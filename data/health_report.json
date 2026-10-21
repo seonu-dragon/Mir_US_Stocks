@@ -1,30 +1,16 @@
 {
- "updatedAtKst": "2026-10-21 19:08 KST",
+ "updatedAtKst": "2026-10-22 08:31 KST",
  "status": "problem",
- "count": 10,
- "checks": 416,
+ "count": 7,
+ "checks": 429,
  "counts": {
-  "freshness": 2,
+  "freshness": 0,
   "structure": 0,
-  "values": 5,
-  "workflow": 3,
+  "values": 3,
+  "workflow": 4,
   "deploy": 0
  },
  "problems": [
-  {
-   "id": "freshness:data/korea/corp_groups.js",
-   "category": "freshness",
-   "label": "krCorpGroups (data/korea/corp_groups.js)",
-   "value": "208h / 허용 144h",
-   "severity": "error"
-  },
-  {
-   "id": "freshness:data/korea/nps_holdings.js",
-   "category": "freshness",
-   "label": "krNps (data/korea/nps_holdings.js)",
-   "value": "208h / 허용 144h",
-   "severity": "error"
-  },
   {
    "id": "values:change:kr",
    "category": "values",
@@ -40,25 +26,18 @@
    "severity": "error"
   },
   {
-   "id": "values:change:us",
-   "category": "values",
-   "label": "US |등락률|>300% (의심 표시 없음)",
-   "value": "3개 · AMTD +4,876%, CAPS +2,856%, GP +372%",
-   "severity": "error"
-  },
-  {
-   "id": "values:bars:us",
-   "category": "values",
-   "label": "US 상세 마지막 봉 종가가 고·저 밖",
-   "value": "1,131 / 4,799종목 (23.6%)",
-   "severity": "error"
-  },
-  {
    "id": "values:stalebars:us",
    "category": "values",
    "label": "US 상세 일봉이 7일 넘게 멈춤",
-   "value": "983 / 4,799종목 (20.5%)",
+   "value": "508 / 4,806종목 (10.6%)",
    "severity": "warn"
+  },
+  {
+   "id": "workflow:hidden:Daily US market snapshot",
+   "category": "workflow",
+   "label": "Daily US market snapshot 가려진 스텝 실패(continue-on-error)",
+   "value": "2건 · python scripts/build_macro_indicators.py 외 · 2026-10-21 21:05 UTC · 기간 내 2회",
+   "severity": "error"
   },
   {
    "id": "workflow:hidden:KR DART disclosures + ownership",
@@ -92,9 +71,9 @@
    "stamp": "2026-10-21 13:29 KST",
    "repoStamp": "2026-10-21 13:29 KST",
    "rows": 1636,
-   "ageHours": 5.7,
+   "ageHours": 19.0,
    "excusedHours": 0.0,
-   "effectiveHours": 5.7,
+   "effectiveHours": 19.0,
    "stale": false
   },
   {
@@ -103,12 +82,12 @@
    "market": "us",
    "maxHours": 240.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:37 KST",
-   "repoStamp": "2026-10-21 06:37 KST",
-   "rows": 205,
-   "ageHours": 12.5,
+   "stamp": "2026-10-22 06:36 KST",
+   "repoStamp": "2026-10-22 06:36 KST",
+   "rows": 204,
+   "ageHours": 1.9,
    "excusedHours": 0.0,
-   "effectiveHours": 12.5,
+   "effectiveHours": 1.9,
    "stale": false
   },
   {
@@ -120,9 +99,9 @@
    "stamp": "2026-10-21 10:28 KST",
    "repoStamp": "2026-10-21 10:28 KST",
    "rows": 4156,
-   "ageHours": 8.7,
+   "ageHours": 22.1,
    "excusedHours": 0.0,
-   "effectiveHours": 8.7,
+   "effectiveHours": 22.1,
    "stale": false
   },
   {
@@ -131,12 +110,12 @@
    "market": "us",
    "maxHours": 336.0,
    "status": "ok",
-   "stamp": "2026-10-21 13:43:09 KST",
-   "repoStamp": "2026-10-21 13:43:09 KST",
-   "rows": 10949,
-   "ageHours": 5.4,
+   "stamp": "2026-10-22 06:40:38 KST",
+   "repoStamp": "2026-10-22 06:40:38 KST",
+   "rows": 10957,
+   "ageHours": 1.9,
    "excusedHours": 0.0,
-   "effectiveHours": 5.4,
+   "effectiveHours": 1.9,
    "stale": false
   },
   {
@@ -145,12 +124,12 @@
    "market": null,
    "maxHours": 336.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:29 KST",
-   "repoStamp": "2026-10-21 06:29 KST",
+   "stamp": "2026-10-22 06:28 KST",
+   "repoStamp": "2026-10-22 06:28 KST",
    "rows": 11,
-   "ageHours": 12.7,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -162,9 +141,9 @@
    "stamp": "2026-10-01 18:04 KST",
    "repoStamp": "2026-10-01 18:04 KST",
    "rows": 369,
-   "ageHours": 481.1,
+   "ageHours": 494.5,
    "excusedHours": 0.0,
-   "effectiveHours": 481.1,
+   "effectiveHours": 494.5,
    "stale": false
   },
   {
@@ -173,12 +152,12 @@
    "market": null,
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 17:23 KST",
-   "repoStamp": "2026-10-21 17:23 KST",
+   "stamp": "2026-10-22 07:08 KST",
+   "repoStamp": "2026-10-22 07:08 KST",
    "rows": 109,
-   "ageHours": 1.8,
+   "ageHours": 1.4,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 1.4,
    "stale": false
   },
   {
@@ -190,9 +169,9 @@
    "stamp": "2026-10-18 03:08 KST",
    "repoStamp": "2026-10-18 03:08 KST",
    "rows": 1388,
-   "ageHours": 88.0,
+   "ageHours": 101.4,
    "excusedHours": 0.0,
-   "effectiveHours": 88.0,
+   "effectiveHours": 101.4,
    "stale": false
   },
   {
@@ -204,9 +183,9 @@
    "stamp": "2026-10-21 14:28 KST",
    "repoStamp": "2026-10-21 14:28 KST",
    "rows": 667,
-   "ageHours": 4.7,
+   "ageHours": 18.1,
    "excusedHours": 0.0,
-   "effectiveHours": 4.7,
+   "effectiveHours": 18.1,
    "stale": false
   },
   {
@@ -215,12 +194,12 @@
    "market": "us",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:33 KST",
-   "repoStamp": "2026-10-21 06:33 KST",
-   "rows": 75,
-   "ageHours": 12.6,
+   "stamp": "2026-10-22 06:33 KST",
+   "repoStamp": "2026-10-22 06:33 KST",
+   "rows": 70,
+   "ageHours": 2.0,
    "excusedHours": 0.0,
-   "effectiveHours": 12.6,
+   "effectiveHours": 2.0,
    "stale": false
   },
   {
@@ -232,9 +211,9 @@
    "stamp": "2026-10-21 13:26 KST",
    "repoStamp": "2026-10-21 13:26 KST",
    "rows": 43,
-   "ageHours": 5.7,
+   "ageHours": 19.1,
    "excusedHours": 0.0,
-   "effectiveHours": 5.7,
+   "effectiveHours": 19.1,
    "stale": false
   },
   {
@@ -246,9 +225,9 @@
    "stamp": "2026-10-03 06:19 KST",
    "repoStamp": "2026-10-03 06:19 KST",
    "rows": 300,
-   "ageHours": 444.8,
+   "ageHours": 458.2,
    "excusedHours": 0.0,
-   "effectiveHours": 444.8,
+   "effectiveHours": 458.2,
    "stale": false
   },
   {
@@ -260,9 +239,9 @@
    "stamp": "2026-10-17 14:30 KST",
    "repoStamp": "2026-10-17 14:30 KST",
    "rows": 84735,
-   "ageHours": 100.6,
+   "ageHours": 114.0,
    "excusedHours": 0.0,
-   "effectiveHours": 100.6,
+   "effectiveHours": 114.0,
    "stale": false
   },
   {
@@ -271,12 +250,12 @@
    "market": "us",
    "maxHours": 240.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:29 KST",
-   "repoStamp": "2026-10-21 06:29 KST",
+   "stamp": "2026-10-22 06:27 KST",
+   "repoStamp": "2026-10-22 06:27 KST",
    "rows": 39,
-   "ageHours": 12.7,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -288,9 +267,23 @@
    "stamp": "2026-10-18 03:03 KST",
    "repoStamp": "2026-10-18 03:03 KST",
    "rows": 1015,
-   "ageHours": 88.1,
+   "ageHours": 101.5,
    "excusedHours": 0.0,
-   "effectiveHours": 88.1,
+   "effectiveHours": 101.5,
+   "stale": false
+  },
+  {
+   "path": "data/finra_ats.js",
+   "name": "다크풀(ATS) 비중",
+   "market": "us",
+   "maxHours": 192.0,
+   "status": "ok",
+   "stamp": "2026-10-22 01:00 KST",
+   "repoStamp": "2026-10-22 01:00 KST",
+   "rows": 4774,
+   "ageHours": 7.5,
+   "excusedHours": 0.0,
+   "effectiveHours": 7.5,
    "stale": false
   },
   {
@@ -299,12 +292,12 @@
    "market": "us",
    "maxHours": 168.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:24 KST",
-   "repoStamp": "2026-10-21 06:24 KST",
-   "rows": 5734,
-   "ageHours": 12.7,
+   "stamp": "2026-10-22 06:24 KST",
+   "repoStamp": "2026-10-22 06:24 KST",
+   "rows": 5727,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -316,9 +309,9 @@
    "stamp": "2026-10-21 13:19 KST",
    "repoStamp": "2026-10-21 13:19 KST",
    "rows": 875,
-   "ageHours": 5.8,
+   "ageHours": 19.2,
    "excusedHours": 0.0,
-   "effectiveHours": 5.8,
+   "effectiveHours": 19.2,
    "stale": false
   },
   {
@@ -327,9 +320,9 @@
    "market": null,
    "maxHours": null,
    "status": "ok",
-   "stamp": "2026-10-21 07:08 KST",
-   "repoStamp": "2026-10-21 07:08 KST",
-   "rows": 78
+   "stamp": "2026-10-22 07:06 KST",
+   "repoStamp": "2026-10-22 07:06 KST",
+   "rows": 79
   },
   {
    "path": "data/industry_by_ticker.js",
@@ -337,12 +330,12 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:17 KST",
-   "repoStamp": "2026-10-21 06:17 KST",
+   "stamp": "2026-10-22 06:17 KST",
+   "repoStamp": "2026-10-22 06:17 KST",
    "rows": 215,
-   "ageHours": 12.9,
+   "ageHours": 2.2,
    "excusedHours": 0.0,
-   "effectiveHours": 12.9,
+   "effectiveHours": 2.2,
    "stale": false
   },
   {
@@ -351,8 +344,8 @@
    "market": null,
    "maxHours": null,
    "status": "ok",
-   "stamp": "2026-10-21 06:17 KST",
-   "repoStamp": "2026-10-21 06:17 KST",
+   "stamp": "2026-10-22 06:17 KST",
+   "repoStamp": "2026-10-22 06:17 KST",
    "rows": 27
   },
   {
@@ -361,12 +354,12 @@
    "market": null,
    "maxHours": 48.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:17 KST",
-   "repoStamp": "2026-10-21 06:17 KST",
+   "stamp": "2026-10-22 06:17 KST",
+   "repoStamp": "2026-10-22 06:17 KST",
    "rows": 152,
-   "ageHours": 12.9,
+   "ageHours": 2.2,
    "excusedHours": 0.0,
-   "effectiveHours": 12.9,
+   "effectiveHours": 2.2,
    "stale": false
   },
   {
@@ -375,12 +368,12 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:17 KST",
-   "repoStamp": "2026-10-21 06:17 KST",
+   "stamp": "2026-10-22 06:17 KST",
+   "repoStamp": "2026-10-22 06:17 KST",
    "rows": 13,
-   "ageHours": 12.9,
+   "ageHours": 2.2,
    "excusedHours": 0.0,
-   "effectiveHours": 12.9,
+   "effectiveHours": 2.2,
    "stale": false
   },
   {
@@ -392,9 +385,9 @@
    "stamp": "2026-10-21 13:19 KST",
    "repoStamp": "2026-10-21 13:19 KST",
    "rows": 8132,
-   "ageHours": 5.8,
+   "ageHours": 19.2,
    "excusedHours": 0.0,
-   "effectiveHours": 5.8,
+   "effectiveHours": 19.2,
    "stale": false
   },
   {
@@ -406,9 +399,9 @@
    "stamp": "2026-10-05 15:06 KST",
    "repoStamp": "2026-10-05 15:06 KST",
    "rows": 153,
-   "ageHours": 388.0,
+   "ageHours": 401.4,
    "excusedHours": 0.0,
-   "effectiveHours": 388.0,
+   "effectiveHours": 401.4,
    "stale": false
   },
   {
@@ -420,9 +413,9 @@
    "stamp": "2026-09-27 22:52 KST",
    "repoStamp": "2026-09-27 22:52 KST",
    "rows": 5340,
-   "ageHours": 572.3,
+   "ageHours": 585.7,
    "excusedHours": 0.0,
-   "effectiveHours": 572.3,
+   "effectiveHours": 585.7,
    "stale": false
   },
   {
@@ -434,9 +427,9 @@
    "stamp": "2026-10-21 13:34 KST",
    "repoStamp": "2026-10-21 13:34 KST",
    "rows": 548,
-   "ageHours": 5.6,
+   "ageHours": 19.0,
    "excusedHours": 0.0,
-   "effectiveHours": 5.6,
+   "effectiveHours": 19.0,
    "stale": false
   },
   {
@@ -448,9 +441,9 @@
    "stamp": "2026-10-21 14:21 KST",
    "repoStamp": "2026-10-21 14:21 KST",
    "rows": 2498,
-   "ageHours": 4.8,
+   "ageHours": 18.2,
    "excusedHours": 0.0,
-   "effectiveHours": 4.8,
+   "effectiveHours": 18.2,
    "stale": false
   },
   {
@@ -462,9 +455,9 @@
    "stamp": "2026-10-21 16:48 KST",
    "repoStamp": "2026-10-21 16:48 KST",
    "rows": 529,
-   "ageHours": 2.3,
+   "ageHours": 15.7,
    "excusedHours": 0.0,
-   "effectiveHours": 2.3,
+   "effectiveHours": 15.7,
    "stale": false
   },
   {
@@ -476,24 +469,24 @@
    "stamp": "2026-10-21 16:28 KST",
    "repoStamp": "2026-10-21 16:28 KST",
    "rows": 322,
-   "ageHours": 2.7,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.7,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
    "path": "data/korea/corp_groups.js",
    "name": "krCorpGroups",
    "market": "kr",
-   "maxHours": 144.0,
-   "status": "problem",
+   "maxHours": 360.0,
+   "status": "ok",
    "stamp": "2026-10-11 03:07 KST",
    "repoStamp": "2026-10-11 03:07 KST",
    "rows": 367,
-   "ageHours": 256.0,
-   "excusedHours": 48.0,
-   "effectiveHours": 208.0,
-   "stale": true
+   "ageHours": 269.4,
+   "excusedHours": 0.0,
+   "effectiveHours": 269.4,
+   "stale": false
   },
   {
    "path": "data/korea/disclosure_stats.js",
@@ -506,6 +499,20 @@
    "rows": 41
   },
   {
+   "path": "data/korea/dividend_growth.js",
+   "name": "배당 성장 이력",
+   "market": "kr",
+   "maxHours": 240.0,
+   "status": "ok",
+   "stamp": "2026-10-22 00:46 KST",
+   "repoStamp": "2026-10-22 00:46 KST",
+   "rows": 1245,
+   "ageHours": 7.8,
+   "excusedHours": 0.0,
+   "effectiveHours": 7.8,
+   "stale": false
+  },
+  {
    "path": "data/korea/dividends.js",
    "name": "배당 결정",
    "market": "kr",
@@ -514,9 +521,9 @@
    "stamp": "2026-10-21 16:28 KST",
    "repoStamp": "2026-10-21 16:28 KST",
    "rows": 34,
-   "ageHours": 2.7,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.7,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -528,9 +535,9 @@
    "stamp": "2026-10-21 16:26 KST",
    "repoStamp": "2026-10-21 16:26 KST",
    "rows": 48,
-   "ageHours": 2.7,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.7,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -542,9 +549,9 @@
    "stamp": "2026-10-21 15:43 KST",
    "repoStamp": "2026-10-21 15:43 KST",
    "rows": 7,
-   "ageHours": 3.4,
+   "ageHours": 16.8,
    "excusedHours": 0.0,
-   "effectiveHours": 3.4,
+   "effectiveHours": 16.8,
    "stale": false
   },
   {
@@ -556,9 +563,9 @@
    "stamp": "2026-10-17 10:23 KST",
    "repoStamp": "2026-10-17 10:23 KST",
    "rows": 107,
-   "ageHours": 104.8,
+   "ageHours": 118.1,
    "excusedHours": 0.0,
-   "effectiveHours": 104.8,
+   "effectiveHours": 118.1,
    "stale": false
   },
   {
@@ -570,9 +577,9 @@
    "stamp": "2026-10-18 03:03 KST",
    "repoStamp": "2026-10-18 03:03 KST",
    "rows": 1027,
-   "ageHours": 88.1,
+   "ageHours": 101.5,
    "excusedHours": 0.0,
-   "effectiveHours": 88.1,
+   "effectiveHours": 101.5,
    "stale": false
   },
   {
@@ -584,9 +591,9 @@
    "stamp": "2026-10-21 15:52 KST",
    "repoStamp": "2026-10-21 15:52 KST",
    "rows": 300,
-   "ageHours": 3.3,
+   "ageHours": 16.7,
    "excusedHours": 0.0,
-   "effectiveHours": 3.3,
+   "effectiveHours": 16.7,
    "stale": false
   },
   {
@@ -598,9 +605,9 @@
    "stamp": "2026-10-21 17:16 KST",
    "repoStamp": "2026-10-21 17:16 KST",
    "rows": 2585,
-   "ageHours": 1.9,
+   "ageHours": 15.3,
    "excusedHours": 0.0,
-   "effectiveHours": 1.9,
+   "effectiveHours": 15.3,
    "stale": false
   },
   {
@@ -612,9 +619,9 @@
    "stamp": "2026-10-21 16:23 KST",
    "repoStamp": "2026-10-21 16:23 KST",
    "rows": 43,
-   "ageHours": 2.8,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.8,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -623,12 +630,12 @@
    "market": "kr",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:42 KST",
-   "repoStamp": "2026-10-21 06:42 KST",
-   "rows": 170,
-   "ageHours": 12.4,
+   "stamp": "2026-10-22 06:43 KST",
+   "repoStamp": "2026-10-22 06:43 KST",
+   "rows": 168,
+   "ageHours": 1.8,
    "excusedHours": 0.0,
-   "effectiveHours": 12.4,
+   "effectiveHours": 1.8,
    "stale": false
   },
   {
@@ -637,12 +644,12 @@
    "market": "kr",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:43 KST",
-   "repoStamp": "2026-10-21 06:43 KST",
-   "rows": 186,
-   "ageHours": 12.4,
+   "stamp": "2026-10-22 06:44 KST",
+   "repoStamp": "2026-10-22 06:44 KST",
+   "rows": 194,
+   "ageHours": 1.8,
    "excusedHours": 0.0,
-   "effectiveHours": 12.4,
+   "effectiveHours": 1.8,
    "stale": false
   },
   {
@@ -654,9 +661,9 @@
    "stamp": "2026-10-21 16:26 KST",
    "repoStamp": "2026-10-21 16:26 KST",
    "rows": 398,
-   "ageHours": 2.7,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.7,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -668,9 +675,9 @@
    "stamp": "2026-10-21 17:16 KST",
    "repoStamp": "2026-10-21 17:16 KST",
    "rows": 261,
-   "ageHours": 1.9,
+   "ageHours": 15.3,
    "excusedHours": 0.0,
-   "effectiveHours": 1.9,
+   "effectiveHours": 15.3,
    "stale": false
   },
   {
@@ -682,9 +689,9 @@
    "stamp": "2026-10-21 16:18 KST",
    "repoStamp": "2026-10-21 16:18 KST",
    "rows": 3821,
-   "ageHours": 2.8,
+   "ageHours": 16.2,
    "excusedHours": 0.0,
-   "effectiveHours": 2.8,
+   "effectiveHours": 16.2,
    "stale": false
   },
   {
@@ -696,9 +703,9 @@
    "stamp": "2026-10-21 17:23 KST",
    "repoStamp": "2026-10-21 17:23 KST",
    "rows": 72,
-   "ageHours": 1.8,
+   "ageHours": 15.1,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 15.1,
    "stale": false
   },
   {
@@ -710,24 +717,24 @@
    "stamp": "2026-10-18 05:41 KST",
    "repoStamp": "2026-10-18 05:41 KST",
    "rows": 10,
-   "ageHours": 85.5,
+   "ageHours": 98.8,
    "excusedHours": 0.0,
-   "effectiveHours": 85.5,
+   "effectiveHours": 98.8,
    "stale": false
   },
   {
    "path": "data/korea/nps_holdings.js",
    "name": "krNps",
    "market": "kr",
-   "maxHours": 144.0,
-   "status": "problem",
+   "maxHours": 360.0,
+   "status": "ok",
    "stamp": "2026-10-11 03:06 KST",
    "repoStamp": "2026-10-11 03:06 KST",
    "rows": 1122,
-   "ageHours": 256.0,
-   "excusedHours": 48.0,
-   "effectiveHours": 208.0,
-   "stale": true
+   "ageHours": 269.4,
+   "excusedHours": 0.0,
+   "effectiveHours": 269.4,
+   "stale": false
   },
   {
    "path": "data/korea/ownership_profile.js",
@@ -738,9 +745,9 @@
    "stamp": "2026-10-21 16:38 KST",
    "repoStamp": "2026-10-21 16:38 KST",
    "rows": 2566,
-   "ageHours": 2.5,
+   "ageHours": 15.9,
    "excusedHours": 0.0,
-   "effectiveHours": 2.5,
+   "effectiveHours": 15.9,
    "stale": false
   },
   {
@@ -752,9 +759,9 @@
    "stamp": "2026-10-18 03:08 KST",
    "repoStamp": "2026-10-18 03:08 KST",
    "rows": 1023,
-   "ageHours": 88.0,
+   "ageHours": 101.4,
    "excusedHours": 0.0,
-   "effectiveHours": 88.0,
+   "effectiveHours": 101.4,
    "stale": false
   },
   {
@@ -766,9 +773,9 @@
    "stamp": "2026-10-18 05:40 KST",
    "repoStamp": "2026-10-18 05:40 KST",
    "rows": 2537,
-   "ageHours": 85.5,
+   "ageHours": 98.9,
    "excusedHours": 0.0,
-   "effectiveHours": 85.5,
+   "effectiveHours": 98.9,
    "stale": false
   },
   {
@@ -780,9 +787,9 @@
    "stamp": "2026-10-19 16:22 KST",
    "repoStamp": "2026-10-19 16:22 KST",
    "rows": 2583,
-   "ageHours": 50.8,
+   "ageHours": 64.2,
    "excusedHours": 0.0,
-   "effectiveHours": 50.8,
+   "effectiveHours": 64.2,
    "stale": false
   },
   {
@@ -794,9 +801,9 @@
    "stamp": "2026-10-19 16:22 KST",
    "repoStamp": "2026-10-19 16:22 KST",
    "rows": 500,
-   "ageHours": 50.8,
+   "ageHours": 64.2,
    "excusedHours": 0.0,
-   "effectiveHours": 50.8,
+   "effectiveHours": 64.2,
    "stale": false
   },
   {
@@ -808,9 +815,9 @@
    "stamp": "2026-10-21 17:23 KST",
    "repoStamp": "2026-10-21 17:23 KST",
    "rows": 235,
-   "ageHours": 1.8,
+   "ageHours": 15.1,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 15.1,
    "stale": false
   },
   {
@@ -822,9 +829,9 @@
    "stamp": "2026-10-17 10:19 KST",
    "repoStamp": "2026-10-17 10:19 KST",
    "rows": 4491,
-   "ageHours": 104.8,
+   "ageHours": 118.2,
    "excusedHours": 0.0,
-   "effectiveHours": 104.8,
+   "effectiveHours": 118.2,
    "stale": false
   },
   {
@@ -836,9 +843,9 @@
    "stamp": "2026-10-21 15:55 KST",
    "repoStamp": "2026-10-21 15:55 KST",
    "rows": 8,
-   "ageHours": 3.2,
+   "ageHours": 16.6,
    "excusedHours": 0.0,
-   "effectiveHours": 3.2,
+   "effectiveHours": 16.6,
    "stale": false
   },
   {
@@ -850,9 +857,9 @@
    "stamp": "2026-10-17 10:18 KST",
    "repoStamp": "2026-10-17 10:18 KST",
    "rows": 2718,
-   "ageHours": 104.8,
+   "ageHours": 118.2,
    "excusedHours": 0.0,
-   "effectiveHours": 104.8,
+   "effectiveHours": 118.2,
    "stale": false
   },
   {
@@ -864,9 +871,9 @@
    "stamp": "2026-10-21 16:32 KST",
    "repoStamp": "2026-10-21 16:32 KST",
    "rows": 2695,
-   "ageHours": 2.6,
+   "ageHours": 16.0,
    "excusedHours": 0.0,
-   "effectiveHours": 2.6,
+   "effectiveHours": 16.0,
    "stale": false
   },
   {
@@ -878,9 +885,9 @@
    "stamp": "2026-10-21 15:32 KST",
    "repoStamp": "2026-10-21 15:32 KST",
    "rows": 2027,
-   "ageHours": 3.6,
+   "ageHours": 17.0,
    "excusedHours": 0.0,
-   "effectiveHours": 3.6,
+   "effectiveHours": 17.0,
    "stale": false
   },
   {
@@ -892,9 +899,9 @@
    "stamp": "2026-10-21 15:45 KST",
    "repoStamp": "2026-10-21 15:45 KST",
    "rows": 26,
-   "ageHours": 3.4,
+   "ageHours": 16.8,
    "excusedHours": 0.0,
-   "effectiveHours": 3.4,
+   "effectiveHours": 16.8,
    "stale": false
   },
   {
@@ -906,9 +913,9 @@
    "stamp": "2026-10-21 15:44 KST",
    "repoStamp": "2026-10-21 15:44 KST",
    "rows": 204,
-   "ageHours": 3.4,
+   "ageHours": 16.8,
    "excusedHours": 0.0,
-   "effectiveHours": 3.4,
+   "effectiveHours": 16.8,
    "stale": false
   },
   {
@@ -930,9 +937,9 @@
    "stamp": "2026-10-21 10:20 KST",
    "repoStamp": "2026-10-21 10:20 KST",
    "rows": 1482,
-   "ageHours": 8.8,
+   "ageHours": 22.2,
    "excusedHours": 0.0,
-   "effectiveHours": 8.8,
+   "effectiveHours": 22.2,
    "stale": false
   },
   {
@@ -944,9 +951,9 @@
    "stamp": "2026-10-21 06:24 KST",
    "repoStamp": "2026-10-21 06:24 KST",
    "rows": 9,
-   "ageHours": 12.7,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -955,12 +962,12 @@
    "market": null,
    "maxHours": 36.0,
    "status": "ok",
-   "stamp": "2026-10-21 14:38 KST",
-   "repoStamp": "2026-10-21 14:38 KST",
+   "stamp": "2026-10-22 06:38 KST",
+   "repoStamp": "2026-10-22 06:38 KST",
    "rows": 7,
-   "ageHours": 4.5,
+   "ageHours": 1.9,
    "excusedHours": 0.0,
-   "effectiveHours": 4.5,
+   "effectiveHours": 1.9,
    "stale": false
   },
   {
@@ -969,12 +976,12 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:41 KST",
-   "repoStamp": "2026-10-21 06:41 KST",
+   "stamp": "2026-10-22 06:41 KST",
+   "repoStamp": "2026-10-22 06:41 KST",
    "rows": 17,
-   "ageHours": 12.5,
+   "ageHours": 1.8,
    "excusedHours": 0.0,
-   "effectiveHours": 12.5,
+   "effectiveHours": 1.8,
    "stale": false
   },
   {
@@ -983,12 +990,12 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 16:11 KST",
-   "repoStamp": "2026-10-21 16:11 KST",
+   "stamp": "2026-10-22 07:31 KST",
+   "repoStamp": "2026-10-22 07:31 KST",
    "rows": 47,
-   "ageHours": 3.0,
+   "ageHours": 1.0,
    "excusedHours": 0.0,
-   "effectiveHours": 3.0,
+   "effectiveHours": 1.0,
    "stale": false
   },
   {
@@ -997,12 +1004,12 @@
    "market": "us",
    "maxHours": 48.0,
    "status": "ok",
-   "stamp": "2026-10-21 07:01 KST",
-   "repoStamp": "2026-10-21 07:01 KST",
-   "rows": 7330,
-   "ageHours": 12.1,
+   "stamp": "2026-10-22 06:59 KST",
+   "repoStamp": "2026-10-22 06:59 KST",
+   "rows": 7326,
+   "ageHours": 1.5,
    "excusedHours": 0.0,
-   "effectiveHours": 12.1,
+   "effectiveHours": 1.5,
    "stale": false
   },
   {
@@ -1014,9 +1021,9 @@
    "stamp": "2026-10-21 13:24 KST",
    "repoStamp": "2026-10-21 13:24 KST",
    "rows": 763,
-   "ageHours": 5.7,
+   "ageHours": 19.1,
    "excusedHours": 0.0,
-   "effectiveHours": 5.7,
+   "effectiveHours": 19.1,
    "stale": false
   },
   {
@@ -1025,12 +1032,12 @@
    "market": "us",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-10-21 07:09 KST",
-   "repoStamp": "2026-10-21 07:09 KST",
+   "stamp": "2026-10-22 07:08 KST",
+   "repoStamp": "2026-10-22 07:08 KST",
    "rows": 78,
-   "ageHours": 12.0,
+   "ageHours": 1.4,
    "excusedHours": 0.0,
-   "effectiveHours": 12.0,
+   "effectiveHours": 1.4,
    "stale": false
   },
   {
@@ -1042,9 +1049,9 @@
    "stamp": "2026-10-21 18:11 KST",
    "repoStamp": "2026-10-21 18:11 KST",
    "rows": 9,
-   "ageHours": 1.0,
+   "ageHours": 14.3,
    "excusedHours": 0.0,
-   "effectiveHours": 1.0,
+   "effectiveHours": 14.3,
    "stale": false
   },
   {
@@ -1053,12 +1060,12 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:25 KST",
-   "repoStamp": "2026-10-21 06:25 KST",
+   "stamp": "2026-10-22 06:24 KST",
+   "repoStamp": "2026-10-22 06:24 KST",
    "rows": 78,
-   "ageHours": 12.7,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -1070,9 +1077,9 @@
    "stamp": "2026-10-18 03:08 KST",
    "repoStamp": "2026-10-18 03:08 KST",
    "rows": 977,
-   "ageHours": 88.0,
+   "ageHours": 101.4,
    "excusedHours": 0.0,
-   "effectiveHours": 88.0,
+   "effectiveHours": 101.4,
    "stale": false
   },
   {
@@ -1084,9 +1091,9 @@
    "stamp": "2026-10-18 03:03 KST",
    "repoStamp": "2026-10-18 03:03 KST",
    "rows": 451,
-   "ageHours": 88.1,
+   "ageHours": 101.5,
    "excusedHours": 0.0,
-   "effectiveHours": 88.1,
+   "effectiveHours": 101.5,
    "stale": false
   },
   {
@@ -1098,9 +1105,9 @@
    "stamp": "2026-10-18 05:40 KST",
    "repoStamp": "2026-10-18 05:40 KST",
    "rows": 3268,
-   "ageHours": 85.5,
+   "ageHours": 98.9,
    "excusedHours": 0.0,
-   "effectiveHours": 85.5,
+   "effectiveHours": 98.9,
    "stale": false
   },
   {
@@ -1109,12 +1116,12 @@
    "market": "us",
    "maxHours": 1080.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:29 KST",
-   "repoStamp": "2026-10-21 06:29 KST",
+   "stamp": "2026-10-22 06:28 KST",
+   "repoStamp": "2026-10-22 06:28 KST",
    "rows": 40,
-   "ageHours": 12.7,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -1126,9 +1133,9 @@
    "stamp": "2026-10-18 03:03 KST",
    "repoStamp": "2026-10-18 03:03 KST",
    "rows": 780,
-   "ageHours": 88.1,
+   "ageHours": 101.5,
    "excusedHours": 0.0,
-   "effectiveHours": 88.1,
+   "effectiveHours": 101.5,
    "stale": false
   },
   {
@@ -1137,12 +1144,12 @@
    "market": null,
    "maxHours": 144.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:30 KST",
-   "repoStamp": "2026-10-21 06:30 KST",
+   "stamp": "2026-10-22 06:29 KST",
+   "repoStamp": "2026-10-22 06:29 KST",
    "rows": 3,
-   "ageHours": 12.6,
+   "ageHours": 2.0,
    "excusedHours": 0.0,
-   "effectiveHours": 12.6,
+   "effectiveHours": 2.0,
    "stale": false
   },
   {
@@ -1151,12 +1158,12 @@
    "market": "us",
    "maxHours": 144.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:30 KST",
-   "repoStamp": "2026-10-21 06:30 KST",
+   "stamp": "2026-10-22 06:29 KST",
+   "repoStamp": "2026-10-22 06:29 KST",
    "rows": 350,
-   "ageHours": 12.6,
+   "ageHours": 2.0,
    "excusedHours": 0.0,
-   "effectiveHours": 12.6,
+   "effectiveHours": 2.0,
    "stale": false
   },
   {
@@ -1168,9 +1175,9 @@
    "stamp": "2026-10-20 15:13 KST",
    "repoStamp": "2026-10-20 15:13 KST",
    "rows": 237,
-   "ageHours": 27.9,
+   "ageHours": 41.3,
    "excusedHours": 0.0,
-   "effectiveHours": 27.9,
+   "effectiveHours": 41.3,
    "stale": false
   },
   {
@@ -1179,12 +1186,12 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-10-21 17:23 KST",
-   "repoStamp": "2026-10-21 17:23 KST",
+   "stamp": "2026-10-22 07:08 KST",
+   "repoStamp": "2026-10-22 07:08 KST",
    "rows": 22,
-   "ageHours": 1.8,
+   "ageHours": 1.4,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 1.4,
    "stale": false
   },
   {
@@ -1203,12 +1210,12 @@
    "market": null,
    "maxHours": 336.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:29 KST",
-   "repoStamp": "2026-10-21 06:29 KST",
+   "stamp": "2026-10-22 06:28 KST",
+   "repoStamp": "2026-10-22 06:28 KST",
    "rows": 12,
-   "ageHours": 12.7,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -1217,12 +1224,12 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:26 KST",
-   "repoStamp": "2026-10-21 06:26 KST",
+   "stamp": "2026-10-22 06:25 KST",
+   "repoStamp": "2026-10-22 06:25 KST",
    "rows": 200,
-   "ageHours": 12.7,
+   "ageHours": 2.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.1,
    "stale": false
   },
   {
@@ -1234,9 +1241,9 @@
    "stamp": "2026-10-21 13:34 KST",
    "repoStamp": "2026-10-21 13:34 KST",
    "rows": 527,
-   "ageHours": 5.6,
+   "ageHours": 19.0,
    "excusedHours": 0.0,
-   "effectiveHours": 5.6,
+   "effectiveHours": 19.0,
    "stale": false
   },
   {
@@ -1245,12 +1252,12 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 14:24 KST",
-   "repoStamp": "2026-10-21 14:24 KST",
+   "stamp": "2026-10-22 06:39 KST",
+   "repoStamp": "2026-10-22 06:39 KST",
    "rows": 574,
-   "ageHours": 4.7,
+   "ageHours": 1.9,
    "excusedHours": 0.0,
-   "effectiveHours": 4.7,
+   "effectiveHours": 1.9,
    "stale": false
   },
   {
@@ -1262,9 +1269,9 @@
    "stamp": "2026-10-21 11:02 KST",
    "repoStamp": "2026-10-21 11:02 KST",
    "rows": 702,
-   "ageHours": 8.1,
+   "ageHours": 21.5,
    "excusedHours": 0.0,
-   "effectiveHours": 8.1,
+   "effectiveHours": 21.5,
    "stale": false
   },
   {
@@ -1273,12 +1280,26 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 14:24 KST",
-   "repoStamp": "2026-10-21 14:24 KST",
-   "rows": 2168,
-   "ageHours": 4.7,
+   "stamp": "2026-10-22 06:39 KST",
+   "repoStamp": "2026-10-22 06:39 KST",
+   "rows": 2331,
+   "ageHours": 1.9,
    "excusedHours": 0.0,
-   "effectiveHours": 4.7,
+   "effectiveHours": 1.9,
+   "stale": false
+  },
+  {
+   "path": "data/us_splits.js",
+   "name": "액면분할 일정",
+   "market": "us",
+   "maxHours": 96.0,
+   "status": "ok",
+   "stamp": "2026-10-22 06:44 KST",
+   "repoStamp": "2026-10-22 06:44 KST",
+   "rows": 14,
+   "ageHours": 1.8,
+   "excusedHours": 0.0,
+   "effectiveHours": 1.8,
    "stale": false
   },
   {
@@ -1290,9 +1311,9 @@
    "stamp": "2026-10-03 12:18 KST",
    "repoStamp": "2026-10-03 12:18 KST",
    "rows": 1160,
-   "ageHours": 438.8,
+   "ageHours": 452.2,
    "excusedHours": 0.0,
-   "effectiveHours": 438.8,
+   "effectiveHours": 452.2,
    "stale": false
   },
   {
@@ -1304,9 +1325,9 @@
    "stamp": "2026-10-18 03:03 KST",
    "repoStamp": "2026-10-18 03:03 KST",
    "rows": 605,
-   "ageHours": 88.1,
+   "ageHours": 101.5,
    "excusedHours": 0.0,
-   "effectiveHours": 88.1,
+   "effectiveHours": 101.5,
    "stale": false
   },
   {
@@ -1315,12 +1336,12 @@
    "market": null,
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-10-21 16:11 KST",
-   "repoStamp": "2026-10-21 16:11 KST",
+   "stamp": "2026-10-22 07:32 KST",
+   "repoStamp": "2026-10-22 07:32 KST",
    "rows": 15,
-   "ageHours": 3.0,
+   "ageHours": 1.0,
    "excusedHours": 0.0,
-   "effectiveHours": 3.0,
+   "effectiveHours": 1.0,
    "stale": false
   },
   {
@@ -1329,12 +1350,12 @@
    "market": "us",
    "maxHours": 48.0,
    "status": "ok",
-   "stamp": "2026-10-21 16:01:14 KST",
-   "repoStamp": "2026-10-21 16:01:14 KST",
-   "rows": 32,
-   "ageHours": 3.1,
+   "stamp": "2026-10-22 06:01:28 KST",
+   "repoStamp": "2026-10-22 06:01:28 KST",
+   "rows": 24,
+   "ageHours": 2.5,
    "excusedHours": 0.0,
-   "effectiveHours": 3.1,
+   "effectiveHours": 2.5,
    "stale": false
   },
   {
@@ -1343,12 +1364,12 @@
    "market": null,
    "maxHours": 144.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:29 KST",
-   "repoStamp": "2026-10-21 06:29 KST",
-   "rows": 14,
-   "ageHours": 12.7,
+   "stamp": "2026-10-22 06:29 KST",
+   "repoStamp": "2026-10-22 06:29 KST",
+   "rows": 15,
+   "ageHours": 2.0,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.0,
    "stale": false
   },
   {
@@ -1357,12 +1378,12 @@
    "market": "us",
    "maxHours": 144.0,
    "status": "ok",
-   "stamp": "2026-10-21 06:29 KST",
-   "repoStamp": "2026-10-21 06:29 KST",
+   "stamp": "2026-10-22 06:29 KST",
+   "repoStamp": "2026-10-22 06:29 KST",
    "rows": 30,
-   "ageHours": 12.7,
+   "ageHours": 2.0,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 2.0,
    "stale": false
   },
   {
@@ -1374,9 +1395,9 @@
    "stamp": "2026-10-21 06:24 KST",
    "repoStamp": "2026-10-21 06:24 KST",
    "rows": 252,
-   "ageHours": 12.7,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 12.7,
+   "effectiveHours": 26.1,
    "stale": false
   }
  ],
@@ -1444,30 +1465,17 @@
    ]
   },
   "us": {
-   "stocks": 7330,
-   "priceDate": "2026-10-20",
-   "changeOutliers": 3,
-   "changeOutlierTop": [
-    {
-     "ticker": "AMTD",
-     "changePct": 4875.9
-    },
-    {
-     "ticker": "CAPS",
-     "changePct": 2855.6
-    },
-    {
-     "ticker": "GP",
-     "changePct": 372.0
-    }
-   ],
-   "changePctSuspect": 0,
+   "stocks": 7326,
+   "priceDate": "2026-10-21",
+   "changeOutliers": 0,
+   "changeOutlierTop": [],
+   "changePctSuspect": 3,
    "nullRatios": {
     "price": 0.0,
     "changePct": 0.0,
     "marketCapB": 0.0,
-    "volume": 0.0768,
-    "rsi14": 0.3453,
+    "volume": 0.0773,
+    "rsi14": 0.344,
     "closeSeries": 0.0
    },
    "indexCheck": [
@@ -1475,21 +1483,21 @@
      "symbol": "SPY",
      "label": "S&P 500",
      "group": "idx_sp500",
-     "index": 0.3,
+     "index": 0.5,
      "members": 502,
-     "median": 1.2,
-     "capWeighted": 0.32,
-     "gap": -0.02
+     "median": 0.2,
+     "capWeighted": 0.6,
+     "gap": -0.1
     },
     {
      "symbol": "QQQ",
      "label": "Nasdaq 100",
      "group": "idx_ndx100",
-     "index": -0.1,
+     "index": 1.1,
      "members": 99,
-     "median": 0.7,
-     "capWeighted": -0.3,
-     "gap": 0.2
+     "median": 0.5,
+     "capWeighted": 0.91,
+     "gap": 0.19
     }
    ]
   }
@@ -1517,40 +1525,31 @@
    "source": "repo"
   },
   "us": {
-   "files": 7247,
-   "withBars": 4799,
-   "noBars": 2448,
+   "files": 7240,
+   "withBars": 4806,
+   "noBars": 2434,
    "unreadable": 0,
-   "lastBarOutsideRange": 1131,
-   "recentBarOutsideRange": 1131,
-   "staleBars": 983,
-   "lastBarExamples": [
-    "AAMI",
-    "AAUC",
-    "ABCB",
-    "ABLV",
-    "ABM",
-    "ABX",
-    "ACA",
-    "ACB"
-   ],
+   "lastBarOutsideRange": 0,
+   "recentBarOutsideRange": 0,
+   "staleBars": 508,
+   "lastBarExamples": [],
    "staleExamples": [
-    "AAMI",
-    "AAUC",
-    "ABCB",
-    "ABM",
-    "ABX",
+    "ABLV",
     "ACA",
     "ACB",
-    "ACCL"
+    "ADAG",
+    "ADIG",
+    "ADNT",
+    "AEON",
+    "AFYA"
    ],
    "source": "repo"
   }
  },
  "workflows": {
-  "workflows": 26,
-  "runs": 197,
-  "badRuns": 5,
+  "workflows": 27,
+  "runs": 218,
+  "badRuns": 7,
   "days": 3
  }
 }

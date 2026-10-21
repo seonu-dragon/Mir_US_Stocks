@@ -195,7 +195,33 @@
     return x.x ? `${finite(windowDays) ? windowDays : x.d}일+` : `${x.d}일`;
   }
 
-  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, streakLabel };
+  // 외국인 보유율 추이 — detail.foreignRetention(숫자 배열, chartSeries 마지막 len 개 봉과 같은 순서·null=모름,
+  // update_korea_data.py foreign_retention_series 와 짝) → 날짜가 붙은 점. 점이 minPoints 개 미만이면 null(패널 숨김).
+  function foreignRetention(series, chartSeries, minPoints) {
+    const need = finite(minPoints) ? minPoints : 5;
+    if (!Array.isArray(series) || !series.length || !Array.isArray(chartSeries) || chartSeries.length < series.length) return null;
+    const tail = chartSeries.slice(chartSeries.length - series.length);
+    const vals = [];
+    const pts = [];
+    series.forEach((v, i) => {
+      const bar = tail[i];
+      const d = Array.isArray(bar) ? String(bar[5] || "") : "";
+      const ok = finite(v) && v >= 0 && v <= 100 && d;
+      vals.push(ok ? v : null);
+      if (ok) pts.push({ d, v });
+    });
+    if (pts.length < need) return null;
+    const nums = pts.map((p) => p.v);
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+    return {
+      vals, pts, first, last,
+      min: Math.min(...nums), max: Math.max(...nums),
+      change: Math.round((last.v - first.v) * 100) / 100,
+    };
+  }
+
+  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, streakLabel, foreignRetention };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrFlowCore = api;
 })(typeof window !== "undefined" ? window : null);

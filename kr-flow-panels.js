@@ -255,6 +255,43 @@ function krFlowStreakCard(payload) {
 
 // ------------------------------------------------------------------ 종목 '일별 보기'
 // kr-panels.js krFlowCard 가 부른다. 샤드가 아직 없으면(첫 수집 전) 아무것도 만들지 않는다.
+// ------------------------------------------------------------------ 종목 분석 › 외국인 보유율 추이
+// 상세 파일의 foreignRetention(네이버 일봉 응답의 외국인 보유율, update_korea_data.py)을 미니 차트로. 값이 없거나
+// 점이 적으면 패널을 그리지 않는다(빈 껍데기 금지). 사실 표시 — 보유율 변화로 매매 판단을 만들지 않는다.
+function krForeignRetentionCard(item) {
+  const C = window.MirKrFlowCore;
+  if (!C || !item || (typeof isKrMarket === "function" && !isKrMarket())) return "";
+  // withDetail 은 기준일 봉을 맞추며 chartSeries 를 바꿀 수 있다 — 정렬 기준은 상세 파일 원본 봉.
+  const key = typeof safeTicker === "function" ? safeTicker(item.ticker) : item.ticker;
+  const raw = (typeof detailCache !== "undefined" && detailCache[key]) || item;
+  const fr = C.foreignRetention(raw.foreignRetention, raw.chartSeries);
+  if (!fr) return "";
+  const W = 300;
+  const H = 64;
+  const d = C.linePath(fr.vals, W, H, 4);
+  if (!d) return "";
+  const pp = (v) => `${v.toFixed(2)}%`;
+  const chg = fr.change;
+  const chgCls = chg > 0 ? "pos" : chg < 0 ? "neg" : "";
+  const chgText = `${chg > 0 ? "+" : ""}${chg.toFixed(2)}%p`;
+  // 1년 창이라 시작일 연도가 다를 수 있다 — 그때만 연도를 붙인다(10.13 → 10.20 이 '1주'로 읽히지 않게).
+  const sameYear = fr.first.d.slice(0, 4) === fr.last.d.slice(0, 4);
+  const startText = sameYear ? krFlowDateShort(fr.first.d) : `${fr.first.d.slice(0, 4)}.${krFlowDateShort(fr.first.d)}`;
+  const span = `${startText} → ${krFlowDateShort(fr.last.d)}`;
+  return `
+    <div class="krflow-card kfr-card">
+      <div class="krflow-head">
+        <b>외국인 보유율 추이</b>
+        <span class="muted">${escapeHtml(krFlowDateShort(fr.last.d))} 기준</span>
+      </div>
+      <p class="kfr-now"><strong>${pp(fr.last.v)}</strong> <span class="${chgCls}">${escapeHtml(chgText)}</span> <span class="muted">${escapeHtml(span)} · ${fr.pts.length}거래일</span></p>
+      <svg class="kfr-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="외국인 보유율 ${escapeHtml(span)} ${pp(fr.first.v)}에서 ${pp(fr.last.v)}">
+        <path d="${d}" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <p class="kfr-range muted"><span>최저 ${pp(fr.min)}</span><span>최고 ${pp(fr.max)}</span></p>
+    </div>`;
+}
+
 function krFlowDailyToggle(item) {
   const flow = window.KR_INVESTOR_FLOW;
   if (!flow || !(flow.dailyShards > 0) || !item?.ticker || krFlowOff()) return "";

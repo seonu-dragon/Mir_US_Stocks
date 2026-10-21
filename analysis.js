@@ -2803,7 +2803,117 @@ function analysisPriceRowHtml(result) {
     const amt = fmtPrice(Math.abs(d)).replace(/^\$/, "");
     chg = `<span class="ca-chg ${dir}">${mark}${escapeHtml(amt)} (${pct > 0 ? "+" : ""}${pct.toFixed(2)}%)</span>`;
   }
-  return `<p class="ca-price-row"><span class="ca-price">${escapeHtml(fmtPrice(price))}</span>${chg}</p>`;
+  return `<p class="ca-price-row"><span class="ca-price">${escapeHtml(fmtPrice(price))}</span>${chg}</p>${caLiveSlotHtml(result)}`;
+}
+
+// ===== 현재 시세 한 줄(독립 분석 페이지, 2026-10-21) =====
+// 대시보드 종목 분석은 장 마감 종가 아래에 워커 분봉 경로(?intraday=1&interval=1m)의 '현재' 한 줄을 더한다
+// (live-quote.js). 이 페이지는 상세 파일 종가만 보여 줘서, 같은 종목인데 두 화면 가격·기준 시각이 달랐다.
+// 같은 워커 경로·같은 계산(live-quote-core.js MirLiveQuote)으로 같은 줄을 그린다. 대시보드(index.html)도 이
+// 파일을 싣지만 결과 HTML 을 다른 곳에 쓰므로, 독립 페이지(init 이 searchForm 을 찾은 경우)에서만 켠다.
+const CA_LIVE_PROXY = "https://mirusstocks.planbesides.workers.dev"; // app.js LIVE_DATA_PROXY 와 같은 워커
+const CA_LIVE_REFRESH_MS = 60000;
+let caLiveStandalone = false;
+const _caLive = { sym: "", timer: 0, seq: 0, payload: null, status: "", snapPrice: null, snapDate: "" };
+
+function caLiveSlotHtml(result) {
+  if (!caLiveStandalone || !window.MirLiveQuote || !result || !result.ticker) return "";
+  return `<p class="sd-live" id="caLiveQuote" data-ticker="${escapeHtml(String(result.ticker))}" title="1분마다 갱신 · 등락은 전 거래일 종가 대비"><span class="muted">현재가 확인 중…</span></p>`;
+}
+
+function caLiveSymbol(detail) {
+  const kr = isKrAnalysisMode();
+  const raw = String((detail && (detail.yahooSymbol || detail.ticker)) || "");
+  if (!kr) return raw.toUpperCase();
+  const cfg = window.MirMarket?.getConfig?.();
+  return cfg && typeof cfg.yahooTicker === "function" ? cfg.yahooTicker(detail, detail.market) : raw;
+}
+
+function caLiveNowLocal(tz) {
+  try {
+    const p = {};
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date()).forEach((x) => { p[x.type] = x.value; });
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+  } catch (e) {
+    return "";
+  }
+}
+
+// 대시보드 lqTimeText 와 같은 규칙: 워커 quote 시각(ISO)은 KST 로, 분봉 시각은 거래소 현지 그대로.
+function caLiveTimeText(t) {
+  const s = String(t || "");
+  if (/Z$|[+-]\d\d:?\d\d$/.test(s)) {
+    try {
+      return new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(s));
+    } catch (e) { return ""; }
+  }
+  return s.slice(11, 16);
+}
+
+function caLiveBodyHtml() {
+  const d = _caLive.payload;
+  if (!d) return _caLive.status === "error" ? '<span class="muted">현재가를 받지 못했습니다</span>' : '<span class="muted">현재가 확인 중…</span>';
+  const kr = isKrAnalysisMode();
+  const tz = d.tz || (kr ? "Asia/Seoul" : "America/New_York");
+  const r = window.MirLiveQuote.computeLiveQuote({
+    bars: d.bars, quote: d.quote || null,
+    snapPrice: _caLive.snapPrice, snapDate: _caLive.snapDate,
+    nowLocal: caLiveNowLocal(tz), market: kr ? "kr" : "us",
+  });
+  if (!r || r.state === "none") return '<span class="muted">현재가 데이터 없음</span>';
+  if (r.state === "nosession") return '<span class="sd-live-label">현재</span><span class="muted">새 거래 없음 — 위 종가가 최신(정규장 전·휴장)</span>';
+  const pct = Number(r.changePct);
+  const chg = Number(r.change);
+  const arrow = chg > 0 ? "▲" : chg < 0 ? "▼" : "";
+  const abs = Number.isFinite(chg) ? `${arrow}${escapeHtml(fmtPrice(Math.abs(chg)))} ` : "";
+  const dir = pct > 0 ? "pos" : pct < 0 ? "neg" : "muted";
+  const pctHtml = Number.isFinite(pct) ? `<span class="${dir}">${abs}(${pct > 0 ? "+" : ""}${pct.toFixed(2)}%)</span>` : "";
+  const stateText = r.state === "live" ? "장중" : "오늘 장 마감(잠정)";
+  const src = r.source === "naver" ? "네이버 실시간" : r.source === "yahoo" ? "야후 실시간" : (r.delayed ? `야후 · 약 ${r.delayed}분 지연` : "야후 · 1분 단위");
+  return `<span class="sd-live-label">현재</span><b class="sd-live-price">${escapeHtml(fmtPrice(r.price))}</b> ${pctHtml}`
+    + `<span class="sd-asof">${escapeHtml([caLiveTimeText(r.time), stateText, src].filter(Boolean).join(" · "))}</span>`;
+}
+
+function caLivePaint() {
+  const el = document.getElementById("caLiveQuote");
+  if (el) el.innerHTML = caLiveBodyHtml();
+}
+
+function caLiveFetch() {
+  const sym = _caLive.sym;
+  if (!sym) return;
+  const seq = _caLive.seq;
+  fetch(`${CA_LIVE_PROXY}/?intraday=1&ticker=${encodeURIComponent(sym)}&interval=1m`, { cache: "no-store" })
+    .then((r) => r.json())
+    .then((d) => {
+      if (seq !== _caLive.seq) return;
+      if (!d || !Array.isArray(d.bars)) throw new Error("no bars");
+      _caLive.payload = d;
+      _caLive.status = "ok";
+    })
+    .catch(() => { if (seq === _caLive.seq) _caLive.status = "error"; })
+    .finally(() => { if (seq === _caLive.seq) caLivePaint(); });
+}
+
+// 결과를 그린 뒤 부른다. 같은 종목이면 받은 값을 바로 다시 그리고(기간 전환 등), 새 종목이면 새로 받는다.
+function caLiveStart(detail, result) {
+  if (!caLiveStandalone || !window.MirLiveQuote || !detail || !result) return;
+  const sym = caLiveSymbol(detail);
+  if (!sym) return;
+  _caLive.snapPrice = Number(result.price);
+  _caLive.snapDate = String(result.lastDate || "");
+  if (sym === _caLive.sym && _caLive.timer) { caLivePaint(); return; }
+  if (_caLive.timer) clearInterval(_caLive.timer);
+  _caLive.sym = sym;
+  _caLive.seq += 1;
+  _caLive.payload = null;
+  _caLive.status = "loading";
+  caLiveFetch();
+  _caLive.timer = setInterval(() => {
+    if (!document.getElementById("caLiveQuote")) { clearInterval(_caLive.timer); _caLive.timer = 0; _caLive.sym = ""; return; }
+    if (!document.hidden) caLiveFetch();
+  }, CA_LIVE_REFRESH_MS);
 }
 
 function renderTechnicalLevelsCard(result) {
@@ -3102,6 +3212,7 @@ async function runAnalysis(ticker) {
     currentDetail = detail;
     const result = analyzeTicker(detail, currentHorizon);
     renderResult(result);
+    caLiveStart(detail, result);
     const url = new URL(window.location);
     url.searchParams.set("t", analysisTickerKey(ticker));
     window.history.replaceState({}, "", url);
@@ -3119,6 +3230,7 @@ function rerenderHorizon() {
   if (!currentDetail) return;
   const result = analyzeTicker(currentDetail, currentHorizon);
   renderResult(result);
+  caLiveStart(currentDetail, result);
 }
 
 // ===== 종목별 메타태그 =====
@@ -3189,6 +3301,7 @@ function updateAnalysisMeta(ticker, company) {
 async function init() {
   const form = $("searchForm");
   if (!form) return; // standalone 분석 페이지가 아니면(예: 대시보드) UI 바인딩 생략
+  caLiveStandalone = true;
   if (window.MirMarket) {
     const params = new URLSearchParams(window.location.search);
     const market = params.get("market");

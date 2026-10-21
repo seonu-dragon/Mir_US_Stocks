@@ -451,6 +451,8 @@ function loadEarningsCalendarSnapshot(cfg) {
     if (window[globalName]) { resolve(true); return; }
     const existing = document.querySelector(`script[data-earnings-calendar="${cfg.id}"]`);
     if (existing) {
+      // 이미 끝난 태그는 load/error 를 다시 주지 않는다 — 기다리면 영영 안 끝난다(실적 일정 탭이 '불러오는 중'에 고정).
+      if (existing.dataset.state) { resolve(existing.dataset.state === "load" && !!window[globalName]); return; }
       existing.addEventListener("load", () => resolve(true), { once: true });
       existing.addEventListener("error", () => resolve(false), { once: true });
       return;
@@ -459,8 +461,8 @@ function loadEarningsCalendarSnapshot(cfg) {
     script.src = src;
     script.async = true;
     script.dataset.earningsCalendar = cfg.id;
-    script.addEventListener("load", () => resolve(true), { once: true });
-    script.addEventListener("error", () => resolve(false), { once: true });
+    script.addEventListener("load", () => { script.dataset.state = "load"; resolve(true); }, { once: true });
+    script.addEventListener("error", () => { script.dataset.state = "error"; resolve(false); }, { once: true });
     document.head.appendChild(script);
   });
 }
@@ -1747,8 +1749,8 @@ function renderActionBoard() {
   grid.innerHTML =
     actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, stockSubLabel(item) || item.industry || "")), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
     actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? (thesisAlerts.length ? "투자 가설 점검 · 저장한 조건" : "저장한 조건에 맞는 종목") : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
-    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, scheduleWide ? "is-wide" : "") +
-    (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "") +
+    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, calendarFetching ? "일정을 불러오는 중…" : "가까운 일정이 아직 없습니다.", { tab: "calendar" }, scheduleWide ? "is-wide" : "") +
+    (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, window.MATERIAL_EVENTS || (typeof _featureDataFailed !== "undefined" && _featureDataFailed.events) ? "새로 확인할 주요 공시가 없습니다." : "공시를 불러오는 중…", { tab: "institutional", sub: "events" }) : "") +
     // 이벤트가 하나도 없으면 카드 자체를 그리지 않는다 — 빈 껍데기 금지.
     (myEventRows.length ? actionBoardCard("이번 주 내 종목 이벤트", isKrMarket() ? "관심·보유 종목 최근 2일 공시" : "관심·보유 종목 D-7 일정", myEventRows, "", { tab: "calendar" }) : "");
   grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
@@ -1889,6 +1891,8 @@ function indexSparkline(series, up) {
 
 // ===== 경제 캘린더 (한국 + 미국, investing.com via Worker) =====
 let calendarLoaded = false;
+// 워커 ?calendar=1 응답을 기다리는 중 — 오늘 탭 '다가오는 일정' 카드가 그 사이 '없습니다'로 깜빡이지 않게.
+let calendarFetching = false;
 
 function whiteHouseCalendarEvents() {
   const payload = window.WHITE_HOUSE_SCHEDULE || {};
@@ -2016,16 +2020,19 @@ function loadCalendar() {
     return;
   }
   calendarLoaded = true;
+  calendarFetching = true;
   body.innerHTML = `<p class="muted">경제 캘린더를 불러오는 중…</p>`;
   fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?calendar=1`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((p) => {
+      calendarFetching = false;
       calendarEventsCache = mergeCalendarEvents((p && p.calendar) || [], whEvents);
       renderCalendarFiltered();
       renderActionBoard();
       if (typeof renderMarketFeedIfVisible === "function") renderMarketFeedIfVisible();
     })
     .catch(() => {
+      calendarFetching = false;
       calendarLoaded = false;
       calendarEventsCache = mergeCalendarEvents([], whEvents);
       if (calendarEventsCache.length) {
@@ -2034,6 +2041,7 @@ function loadCalendar() {
         renderActionBoard();
       } else {
         body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
+        renderActionBoard();
       }
     });
 }
@@ -3803,7 +3811,8 @@ function sdFact(label, value) {
 function renderStockFlowPanel(item) {
   const el = byId("stockFlowPanel");
   if (!el) return;
-  const html = item ? [krFlowCard(item), krGroupCard(item), krNpsCard(item)].join("").trim() : "";
+  const foreign = typeof krForeignRetentionCard === "function" ? krForeignRetentionCard(item) : "";
+  const html = item ? [krFlowCard(item), foreign, krGroupCard(item), krNpsCard(item)].join("").trim() : "";
   // 일별 보기(<details>)를 열어 둔 채 늦은 데이터로 다시 그리면 접히지 않게 상태를 옮긴다.
   const wasOpen = !!el.querySelector("details[open]");
   el.innerHTML = html ? `<h3 class="sd-card-title">수급 · 보유</h3>${html}` : "";

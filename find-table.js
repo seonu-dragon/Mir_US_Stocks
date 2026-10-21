@@ -119,6 +119,8 @@ function ftApplyView() {
   });
   const colsBtn = byId("findColsBtn");
   if (colsBtn) colsBtn.hidden = view !== "table" || Boolean(ftList);
+  const csvBtn = byId("findCsvBtn");
+  if (csvBtn) csvBtn.hidden = view !== "table";
   if (view !== "table" || ftList) ftClosePanel();
 }
 
@@ -480,6 +482,27 @@ function ftRenderPanel() {
 
 function ftRerender() { renderFindTable(ftLast.rows, ftLast.metric); }
 
+// 지금 보이는 표(상위 종목·배당·신규상장·경보·서학개미 목록 모두) 그대로 CSV 로. 화면 글자를
+// 읽으므로 열 설정·정렬·칩 선택이 그대로 반영된다. 종목 칸 앞의 순위·로고는 빼고 이름만.
+function ftExportCsv() {
+  const table = byId("topStocksTableWrap")?.querySelector("table");
+  if (!table || typeof downloadCsv !== "function") return;
+  const clean = (el) => (el.textContent || "").replace(/\s+/g, " ").replace(/\s*[▲▼]\s*$/, "").trim();
+  const head = [...table.querySelectorAll("thead th")].map(clean);
+  const body = [...table.querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((td) => {
+    if (td.classList.contains("ft-name")) {
+      const name = td.querySelector("strong");
+      const sub = td.querySelector("small");
+      return [name ? clean(name) : clean(td), sub ? clean(sub) : ""].filter(Boolean).join(" ");
+    }
+    return clean(td);
+  }));
+  if (!body.length) return;
+  const tag = ftList || (ftLast.metric || "top");
+  const day = new Date().toISOString().slice(0, 10);
+  downloadCsv(`mir_${ftMarket()}_${tag}_${day}.csv`, [head, ...body]);
+}
+
 function setupFindTable() {
   const bar = byId("findTableBar");
   if (!bar || bar.dataset.ftBound) return;
@@ -499,6 +522,7 @@ function setupFindTable() {
     }
     const v = e.target.closest("[data-fview]");
     if (v) { ftSet(FT_VIEW_KEY, v.dataset.fview); ftApplyView(); return; }
+    if (e.target.closest("#findCsvBtn")) { ftExportCsv(); return; }
     if (e.target.closest("#findColsBtn")) {
       const panel = byId("findColsPanel");
       if (!panel) return;

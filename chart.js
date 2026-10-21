@@ -852,7 +852,7 @@ function chartBaseLength(item) {
 }
 
 // Set an absolute zoom, keeping the bar at `frac` (0 left … 1 right) anchored.
-function setZoomAnchored(frac, requestedZoom) {
+function setZoomAnchored(frac, requestedZoom, deferRedraw) {
   const item = currentChartItem();
   if (!item) return;
   const n = chartBaseLength(item);
@@ -866,11 +866,24 @@ function setZoomAnchored(frac, requestedZoom) {
   newStart = Math.max(0, Math.min(Math.max(0, n - newWindow), newStart));
   chartState.zoom = newZoom;
   chartState.offset = Math.max(0, n - newWindow - newStart);
-  redrawChart();
+  if (deferRedraw) scheduleChartPanRedraw();
+  else redrawChart();
 }
 
-function zoomChartAt(frac, factor) {
-  setZoomAnchored(frac, chartState.zoom * factor);
+function zoomChartAt(frac, factor, deferRedraw) {
+  setZoomAnchored(frac, chartState.zoom * factor, deferRedraw);
+}
+
+// 휠·핀치 줌: 이벤트마다 동기로 전부 다시 그리면(S/R·기술 레벨 재계산) 트랙패드에서 버벅인다.
+// 연속 조작 동안은 팬과 같이 가벼운 렌더(rAF 묶음, 무거운 오버레이 생략)를 하고 멈추면 한 번 전체.
+let chartGestureIdleTimer = 0;
+function markChartGestureActive() {
+  chartPanActive = true;
+  clearTimeout(chartGestureIdleTimer);
+  chartGestureIdleTimer = setTimeout(() => {
+    chartGestureIdleTimer = 0;
+    endChartPan();
+  }, 180);
 }
 
 // Narrower viewBox on phones gives the chart a taller, more readable aspect ratio.
@@ -1226,7 +1239,8 @@ function setupChartInteractions() {
     const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
     const plotW = g.width - g.padL - g.padR;
     const frac = Math.max(0, Math.min(1, (vbX - g.padL) / plotW));
-    zoomChartAt(frac, event.deltaY < 0 ? 1.2 : 1 / 1.2);
+    markChartGestureActive();
+    zoomChartAt(frac, event.deltaY < 0 ? 1.2 : 1 / 1.2, true);
   }, { passive: false });
 
   let dragPointerId = null;
@@ -1380,6 +1394,7 @@ function setupChartInteractions() {
   let touchMode = null;     // null | "pinch"(가로 줌) | "ypinch"(세로 줌)
   let pinchStartDist = 0;
   let pinchStartZoom = 1;
+  let pinchFrac = 0.5;
   let pinchYStart = null;
   let pinchYAnchor = NaN;
   let pinchYRef = null;
@@ -1414,6 +1429,11 @@ function setupChartInteractions() {
         touchMode = "pinch";
         pinchStartDist = touchDist(event.touches);
         pinchStartZoom = chartState.zoom;
+        // 화면 가운데가 아니라 두 손가락 중점을 기준으로 확대한다.
+        const g = priceChartGeom();
+        const rect = svg.getBoundingClientRect();
+        const vbX = rect.width ? ((mid.clientX - rect.left) / rect.width) * g.width : g.width / 2;
+        pinchFrac = Math.max(0, Math.min(1, (vbX - g.padL) / Math.max(1, g.width - g.padL - g.padR)));
       }
     }
   }, { passive: true });
@@ -1421,7 +1441,10 @@ function setupChartInteractions() {
   svg.addEventListener("touchmove", (event) => {
     if (touchMode === "pinch" && event.touches.length === 2) {
       const dist = touchDist(event.touches);
-      if (pinchStartDist > 0) setZoomAnchored(0.5, pinchStartZoom * (dist / pinchStartDist));
+      if (pinchStartDist > 0) {
+        markChartGestureActive();
+        setZoomAnchored(pinchFrac, pinchStartZoom * (dist / pinchStartDist), true);
+      }
       event.preventDefault();
     } else if (touchMode === "ypinch" && event.touches.length === 2) {
       const f = window.MirYScale.pinchZoomFactor(pinchStartDist, Math.max(1, touchDy(event.touches)));
@@ -2120,10 +2143,136 @@ function setupChartEventInteractions() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideChartEventTip(true); });
 }
 
+// ===== 크로스헤어 + OHLCV 데이터 창 (TradingView 식) =====
+// 마우스(펜)를 올리면 봉 중심에 세로선, 커서 높이에 가로선·가격 태그, 아래에 날짜 태그,
+// 플롯 왼쪽 위에 그 봉의 시가·고가·저가·종가·전봉 대비·거래량을 띄운다. 차트 전체를 다시
+// 그리지 않고 #chartCrosshair 층만 바꾼다. 터치는 기존 탭·팬 동작을 유지한다.
+function chartCrosshairPrice(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  if (isKrMarket()) return Math.round(n).toLocaleString("ko-KR");
+  const dec = Math.abs(n) < 1 ? 4 : 2;
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
+}
+
+function chartCrosshairDate(d) {
+  const t = String(d || "");
+  if (!isIntradayTf(chartState.barTf)) return t.slice(0, 10);
+  return `${t.slice(5, 10)} ${t.slice(11, 16)}`;
+}
+
+function renderChartCrosshair(vbX, vbY) {
+  const layer = byId("chartCrosshair");
+  const g = lastChartGeom;
+  if (!layer) return;
+  if (!g || !g.rows || !g.rows.length || vbX < g.padL || vbX > g.padL + g.plotW || vbY < g.padT || vbY > g.axisBottom) {
+    layer.innerHTML = "";
+    return;
+  }
+  const n = g.rows.length;
+  const idx = Math.max(0, Math.min(n - 1, Math.round(((vbX - g.padL) / Math.max(1, g.plotW)) * (n - 1))));
+  const bar = g.rows[idx];
+  const raw = (g.rawRows && g.rawRows[idx]) || bar;
+  const x = g.padL + (idx / Math.max(1, n - 1)) * g.plotW;
+  const xR = g.padL + g.plotW;
+  let out = `<line class="chart-xhair" x1="${x.toFixed(1)}" y1="${g.padT}" x2="${x.toFixed(1)}" y2="${g.axisBottom.toFixed(1)}"></line>`;
+  if (vbY <= g.padT + g.plotH) {
+    const price = g.scale.value(vbY);
+    out += `<line class="chart-xhair" x1="${g.padL}" y1="${vbY.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${vbY.toFixed(1)}"></line>`;
+    if (Number.isFinite(price)) {
+      out += `<g class="chart-xhair-tag"><rect x="${(xR + 2).toFixed(1)}" y="${(vbY - 8).toFixed(1)}" width="${(g.width - xR - 4).toFixed(1)}" height="16" rx="3"></rect><text x="${(g.width - 6).toFixed(1)}" y="${(vbY + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(chartPriceLabel(price))}</text></g>`;
+    }
+  }
+  const dateLabel = chartCrosshairDate(raw.d);
+  const dw = Math.max(54, dateLabel.length * 6.4 + 10);
+  const dx = Math.max(g.padL, Math.min(xR - dw, x - dw / 2));
+  out += `<g class="chart-xhair-tag"><rect x="${dx.toFixed(1)}" y="${(g.height - 22).toFixed(1)}" width="${dw.toFixed(1)}" height="18" rx="3"></rect><text x="${(dx + dw / 2).toFixed(1)}" y="${(g.height - 9).toFixed(1)}" text-anchor="middle">${escapeHtml(dateLabel)}</text></g>`;
+  // 데이터 창: 등락은 전봉 종가 대비(첫 봉은 시가 대비).
+  const prev = idx > 0 ? g.rows[idx - 1].c : bar.o;
+  const chg = prev ? ((bar.c - prev) / prev) * 100 : NaN;
+  const dir = bar.c >= bar.o ? "is-up" : "is-down";
+  const chgDir = Number.isFinite(chg) && chg < 0 ? "is-down" : "is-up";
+  const vol = raw.v != null && Number.isFinite(Number(raw.v)) && Number(raw.v) > 0 ? ` V <tspan class="chart-ohlc-v">${escapeHtml(fmtCompact(raw.v))}</tspan>` : "";
+  out += `<text class="chart-ohlc" x="${(g.padL + 6).toFixed(1)}" y="${(g.padT + 24).toFixed(1)}">`
+    + `<tspan class="chart-ohlc-d">${escapeHtml(dateLabel)}</tspan>`
+    + ` O <tspan class="chart-ohlc-v ${dir}">${escapeHtml(chartCrosshairPrice(bar.o))}</tspan>`
+    + ` H <tspan class="chart-ohlc-v ${dir}">${escapeHtml(chartCrosshairPrice(bar.h))}</tspan>`
+    + ` L <tspan class="chart-ohlc-v ${dir}">${escapeHtml(chartCrosshairPrice(bar.l))}</tspan>`
+    + ` C <tspan class="chart-ohlc-v ${dir}">${escapeHtml(chartCrosshairPrice(bar.c))}</tspan>`
+    + (Number.isFinite(chg) ? ` <tspan class="chart-ohlc-v ${chgDir}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%</tspan>` : "")
+    + vol
+    + `</text>`;
+  layer.innerHTML = out;
+}
+
+function setupChartCrosshair() {
+  const svg = byId("priceChart");
+  if (!svg || svg.dataset.xhairBound) return;
+  svg.dataset.xhairBound = "1";
+  let pending = null;
+  let raf = 0;
+  const flush = () => {
+    raf = 0;
+    if (pending) renderChartCrosshair(pending.x, pending.y);
+  };
+  svg.addEventListener("pointermove", (e) => {
+    if (e.pointerType === "touch" || e.buttons || chartPanActive) {
+      const layer = byId("chartCrosshair");
+      if (layer) layer.innerHTML = "";
+      pending = null;
+      return;
+    }
+    const g = lastChartGeom;
+    if (!g) return;
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    pending = { x: ((e.clientX - rect.left) / rect.width) * g.width, y: ((e.clientY - rect.top) / rect.height) * g.height };
+    if (!raf) raf = requestAnimationFrame(flush);
+  });
+  svg.addEventListener("pointerleave", () => {
+    pending = null;
+    const layer = byId("chartCrosshair");
+    if (layer) layer.innerHTML = "";
+  });
+}
+
+// ===== 차트 키보드 조작 =====
+// 차트(svg)에 포커스가 있을 때: ←/→ 이동, +/− 확대·축소, Home 맨 처음, End 최신, 0 초기화, L 로그.
+function setupChartKeyboard() {
+  const svg = byId("priceChart");
+  if (!svg || svg.dataset.keysBound) return;
+  svg.dataset.keysBound = "1";
+  if (!svg.hasAttribute("tabindex")) svg.setAttribute("tabindex", "0");
+  svg.addEventListener("keydown", (e) => {
+    if (e.target !== svg || e.altKey || e.ctrlKey || e.metaKey) return;
+    const item = currentChartItem();
+    if (!item) return;
+    const n = chartBaseLength(item);
+    const win = Math.max(16, Math.floor(n / chartState.zoom));
+    const maxOffset = Math.max(0, n - win);
+    const step = Math.max(1, Math.round(win * (e.shiftKey ? 0.5 : 0.1)));
+    let handled = true;
+    if (e.key === "ArrowLeft") chartState.offset = Math.min(maxOffset, chartState.offset + step);
+    else if (e.key === "ArrowRight") chartState.offset = Math.max(0, chartState.offset - step);
+    else if (e.key === "Home") chartState.offset = maxOffset;
+    else if (e.key === "End") chartState.offset = 0;
+    else if (e.key === "+" || e.key === "=") { zoomChartAt(1, 1.25); return e.preventDefault(); }
+    else if (e.key === "-" || e.key === "_") { zoomChartAt(1, 1 / 1.25); return e.preventDefault(); }
+    else if (e.key === "0") { resetChartView(); return e.preventDefault(); }
+    else if (e.key === "l" || e.key === "L") { toggleChartYLog(); return e.preventDefault(); }
+    else handled = false;
+    if (!handled) return;
+    e.preventDefault();
+    redrawChart();
+  });
+}
+
 function drawChart(item, options = {}) {
   setupChartDrawing();
   setupChartEventToggles();
   setupChartEventInteractions();
+  setupChartCrosshair();
+  setupChartKeyboard();
   const mainChart = !options.svgElement;
   const svg = options.svgElement || byId("priceChart");
   const intraday = isIntradayTf(chartState.barTf);
@@ -2190,7 +2339,9 @@ function drawChart(item, options = {}) {
   const height = padT + plotH + evStripH + panelsH + axisH;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-  const plotRows = chartState.chartType === "heikin" ? heikinAshiRows(rows) : rows;
+  // 지표용 컨텍스트(보이는 구간 + 기간 밖 앞쪽 이력). 하이킨아시 시드도 여기서 잡아 팬할 때 첫 봉이 바뀌지 않게.
+  const indRows = chartIndicatorContextRows(allRows);
+  const plotRows = chartState.chartType === "heikin" ? lastN(heikinAshiRows(indRows), rows.length) : rows;
   const closes = plotRows.map((row) => row.c);
   const lows = plotRows.map((row) => row.l);
   const highs = plotRows.map((row) => row.h);
@@ -2236,7 +2387,7 @@ function drawChart(item, options = {}) {
   // 지표를 ctxRows로 계산한 뒤 lastN(..., visN)으로 잘라 그린다(좌측 워밍업 잘림 방지).
   const ctxRows = chartAnalysisContextRows(allRows);
   const visN = rows.length;
-  const ctxCloses = ctxRows.map((r) => r.c);
+  const ctxCloses = indRows.map((r) => r.c);
   const tailCh = (ch) => ch ? { upper: lastN(ch.upper, visN), lower: lastN(ch.lower, visN), mid: lastN(ch.mid, visN) } : null;
   const tailObj = (o) => { const r = {}; for (const k in o) r[k] = Array.isArray(o[k]) ? lastN(o[k], visN) : o[k]; return r; };
   // 화면 가격범위 밖 값은 가장자리에 평평하게 깔리지 않도록 null 처리(선이 끊김) — 가짜 수평선 방지.
@@ -2277,10 +2428,10 @@ function drawChart(item, options = {}) {
     return `<g class="${up ? "candle-up" : "candle-down"}"><line x1="${x.toFixed(1)}" y1="${yFor(row.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yFor(row.l).toFixed(1)}"></line><rect x="${(x - candleW / 2).toFixed(1)}" y="${bodyY.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}"></rect></g>`;
   }).join("");
 
-  const keltner = chartState.showKeltner ? tailCh(keltnerChannels(ctxRows, 20, 2)) : null;
-  const donchian = chartState.showDonchian ? tailCh(donchianChannels(ctxRows, 20)) : null;
-  const ichimoku = chartState.showIchimoku ? tailObj(ichimokuArrays(ctxRows)) : null;
-  const supertrend = chartState.showSupertrend ? lastN(supertrendArray(ctxRows, 10, 3), visN) : null;
+  const keltner = chartState.showKeltner ? tailCh(keltnerChannels(indRows, 20, 2)) : null;
+  const donchian = chartState.showDonchian ? tailCh(donchianChannels(indRows, 20)) : null;
+  const ichimoku = chartState.showIchimoku ? tailObj(ichimokuArrays(indRows)) : null;
+  const supertrend = chartState.showSupertrend ? lastN(supertrendArray(indRows, 10, 3), visN) : null;
 
   // 이평/지표는 컨텍스트로 계산 후 보이는 구간으로 잘라 그린다. 단일 라인은 clipRange로
   // 화면 밖 구간을 끊고, 채널(밴드 채움)은 기존 overlayYFor(클램프)를 유지한다.
@@ -2292,7 +2443,7 @@ function drawChart(item, options = {}) {
     chartState.showSma120 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 120), visN)), xFor, yFor, "#a16207", 1.8, "") : "",
     chartState.showEma20 ? pathFromSeries(clipRange(lastN(emaArray(ctxCloses, 20), visN)), xFor, yFor, "#db2777", 1.6, "") : "",
     chartState.showEma60 ? pathFromSeries(clipRange(lastN(emaArray(ctxCloses, 60), visN)), xFor, yFor, "#0284c7", 1.6, "") : "",
-    chartState.showVwap ? pathFromSeries(clipRange(lastN(vwapArray(ctxRows), visN)), xFor, yFor, "#ea580c", 1.7, "") : "",
+    chartState.showVwap ? pathFromSeries(clipRange(lastN(vwapArray(indRows), visN)), xFor, yFor, "#ea580c", 1.7, "") : "",
     supertrend ? pathFromSeries(clipRange(supertrend), xFor, yFor, "#22c55e", 1.6, "5 3") : "",
     ichimoku ? renderIchimokuOverlay(ichimoku, xFor, overlayYFor) : "",
     keltner ? renderChannelOverlay(keltner.upper, keltner.lower, keltner.mid, xFor, overlayYFor, "#fb7185") : "",
@@ -2565,21 +2716,21 @@ function drawChart(item, options = {}) {
   let cursorY = padT + plotH + evStripH + gap;
   let panelsSvg = "";
   for (const p of panels) {
-    if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW);
-    else if (p.t === "obv") panelsSvg += renderObvPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "ad") panelsSvg += renderAdPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW, indRows);
+    else if (p.t === "obv") panelsSvg += renderObvPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "ad") panelsSvg += renderAdPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
     else if (p.t === "rsi") panelsSvg += renderRsiPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, visN);
     else if (p.t === "macd") panelsSvg += renderMacdPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, candleW, visN);
-    else if (p.t === "stoch") panelsSvg += renderStochPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "stoch") panelsSvg += renderStochPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
     else if (p.t === "roc") panelsSvg += renderRocPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, visN);
     else if (p.t === "momentum") panelsSvg += renderMomentumPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "williams") panelsSvg += renderWilliamsPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "atr") panelsSvg += renderAtrPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "adx") panelsSvg += renderAdxPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "cci") panelsSvg += renderCciPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "cmf") panelsSvg += renderCmfPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "mfi") panelsSvg += renderMfiPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
-    else if (p.t === "ttm") panelsSvg += renderTtmSqueezePanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, candleW, visN);
+    else if (p.t === "williams") panelsSvg += renderWilliamsPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "atr") panelsSvg += renderAtrPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "adx") panelsSvg += renderAdxPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "cci") panelsSvg += renderCciPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "cmf") panelsSvg += renderCmfPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "mfi") panelsSvg += renderMfiPanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "ttm") panelsSvg += renderTtmSqueezePanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, candleW, visN);
     else if (p.t === "relative") panelsSvg += renderRelativePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "compare") panelsSvg += renderComparePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     cursorY += p.h + gap;
@@ -2610,6 +2761,7 @@ function drawChart(item, options = {}) {
     padL, plotW, padT, plotH, min, max, width, height, ticker: item.ticker,
     log: yLog, manual: yManual, scale: yScale, autoMin: autoRef.min, autoMax: autoRef.max,
     times: buildChartTimes(rows),
+    rows: plotRows, rawRows: rows, axisBottom: height - axisH,
     events: mainChart ? { clusters: evClusters, yC: evYC } : null,
     moments: mainChart ? kmPts : [],
     kmVersion,
@@ -2675,6 +2827,7 @@ function drawChart(item, options = {}) {
     ${lastTag}
     ${axisHit}
     ${yBtns}
+    <g id="chartCrosshair" class="chart-crosshair"></g>
   `;
   // 일별 시세 표(daily-table.js)는 같은 일봉을 쓴다. 시계열이 그대로면 즉시 돌아간다.
   if (mainChart && typeof renderDailyTable === "function") renderDailyTable(item);

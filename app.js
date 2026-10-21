@@ -2242,8 +2242,38 @@ function navStatesEqual(a, b) {
     && a.ticker === b.ticker && a.communityTicker === b.communityTicker;
 }
 
+// 주소창을 지금 화면에 맞춘다 — 공유·새로고침·북마크가 보던 화면을 연다. 예전엔 탭을 옮겨도
+// URL 이 첫 딥링크(?tab=signals&sig=… · ?ticker=NVDA) 그대로라 새로고침하면 다른 화면이 열렸다.
+// 사용자 이동(recordNav)에서만 부른다: 부팅 중엔 다른 모듈이 아직 딥링크 파라미터를 읽어야 한다.
+// 같은 탭·하위탭이면 그 화면 전용 파라미터(&sig= &view= &i= …)는 두고 종목만 맞춘다.
+function syncNavUrl() {
+  try {
+    const state = navCurrentState();
+    if (!state.tab) return;
+    const url = new URL(window.location.href);
+    const p = url.searchParams;
+    const sameScreen = p.get("tab") === state.tab && (p.get("sub") || null) === (state.sub || null);
+    if (!sameScreen) {
+      [...new Set(p.keys())].forEach((k) => { if (k !== "market") p.delete(k); });
+      p.set("tab", state.tab);
+      if (state.sub) p.set("sub", state.sub);
+    }
+    if (typeof marketCfg === "function") p.set("market", marketCfg().id);
+    if (state.tab === "search" && state.sub === "analysis" && state.ticker) {
+      if (p.get("ticker") && p.get("ticker") !== state.ticker) p.delete("dcf"); // 다른 종목의 시나리오는 버린다
+      p.set("ticker", state.ticker);
+    } else {
+      p.delete("ticker");
+    }
+    if (state.tab === "community" && state.communityTicker) p.set("cticker", state.communityTicker);
+    const next = url.toString();
+    if (next !== window.location.href) history.replaceState(history.state, "", next);
+  } catch (_) { /* history 차단 환경 */ }
+}
+
 // 사용자 주도 탭/하위탭 이동을 breadcrumb에 기록(중복 제거 + 깊이 제한)
 function recordNav() {
+  syncNavUrl();
   const state = navCurrentState();
   const top = navStack[navStack.length - 1];
   if (navStatesEqual(top, state)) return;
@@ -3558,7 +3588,14 @@ function setupEvents() {
     const chip = e.target.closest("[data-group-ticker]");
     if (chip) selectTicker(chip.dataset.groupTicker, { openSearch: true });
   });
-  window.addEventListener("resize", debounce(renderTreemap, 120));
+  // 트리맵은 보일 때·폭이 바뀌었을 때만 다시 그린다. 폰 주소창이 접히는 높이 변화나 다른 탭에서의
+  // 리사이즈마다 수백~천여 타일을 innerHTML 로 다시 만들던 비용을 없앤다(숨은 탭은 진입 때 그린다).
+  let treemapResizeW = window.innerWidth;
+  window.addEventListener("resize", debounce(() => {
+    if (window.innerWidth === treemapResizeW) return;
+    treemapResizeW = window.innerWidth;
+    if (currentTab === "map") renderTreemap();
+  }, 120));
 
   // Sector chart: timeframe and benchmark listeners
   byId("sectorTimeframeControls").querySelectorAll("button").forEach((btn) => {
@@ -5136,7 +5173,7 @@ function selectTicker(ticker, options = {}) {
     activateTab("search", { sub: "analysis", ticker: selectedTicker, push: true, renderOptions: options });
   } else {
     if (!options.skipRender) renderSearch(options);
-    if (wantsSearch) history.replaceState({ tab: "search", sub: "analysis", ticker: selectedTicker }, "");
+    if (wantsSearch) syncNavUrl();
   }
   return true;
 }
@@ -7696,15 +7733,20 @@ function buildMarketChatContext() {
 function downloadCsv(filename, rows) {
   const bom = "\uFEFF";
   const body = rows.map((row) => row.map((cell) => {
-    const text = String(cell ?? "");
+    let text = String(cell ?? "");
+    // 스프레드시트 수식 주입 방지: =,+,-,@ 로 시작하는 글자 칸(숫자·등락률 "-1.2%" 제외)은 ' 를 붙인다.
+    if (/^[=+\-@]/.test(text) && !/^[-+]?[\d.,]+%?$/.test(text)) text = `'${text}`;
     return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   }).join(",")).join("\n");
   const blob = new Blob([bom + body], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
+  // DOM 에 붙이지 않거나 click 직후 바로 revoke 하면 일부 Safari·Firefox 에서 받기가 실패한다.
+  link.style.display = "none";
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => { URL.revokeObjectURL(link.href); link.remove(); }, 1000);
 }
 
 // CSV 가져오기 — 내보내기 포맷(티커,종목명,수량,평단,…) 또는 최소 3열(티커,수량,평단)을
@@ -9250,6 +9292,7 @@ function cmdkBuildActions(query) {
 function cmdkRender(query) {
   const list = byId("cmdkList");
   if (!list) return;
+  cmdkState.query = query;
   cmdkState.items = cmdkBuildActions(query);
   cmdkState.index = Math.min(cmdkState.index, Math.max(0, cmdkState.items.length - 1));
   if (!cmdkState.items.length) {
@@ -9323,7 +9366,14 @@ function setupCommandPalette() {
         return;
       }
       if (e.key === "Enter") {
-        e.preventDefault(); e.stopPropagation(); cmdkRun(cmdkState.index); return;
+        // 한글 IME 조합 확정 Enter 는 실행이 아니다.
+        if (e.isComposing || e.keyCode === 229) return;
+        e.preventDefault(); e.stopPropagation();
+        // 목록은 120ms 디바운스로 갱신된다 — 빠르게 치거나 붙여넣고 Enter 를 누르면 직전(빈 질의)
+        // 목록의 1순위가 실행됐다. 지금 입력이 아직 반영 안 됐으면 먼저 다시 만든다.
+        const input = byId("cmdkInput");
+        if (input && input.value !== cmdkState.query) cmdkRender(input.value);
+        cmdkRun(cmdkState.index); return;
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault(); e.stopPropagation(); cmdkClose(); return;

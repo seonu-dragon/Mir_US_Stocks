@@ -355,11 +355,28 @@
     return (mode || getMode()) === "kr" ? KR : US;
   }
 
+  // 한 시장에만 있는 화면의 딥링크. market= 이 따로 없으면 그 시장으로 연다(예전엔 미국 모드에서
+  // ?tab=krflow 가 종목 화면으로, ?sig=ecosmacro 가 첫 위젯으로 조용히 바뀌었다).
+  const KR_ONLY_TABS = ["krflow"];
+  const KR_ONLY_SIGS = ["krmarketalerts", "ecosmacro", "tradeexports"];
+  function deeplinkMarket(params) {
+    try {
+      const p = params || new URLSearchParams(window.location.search);
+      const tab = String(p.get("tab") || "").toLowerCase();
+      const sig = String(p.get("sig") || "").toLowerCase();
+      if (KR_ONLY_TABS.includes(tab)) return "kr";
+      if ((!tab || tab === "signals") && KR_ONLY_SIGS.includes(sig)) return "kr";
+    } catch (_) { /* ignore */ }
+    return null;
+  }
+
   function getInitialMode() {
     try {
       const params = new URLSearchParams(window.location.search);
       const q = params.get("market");
       if (q === "kr" || q === "us") return q;
+      const only = deeplinkMarket(params);
+      if (only) return only;
       const saved = storage.get(STORAGE_KEY);
       if (saved === "kr" || saved === "us") return saved;
     } catch (_) {}
@@ -436,6 +453,7 @@
     getMode,
     getConfig,
     getInitialMode,
+    deeplinkMarket,
     setMode,
     detailPath,
     isKrEtfLike,

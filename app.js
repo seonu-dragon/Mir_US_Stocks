@@ -890,6 +890,10 @@ function applyMarketOnlyUi() {
   const aggInsights = byId("aggInsights");
   if (aggFold) aggFold.hidden = krMode;
   if (aggInsights) aggInsights.style.display = krMode ? "none" : "";
+  // '원화로 본 내 자산'은 달러 자산의 환율 효과를 나누는 도구 — 국내 모드엔 나눌 것이 없어 빈 화면이었다.
+  // 숨긴 접힘은 목차(toc-layout.js)에서도 빠진다.
+  const krwFold = document.querySelector('details.ia-tool-fold[data-toc-key="krw"]');
+  if (krwFold) krwFold.hidden = krMode;
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
   const pfBench = byId("portfolioBenchmark");
@@ -999,6 +1003,13 @@ function boot(options = {}) {
   fetchMarketHeader();
   renderSnapshotIndices();
   const initialTab = route.get("tab");
+  // 다른 시장 전용 화면 딥링크(market= 으로 시장을 못박은 경우만 여기까지 온다 — 아니면
+  // market_config.js 가 그 시장으로 연다). 조용히 다른 화면으로 가지 않게 한 번 알린다.
+  const onlyMarket = window.MirMarket && typeof window.MirMarket.deeplinkMarket === "function" ? window.MirMarket.deeplinkMarket(route) : null;
+  if (onlyMarket && onlyMarket !== marketCfg().id && !boot._marketOnlyToastShown) {
+    boot._marketOnlyToastShown = true;
+    setTimeout(() => showAppToast(onlyMarket === "kr" ? "국내 시장 전용 화면입니다 · 상단에서 '한국'으로 바꿔 보세요" : "미국 시장 전용 화면입니다 · 상단에서 '미국'으로 바꿔 보세요", 3600), 400);
+  }
   // 필터 목록 딥링크(?tab=find&filter=<id>) — sub 가 없으면 찾기 › 필터 목록으로 연다.
   const initialSub = route.get("sub") || (route.get("filter") && ["find", "search"].includes(route.get("tab")) ? "filters" : null);
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
@@ -2630,10 +2641,20 @@ function applyCommunityBoardTickerFilter(ticker) {
   if (tickerEl) tickerEl.value = resolved;
 }
 
+// 트렌딩(Reddit·Stocktwits·Yahoo·WSB)은 미국 소셜 데이터다. 스냅샷에 없으면(국내 모드) 서브탭을 숨기고 토론으로 연다.
+function communityTrendingAvailable() {
+  const s = (typeof data === "object" && data && data.social_sentiment) || null;
+  return Boolean(s && ["reddit", "stocktwits", "yahoo"].some((k) => Array.isArray(s[k]) && s[k].length));
+}
+
 function activateCommunitySub(name, { push = false, communityTicker = null } = {}) {
   // '오늘의 뉴스' 서브탭은 IA 재편으로 삭제(카드뉴스는 오늘 탭 한 곳) — 옛 링크는 트렌딩으로.
   if (name === "sns" || name === "news") name = "trending";
-  communitySubTab = name || "trending";
+  const trendingOk = communityTrendingAvailable();
+  const trendBtn = byId("communitySubTabs")?.querySelector('[data-sub="trending"]');
+  if (trendBtn) setTabHidden(trendBtn, !trendingOk);
+  if (!name || (name === "trending" && !trendingOk)) name = trendingOk ? "trending" : "board";
+  communitySubTab = name;
   if (communityTicker != null) applyCommunityBoardTickerFilter(communityTicker);
   const nav = byId("communitySubTabs");
   if (nav) {
@@ -9297,7 +9318,7 @@ function cmdkBuildActions(query) {
   goto("내 투자 · 보유 종목", "bulk", "holdings");
   goto("내 투자 · 관심 리스트", "bulk", "watch");
   goto("내 투자 · 분석 도구", "bulk", "tools");
-  goto("커뮤니티 · 트렌딩", "community", "trending");
+  if (communityTrendingAvailable()) goto("커뮤니티 · 트렌딩", "community", "trending");
   goto("커뮤니티 · 종목 토론", "community", "board");
   goto("커뮤니티 · 투표", "community", "vote");
   actions.push({ label: "데이터 신뢰도 센터", hint: "데이터 상태", run: () => openDataTrustCenter() });

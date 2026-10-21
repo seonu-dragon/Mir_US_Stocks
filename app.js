@@ -3909,17 +3909,20 @@ function renderSectors() {
   const sortBy = byId("sectorSort")?.value || "avg";
   const groups = getSectorEtfs().map((meta) => {
     const rows = getSectorStocks(meta);
-    const avg = rows.length ? rows.reduce((sum, item) => sum + item.changePct, 0) / rows.length : 0;
-    const avg1w = rows.length ? rows.reduce((sum, item) => sum + (item.weekChangePct || 0), 0) / rows.length : 0;
-    const avg1m = rows.length ? rows.reduce((sum, item) => sum + (item.monthChangePct || 0), 0) / rows.length : 0;
-    const avg3m = rows.length ? rows.reduce((sum, item) => sum + (item.threeMonthChangePct || 0), 0) / rows.length : 0;
+    // 시총가중(signals.js capWeightedChange) — 단순 평균은 AMTD +4,875% 같은 초소형 이상치 하나가 섹터를 끌고 갔다.
+    // 빌더가 신뢰 불가로 표시한 등락률(changePctSuspect)은 집계·상승/하락 수에서 뺀다.
+    const trusted = rows.filter(changeTrusted);
+    const avg = capWeightedChange(trusted, "changePct") ?? 0;
+    const avg1w = capWeightedChange(trusted, "weekChangePct") ?? 0;
+    const avg1m = capWeightedChange(trusted, "monthChangePct") ?? 0;
+    const avg3m = capWeightedChange(trusted, "threeMonthChangePct") ?? 0;
     // 평균 RSI(14) — 실측값만 평균(합성/결측 제외). 값이 없으면 null.
     const rsiVals = rows.map((item) => rsiValue(item)).filter((v) => v != null);
     const rs = rsiVals.length ? rsiVals.reduce((sum, v) => sum + v, 0) / rsiVals.length : null;
 
-    const upCount = rows.filter((item) => item.changePct > 0).length;
-    const downCount = rows.filter((item) => item.changePct < 0).length;
-    const upPct = rows.length ? (upCount / rows.length) * 100 : 0;
+    const upCount = trusted.filter((item) => item.changePct > 0).length;
+    const downCount = trusted.filter((item) => item.changePct < 0).length;
+    const upPct = trusted.length ? (upCount / trusted.length) * 100 : 0;
 
     // Top 3 sector leaders by 3-month momentum (RS 합성 점수 대체)
     const topLeaders = [...rows]
@@ -3944,7 +3947,7 @@ function renderSectors() {
         
         <div class="sector-main-stats">
           <div class="stat-group">
-            <span class="stat-label">당일 평균</span>
+            <span class="stat-label">당일 시총가중</span>
             <strong class="stat-value ${cls(item.avg)}">${fmtPct(item.avg)}</strong>
           </div>
           <div class="stat-group">
@@ -5374,11 +5377,11 @@ function renderMoveExplanation(item) {
   if (!box || !item) return;
   const change = Number(item.changePct || 0);
   const direction = change > 0 ? "상승" : change < 0 ? "하락" : "보합";
-  const peers = (data.stocks || []).filter((row) => row.sector === item.sector && row.ticker !== item.ticker && Number.isFinite(Number(row.changePct)));
-  const sectorAvg = peers.length ? peers.reduce((sum, row) => sum + Number(row.changePct), 0) / peers.length : 0;
+  const peers = (data.stocks || []).filter((row) => row.sector === item.sector && row.ticker !== item.ticker && changeTrusted(row) && Number.isFinite(Number(row.changePct)));
+  const sectorAvg = capWeightedChange(peers) ?? 0;
   const relative = change - sectorAvg;
   const evidence = [];
-  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtDailyPct(change)} · 섹터 평균 ${fmtPct(sectorAvg)} · 차이 ${fmtSignedPct(relative, 1, "%p")}`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
+  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtDailyPct(change)} · 섹터 시총가중 ${fmtPct(sectorAvg)} · 차이 ${fmtSignedPct(relative, 1, "%p")}`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
 
   const volume = Number(item.volumeRatio || 0);
   if (volume > 0) {
@@ -6631,7 +6634,7 @@ function renderMarketBreadth() {
   const box = byId("marketBreadthCard");
   if (!box) return;
   const stocks = (data.stocks || []).filter((s) =>
-    s && s.sector && !isStockEtf(s) && Number.isFinite(Number(s.changePct)));
+    s && s.sector && !isStockEtf(s) && changeTrusted(s) && Number.isFinite(Number(s.changePct)));
   const n = stocks.length;
   if (n < 5) { box.innerHTML = ""; return; }
 
@@ -6720,7 +6723,8 @@ function sectorShortName(sector) {
     "HEALTHCARE": "헬스케어", "ENERGY": "에너지", "INDUSTRIALS": "산업재",
     "CONSUMER CYCLICAL": "경기소비재", "CONSUMER DEFENSIVE": "필수소비재",
     "COMMUNICATION SERVICES": "커뮤니케이션", "UTILITIES": "유틸리티",
-    "REAL ESTATE": "부동산", "BASIC MATERIALS": "소재", "MATERIALS": "소재"
+    "REAL ESTATE": "부동산", "BASIC MATERIALS": "소재", "MATERIALS": "소재",
+    "MISC": "기타", "EXCHANGE TRADED FUNDS": "ETF"
   };
   return map[String(sector || "").toUpperCase()] || sector;
 }

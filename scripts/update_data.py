@@ -2261,7 +2261,10 @@ def make_stock(meta, rows):
         # 마지막 봉 종가가 그 봉의 고가·저가 밖이었다(AEIS 09-18 고 262.95·저 256.76·종 239.65,
         # AMTD 10-15 고 0.62·종 24.78 → 섹터 평균 등락률 +6.4% 왜곡).
         last_date = str(history_rows[-1].get("date") or "") if history_rows else ""
-        overwrite_last = not bar_missing and (not price_date or not last_date or last_date >= price_date)
+        # KR 은 기준일 거래량이 0 이면(개장 전 실행 등) priceDate 를 넘기지 않는다 — 그래도 시세 기준일(quoteDate)이
+        # 마지막 봉보다 뒤면 그 봉은 기준일 봉이 아니므로 덮지 않는다(묵은 yahoo-cache 봉 종가 오염 방지).
+        guard_date = price_date or meta.get("quoteDate")
+        overwrite_last = not bar_missing and (not guard_date or not last_date or last_date >= guard_date)
         stock["chartSeries"] = [
             [
                 round(row["open"], 2),
@@ -2552,8 +2555,54 @@ def is_active_small_cap(meta):
     return cap >= ACTIVE_SMALL_CAP_MIN_CAP_B and volume >= ACTIVE_SMALL_CAP_MIN_VOLUME
 
 
+# ===================== 비정상 당일 등락률 가드(2026-10-21) =====================
+# 야후 spark 의 전일 종가에 역분할·ADS 비율 변경이 반영되지 않으면 당일 등락률이 수천 %로 튄다(AMTD +4,875.9%·
+# CAPS +2,855.6%·GP +372.0%, 셋 다 거래량비 0.1~0.2). 그 한 종목이 섹터 평균·시장 폭 집계를 오염시켰다.
+# |등락률| 이 IMPLAUSIBLE_CHANGE_PCT 를 넘는데 거래량 급증 근거(거래량비 ≥ IMPLAUSIBLE_VOLUME_RATIO)가 없거나,
+# 최근 분할 이벤트가 있으면(= 분할 미반영 전일가와 비교한 값일 가능성) changePctSuspect 로 표시한다. 값은 바꾸지
+# 않는다(진짜 등락률을 모르므로 지어내지 않는다) — 집계(섹터·시장 폭·요약)만 이 종목을 뺀다.
+IMPLAUSIBLE_CHANGE_PCT = 300.0
+IMPLAUSIBLE_VOLUME_RATIO = 3.0
+IMPLAUSIBLE_SPLIT_LOOKBACK_DAYS = 10
+
+
+def flag_implausible_change(stock, splits=None):
+    """비정상 당일 등락률이면 stock["changePctSuspect"] 에 사유("split"|"noVolume")를 넣고 돌려준다. 정상이면 None."""
+    chg = stock.get("changePct")
+    if not isinstance(chg, (int, float)) or isinstance(chg, bool) or not math.isfinite(chg):
+        return None
+    if abs(chg) <= IMPLAUSIBLE_CHANGE_PCT:
+        return None
+    ref = str(stock.get("priceDate") or datetime.now(ET_TZ).date().isoformat())[:10]
+    recent_split = False
+    try:
+        ref_day = date.fromisoformat(ref)
+        for entry in (splits if splits is not None else stock.get("splits")) or []:
+            try:
+                gap = (ref_day - date.fromisoformat(str(entry[0])[:10])).days
+            except (TypeError, ValueError, IndexError):
+                continue
+            if 0 <= gap <= IMPLAUSIBLE_SPLIT_LOOKBACK_DAYS:
+                recent_split = True
+                break
+    except ValueError:
+        pass
+    ratio = stock.get("volumeRatio")
+    volume_backed = isinstance(ratio, (int, float)) and math.isfinite(ratio) and ratio >= IMPLAUSIBLE_VOLUME_RATIO
+    if volume_backed and not recent_split:
+        return None
+    reason = "split" if recent_split else "noVolume"
+    stock["changePctSuspect"] = reason
+    return reason
+
+
+def change_trusted(item):
+    """집계에 써도 되는 당일 등락률인가(flag_implausible_change 가 표시하지 않았나)."""
+    return not item.get("changePctSuspect")
+
+
 def build_summary(stocks):
-    stock_rows = [item for item in stocks if item["sector"] != "EXCHANGE TRADED FUNDS"]
+    stock_rows = [item for item in stocks if item["sector"] != "EXCHANGE TRADED FUNDS" and change_trusted(item)]
     sector_scores = {}
     for item in stock_rows:
         sector_scores.setdefault(item["sector"], []).append(item["changePct"])
@@ -2597,6 +2646,26 @@ def _cached_dividends(detail):
     return out
 
 
+def drop_corrupted_last_bar(rows):
+    """캐시 rows 의 마지막 봉 종가가 그 봉의 고가·저가 범위를 2% 넘게 벗어나면 그 봉을 버린다. 버렸으면 True.
+
+    make_stock 이 묵은 캐시 마지막 봉의 종가 칸에 다른 날 가격을 덮던 버그(US 2026-10-21 수정, KR 은 2026-09-30
+    이전 코드)로 오염된 캐시가 남아 있다 — 진짜 종가를 알 수 없으므로 봉을 통째로 뺀다(다음 실측 수집이 그 날짜를
+    다시 채운다). 지어낸 값으로 메우지 않는다. US·KR load_cached_history 가 같이 쓴다.
+    """
+    if not rows:
+        return False
+    last = rows[-1]
+    try:
+        high, low, close = float(last["high"]), float(last["low"]), float(last["close"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if high > 0 and low > 0 and not (low * 0.98 <= close <= high * 1.02):
+        rows.pop()
+        return True
+    return False
+
+
 def load_cached_history(symbol):
     """직전 발행된 detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
 
@@ -2621,13 +2690,7 @@ def load_cached_history(symbol):
                 "close": float(entry[3]),
                 "volume": float(entry[4] or 0),
             })
-        # 위 make_stock 버그(2026-10-21 수정 전)로 마지막 봉 종가에 다른 날 가격이 덮인 캐시가 있다.
-        # 종가가 그 봉의 고가·저가 범위를 2% 넘게 벗어나면 진짜 종가를 알 수 없으므로 그 봉은 버린다
-        # (다음 실측 수집이 다시 채운다). 지어낸 값으로 메우지 않는다.
-        if rows:
-            last = rows[-1]
-            if last["high"] > 0 and last["low"] > 0 and not (last["low"] * 0.98 <= last["close"] <= last["high"] * 1.02):
-                rows.pop()
+        drop_corrupted_last_bar(rows)
         if len(rows) < 30:
             return None
         remember_cached_splits(symbol, detail)
@@ -3657,6 +3720,10 @@ def build_snapshot():
                 stocks.append(stock)
             if error:
                 errors.append(error)
+
+    suspect = [item["ticker"] for item in stocks if flag_implausible_change(item)]
+    if suspect:
+        print(f"[등락률 가드] |등락률|>{IMPLAUSIBLE_CHANGE_PCT:.0f}% 근거 없음 {len(suspect)}종목 → 집계 제외: {', '.join(suspect[:10])}")
 
     # 데이터 정직성 게이트: 오늘 preferHistory 티커의 실측 이력이 직전 같은
     # 티커 집합보다 10% 이상 급감하면 발행 중단. 스냅샷 전체 실측 수와 비교하면

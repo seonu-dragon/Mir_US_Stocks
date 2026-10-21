@@ -91,6 +91,12 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   같은 응답의 `foreignRetentionRate` 는 detail 의 `foreignRetention`(숫자 배열 하나, **chartSeries 마지막 len 개 봉과
   같은 순서**, 모르는 날 null, 최대 250봉)으로 보존된다(2026-10-21). 증분 수집이라 이력은 실행마다 쌓이고, 다음
   실행의 `load_cached_history` 가 직전 detail 에서 되돌려 이어 붙인다. 종목 상세 수급 탭 '외국인 보유율 추이'가 읽는다.
+- 캐시 마지막 봉 종가가 그 봉 고가·저가 밖이면 US·KR `load_cached_history` 가 그 봉을 버린다
+  (`UD.drop_corrupted_last_bar`, 메우지 않음). KR 은 yahoo-cache 로 이월만 되던 묵은 캐시(마지막 봉 5일↑)를
+  실행당 `KR_HISTORY_STALE_REFRESH`(기본 200)개씩 오래된 순으로 다시 받는다(2026-10-21).
+- US 스냅샷의 `changePctSuspect`("split"|"noVolume"): |당일 등락률| > 300% 인데 거래량 근거가 없거나 최근 분할이
+  있으면 붙는다(`update_data.flag_implausible_change`, AMTD +4,875%). 값은 그대로 두고 섹터 평균·시장 폭·요약
+  집계에서만 뺀다. 프론트 섹터 등락률은 시총가중(`signals.js capWeightedChange`)이다.
 - `repository_publish_lock` (`scripts/briefing_store.py`): 스냅샷 writer 와 git
   commit/push 를 이 머신에서 직렬화한다. 락 소유권을 **환경변수로 자식에게 상속**시켜,
   락 안에서 띄운 subprocess 빌더가 자기 부모를 기다리다 죽지 않게 한다.

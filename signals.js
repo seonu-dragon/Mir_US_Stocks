@@ -78,20 +78,36 @@ function sectorLabelKo(sector) {
   return s;
 }
 
+// 빌더가 신뢰 불가로 표시한 당일 등락률(changePctSuspect — 분할·병합 미반영 의심, update_data.flag_implausible_change).
+// 종목 행은 그대로 두되 섹터 평균·시장 폭 같은 집계에서는 뺀다(+4,875% 하나가 섹터 평균을 끌고 가지 않게).
+function changeTrusted(s) {
+  return !!s && !s.changePctSuspect;
+}
+
+// 섹터 등락률 = 시가총액 가중 평균(movers sectorNote·시장지도 색과 같은 원칙). 단순 평균은 초소형주 이상치 하나에
+// 휘둘린다. 값이 없는 종목은 빠지고, 시총이 전부 없으면 단순 평균(treemap-core weightedAverage). 없으면 null.
+function capWeightedChange(rows, key = "changePct") {
+  const core = typeof window !== "undefined" ? window.MirTreemapCore : null;
+  const list = (rows || []).filter(changeTrusted);
+  if (core && core.weightedAverage) return core.weightedAverage(list, (s) => s[key], (s) => s.marketCapB);
+  const vals = list.map((s) => Number(s[key])).filter(Number.isFinite);
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+}
+
 function computeSectorRanks() {
-  const agg = {};
+  const groups = {};
   const kr = isKrMarket();
   data.stocks.forEach((s) => {
     if (isStockEtf(s) || !s.sector) return;
     if (!kr && !SECTOR_KO[s.sector]) return;
-    const a = (agg[s.sector] = agg[s.sector] || { sum: 0, n: 0 });
-    a.sum += Number(s.changePct) || 0;
-    a.n += 1;
+    if (!changeTrusted(s)) return;
+    (groups[s.sector] = groups[s.sector] || []).push(s);
   });
   const minCount = kr ? 3 : 5;
-  const arr = Object.entries(agg)
-    .filter(([, v]) => v.n >= minCount)
-    .map(([sec, v]) => ({ ko: kr ? sec : SECTOR_KO[sec], avg: v.sum / v.n }));
+  const arr = Object.entries(groups)
+    .filter(([, rows]) => rows.length >= minCount)
+    .map(([sec, rows]) => ({ ko: kr ? sec : SECTOR_KO[sec], avg: capWeightedChange(rows) }))
+    .filter((r) => Number.isFinite(r.avg));
   arr.sort((a, b) => b.avg - a.avg);
   return { strong: arr.slice(0, 5), weak: arr.slice(-5).reverse() };
 }

@@ -50,6 +50,12 @@ MAX_REAL_HISTORY = 600
 # chartSeries 로 보존하도록 고쳐졌으므로(2026-09-03) 한 번 받으면 계속 유지되고,
 # 이 쿼터만큼 커버리지가 매 실행 단조 증가한다. 0 으로 두면 백필을 끈다.
 HISTORY_BACKFILL_PER_RUN = int(os.environ.get("KR_HISTORY_BACKFILL", "500") or 0)
+# 백필과 별도로 '묵은 캐시'(yahoo-cache 인데 마지막 봉이 STALE_CACHE_DAYS 넘게 지난 종목)를 다시 받는다.
+# 실측이 한 번 생기면 위 백필 대상(= 실측 없음)에서 빠지므로, 상위 600·공시 창에서 내려간 종목은 직전 detail 을
+# 무기한 이월만 했다 — 2026-10-21 실측 yahoo-cache 1,602개, 오염 봉 369개의 마지막 봉이 09-11~09-23 에 멈춰 있었다.
+# 오래된 순으로 실행당 최대 이만큼 — 0 이면 끈다.
+HISTORY_STALE_REFRESH_PER_RUN = int(os.environ.get("KR_HISTORY_STALE_REFRESH", "200") or 0)
+STALE_CACHE_DAYS = 5
 # Naver fundamentals are cheap (1 JSON call) and cover all listed stocks, so we
 # fetch them far wider than Yahoo did — every mid/small cap gets financials too.
 MAX_FUNDAMENTALS = 1600
@@ -1527,6 +1533,10 @@ def load_cached_history(symbol: str):
                 "close": float(entry[3]),
                 "volume": float(entry[4] or 0),
             })
+        # 오염된 마지막 봉(종가가 그 봉 고가·저가 밖) 버리기 — 2026-10-21 실측 국내 details 3,795개 중 369개, 전부
+        # yahoo-cache·barsSource=yahoo(마지막 봉 09-11 227개). 진짜 종가를 모르므로 메우지 않는다. foreignRetention 은
+        # 날짜로 되돌리고(restore_foreign_rates) 새 chartSeries 날짜로 다시 맞추므로(foreign_retention_series) 어긋나지 않는다.
+        UD.drop_corrupted_last_bar(rows)
         if len(rows) < 30:
             return None
         restore_foreign_rates(rows, detail)
@@ -2255,6 +2265,44 @@ def history_backfill_symbols(metas: list[dict], prev_stocks: list[dict], quota: 
     return {m["symbol"] for m in missing[:quota]}
 
 
+def _cached_last_bar_date(symbol: str) -> str | None:
+    """직전 KR detail 의 chartSeries 마지막 봉 날짜(없거나 못 읽으면 None)."""
+    try:
+        safe = re.sub(r"[^0-9A-Z._-]", "_", str(symbol).upper())
+        with open(DETAILS_DIR / f"{safe}.json", encoding="utf-8") as handle:
+            series = json.load(handle).get("chartSeries") or []
+        last = series[-1] if series else None
+        return str(last[5]) if isinstance(last, list) and len(last) > 5 and last[5] else None
+    except Exception:
+        return None
+
+
+def stale_cache_refresh_symbols(metas: list[dict], prev_stocks: list[dict], quota: int, today=None,
+                                last_bar_fn=None) -> set[str]:
+    """yahoo-cache 로 이월만 되던 종목 중 마지막 봉이 STALE_CACHE_DAYS 넘게 지난 것을 오래된 순으로 quota 개.
+
+    이 종목들을 preferHistory 로 올리면 build_one 이 네이버 일봉을 다시 받아 빠진 날짜(오염 봉을 버린 날 포함)를
+    실측으로 채운다. 지어낸 봉은 없다 — 받지 못하면 직전 캐시 이월(현행)으로 돌아간다.
+    """
+    if quota <= 0:
+        return set()
+    if today is None:
+        today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    cutoff = (today - timedelta(days=STALE_CACHE_DAYS)).isoformat()
+    last_bar = last_bar_fn or _cached_last_bar_date
+    listed = {m["symbol"] for m in metas}
+    stale = []
+    for item in prev_stocks:
+        ticker = str(item.get("ticker") or "")
+        if item.get("historySource") != "yahoo-cache" or ticker not in listed:
+            continue
+        last = last_bar(ticker)
+        if last and last < cutoff:
+            stale.append((last, -(item.get("marketCapT") or 0), ticker))
+    stale.sort()
+    return {ticker for _last, _cap, ticker in stale[:quota]}
+
+
 # 야후가 시계열 자체를 주지 않는 종목(404). 2026-09-03 실측: 수집 실패 384건 중
 # 329건이 5·6 으로 시작하는 ELW/ETN 등 파생상품이었고, 표본 40개를 직접 조회하니
 # 40개 전부 404 였다(.KS/.KQ 양쪽 모두). 이들이 매 실행 백필 쿼터를 먹어서 481개를
@@ -2306,6 +2354,10 @@ def build_snapshot(limit: int | None = None) -> dict:
     if backfill:
         real_symbols |= backfill
         print(f"[history] 실측 이력이 없는 종목 {len(backfill)}개를 백필 쿼터로 추가")
+    stale = stale_cache_refresh_symbols(metas, prev_stocks, HISTORY_STALE_REFRESH_PER_RUN) - real_symbols
+    if stale:
+        real_symbols |= stale
+        print(f"[history] 마지막 봉이 {STALE_CACHE_DAYS}일 넘게 묵은 캐시 {len(stale)}개를 다시 수집")
 
     # 공시를 낸 종목은 시총과 무관하게 이력을 받는다(공시 반응 분석용).
     disclosed = recent_disclosure_symbols() & {m["symbol"] for m in metas}

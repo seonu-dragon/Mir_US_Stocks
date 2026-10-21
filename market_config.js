@@ -504,18 +504,15 @@
   // 놀았다. 번들(이 파일은 그 맨 앞)이 실행되기 시작할 때 같은 옵션(cache: "no-cache")으로 요청해 두면
   // app.js loadData 가 takeEarlySnapshot 으로 한 번만 꺼내 쓴다(경로가 다르면 버리고 평소대로 요청).
   // <head> 에서 시작하면 번들과 대역폭을 나눠 오히려 늦었다(저속 4G 실측) — 그래서 여기다.
-  // 부팅이 스냅샷 바로 뒤에 기다리는 펀더멘털 스크립트도 preload 로 같이 받아 둔다(실행 순서는 그대로).
+  // 펀더멘털 스크립트(map_fundamentals.js)는 preload 하지 않는다 — 같이 받으면 스냅샷과 대역폭을 나눠
+  // 데이터 준비가 오히려 0.2초 늦었다(2026-10-21 라이브 A/B, 폰 에뮬레이션 CPU×4·9Mbps, 5회 교차 측정:
+  // preload 있음 US 2.53s/KR 1.82s · 선요청만 2.37s/1.62s · 선요청 없음 2.43s/1.63s).
   try {
     if (window.MIR_EARLY_SNAPSHOT && !window.__mirEarlySnapshot && window.location.protocol !== "file:" && typeof fetch === "function") {
       const cfg = getConfig(window.MIR_MARKET_MODE);
       const req = fetch(cfg.snapshotPath, { cache: "no-cache" });
       req.catch(() => {});
       window.__mirEarlySnapshot = { path: cfg.snapshotPath, promise: req };
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "script";
-      link.href = cfg.id === "kr" ? "data/korea/map_fundamentals.js" : "data/map_fundamentals.js";
-      document.head.appendChild(link);
     }
   } catch (_) { /* 선요청 실패는 무시 — loadData 가 평소대로 받는다 */ }
 })();

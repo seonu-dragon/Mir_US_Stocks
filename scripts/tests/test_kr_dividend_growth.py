@@ -26,6 +26,22 @@ def test_parse_alot_common_stock_only_and_dash_is_zero():
     assert kd.parse_alot([{"se": "주당액면가액(원)", "thstrm": "100"}], 2018) == {}   # 배당 행이 없으면 빈 결과
 
 
+def test_parse_alot_old_reports_without_stock_kind_use_first_row():
+    # 2019 이전 보고서: stock_knd 가 '-' 이고 보통주 행 다음에 우선주 행(SK텔레콤 2019 실제 응답 모양).
+    rows = [{"se": "주당액면가액(원)", "stock_knd": "-", "thstrm": "500", "frmtrm": "500", "lwfr": "500"},
+            {"se": "주당 현금배당금(원)", "stock_knd": "-", "thstrm": "10,000", "frmtrm": "10,000", "lwfr": "10,000"},
+            {"se": "주당 현금배당금(원)", "stock_knd": "-", "thstrm": "-", "frmtrm": "-", "lwfr": "-"}]
+    assert kd.parse_alot(rows, 2019) == {2019: [10000.0, 500.0], 2018: [10000.0, 500.0], 2017: [10000.0, 500.0]}
+    # 우선주 표시만 있고 보통주 표시가 없으면 우선주는 쓰지 않는다
+    assert kd.parse_alot([{"se": "주당 현금배당금(원)", "stock_knd": "우선주", "thstrm": "9", "frmtrm": "9", "lwfr": "9"}], 2019) == {}
+
+
+def test_forget_empty_reports_only_drops_reports_without_values():
+    cache = {"C": {"fetched": [2016, 2019, 2022], "years": {"2022": [1, 1], "2021": [1, 1], "2016": [1, 1]}}}
+    assert kd.forget_empty_reports(cache) == 1
+    assert cache["C"]["fetched"] == [2016, 2022]
+
+
 def test_par_split_is_converted_to_latest_par():
     # 삼성전자 2018 액면분할(5,000 → 100): 2017 42,500원 = 지금 기준 850원.
     years = {"2018": [1416.0, 100.0], "2017": [42500.0, 5000.0], "2016": [28500.0, 5000.0]}
@@ -58,6 +74,12 @@ def test_next_report_plan_goes_deeper_only_while_paying():
     assert kd.next_report({"fetched": [2025], "years": {}}, L) is None   # 자료 없음
     deep = {"fetched": [2025, 2022, 2019, 2016], "years": {str(y): [1, 1] for y in range(2014, 2026)}}
     assert kd.next_report(deep, L) is None                       # 4개 보고서(12년)까지
+    # 중간 보고서가 빠졌으면(받았는데 비어 다시 받기로 한 것 등) 그걸 먼저 채운다 — SK텔레콤 2019 보고서 사례.
+    gap = {"fetched": [2016, 2025], "years": {str(y): [1, 1] for y in (2014, 2015, 2016, 2023, 2024, 2025)}}
+    assert kd.next_report(gap, L) == 2022
+    gap["fetched"].append(2022)
+    gap["years"].update({str(y): [1, 1] for y in (2020, 2021, 2022)})
+    assert kd.next_report(gap, L) == 2019
     early = {"fetched": [2017], "years": {str(y): [1, 1] for y in range(2015, 2018)}}
     assert kd.next_report(early, 2017) is None                   # 2015 이전 보고서는 없다(2014 < 2015)
 

@@ -53,6 +53,9 @@ KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 MIN_REPORT_YEAR = 2015          # alotMatter 가 주는 가장 이른 사업연도
 STEP = 3                        # 한 보고서 = 3개년
 DEPTH = 4                       # L, L-3, L-6, L-9 → 최대 12개년
+# parse_alot 규칙이 바뀌면 올린다. 캐시의 버전이 낮으면 '받았는데 값이 없던' 보고서만 다시 받는다
+# (2: 옛 보고서의 이름 없는 보통주 행을 읽게 됨 — 1 은 그런 보고서를 빈 결과로 캐시했다).
+PARSER_VERSION = 2
 
 
 def kst_now() -> datetime:
@@ -78,21 +81,30 @@ def parse_alot(rows: list[dict], report_year: int) -> dict[int, list]:
     """alotMatter 응답 행 → {사업연도: [보통주 주당 현금배당금(원), 주당액면가액(원)]}.
 
     배당금 칸이 '-' 면 그해 무배당(0)으로 본다 — 보고서가 그 연도를 다룬 이상 '모름'이 아니다.
+    주식 종류: 2020 사업연도쯤부터는 stock_knd 가 '보통주'·'우선주'로 오지만, 그 전 보고서는 '-' 로 오고
+    보통주 행이 먼저, 우선주 행이 뒤에 이름 없이 온다(SK텔레콤 2019·SK하이닉스 2016 확인). 그래서 '보통주'
+    표시가 있으면 그 행, 없으면 '우선주'가 아닌 첫 행을 쓴다.
     """
     dps = {}
     par = {}
+    dps_rows = []
     for r in rows or []:
         se = re.sub(r"\s+", "", str(r.get("se") or ""))
         knd = str(r.get("stock_knd") or "").strip()
         cols = (r.get("thstrm"), r.get("frmtrm"), r.get("lwfr"))
-        if se.startswith("주당현금배당금") and knd == "보통주":
-            for i, v in enumerate(cols):
-                dps[report_year - i] = _num(v) or 0.0
+        if se.startswith("주당현금배당금"):
+            dps_rows.append((knd, cols))
         elif se.startswith("주당액면가액"):
             for i, v in enumerate(cols):
                 n = _num(v)
                 if n and n > 0:
                     par[report_year - i] = n
+    common = next((c for k, c in dps_rows if k == "보통주"), None)
+    if common is None:
+        common = next((c for k, c in dps_rows if "우선" not in k), None)
+    if common is not None:
+        for i, v in enumerate(common):
+            dps[report_year - i] = _num(v) or 0.0
     if not dps:
         return {}
     return {y: [dps[y], par.get(y)] for y in dps}
@@ -153,21 +165,32 @@ def growth_stats(vals: dict[int, float], last_year: int) -> dict | None:
 def next_report(entry: dict, last_year: int) -> int | None:
     """이 회사에 더 불러야 할 사업보고서 연도(없으면 None = 계획 완료)."""
     fetched = set(int(y) for y in entry.get("fetched") or [])
-    if last_year not in fetched:
-        return last_year
     years = {int(y): v for y, v in (entry.get("years") or {}).items()}
-    deepest = min(fetched)
-    nxt = deepest - STEP
-    if nxt < MIN_REPORT_YEAR or nxt < last_year - STEP * (DEPTH - 1):
+    # 계획한 보고서 [L, L-3, L-6, L-9] 를 최근부터 보며 아직 안 받은 첫 보고서를 고른다(중간이 빠졌으면 그걸 채운다).
+    for k in range(DEPTH):
+        r = last_year - STEP * k
+        if r < MIN_REPORT_YEAR:
+            return None
+        if r in fetched:
+            continue
+        if k == 0:
+            return r
+        # 더 거슬러 가는 건 그 뒤 연도(r+1 ~ L)가 빠짐없이 배당을 지급했을 때만 — 끊겼으면 연속 기록에 쓸모없다.
+        if all((years.get(y) or [0])[0] > 0 for y in range(r + 1, last_year + 1)):
+            return r
         return None
-    covered = [y for y in years if y <= last_year]
-    if not covered:
-        return None            # 마지막 보고서에 배당 행이 없다(013·미제출) — 더 볼 것 없다
-    lo = min(covered)
-    # 연속 지급이 기록 첫머리까지 이어질 때만 더 거슬러 간다.
-    if all((years.get(y) or [0])[0] > 0 for y in range(lo, last_year + 1)):
-        return nxt
     return None
+
+
+def forget_empty_reports(cache: dict) -> int:
+    """받은 보고서 중 그 3개년 값이 하나도 없는 것을 '안 받음'으로 되돌린다(파서가 바뀐 뒤 다시 받게). 되돌린 수."""
+    n = 0
+    for entry in cache.values():
+        years = entry.get("years") or {}
+        keep = [r for r in entry.get("fetched") or [] if any(str(r - i) in years for i in range(STEP))]
+        n += len(entry.get("fetched") or []) - len(keep)
+        entry["fetched"] = keep
+    return n
 
 
 def universe(snapshot: dict, corp_map: dict) -> list[tuple[str, str]]:
@@ -246,10 +269,13 @@ def main() -> int:
     except Exception:
         prev = {}
     try:
-        cache = json.loads(STATE_JSON.read_text(encoding="utf-8")).get("cache") or {}
+        state = json.loads(STATE_JSON.read_text(encoding="utf-8"))
     except Exception:
         # 첫 버전은 캐시를 결과 JSON 안에 두었다 — 있으면 이어받는다.
-        cache = prev.get("cache") if isinstance(prev.get("cache"), dict) else {}
+        state = {"cache": prev.get("cache") if isinstance(prev.get("cache"), dict) else {}}
+    cache = state.get("cache") or {}
+    if int(state.get("parser") or 1) < PARSER_VERSION:
+        print(f"  파서 버전 {state.get('parser') or 1} → {PARSER_VERSION}: 빈 결과로 캐시된 보고서 {forget_empty_reports(cache)}건을 다시 받는다")
     snapshot = json.loads(KR_SNAPSHOT.read_text(encoding="utf-8"))
     corp_map = load_corp_map(api_key)
     if not corp_map:
@@ -297,7 +323,7 @@ def main() -> int:
     with repository_publish_lock(ROOT):
         # 캐시는 결과와 따로 먼저 쓴다 — 결과가 회귀 가드에 막혀도 받은 DART 값은 다음 실행이 쓴다.
         OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_text(STATE_JSON, json.dumps({"lastYear": last_year, "cache": cache}, ensure_ascii=False, separators=(",", ":")) + "\n")
+        atomic_write_text(STATE_JSON, json.dumps({"lastYear": last_year, "parser": PARSER_VERSION, "cache": cache}, ensure_ascii=False, separators=(",", ":")) + "\n")
         write_data(OUT_JSON, OUT_JS, "DIVIDEND_GROWTH", payload, indent=None, min_ratio=0.7)
         print(f"  → {OUT_JSON.relative_to(ROOT)} · {OUT_JS.relative_to(ROOT)} · {STATE_JSON.relative_to(ROOT)}")
         if args.push:

@@ -214,6 +214,18 @@ const FEATURE_DATA_RETRY_MS = 5 * 60 * 1000;
 // 스크립트가 load/error 를 끝내 안 내는 경우(멈춘 연결)의 상한. 무거운 데이터셋(수 MB)은 더 길게.
 const FEATURE_DATA_TIMEOUT_MS = 45 * 1000;
 const FEATURE_DATA_TIMEOUT_HEAVY_MS = 90 * 1000;
+// 지금 받는 중인(<script> 를 붙였고 load/error 가 아직 안 온) 데이터셋 키. 종목 상세 탭이 '데이터 없음'을
+// 단정하기 전에 본다(stock-view.js sdUpdateEmpty) — 도착 전의 빈 카드를 '없음'으로 깜빡이지 않게.
+const _featureDataInFlight = {};
+// 부팅 프리로드(preloadFeatureData)가 아직 첫 묶음을 요청하지 않았으면 true — 그 전엔 '받는 중'도 0개라
+// 빈 카드를 '없음'으로 오판한다.
+let _featurePreloadStarted = false;
+function featureDataLoadingKeys() {
+  return Object.keys(_featureDataInFlight);
+}
+function featurePreloadPending() {
+  return !_featurePreloadStarted;
+}
 function clearFeatureDataFailures() {
   Object.keys(_featureDataFailed).forEach((k) => delete _featureDataFailed[k]);
 }
@@ -250,6 +262,7 @@ function ensureFeatureData(key) {
   }
   const src = featureDataSrc(path);
 
+  _featureDataInFlight[key] = true;
   _featureDataPromises[key] = new Promise((resolve) => {
     const script = document.createElement("script");
     let settled = false;
@@ -258,6 +271,7 @@ function ensureFeatureData(key) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      delete _featureDataInFlight[key];
       delete _featureDataPromises[key];
       _featureDataFailed[key] = { failedAt: Date.now() };
       script.remove(); // 재시도 때 새 태그로 다시 받는다(이미 받던 중이면 늦게라도 실행돼 전역이 채워질 수 있다)
@@ -270,6 +284,7 @@ function ensureFeatureData(key) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      delete _featureDataInFlight[key];
       const ok = !!window[meta.global];
       // 받았는데 전역이 비면(빈 파일·문법 오류) 실패로 본다 — 약속을 남겨 두면 재시도가 영영 막힌다.
       if (!ok) { delete _featureDataPromises[key]; _featureDataFailed[key] = { failedAt: Date.now() }; }
@@ -299,10 +314,10 @@ const FIRST_SCREEN_FEATURE_KEYS = new Set([
 function preloadFeatureData() {
   const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
   const saveData = !!(navigator.connection && navigator.connection.saveData);
-  const load = (keys) => keys.forEach((key) => {
+  const load = (keys) => { _featurePreloadStarted = true; keys.forEach((key) => {
     if (FEATURE_DATA[key].heavy || FEATURE_DATA[key].lazy) return;
     ensureFeatureData(key).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
-  });
+  }); };
   const all = Object.keys(FEATURE_DATA);
   if (!phone && !saveData) {
     const run = () => load(all);

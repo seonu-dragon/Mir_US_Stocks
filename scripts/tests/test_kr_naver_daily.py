@@ -45,7 +45,9 @@ def test_parser_reads_real_fixture_with_naver_close():
     assert by_date["2026-09-29"]["close"] == 275000.0
     assert by_date["2026-09-23"]["close"] == 286500.0
     assert by_date["2026-09-30"]["volume"] == 16477580.0
-    assert set(rows[0]) == {"date", "open", "high", "low", "close", "volume"}
+    # 외국인 보유율(foreignRetentionRate)도 같은 응답에서 받는다(2026-10-21).
+    assert set(rows[0]) == {"date", "open", "high", "low", "close", "volume", "foreignRate"}
+    assert by_date["2026-09-01"]["foreignRate"] == 46.71
 
 
 def test_parser_accepts_price_infos_wrapper_and_cleans_rows():
@@ -304,3 +306,59 @@ def test_bars_source_goes_to_detail_not_light_snapshot():
     light, details = K.split_snapshot_details({"stocks": [stock]})
     assert details["005930"]["barsSource"] == "naver"
     assert "barsSource" not in light["stocks"][0]
+
+
+# --------------------------------------------------------------------------
+# 외국인 보유율 추이(foreignRetention, 2026-10-21)
+# --------------------------------------------------------------------------
+
+def test_foreign_rate_missing_or_out_of_range_is_not_invented():
+    rows = K.parse_naver_daily([
+        {"localDate": "20261001", "closePrice": 10.0, "foreignRetentionRate": None},
+        {"localDate": "20261002", "closePrice": 10.0, "foreignRetentionRate": 140.0},
+        {"localDate": "20261005", "closePrice": 10.0},
+    ])
+    assert all("foreignRate" not in r for r in rows)
+    assert K.foreign_retention_series(rows, [[1, 1, 1, 1, 1, r["date"]] for r in rows]) is None
+
+
+def test_foreign_series_is_aligned_to_chart_tail_and_trims_leading_nulls():
+    rows = _fixture_rows()
+    chart = [[r["open"], r["high"], r["low"], r["close"], r["volume"], r["date"]] for r in rows]
+    # 앞쪽 2봉은 보유율 없음 → 잘라 낸다. 중간 1봉 없음 → null 로 자리 유지.
+    rows[0].pop("foreignRate"); rows[1].pop("foreignRate"); rows[5].pop("foreignRate")
+    series = K.foreign_retention_series(rows, chart)
+    assert len(series) == len(chart) - 2
+    tail = chart[-len(series):]
+    assert tail[0][5] == rows[2]["date"] and series[0] == rows[2]["foreignRate"]
+    assert series[3] is None                                   # rows[5]
+    assert series[-1] == rows[-1]["foreignRate"]
+    assert len(K.foreign_retention_series(rows, chart, limit=5)) == 5
+
+
+def test_foreign_series_survives_incremental_merge_via_cached_detail(isolated_details):
+    rows = _bars(1, 25, 250000.0, "2026-08") + _fixture_rows()
+    chart = [[r["open"], r["high"], r["low"], r["close"], r["volume"], r["date"]] for r in rows]
+    for r in rows[:25]:
+        r["foreignRate"] = 45.0
+    detail = {"historySource": "yahoo", "barsSource": "naver", "chartSeries": chart,
+              "foreignRetention": K.foreign_retention_series(rows, chart)}
+    (isolated_details / "005930.json").write_text(json.dumps(detail), encoding="utf-8")
+    cached_rows, _divs = K.load_cached_history("005930")
+    assert cached_rows[0]["foreignRate"] == 45.0
+    assert cached_rows[-1]["foreignRate"] == rows[-1]["foreignRate"]
+
+
+def test_build_one_attaches_foreign_retention_and_split_puts_it_in_detail_only(isolated_details, monkeypatch):
+    full = _fixture_rows()
+    monkeypatch.setattr(K, "fetch_naver_daily", lambda code, start, end, retries=3: list(full))
+    monkeypatch.setattr(K, "fetch_yahoo_history_kr", lambda ysym, range_="5y": (_krx_from(full), []))
+    stock, err = K.build_one(_meta())
+    assert err is None
+    series = stock["foreignRetention"]
+    dates = [bar[5] for bar in stock["chartSeries"][-len(series):]]
+    rate = {r["date"]: r["foreignRate"] for r in full}
+    assert series == [rate[d] for d in dates]                  # 야후(KRX) 봉 덮어쓰기 뒤에도 네이버 보유율
+    light, details = K.split_snapshot_details({"stocks": [stock]})
+    assert details["005930"]["foreignRetention"] == series
+    assert "foreignRetention" not in light["stocks"][0]

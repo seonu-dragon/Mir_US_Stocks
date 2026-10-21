@@ -367,11 +367,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=4e6596088f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=4e6596088f"></noscript>
+    <link rel="preload" href="styles.css?v=fcaf2a52f4" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=fcaf2a52f4"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=4e9a445b78"></script>
+    <script src="build_id.js?v=828b8cab71"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3372,7 +3372,7 @@ html[data-market="kr"][data-theme="dark"] {
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="indicators.js?v=68f9658c54"></script>
     <script src="pattern_detectors_extended.js?v=da47646599"></script>
-    <script src="analysis.js?v=5cb72540bd"></script>
+    <script src="analysis.js?v=8fd06fcd37"></script>
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="per-basis-core.js?v=b7c4da7066"></script>
@@ -3403,7 +3403,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=209bd7baa2"></script>
+    <script src="feature-data.js?v=d8ac111690"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3441,8 +3441,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="institutional.js?v=02c52dab3b"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
     <script src="kr-panels.js?v=4a548a9ebb"></script>
-    <script src="kr-flow-core.js?v=c8ff723dc1"></script>
-    <script src="kr-flow-panels.js?v=dcb528fb7a"></script>
+    <script src="kr-flow-core.js?v=b1bc91f634"></script>
+    <script src="kr-flow-panels.js?v=e1c7ce690a"></script>
     <script src="kr-themes-core.js"></script>
     <script src="kr-themes.js"></script>
     <script src="kr-alerts.js?v=d064670f43"></script>
@@ -3452,7 +3452,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study.js?v=039f23654c"></script>
     <script src="timeline-core.js?v=e827c62edd"></script>
     <script src="timeline.js?v=10a1c71063"></script>
-    <script src="watchlist.js?v=d8e8763fe7"></script>
+    <script src="watchlist.js?v=c54b56654e"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=9a1ecf4141"></script>
     <script src="earnings-insight.js?v=d71fe2ed8c"></script>
@@ -3473,7 +3473,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="daily-table.js?v=0f27127020"></script>
     <script src="seasonality-core.js?v=aba17c25f3"></script>
     <script src="seasonality.js?v=fee2629b20"></script>
-    <script src="stock-view.js?v=f8f4e5eff8"></script>
+    <script src="stock-view.js?v=ca6650f62f"></script>
     <script src="subscribe-feeds.js?v=c5e0fba053"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=15e699c81d"></script>
@@ -3493,7 +3493,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=0404ed9c85"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=176aedf6d0"></script>
+    <script src="app.js?v=84eb6ee25c"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

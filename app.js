@@ -2893,6 +2893,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "health") renderIndexStrip(marketHeader.indices);
   // 첫 진입 탭은 여기서 처음 그린다(부팅 때 전 탭을 그리지 않는다 — renderAll 참고).
   renderTabContent(name);
+  // 다른 화면에서 ★ 를 눌러 미뤄 둔 렌더(watchlist.js)를 이제 보이는 것부터 그린다.
+  if (typeof flushWatchDeferredRenders === "function") flushWatchDeferredRenders();
   // US 증자·희석 데이터는 종목검색 서브탭에서만 쓰므로 탭 첫 진입 때 한 번만 시도.
   // 파일이 아직 배포 전이면 조용히 실패하고 서브탭이 숨은 채 유지된다.
   if (name === "search" && !isKrMarket() && !window.US_DILUTION && FEATURE_DATA.usDilution && !FEATURE_DATA.usDilution.tried) {
@@ -3338,7 +3340,8 @@ function setupEvents() {
   eventsBound = true;
   ["bucketFilter", "sectorFilter", "metricFilter", "tileSizeFilter"].forEach((id) => byId(id).addEventListener("change", renderTreemap));
   // 5천 타일 트리맵을 키 입력마다 다시 그리지 않도록 디바운스.
-  byId("heatmapSearch").addEventListener("input", debounce(renderTreemap, 150));
+  // 입력마다는 타일 강조 클래스만 바꾼다(applyTreemapSearchHighlight) — 필요할 때만 전체 재렌더.
+  byId("heatmapSearch").addEventListener("input", debounce(applyTreemapSearchHighlight, 150));
   // Enter 확정(현재 시장에서 찾으면 타일 포커스, 못 찾으면 반대 시장까지)은
   // setupTickerSearchHelpers 의 공용 자동완성이 처리한다.
   // 모바일 트리맵 필터 접기/펼치기(CSS 는 640px 이하에서만 접는다).

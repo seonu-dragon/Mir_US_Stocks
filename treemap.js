@@ -1168,6 +1168,27 @@ function layoutRow(row, box, out) {
   return { x: box.x, y: box.y + rowHeight, w: box.w, h: Math.max(0, box.h - rowHeight) };
 }
 
+// 검색어 입력: 지도를 통째로 다시 그리지 않고 타일의 is-match / is-dimmed 만 바꾼다(5천 타일 재배치 비용).
+// 일치 종목이 '기타 N개' 묶음 안에 들어가 타일이 없을 때만 다시 그린다(묶음에서 빼 줘야 강조가 보인다).
+// 폰 목록 보기는 검색어를 쓰지 않으므로 아무것도 하지 않는다.
+function applyTreemapSearchHighlight() {
+  if (typeof mapViewIsList === "function" && mapViewIsList()) return;
+  const map = byId("stockTreemap");
+  if (!map || _treemapPending || !map.querySelector(".heat-tile[data-ticker]")) { renderTreemap(); return; }
+  const query = byId("heatmapSearch")?.value.trim() || "";
+  if (query && _tmGroups.size) {
+    for (const g of _tmGroups.values()) {
+      if (g.stocks.some((it) => heatmapItemMatchesQuery(it, query))) { renderTreemap(); return; }
+    }
+  }
+  map.querySelectorAll(".heat-tile[data-ticker]").forEach((tile) => {
+    const item = stockByTicker(tile.dataset.ticker);
+    const match = Boolean(query && item && heatmapItemMatchesQuery(item, query));
+    tile.classList.toggle("is-match", match);
+    tile.classList.toggle("is-dimmed", Boolean(query) && !match);
+  });
+}
+
 function heatmapItemMatchesQuery(item, rawQuery) {
   const q = String(rawQuery || "").trim();
   if (!q) return true;

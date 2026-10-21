@@ -110,10 +110,12 @@ function toggleWatchlist(ticker) {
   else watchlist.push(t);
   persistWatchlist();
   renderWatchlistBar();
-  renderSummary();
-  renderWatchAlerts();
-  renderBulk();
-  renderActionBoard();
+  // ★ 한 번에 무거운 렌더(시장 요약·알림·내 투자 표+상관행렬·오늘 액션보드)를 다 돌리지 않는다 —
+  // 지금 보이는 화면만 바로 그리고, 가려진 화면은 다음에 보일 때(탭 전환·접힘 펼침) 그린다.
+  watchRenderWhenVisible("summary", "marketSummary", renderSummary);
+  watchRenderWhenVisible("alerts", "watchAlertPanel", renderWatchAlerts);
+  watchRenderWhenVisible("bulk", "tab-bulk", () => { renderBulk(); renderMyInvestSummary(); });
+  watchRenderWhenVisible("action", "dailyActionGrid", renderActionBoard);
   document.querySelectorAll(`[data-watch="${t}"]`).forEach((btn) => {
     const on = isInWatchlist(t);
     btn.classList.toggle("is-on", on);
@@ -126,6 +128,33 @@ function toggleWatchlist(ticker) {
     if (base) renderSearchFacts(applyLive(withDetail(base)));
   }
 }
+
+// ----- 관심종목 변경 후 '보일 때 다시 그리기' -----
+const _watchDeferredRenders = new Map(); // key → { id, fn }
+function watchElVisible(id) {
+  const el = byId(id);
+  return Boolean(el && el.getClientRects().length);
+}
+function watchRenderWhenVisible(key, id, fn) {
+  if (watchElVisible(id)) {
+    _watchDeferredRenders.delete(key);
+    try { fn(); } catch (e) { /* 한 화면 실패가 나머지를 막지 않게 */ }
+  } else {
+    _watchDeferredRenders.set(key, { id, fn });
+  }
+}
+// activateTab(탭 전환)·details 펼침 뒤에 부른다. 이제 보이는 것만 그리고 나머지는 계속 미룬다.
+function flushWatchDeferredRenders() {
+  if (!_watchDeferredRenders.size) return;
+  [..._watchDeferredRenders.entries()].forEach(([key, { id, fn }]) => {
+    if (!watchElVisible(id)) return;
+    _watchDeferredRenders.delete(key);
+    try { fn(); } catch (e) { /* ignore */ }
+  });
+}
+document.addEventListener("toggle", (e) => {
+  if (e.target && e.target.open) flushWatchDeferredRenders();
+}, true);
 
 // ===== 관심 리스트 여러 개(2026-10-03) =====
 // '전체' 는 기존 watchlist(★) 그대로다. 사용자가 만든 리스트는 시장별 [{ id, name, tickers }] 로 따로 저장하고,

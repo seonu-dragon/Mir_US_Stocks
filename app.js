@@ -380,7 +380,10 @@ const TOP_PRESETS = {
   value:    { metric: "forwardPE",           minRsi: 0,  maxRsi: 0,  minVolume: 0,   minMarketCap: 10, newHigh: "All",   recency: "All" },
   lows:     { metric: "low52Dist",           minRsi: 0,  maxRsi: 0,  minVolume: 0,   minMarketCap: 1,  newHigh: "All",   recency: "All" },
   volsurge: { metric: "volumeRatio",         minRsi: 0,  maxRsi: 0,  minVolume: 3,   minMarketCap: 1,  newHigh: "All",   recency: "All" },
-  oversold: { metric: "rsi14",               minRsi: 0,  maxRsi: 30, minVolume: 0,   minMarketCap: 2,  newHigh: "All",   recency: "All" }
+  oversold: { metric: "rsi14",               minRsi: 0,  maxRsi: 30, minVolume: 0,   minMarketCap: 2,  newHigh: "All",   recency: "All" },
+  // 추정치·의견(US 전용 lazy 데이터 — 옵션은 formula-screener.js xmSyncSelectOptions 가 그 시장에서만 넣는다).
+  estUpDiv10:      { metric: "epsRev30",   minRsi: 0, maxRsi: 0, minVolume: 0, minMarketCap: 0, newHigh: "All", recency: "All" },
+  ratingUpCluster: { metric: "ratingUp30", minRsi: 0, maxRsi: 0, minVolume: 0, minMarketCap: 0, newHigh: "All", recency: "All" }
 };
 
 // 프리셋의 minMarketCap 은 미국 기준 "달러 10억($B)" 단위다(US 스냅샷 marketCapB).
@@ -3272,6 +3275,8 @@ function setupFilters() {
   if (scanBucket) { scanBucket.innerHTML = bucketOptions; scanBucket.value = defaultBucket; }
   const scanSector = byId("scanSector");
   if (scanSector) scanSector.innerHTML = sectorOptions;
+  // 추정치·의견·배당 성장 정렬 지표·프리셋 옵션(US 만, formula-screener.js).
+  if (typeof xmSyncSelectOptions === "function") xmSyncSelectOptions();
 }
 
 let eventsBound = false;
@@ -4463,6 +4468,8 @@ function renderTopStocks() {
   const minMarketCap = numberInputValue("topMinMarketCap", 0);
   const limit = Math.max(1, numberInputValue("topLimit", 24));
   const preset = byId("topPreset")?.value || "custom";
+  // 추정치·의견 지표·프리셋은 데이터를 받은 뒤 다시 그린다(그 전엔 값 없음 → 빈 목록).
+  if (typeof xmEnsureForScreen === "function") xmEnsureForScreen(metric, preset, renderTopStocks);
   const rows = data.stocks
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
@@ -5066,6 +5073,7 @@ function topPresetMatches(item, preset) {
   if (preset === "lows") { const d = low52DistPct(item); return Number.isFinite(d) && d <= 15; }
   if (preset === "volsurge") return Number(item.volumeRatio) >= 3;
   if (preset === "oversold") { const r = rsiValue(item); return r != null && r <= 30; }
+  if (typeof XM_PRESETS === "object" && XM_PRESETS[preset]) return XM_PRESETS[preset].test(item);
   return true;
 }
 
@@ -5078,6 +5086,8 @@ function metricValue(item, metric) {
   if (metric === "ps") return Number(f.ps);
   if (metric === "pb") return Number(f.pb);
   if (metric === "low52Dist") return low52DistPct(item);
+  // 추정치·의견·배당 성장·옵션(formula-screener.js XM_METRICS, lazy) — 값이 없으면 NaN(목록에서 빠진다).
+  if (typeof XM_BY_KEY === "object" && XM_BY_KEY[metric]) { const v = extraMetricValue(item, metric); return v == null ? NaN : v; }
   return Number(item[metric]);
 }
 
@@ -5088,6 +5098,7 @@ function metricSortDirection(metric) {
 }
 
 function formatMetricValue(value, metric) {
+  if (typeof XM_BY_KEY === "object" && XM_BY_KEY[metric]) return xmFormatMetric(value, metric);
   if (metric === "marketCapB") return fmtBillions(value);
   if (metric === "amount") return typeof qiMoneyLarge === "function" ? qiMoneyLarge(value) : fmtCompact(value);
   if (metric === "volume") return Number.isFinite(Number(value)) ? `${Math.round(Number(value)).toLocaleString("en-US")}주` : "—";
@@ -5102,6 +5113,7 @@ function formatMetricValue(value, metric) {
 }
 
 function metricClass(value, metric) {
+  if (typeof XM_BY_KEY === "object" && XM_BY_KEY[metric]) return xmMetricClass(value, metric);
   if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio", "volume", "amount", "low52Dist", "rsi14", "stochK", "epsTtm"].includes(metric)) return "";
   if (metric === "newHighDistancePct") return "neg";
   return cls(value);

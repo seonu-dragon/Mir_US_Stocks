@@ -230,6 +230,10 @@ function renderScreener({ trackSaved = false } = {}) {
   const body = byId("screenerTable");
   const meta = byId("screenerMeta");
   if (!body) return;
+  // 추정치·의견·배당 성장 지표·프리셋(US lazy)은 데이터를 받은 뒤 다시 그린다 — 그 전 빈 결과로 저장 델타를 남기지 않는다.
+  const waiting = typeof xmEnsureForScreen === "function"
+    && xmEnsureForScreen(byId("scrMetric")?.value || "rsi14", byId("scrPreset")?.value || "custom", () => renderScreener({ trackSaved }));
+  if (waiting) { if (meta) meta.textContent = "필드 데이터를 불러오는 중…"; return; }
   const rows = screenerRows();
   if (trackSaved && selectedSavedScreenerId) compareSavedScreener(savedScreenerById(), rows.map(({ item }) => item.ticker));
   if (meta) meta.textContent = `${rows.length}개 종목 · ${byId("scrBucket")?.selectedOptions?.[0]?.textContent || ""}`;

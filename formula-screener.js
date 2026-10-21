@@ -92,6 +92,171 @@ FX_FIELDS.push(
   { key: "riskChangePct", label: "10-K 위험요인 변화 크기 백분위(0~100)", group: "공시 텍스트", src: "10-K 위험요인 변화",
     get: (it) => { const r = fxRiskFactorsRow(it); return r && typeof r.pct === "number" ? r.pct : null; } },
 );
+// ---------- 추정치·의견·배당 성장·옵션 필드(US, 2026-10-21 데이터 — 전부 lazy) ----------
+// 찾기 표(find-table.js)·클래식 스크리너(app.js metricValue)·필터 목록도 같은 정의(XM_METRICS)를 쓴다.
+// 데이터는 그 필드가 조건·열·정렬에 쓰일 때만 ensureFeatureData 로 받는다(xmEnsure). 해당 데이터가 꺼진
+// 시장(국내 — usOnly, 또는 market_config features `=== false`)에서는 필드가 목록에 나오지 않는다(xmEnabled).
+// VIX 기간구조는 시장 전체 한 값이라 종목 필드로 두지 않았고, 옵션 IV 는 options_stats 에 없는 값이라 두지 않았다.
+let xmRatingMemo = { src: null, idx: null };
+let xmRowMemo = { est: null, rat: null, rows: new Map() };
+function xmRatingIdx() {
+  const r = window.US_RATING_CHANGES;
+  const core = window.MirAnalystRevCore;
+  if (!r || !core) return null;
+  if (xmRatingMemo.src !== r) xmRatingMemo = { src: r, idx: core.ratingIndex(r) };
+  return xmRatingMemo.idx;
+}
+function xmTicker(it) {
+  return typeof normalizeTickerKey === "function" ? normalizeTickerKey(it.ticker) : String(it.ticker || "").toUpperCase();
+}
+function xmRevRow(it) {
+  const est = window.US_ESTIMATE_REVISIONS || null;
+  const rat = window.US_RATING_CHANGES || null;
+  const core = window.MirAnalystRevCore;
+  if ((!est && !rat) || !core) return null;
+  if (xmRowMemo.est !== est || xmRowMemo.rat !== rat) xmRowMemo = { est, rat, rows: new Map() };
+  const t = xmTicker(it);
+  if (!xmRowMemo.rows.has(t)) xmRowMemo.rows.set(t, core.screenMetrics(est, rat ? xmRatingIdx() : null, t));
+  return xmRowMemo.rows.get(t);
+}
+function xmDivRec(it) {
+  const p = window.DIVIDEND_GROWTH;
+  const core = window.MirDivGrowthCore;
+  return p && core ? core.record(p, xmTicker(it)) : null;
+}
+function xmOpt(it) {
+  const st = window.OPTIONS_STATS && window.OPTIONS_STATS.stocks;
+  return st ? (st[xmTicker(it)] || st[it.ticker] || null) : null;
+}
+const xmRev = (k) => (it) => { const r = xmRevRow(it); return r && r[k] != null ? fxNum(r[k]) : null; };
+const XM_METRICS = [
+  { key: "epsRev7", label: "EPS 추정치 7일 변화(%, 올해 회계연도)", short: "추정치 7일", data: ["usEstimateRevisions"], pct: true, get: xmRev("epsRev7") },
+  { key: "epsRev30", label: "EPS 추정치 30일 변화(%, 올해 회계연도)", short: "추정치 30일", data: ["usEstimateRevisions"], pct: true, get: xmRev("epsRev30") },
+  { key: "epsRev90", label: "EPS 추정치 90일 변화(%, 올해 회계연도)", short: "추정치 90일", data: ["usEstimateRevisions"], pct: true, get: xmRev("epsRev90") },
+  { key: "epsUp30", label: "EPS 추정치 30일 상향 애널리스트 수", short: "추정 상향 수", data: ["usEstimateRevisions"], get: xmRev("epsUp30") },
+  { key: "epsDown30", label: "EPS 추정치 30일 하향 애널리스트 수", short: "추정 하향 수", data: ["usEstimateRevisions"], get: xmRev("epsDown30") },
+  { key: "ratingUp30", label: "30일 애널리스트 의견 상향 건수", short: "의견 상향", data: ["usRatingChanges", "usEstimateRevisions"], get: xmRev("ratingUp30") },
+  { key: "ratingDown30", label: "30일 애널리스트 의견 하향 건수", short: "의견 하향", data: ["usRatingChanges", "usEstimateRevisions"], get: xmRev("ratingDown30") },
+  { key: "targetChg30", label: "30일 목표가 변경 중앙값(%)", short: "목표가 변경", data: ["usRatingChanges"], pct: true, get: xmRev("targetChg30") },
+  { key: "divGrowthYears", label: "배당 연속 증가 연수", short: "배당 연속 증가", data: ["dividendGrowth"], get: (it) => { const r = xmDivRec(it); return r && r.up != null ? fxNum(r.up) : null; } },
+  { key: "divPaidYears", label: "배당 연속 지급 연수", short: "배당 연속 지급", data: ["dividendGrowth"], get: (it) => { const r = xmDivRec(it); return r && r.paid != null ? fxNum(r.paid) : null; } },
+  { key: "divCagr5", label: "주당배당금 5년 연평균 증가율(%)", short: "배당 5년 연평균", data: ["dividendGrowth"], pct: true, get: (it) => { const r = xmDivRec(it); return r && r.cagr5 != null ? fxNum(r.cagr5) : null; } },
+  { key: "optPcr", label: "옵션 풋/콜 미결제약정 비율(최근 만기)", short: "풋/콜", data: ["optionsStats"], get: (it) => { const o = xmOpt(it); return o && o.putCallOI != null ? fxNum(o.putCallOI) : null; } },
+  { key: "optMove", label: "옵션 예상 변동폭(%, 최근 만기)", short: "예상 변동폭", data: ["optionsStats"], pct: true, get: (it) => { const o = xmOpt(it); return o && o.expectedMovePct != null ? fxNum(o.expectedMovePct) : null; } },
+];
+const XM_BY_KEY = Object.fromEntries(XM_METRICS.map((m) => [m.key, m]));
+// 이 시장에서 그 데이터셋을 쓸 수 있는지. usOnly/krOnly 와 market_config features `=== false` 를 둘 다 본다
+// (featureDataEnabled 는 usOnly 면 features 를 보지 않는다).
+function xmDataEnabled(dataKey) {
+  const meta = typeof FEATURE_DATA === "object" && FEATURE_DATA ? FEATURE_DATA[dataKey] : null;
+  if (!meta) return false;
+  const cfg = marketCfg();
+  if (typeof featureDataEnabled === "function" && !featureDataEnabled(meta, cfg)) return false;
+  return !(meta.feature && cfg.features && cfg.features[meta.feature] === false);
+}
+function xmEnabled(key) {
+  const m = XM_BY_KEY[key];
+  return Boolean(m) && xmDataEnabled(m.data[0]);
+}
+function xmLoaded(key) {
+  const m = XM_BY_KEY[key];
+  return Boolean(m) && m.data.every((d) => !xmDataEnabled(d) || Boolean(window[FEATURE_DATA[d].global]));
+}
+// keys(필드 이름 배열) 중 아직 안 받은 데이터만 받는다. 기다릴 것이 없으면 false, 있으면 전부 끝난 뒤 true.
+// 다른 화면이 먼저 받기 시작한 데이터도 같은 약속을 기다린다(찾기 표·클래식 스크리너·수식이 같이 쓴다).
+const xmWaits = new Map();
+const xmSettled = new Set();
+function xmEnsure(keys) {
+  const need = new Set();
+  (keys || []).forEach((k) => {
+    const m = XM_BY_KEY[k];
+    if (!m || !xmEnabled(k)) return;
+    m.data.forEach((d) => { if (xmDataEnabled(d) && !window[FEATURE_DATA[d].global] && !xmSettled.has(d)) need.add(d); });
+  });
+  if (!need.size || typeof ensureFeatureData !== "function") return Promise.resolve(false);
+  const waits = [...need].map((d) => {
+    if (!xmWaits.has(d)) xmWaits.set(d, ensureFeatureData(d).then(() => { xmSettled.add(d); }));
+    return xmWaits.get(d);
+  });
+  return Promise.all(waits).then(() => true);
+}
+// 아직 받는 중(또는 받기 전)인 데이터가 있는 필드. 받기를 마쳤는데 실패한 데이터는 기다리지 않는다(값은 결측).
+function xmPending(key) {
+  const m = XM_BY_KEY[key];
+  if (!m || !xmEnabled(key)) return false;
+  return m.data.some((d) => xmDataEnabled(d) && !window[FEATURE_DATA[d].global] && !xmSettled.has(d));
+}
+function extraMetricValue(item, key) {
+  const m = XM_BY_KEY[key];
+  if (!m || !item || !xmEnabled(key)) return null;
+  return m.get(item);
+}
+function xmLoadState() {
+  return ["US_ESTIMATE_REVISIONS", "US_RATING_CHANGES", "DIVIDEND_GROWTH", "OPTIONS_STATS"].map((g) => (window[g] ? 1 : 0)).join("");
+}
+// 클래식 스크리너(찾기 › 상위 종목 #topMetric · 고급 스크리너 #scrMetric) 정렬 지표로 내는 필드와 프리셋.
+// 국내처럼 데이터가 꺼진 시장에서는 옵션 자체를 넣지 않는다(xmSyncSelectOptions — 시장을 바꿀 때마다 다시).
+const XM_SORT_KEYS = ["epsRev7", "epsRev30", "epsRev90", "epsUp30", "ratingUp30", "ratingDown30", "targetChg30", "divGrowthYears", "divCagr5", "optPcr", "optMove"];
+const XM_PRESETS = {
+  estUpDiv10: { label: "추정치 상향 + 배당 성장 10년+", fields: ["epsRev30", "divGrowthYears"],
+    test: (it) => { const a = extraMetricValue(it, "epsRev30"); const b = extraMetricValue(it, "divGrowthYears"); return a != null && a > 0 && b != null && b >= 10; } },
+  ratingUpCluster: { label: "의견 상향 몰림", fields: ["ratingUp30"],
+    test: (it) => { const v = extraMetricValue(it, "ratingUp30"); return v != null && v >= 2; } },
+};
+function xmPresetEnabled(key) {
+  const p = XM_PRESETS[key];
+  return Boolean(p) && p.fields.every((k) => xmEnabled(k));
+}
+// 셀렉트에 이 시장에서 쓸 수 있는 추가 옵션을 넣고 뺀다. 고른 값이 빠지면 첫 옵션으로 돌린다.
+function xmSyncSelectOptions() {
+  const sync = (id, entries) => {
+    const sel = byId(id);
+    if (!sel) return;
+    const before = sel.value;
+    sel.querySelectorAll("option[data-xm]").forEach((o) => o.remove());
+    entries.forEach(([v, label]) => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = label;
+      o.dataset.xm = "1";
+      sel.appendChild(o);
+    });
+    if ([...sel.options].some((o) => o.value === before)) sel.value = before;
+    else sel.selectedIndex = 0;
+  };
+  const metrics = XM_SORT_KEYS.filter((k) => xmEnabled(k)).map((k) => [k, XM_BY_KEY[k].short]);
+  const presets = Object.keys(XM_PRESETS).filter((k) => xmPresetEnabled(k)).map((k) => [k, XM_PRESETS[k].label]);
+  sync("topMetric", metrics);
+  sync("scrMetric", metrics);
+  sync("topPreset", presets);
+  sync("scrPreset", presets);
+}
+// 클래식 스크리너가 지금 고른 지표·프리셋이 lazy 필드를 쓰면 받고, 다 오면 rerender 를 부른다.
+function xmEnsureForScreen(metric, preset, rerender) {
+  const keys = [];
+  if (XM_BY_KEY[metric]) keys.push(metric);
+  if (XM_PRESETS[preset]) keys.push(...XM_PRESETS[preset].fields);
+  if (!keys.some((k) => xmPending(k))) return false;
+  xmEnsure(keys).then((started) => { if (started && typeof rerender === "function") rerender(); });
+  return true;
+}
+// 정렬 지표 표기(app.js formatMetricValue / metricClass 가 위임).
+function xmFormatMetric(value, metric) {
+  const m = XM_BY_KEY[metric];
+  const v = Number(value);
+  if (!m || !Number.isFinite(v)) return "—";
+  if (m.pct) { const r = Number(v.toFixed(1)); return `${r > 0 ? "+" : ""}${(r === 0 ? 0 : r).toFixed(1)}%`; }
+  if (metric === "divGrowthYears" || metric === "divPaidYears") return `${Math.round(v)}년`;
+  if (metric === "optPcr") return v.toFixed(2);
+  return String(Math.round(v));
+}
+function xmMetricClass(value, metric) {
+  const m = XM_BY_KEY[metric];
+  // 표기와 같은 자리(소수 1자리)로 반올림한 값으로 색을 정한다 — '0.0%' 가 초록·빨강으로 칠해지지 않게.
+  const r = Number(Number(value).toFixed(1));
+  return m && m.pct && metric !== "optMove" && typeof cls === "function" && r !== 0 ? cls(r) : "";
+}
+XM_METRICS.forEach((m) => FX_FIELDS.push({ key: m.key, label: m.label, group: "추정치·의견·배당·옵션", src: "lazy", lazy: true, get: m.get }));
 const FX_FIELD_BY_KEY = Object.fromEntries(FX_FIELDS.map((f) => [f.key, f]));
 const FX_ALIASES = {
   per: "pe", pbr: "pb", psr: "ps", rsi: "rsi14", eps: "epsTtm", cap: "marketCap", mktcap: "marketCap",
@@ -113,7 +278,7 @@ function fxAvailableFields() {
   const mfCount = Object.keys(window.MAP_FUNDAMENTALS || {}).length;
   const rcCount = window.RISK_CHECK ? Number(window.RISK_CHECK.count) || 0 : 0;
   const rfCount = window.US_RISK_FACTORS_INDEX ? Number(window.US_RISK_FACTORS_INDEX.count) || 0 : 0;
-  const key = `${marketCfg().id}|${data && (data.updatedAtKst || data.updated_at_kst)}|${stocks.length}|${mfCount}|${rcCount}|${rfCount}`;
+  const key = `${marketCfg().id}|${data && (data.updatedAtKst || data.updated_at_kst)}|${stocks.length}|${mfCount}|${rcCount}|${rfCount}|${xmLoadState()}`;
   if (fxFieldsMemo && fxFieldsMemo.key === key) return fxFieldsMemo;
   const universe = stocks.filter((s) => s && !isStockEtf(s));
   const counts = {};
@@ -122,10 +287,13 @@ function fxAvailableFields() {
     const f = mapFundamentalsFor(it.ticker) || {};
     FX_FIELDS.forEach((fd) => { if (fd.get(it, f) != null) counts[fd.key]++; });
   });
-  const list = FX_FIELDS.filter((fd) => counts[fd.key] >= FX_MIN_COVERAGE);
+  // lazy 필드(XM_METRICS)는 데이터를 받기 전엔 셀 수 없다 — 이 시장에서 켜진 데이터면 목록에 두고, 조건에 쓰이면
+  // 그때 받는다(fxRunNow). 받은 뒤에는 다른 필드와 같이 FX_MIN_COVERAGE 로 거른다.
+  const shown = (fd) => (fd.lazy ? xmEnabled(fd.key) && (!xmLoaded(fd.key) || counts[fd.key] >= FX_MIN_COVERAGE) : counts[fd.key] >= FX_MIN_COVERAGE);
+  const list = FX_FIELDS.filter(shown);
   const unavailable = {};
   FX_FIELDS.forEach((fd) => {
-    if (counts[fd.key] < FX_MIN_COVERAGE) unavailable[fd.key.toLowerCase()] = `이 시장(${isKrMarket() ? "국내" : "미국"}) 데이터에 없는 필드입니다(${fd.label}).`;
+    if (!shown(fd)) unavailable[fd.key.toLowerCase()] = `이 시장(${isKrMarket() ? "국내" : "미국"}) 데이터에 없는 필드입니다(${fd.label}).`;
   });
   fxFieldsMemo = { key, list, keys: list.map((f) => f.key), unavailable, counts, universeSize: universe.length };
   return fxFieldsMemo;
@@ -176,6 +344,13 @@ function fxRunNow({ trackSaved = false } = {}) {
   }
   const colCompiled = fxState.columns.map((c) => (c.e ? core.compile(c.e, fxCompileOptions("num")) : null));
   fxRenderColumnErrors(colCompiled);
+  // 조건·열에 쓰인 lazy 필드(추정치·의견·배당 성장·옵션)는 그 데이터를 받은 뒤 다시 돈다.
+  const usedLazy = [...(compiled.ok ? compiled.fields : []), ...colCompiled.flatMap((cc) => (cc && cc.ok ? cc.fields : []))]
+    .filter((k) => xmPending(k));
+  if (usedLazy.length) {
+    const wait = xmEnsure(usedLazy);
+    wait.then((started) => { if (started) fxRunNow({ trackSaved }); });
+  }
   fxRenderBacktestSlot(compiled.ok ? compiled : null);
   if (!compiled.ok) {
     fxLastRun = null;
@@ -193,11 +368,14 @@ function fxRunNow({ trackSaved = false } = {}) {
   fxLastRun = { compiled, rows, idx: inBucket, colVals, usedFields, total: pass.length };
   const tickers = inBucket.map((i) => rows[i].item.ticker);
   const record = fxSelectedRecord();
-  if (trackSaved && record) compareSavedScreener(record, tickers.slice(0, 1000), fxRenderDelta);
+  // lazy 데이터가 오기 전 결과(빈 값)로 저장 스크리너의 편입/이탈을 기록하지 않는다 — 도착 후 다시 돈다.
+  if (trackSaved && record && !usedLazy.length) compareSavedScreener(record, tickers.slice(0, 1000), fxRenderDelta);
   const bucketLabel = (cfg.buckets || []).find(([v]) => v === bucket)?.[1] || "전체";
   if (meta) {
     const when = data.updatedAtKst || data.updated_at_kst || "";
-    meta.textContent = `${inBucket.length.toLocaleString()}개 종목 일치 · ${bucketLabel} · 모집단 ${rows.length.toLocaleString()}종목(ETF 제외)${when ? ` · 기준 ${when}` : ""}`;
+    meta.textContent = usedLazy.length
+      ? "필드 데이터를 불러오는 중…"
+      : `${inBucket.length.toLocaleString()}개 종목 일치 · ${bucketLabel} · 모집단 ${rows.length.toLocaleString()}종목(ETF 제외)${when ? ` · 기준 ${when}` : ""}`;
   }
   fxRenderTable(fxLastRun);
 }
@@ -474,8 +652,10 @@ function fxRenderFieldHelp() {
   const av = fxAvailableFields();
   const groups = {};
   av.list.forEach((fd) => { (groups[fd.group] = groups[fd.group] || []).push(fd); });
-  const missing = FX_FIELDS.filter((fd) => !av.keys.includes(fd.key)).map((fd) => fd.key);
-  box.innerHTML = Object.entries(groups).map(([g, list]) => `<div class="fx-field-group"><b>${escapeHtml(g)}</b>${list.map((fd) => `<button type="button" class="fx-field-chip" data-fx-insert="${escapeHtml(fd.key)}" title="${escapeHtml(`${fd.label} · 값 있는 종목 ${av.counts[fd.key].toLocaleString()}/${av.universeSize.toLocaleString()}`)}">${escapeHtml(fd.key)}<span>${escapeHtml(fd.label)}</span></button>`).join("")}</div>`).join("")
+  // 이 시장에서 꺼진 lazy 데이터의 필드(국내의 추정치·의견 등)는 '뺀 필드' 목록에도 적지 않는다.
+  const missing = FX_FIELDS.filter((fd) => !av.keys.includes(fd.key) && !(fd.lazy && !xmEnabled(fd.key))).map((fd) => fd.key);
+  const chipTitle = (fd) => (fd.lazy && !xmLoaded(fd.key) ? fd.label : `${fd.label} · 값 있는 종목 ${av.counts[fd.key].toLocaleString()}/${av.universeSize.toLocaleString()}`);
+  box.innerHTML = Object.entries(groups).map(([g, list]) => `<div class="fx-field-group"><b>${escapeHtml(g)}</b>${list.map((fd) => `<button type="button" class="fx-field-chip" data-fx-insert="${escapeHtml(fd.key)}" title="${escapeHtml(chipTitle(fd))}">${escapeHtml(fd.key)}<span>${escapeHtml(fd.label)}</span></button>`).join("")}</div>`).join("")
     + (missing.length ? `<p class="muted fx-missing">이 시장에 값이 없어 뺀 필드: ${escapeHtml(missing.join(", "))}</p>` : "");
 }
 

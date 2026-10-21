@@ -414,6 +414,54 @@ await test("크론(07:30 KST): 요약은 my-digest-core 본문 + 실적 D-1, 동
   ok(!f.calls.some((u) => u.includes("AAPL")), "동기화 목록이 기기 목록(AAPL·KO)을 대신한다");
 });
 
+await test("크론(07:30 KST): 애널리스트 의견·목표가·EPS 추정치 알림, 켠 구독만 받고 다음 날 다시 울리지 않는다", async () => {
+  const now = Date.UTC(2026, 8, 28, 22, 30); // 2026-09-29(화) 07:30 KST
+  const rc = {
+    asOf: "2026-09-28", windowDays: 30, cols: ["t", "d", "firm", "act", "from", "to", "pt", "ptPrev", "ptAct"],
+    rows: [
+      ["NVDA", "2026-09-28", "Firm A", "up", "Hold", "Buy", 220, 200, "Raises"],
+      ["AAPL", "2026-09-28", "Firm B", "main", "Buy", "Buy", 300, 240, "Raises"],   // 목표가 +25% ≥ 20%
+      ["KO", "2026-09-28", "Firm C", "main", "Hold", "Hold", 70, 68, "Raises"],     // +2.9% — 조건 밖
+      ["MSFT", "2026-09-28", "Firm D", "down", "Buy", "Hold", 400, 450, "Lowers"],  // 내 목록 밖
+      ["NVDA", "2026-09-10", "Firm E", "down", "Buy", "Hold", null, null, ""],      // 구독 전·4일 창 밖
+    ],
+  };
+  const est = (stamp) => ({
+    updatedAtKst: `${stamp} 06:30 KST`,
+    cols: ["period", "end", "cur", "d7", "d30", "d60", "d90", "up7", "up30", "dn7", "dn30", "n"],
+    tickers: {
+      NVDA: { p: [["0y", "2027-01-31", 4.24, 4.0, 3.9, 3.8, 3.7, 6, 9, 0, 0, 40]] },  // 7일 +6%
+      KO: { p: [["0y", "2026-12-31", 3.0, 2.98, 2.9, 2.9, 2.9, 1, 1, 0, 0, 20]] },    // +0.7%
+    },
+  });
+  const env = await makeEnv();
+  await seed(env, { prefs: { kinds: { rating: true, estimate: true, earnings: false }, targetPct: 20, estPct: 5 } }, "rv");
+  await seed(env, {}, "off"); // 기본 설정(의견·추정치 꺼짐)
+  const f = fakeFetch({ data: { "us_rating_changes.json": rc, "us_estimate_revisions.json": est("2026-09-29") } });
+  const s = await runCron(env, now, { fetchImpl: f.impl });
+  ok(s.jobs.includes("revisionsUs"), `jobs=${s.jobs}`);
+  eq(s.sent, 1, "켠 구독 1건만");
+  const msg = await openPush(f.sent[0]);
+  ok(/3건/.test(msg.title), msg.title);
+  ok(msg.body.includes("NVDA Firm A 의견 상향 Hold → Buy 목표가 $200.00 → $220.00 (+10.0%) (9/28)"), msg.body);
+  ok(msg.body.includes("AAPL Firm B 목표가 $240.00 → $300.00 (+25.0%)"), msg.body);
+  ok(msg.body.includes("NVDA 올해 회계연도 EPS 추정치 7일 +6.0% ($4.00 → $4.24)"), msg.body);
+  ok(!msg.body.includes("KO") && !msg.body.includes("MSFT") && !msg.body.includes("Firm E"), msg.body);
+  ok(msg.body.includes("사실 알림(추천 아님)"), msg.body);
+  for (const bad of ["매수", "매도", "추천합니다", "전망"]) ok(!msg.body.includes(bad), `금칙어 ${bad}`);
+  const f2 = fakeFetch({ data: { "us_rating_changes.json": rc, "us_estimate_revisions.json": est("2026-09-30") } });
+  eq((await runCron(env, now + 86400000, { fetchImpl: f2.impl })).sent, 0, "같은 의견 변경·7일 안 같은 방향 추정치는 다시 안 보낸다");
+  const env2 = await makeEnv();
+  await seed(env2, {}, "only-off");
+  const f3 = fakeFetch({ data: { "us_rating_changes.json": rc } });
+  await runCron(env2, now, { fetchImpl: f3.impl });
+  ok(!f3.calls.some((u) => u.includes("us_rating_changes") || u.includes("us_estimate_revisions")), "아무도 안 켰으면 파일을 받지 않는다");
+  const env3 = await makeEnv();
+  await seed(env3, { prefs: { kinds: { estimate: true, earnings: false } } }, "stale");
+  const f4 = fakeFetch({ data: { "us_estimate_revisions.json": est("2026-09-20") } });
+  eq((await runCron(env3, now, { fetchImpl: f4.impl })).sent, 0, "사흘 넘게 묵은 추정치 파일은 쓰지 않는다");
+});
+
 await test("크론: 할 일 없는 칸(주말 새벽)은 아무것도 부르지 않는다", async () => {
   const env = await makeEnv();
   await seed(env);

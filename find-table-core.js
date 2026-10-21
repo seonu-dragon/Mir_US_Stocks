@@ -35,6 +35,14 @@
     { key: "epsTtm", label: "EPS", markets: ["us", "kr"], num: true, metric: "epsTtm" },
     { key: "newHigh", label: "52주 고점 대비", markets: ["us", "kr"], num: true, metric: "newHighDistancePct" },
     { key: "sector", label: "섹터", markets: ["us", "kr"], num: false },
+    // 추정치·의견·배당 성장·옵션(US 전용 lazy 데이터, 2026-10-21) — 값은 formula-screener.js extraMetricValue,
+    // 데이터는 이 열을 켰을 때만 받는다. 국내·features 로 끈 시장에서는 find-table.js 가 목록에서 뺀다.
+    { key: "epsRev30", label: "추정치 30일", markets: ["us"], num: true, metric: "epsRev30", lazy: true },
+    { key: "ratingUp30", label: "의견 상향 30일", markets: ["us"], num: true, metric: "ratingUp30", lazy: true },
+    { key: "targetChg30", label: "목표가 변경 30일", markets: ["us"], num: true, metric: "targetChg30", lazy: true },
+    { key: "divGrowthYears", label: "배당 연속 증가", markets: ["us"], num: true, metric: "divGrowthYears", lazy: true },
+    { key: "optPcr", label: "풋/콜", markets: ["us"], num: true, metric: "optPcr", lazy: true },
+    { key: "optMove", label: "예상 변동폭", markets: ["us"], num: true, metric: "optMove", lazy: true },
   ];
 
   const DEFAULTS = {

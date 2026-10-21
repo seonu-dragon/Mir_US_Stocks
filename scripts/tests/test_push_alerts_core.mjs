@@ -250,6 +250,52 @@ test("요약 알림: my-digest-core digestToText 재사용 — 제목 줄을 알
   assert.equal(core.digestNotification({ items: [] }, digestCore), null);
 });
 
+test("의견·추정치(2026-10-21): 기본 꺼짐, 임계값 범위, 07:30 칸, 조건·중복·국내 제외", () => {
+  const d = core.normalizePrefs({});
+  assert.equal(d.kinds.rating, false);
+  assert.equal(d.kinds.estimate, false);
+  assert.equal(d.targetPct, 20);
+  assert.equal(d.estPct, 5);
+  const old = core.normalizePrefs({ kinds: { move: true, level: true, earnings: true, disclosure: true, digest: false } });
+  assert.equal(old.kinds.rating, false, "옛 설정은 배포 뒤에도 저절로 켜지지 않는다");
+  const p = core.normalizePrefs({ targetPct: 1, estPct: 99, kinds: { rating: true, estimate: true } });
+  assert.equal(p.targetPct, 5);
+  assert.equal(p.estPct, 50);
+  // 2026-09-29(화) 07:30 KST
+  assert.equal(core.planJobs(Date.UTC(2026, 8, 28, 22, 30)).jobs.revisionsUs, true);
+  assert.equal(core.planJobs(Date.UTC(2026, 8, 27, 22, 30)).jobs.revisionsUs, false, "월요일 07:30 KST(미 주말 뒤)는 건너뛴다");
+  const lists = core.normalizeLists({ us: { watch: ["NVDA", "TINY"], hold: [{ t: "AAPL", q: 1 }] }, kr: { watch: ["005930"] } });
+  const ratings = { cols: ["t", "d", "firm", "act", "from", "to", "pt", "ptPrev", "ptAct"], rows: [
+    ["NVDA", "2026-09-28", "A", "down", "Buy", "Hold", null, null, ""],
+    ["AAPL", "2026-09-28", "B", "init", "", "Buy", 300, null, ""],     // 신규 — 이전 목표가 없음
+    ["AAPL", "2026-09-27", "C", "reit", "Buy", "Buy", 150, 200, ""],   // −25%
+    ["AAPL", "2026-09-20", "D", "up", "Hold", "Buy", 210, 200, ""],    // 4일 창 밖
+  ] };
+  const estimates = { updatedAtKst: "2026-09-29 06:30 KST", tickers: {
+    NVDA: { p: [["0y", "x", 3.8, 4.0, 4, 4, 4, 0, 0, 0, 0, 30]] },     // −5%
+    TINY: { p: [["0y", "x", 0.09, 0.03, 0, 0, 0, 0, 0, 0, 0, 3]] },    // 기준 |0.05| 미만 — 비율 없음
+  } };
+  const prefs = { kinds: { rating: true, estimate: true }, targetPct: 20, estPct: 5 };
+  const a = core.evaluateRevisions({ prefs, lists, market: "us", ratings, estimates, fired: {}, today: "2026-09-29", since: "2026-09-01" });
+  assert.equal(a.length, 3, JSON.stringify(a.map((x) => x.text)));
+  assert.ok(a.some((x) => x.kind === "rating" && x.text.startsWith("NVDA A 의견 하향 Buy → Hold")));
+  assert.ok(a.some((x) => x.kind === "rating" && x.text.includes("AAPL C 목표가 $200.00 → $150.00 (-25.0%)")));
+  assert.ok(a.some((x) => x.kind === "estimate" && x.text.includes("NVDA 올해 회계연도 EPS 추정치 7일 -5.0%")));
+  assert.equal(core.evaluateRevisions({ prefs, lists, market: "kr", ratings, estimates, fired: {}, today: "2026-09-29" }).length, 0);
+  assert.equal(core.evaluateRevisions({ prefs: {}, lists, market: "us", ratings, estimates, fired: {}, today: "2026-09-29" }).length, 0, "기본 꺼짐");
+  const since = core.evaluateRevisions({ prefs, lists, market: "us", ratings, estimates, fired: {}, today: "2026-09-29", since: "2026-09-28" });
+  assert.ok(!since.some((x) => x.text.includes("AAPL C")), "구독 전 변경은 보내지 않는다");
+  const fired = {};
+  a.forEach((x) => { fired[x.key] = "2026-09-29"; });
+  assert.equal(core.evaluateRevisions({ prefs, lists, market: "us", ratings, estimates, fired, today: "2026-09-30" }).length, 0);
+  const later = core.evaluateRevisions({ prefs, lists, market: "us", ratings, estimates: { ...estimates, updatedAtKst: "2026-10-07 06:30 KST" }, fired, today: "2026-10-07" });
+  assert.deepEqual(later.map((x) => x.kind), ["estimate"], "같은 방향 추정치는 8일째에 다시");
+  const n = core.composeAlertNotification(a, "us", { stamp: "x" });
+  assert.ok(n.body.includes("사실 알림(추천 아님)"));
+  assert.ok(!n.body.includes("시세는"), "시세 알림이 아니면 시세 문구 없음");
+  for (const bad of ["매수", "매도", "추천합니다", "전망"]) assert.ok(!n.body.includes(bad), `금칙어 ${bad}`);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length}건\n  ${failures.join("\n  ")}`);
   process.exit(1);

@@ -6,6 +6,8 @@
 // 구독(endpoint + 키)을 KV 에 저장하고, 30분 Cron Trigger 가 조건을 평가해 발송한다.
 //   · 가격: ±N% 등락, 가격 도달(직접 입력·투자 가설/매매일지 목표가·손절가) — 야후 spark 지연 시세
 //   · 일정·공시: 실적 발표 D-1, 새 8-K / DART 주요 공시 — GitHub Pages 의 data/*.json
+//   · 애널리스트(미국): 의견 상향·하향·목표가 큰 변경, EPS 추정치 7일 급변 — data/us_rating_changes.json ·
+//     data/us_estimate_revisions.json (KST 화~토 07:30 칸, 2026-10-21)
 //   · 하루 한 번 "오늘 내 주식은" 요약 — 사이트와 같은 my-digest-core.js(아래에 박아 넣음)
 //
 // 왜 yahoo-proxy 와 따로인가: 그 워커는 뉴스·차트·커뮤니티·챗봇을 한 파일(3,200행)로 붙여넣기
@@ -532,7 +534,7 @@
 // 담는 것
 //   1) 설정·목록 정리: normalizePrefs / normalizeLists / listsFromSyncPrefs / mergeLists
 //   2) 언제 무엇을 하나(크론 계획): planJobs(nowMs) — KST·미 동부 시각으로 시세·공시·요약 슬롯 판정
-//   3) 조건 평가: parseSpark(야후 spark 응답) → evaluatePrice / evaluateEvents
+//   3) 조건 평가: parseSpark(야후 spark 응답) → evaluatePrice / evaluateEvents / evaluateRevisions(의견·추정치, 미국)
 //   4) 발송 상한·중복 방지 상태: dayState / capRemaining / recordFired / pruneState
 //   5) 알림 문구: composeAlertNotification / digestNotification(my-digest-core 의 digestToText 재사용)
 //
@@ -552,8 +554,11 @@
     lines: 6,
   };
   const DEFAULT_PREFS = {
-    kinds: { move: true, level: true, earnings: true, disclosure: true, digest: false },
+    // rating·estimate(2026-10-21)는 켜야 받는다 — 옛 구독의 설정(kinds 에 키 없음)이 워커 배포 뒤 저절로 켜지지 않게.
+    kinds: { move: true, level: true, earnings: true, disclosure: true, digest: false, rating: false, estimate: false },
     movePct: 5,                 // ±N% — 전일 종가 대비 등락률 절댓값
+    targetPct: 20,              // 목표가 이전 → 새 값 변화율 절댓값 ±N% 이상이면 의견 유지여도 알림
+    estPct: 5,                  // 올해 회계연도 컨센서스 EPS 7일 변화율 절댓값 ±N%
     maxPerDay: 6,               // 하루 발송 상한(요약 포함)
     digestMarkets: ["us", "kr"],
     useSync: false,             // 클라우드 동기화 목록(/sync/prefs)을 크론 때마다 다시 읽는다
@@ -624,6 +629,8 @@
     return {
       kinds,
       movePct: Math.round(clamp(src.movePct, 1, 30, DEFAULT_PREFS.movePct) * 10) / 10,
+      targetPct: Math.round(clamp(src.targetPct, 5, 100, DEFAULT_PREFS.targetPct)),
+      estPct: Math.round(clamp(src.estPct, 1, 50, DEFAULT_PREFS.estPct) * 10) / 10,
       maxPerDay: Math.round(clamp(src.maxPerDay, 1, LIMITS.maxPerDayCap, DEFAULT_PREFS.maxPerDay)),
       digestMarkets: [...new Set(dm)],
       useSync: Boolean(src.useSync),
@@ -764,6 +771,7 @@
    *   priceUs  미 정규장(ET 평일 09:30~16:29) — 16:00 칸이 종가를 한 번 더 본다
    *   priceKr  국내 정규장(KST 평일 09:00~15:59)
    *   digestUs KST 화~토 07:30 칸 — 미 장 마감 요약 + 실적 D-1(두 시장)
+   *   revisionsUs 같은 칸 — 애널리스트 의견·목표가·EPS 추정치(us_rating_changes · us_estimate_revisions, 06:30 KST 수집)
    *   eventsUs KST 월~토 15:00 칸 — 8-K(13:23 KST 수집, 크론 지연 감안)
    *   digestKr·eventsKr KST 월~금 20:00 칸 — 국내 마감 요약 + DART 주요 공시
    * 휴장일은 모른다 — 시세가 그날 것이 아니면(거래일 키) 알리지 않는 것으로 막는다.
@@ -778,6 +786,7 @@
       priceUs: eWeekday && e.minutes >= 570 && e.minutes < 990,
       priceKr: kWeekday && k.minutes >= 540 && k.minutes < 960,
       digestUs: slot === 450 && k.dow >= 2 && k.dow <= 6,
+      revisionsUs: slot === 450 && k.dow >= 2 && k.dow <= 6,
       earningsD1: slot === 450,
       eventsUs: slot === 900 && k.dow >= 1 && k.dow <= 6,
       digestKr: slot === 1200 && kWeekday,
@@ -890,6 +899,81 @@
     return out.sort((a, b) => b.sort - a.sort);
   }
 
+  /**
+   * 애널리스트 의견·목표가 · EPS 추정치(미국). ratings = us_rating_changes.json, estimates = us_estimate_revisions.json
+   * (scripts/build_us_analyst_revisions.py — 배열 행 + cols). 값이 없으면 알리지 않는다.
+   * - rating: 의견 상향(up)·하향(down), 또는 목표가 이전 → 새 값 변화율 |%| ≥ targetPct(의견 유지여도).
+   *   [max(since, today-4), today] 안의 변경만, (종목·날짜·증권사·행동)당 한 번.
+   * - estimate: 올해 회계연도(0y) 컨센서스 EPS 의 7일 전 대비 |%| ≥ estPct. 기준값 |0.05| 미만은 비율을 만들지 않는다.
+   *   같은 종목·방향은 7일에 한 번(7일 창이 겹쳐 매일 다시 울리지 않게). 파일이 3일 넘게 묵었으면 쓰지 않는다.
+   */
+  const EST_COLS = ["period", "end", "cur", "d7", "d30", "d60", "d90", "up7", "up30", "dn7", "dn30", "n"];
+  const RATING_COLS = ["t", "d", "firm", "act", "from", "to", "pt", "ptPrev", "ptAct"];
+  const RATING_ACT_KO = { up: "의견 상향", down: "의견 하향" };
+  function rowObj(arr, cols) {
+    const o = {};
+    cols.forEach((c, i) => { o[c] = arr && arr[i] !== undefined ? arr[i] : null; });
+    return o;
+  }
+  function ratioPct(cur, base) {
+    const c = num(cur);
+    const b = num(base);
+    if (c == null || b == null || Math.abs(b) < 0.05) return null;
+    return (c / Math.abs(b) - Math.sign(b)) * 100;
+  }
+  function fmtEps(v) {
+    const n = num(v);
+    return n == null ? "—" : `$${n.toFixed(2)}`;
+  }
+  function evaluateRevisions({ prefs, lists, market, ratings, estimates, fired, today, since }) {
+    const p = normalizePrefs(prefs);
+    const f = fired || {};
+    const out = [];
+    if (market !== "us") return out;
+    const mine = new Set(marketTickers(lists, "us"));
+    if (!mine.size) return out;
+    if (p.kinds.rating && ratings && Array.isArray(ratings.rows)) {
+      const cols = Array.isArray(ratings.cols) && ratings.cols.length ? ratings.cols : RATING_COLS;
+      const floor = [since, today ? addDays(today, -4) : null].filter(Boolean).sort().pop() || "";
+      ratings.rows.forEach((arr) => {
+        const r = rowObj(arr, cols);
+        const t = cleanTicker(r.t);
+        if (!t || !mine.has(t) || !r.d || r.d < floor || (today && r.d > today)) return;
+        const ptChg = ratioPct(r.pt, r.ptPrev);
+        const gradeMove = r.act === "up" || r.act === "down";
+        const bigTarget = ptChg != null && Math.abs(ptChg) >= p.targetPct;
+        if (!gradeMove && !bigTarget) return;
+        const key = `rt:${t}:${r.d}:${shortHash(`${r.firm}|${r.act}|${r.pt}`)}`;
+        if (f[key]) return;
+        const parts = [displayName(t, lists), clip(r.firm, 24)];
+        if (gradeMove) parts.push(`${RATING_ACT_KO[r.act]} ${clip(r.from, 16) || "—"} → ${clip(r.to, 16) || "—"}`);
+        if (ptChg != null && (bigTarget || gradeMove)) parts.push(`목표가 ${fmtPrice(r.ptPrev, "us")} → ${fmtPrice(r.pt, "us")} (${fmtPct(ptChg)})`);
+        out.push({ key, kind: "rating", ticker: t, market, sort: gradeMove ? 60 : 55,
+          text: `${parts.join(" ")} (${Number(r.d.slice(5, 7))}/${Number(r.d.slice(8, 10))})` });
+      });
+    }
+    if (p.kinds.estimate && estimates && estimates.tickers) {
+      const stamp = String(estimates.updatedAtKst || "").slice(0, 10);
+      const fresh = /^\d{4}-\d{2}-\d{2}$/.test(stamp) && (!today || addDays(stamp, 3) >= today);
+      const cols = Array.isArray(estimates.cols) && estimates.cols.length ? estimates.cols : EST_COLS;
+      if (fresh) {
+        mine.forEach((t) => {
+          const rec = estimates.tickers[t];
+          if (!rec || !Array.isArray(rec.p)) return;
+          const row = rec.p.map((a) => rowObj(a, cols)).find((o) => o.period === "0y");
+          const chg = row ? ratioPct(row.cur, row.d7) : null;
+          if (chg == null || Math.abs(chg) < p.estPct) return;
+          const dir = chg > 0 ? "up" : "down";
+          const key = `es:${t}:0y:${dir}`;
+          if (f[key] && today && f[key] >= addDays(today, -7)) return;
+          out.push({ key, kind: "estimate", ticker: t, market, sort: Math.min(49, Math.abs(chg)),
+            text: `${displayName(t, lists)} 올해 회계연도 EPS 추정치 7일 ${fmtPct(chg)} (${fmtEps(row.d7)} → ${fmtEps(row.cur)})` });
+        });
+      }
+    }
+    return out.sort((a, b) => b.sort - a.sort);
+  }
+
   // ------------------------------------------------------------------ 4) 발송 상한·중복 방지
   /** 구독별 상태 { day, sent, fired: {key: 날짜} } — 날짜가 바뀌면 sent 를 0 으로. */
   function dayState(state, kstDate) {
@@ -932,6 +1016,7 @@
     const lines = list.slice(0, LIMITS.lines).map((a) => a.text);
     if (list.length > LIMITS.lines) lines.push(`외 ${list.length - LIMITS.lines}건`);
     if (list.some((a) => a.kind === "move" || a.kind === "level") && delayed !== false) lines.push("시세는 야후 지연 시세 · 사실 알림(추천 아님)");
+    else if (list.some((a) => a.kind === "rating" || a.kind === "estimate")) lines.push("야후 애널리스트 자료 · 사실 알림(추천 아님)");
     const title = list.length === 1
       ? `${MARKET_KO[market] || ""} 내 종목 알림`.trim()
       : `${MARKET_KO[market] || ""} 내 종목 알림 ${list.length}건`.trim();
@@ -973,7 +1058,7 @@
     LIMITS, DEFAULT_PREFS,
     normalizePrefs, normalizeLists, emptyLists, listsFromSyncPrefs, mergeLists, marketTickers, marketOf, cleanTicker, yahooSymbol,
     planJobs, etParts, kstParts,
-    parseSpark, evaluatePrice, evaluateEvents,
+    parseSpark, evaluatePrice, evaluateEvents, evaluateRevisions,
     dayState, capRemaining, recordFired, pruneState,
     composeAlertNotification, digestNotification, siteUrl,
     fmtPct, fmtPrice, addDays, shortHash,
@@ -1412,7 +1497,7 @@ function dataUrl(env, path) {
 /** 이번 실행에 필요한 Pages 데이터만 받는다. 빠진 파일은 null(그 종류 알림만 건너뛴다). */
 async function loadSources(env, fetchImpl, need) {
   const get = (p) => fetchJson(fetchImpl, dataUrl(env, p));
-  const [materialEvents, earningsReleases, usCalendar, usMovers, krDisclosures, krIrSchedule, krDividends, krMovers] = await Promise.all([
+  const [materialEvents, earningsReleases, usCalendar, usMovers, krDisclosures, krIrSchedule, krDividends, krMovers, usRatings, usEstimates] = await Promise.all([
     need.usPast ? get("material_events.json") : null,
     need.usPast ? get("earnings_releases.json") : null,
     need.usUpcoming ? get("us_calendar.json") : null,
@@ -1421,9 +1506,11 @@ async function loadSources(env, fetchImpl, need) {
     need.krUpcoming ? get("korea/ir_schedule.json") : null,
     need.krDividends ? get("korea/dividends.json") : null,
     need.krMovers ? get("korea/movers_reasons.json") : null,
+    need.usRatings ? get("us_rating_changes.json") : null,
+    need.usEstimates ? get("us_estimate_revisions.json") : null,
   ]);
   return {
-    us: { materialEvents, earningsReleases, usCalendar, movers: usMovers },
+    us: { materialEvents, earningsReleases, usCalendar, movers: usMovers, ratings: usRatings, estimates: usEstimates },
     kr: { krDisclosures, krIrSchedule, krDividends, movers: krMovers },
   };
 }
@@ -1551,6 +1638,8 @@ export async function runCron(env, nowMs = Date.now(), deps = {}) {
     krUpcoming: needEarn || anyDigest("kr"),
     krDividends: anyDigest("kr"),
     krMovers: anyDigest("kr"),
+    usRatings: jobs.revisionsUs && anyKind("rating"),
+    usEstimates: jobs.revisionsUs && anyKind("estimate"),
   });
 
   const today = plan.kstDate;
@@ -1597,6 +1686,12 @@ export async function runCron(env, nowMs = Date.now(), deps = {}) {
         alerts.push(...PushCore.evaluateEvents({
           prefs: rec.prefs, lists, market: m, past: ev.past, upcoming: ev.upcoming, fired: state.fired,
           today, since: rec.since, doEarnings: jobs.earningsD1, doDisclosures: doDisc,
+        }));
+      }
+      if (m === "us" && jobs.revisionsUs && tickers.length && (rec.prefs.kinds.rating || rec.prefs.kinds.estimate)) {
+        alerts.push(...PushCore.evaluateRevisions({
+          prefs: rec.prefs, lists, market: m, ratings: sources.us.ratings, estimates: sources.us.estimates,
+          fired: state.fired, today, since: rec.since,
         }));
       }
       if (alerts.length) {

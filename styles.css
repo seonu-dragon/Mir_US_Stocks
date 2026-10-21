@@ -8446,6 +8446,29 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 .data-trust-link { display: inline-block; margin-top: 10px; color: var(--primary); font-size: var(--fs-cap); font-weight: 600; text-decoration: none; }
 .data-trust-link:hover { text-decoration: underline; }
 
+/* 데이터 건강(data/health_report.js) — 일일 감시 요약. 상태·갱신 시각·범주별 건수·문제 항목만. */
+.data-health { margin: 0 0 14px; padding: 12px; border: 1px solid var(--line); border-left-width: 3px; border-radius: var(--r-md); background: var(--panel); }
+.data-health.health-ok { border-left-color: var(--green); }
+.data-health.health-problem { border-left-color: var(--red); }
+.data-health.health-stale { border-left-color: var(--amber); }
+.data-health-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.data-health-head strong { font-size: var(--fs-h3); }
+.data-health-head b { font-size: var(--fs-cap); }
+.health-ok .data-health-head b { color: var(--green); }
+.health-problem .data-health-head b { color: var(--red); }
+.health-stale .data-health-head b { color: var(--amber); }
+.data-health-head small { color: var(--muted); font-size: var(--fs-cap); }
+.data-health-counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-2); margin: 10px 0 0; }
+.data-health-counts > div { padding: 7px 9px; border-radius: var(--r-md); background: var(--panel-soft); }
+.data-health-counts span { display: block; color: var(--muted); font-size: var(--fs-cap); }
+.data-health-counts strong { display: block; margin-top: 2px; font-size: var(--fs-h3); }
+.data-health-counts strong.neg { color: var(--red); }
+.data-health-list { display: grid; gap: 4px; margin: 10px 0 0; padding: 0; list-style: none; }
+.data-health-list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 8px; font-size: var(--fs-cap); }
+.data-health-list em { color: var(--muted); font-style: normal; }
+.data-health-list span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.data-health-list b { font-weight: 600; text-align: right; white-space: nowrap; }
+
 /* 투자 체크리스트 */
 .investment-checklist-card { padding: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
 .investment-check-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -8484,6 +8507,10 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 }
 @media (max-width: 640px) {
   .data-trust-grid { grid-template-columns: 1fr; }
+  .data-health-counts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .data-health-list li { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .data-health-list span { white-space: normal; }
+  .data-health-list b { text-align: left; white-space: normal; overflow-wrap: anywhere; }
 }
 
 /* 종목 분석 균형 레이아웃 */

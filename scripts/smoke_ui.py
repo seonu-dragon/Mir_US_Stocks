@@ -364,6 +364,19 @@ def test_trust_center(browser, base: str) -> None:
     check("상세에 워크플로우·빌더 이름이 없음",
           "워크플로우" not in txt and "scripts/" not in txt and page.locator(".data-trust-link").count() == 0)
 
+    # 데이터 건강(data/health_report.js, 일일 감시) — 상태·점검 시각·범주 5칸. 운영용 이름(워크플로우·빌더)은 없어야 한다.
+    try:
+        page.wait_for_selector("#dataHealthPanel:not([hidden])", timeout=15000)
+        health_ok = True
+    except Exception:
+        health_ok = False
+    check("데이터 건강 섹션 렌더", health_ok)
+    if health_ok:
+        htxt = page.locator("#dataHealthPanel").inner_text()
+        check("데이터 건강 범주 5칸", page.locator("#dataHealthPanel .data-health-counts > div").count() == 5)
+        check("데이터 건강에 점검 시각", "점검 " in htxt)
+        check("데이터 건강에 워크플로우·빌더 이름이 없음", "scripts/" not in htxt and ".py" not in htxt, htxt[:120])
+
     shoot(page.locator(".data-trust-center"), "trust-center")
     page.close()
 

@@ -215,6 +215,9 @@ const FEATURE_DATA = {
   // 배당 성장 이력(build_dividend_growth.py, 야후 배당 1985~ — 연속 증가·연속 지급·5/10년 연평균). 미국 전용(국내를 뺀
   // 이유는 빌더 주석). 주주환원 카드·찾기 › 배당 랭킹이 처음 그릴 때만(lazy).
   dividendGrowth: { global: "DIVIDEND_GROWTH", path: "data/dividend_growth.js", feature: "dividendGrowth", usOnly: true, lazy: true },
+  // 데이터 건강 감시 결과(scripts/data_health_watch.py, 매일 08:30 KST) — 라이브 데이터셋 전부의 신선도·구조·값 이상·
+  // 워크플로우·배포 점검. 두 시장 공통 한 파일. 신뢰도 센터 '데이터 건강' 섹션을 열 때만(lazy).
+  dataHealth: { global: "MIR_DATA_HEALTH", path: "data/health_report.js", lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 잠시(FEATURE_DATA_RETRY_MS) 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다

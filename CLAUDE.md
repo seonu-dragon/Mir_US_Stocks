@@ -130,6 +130,14 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   `scripts/verify_pages_deploy.py`(`publish_today.ps1` 끝에서 자동 — 좀비 정리·배포
   대기·라이브 `today_content.json` date 확인). 발행 뒤에는 레포가 아니라 이 출력으로
   라이브를 확인한다.
+- **데이터 건강 감시**(`data-health-watch.yml`, 매일 08:30 KST, 2026-10-21): 위 장치들은 각자 한 경로만 본다
+  (신선도 관문 = 그 워크플로우가 끝까지 돌았을 때만, 신뢰도 센터 = 사람이 열어야 보임). 이 감시는 라이브의
+  모든 데이터셋(FEATURE_DATA·snapshotPath·HTML data 태그에서 자동 수집)을 신선도(휴장 차감)·구조·값 이상
+  (종가가 봉 고·저 밖, 의심 표시 없는 큰 등락률, null 급증, 지수 vs 구성 종목)·워크플로우(실패·타임아웃 cancelled·
+  continue-on-error 로 가려진 스텝 실패 = 성공 job 의 failure 주석)·배포(라이브 vs 레포)로 훑고
+  `data/health_report.json/.js` 를 발행, 문제는 텔레그램 하루 1회(`data/health_alert_state.json`, 배포 제외).
+  판정은 `scripts/data_health_core.py`(순수 함수 + pytest), 실행은 `py scripts/data_health_watch.py --dry-run`.
+  새 데이터셋은 FEATURE_DATA 나 신뢰도 센터 source() 에 넣으면 자동으로 감시된다.
 - `data/market_snapshot.json` 이 pretty ↔ compact 로 재포맷되면서 수십만 줄 diff 가
   뜰 수 있다. 데이터 손실이 아니라 포맷 변화이므로 키 단위로 비교해 확인할 것.
 - 워크플로우의 `name:` 을 바꾸면 `deploy-pages.yml` 의 `workflow_run` 참조가 **조용히

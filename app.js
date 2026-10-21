@@ -7405,6 +7405,52 @@ function trust13fStats(payload) {
 // 신뢰도 센터가 로드를 시도해 본 feature 키(성공/실패 무관). 재요청 폭주 방지용.
 const trustLoadAttempted = new Set();
 
+// 데이터 건강(일일 감시 data/health_report.js, scripts/data_health_watch.py). 상태·점검 시각·범주별 건수·문제 항목만 —
+// 설명 문구를 붙이지 않는다. 파일이 없거나 로드에 실패하면 섹션을 숨긴다(없는 데이터는 기능을 끈다).
+// 운영용 정보(워크플로우·빌더 이름)는 화면에 내지 않는다(2026-09-26) — workflow 범주는 '수집 작업' 건수 한 줄로만
+// 보이고, 어떤 run·스텝인지는 보고서 파일과 텔레그램 알림에만 있다.
+const DATA_HEALTH_CATEGORIES = [["freshness", "신선도"], ["structure", "구조"], ["values", "값 이상"], ["workflow", "수집 작업"], ["deploy", "배포"]];
+const DATA_HEALTH_MAX_ITEMS = 12;
+const DATA_HEALTH_STALE_HOURS = 36;
+
+function renderDataHealth() {
+  const box = byId("dataHealthPanel");
+  if (!box) return;
+  const report = window.MIR_DATA_HEALTH;
+  if (!report) {
+    box.hidden = true;
+    if (!trustLoadAttempted.has("dataHealth")) {
+      trustLoadAttempted.add("dataHealth");
+      ensureFeatureData("dataHealth").then((ok) => { if (ok) renderDataHealth(); });
+    }
+    return;
+  }
+  const problems = Array.isArray(report.problems) ? report.problems : [];
+  const counts = report.counts || {};
+  const checked = parseSnapshotDate(report.updatedAtKst);
+  const ageHours = checked ? (Date.now() - checked.getTime()) / 36e5 : null;
+  const stale = ageHours == null || ageHours > DATA_HEALTH_STALE_HOURS;
+  const tone = stale ? "stale" : (problems.length ? "problem" : "ok");
+  const label = stale ? "점검 지연" : (problems.length ? `문제 ${problems.length.toLocaleString()}건` : "정상");
+  const catLabel = Object.fromEntries(DATA_HEALTH_CATEGORIES);
+  const jobProblems = problems.filter((p) => p.category === "workflow").length;
+  const rowsShown = problems.filter((p) => p.category !== "workflow")
+    .map((p) => ({ cat: catLabel[p.category] || p.category || "", label: p.label || "", value: p.value || "" }));
+  if (jobProblems) rowsShown.push({ cat: catLabel.workflow, label: "실패·중단", value: `${jobProblems.toLocaleString()}건` });
+  const items = rowsShown.slice(0, DATA_HEALTH_MAX_ITEMS).map((r) => `
+      <li><em>${escapeHtml(r.cat)}</em><span title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span><b>${escapeHtml(r.value)}</b></li>`).join("");
+  const more = rowsShown.length > DATA_HEALTH_MAX_ITEMS ? `<li><em></em><span>외</span><b>${(rowsShown.length - DATA_HEALTH_MAX_ITEMS).toLocaleString()}건</b></li>` : "";
+  box.className = `data-health health-${tone}`;
+  box.innerHTML = `
+    <div class="data-health-head"><strong>데이터 건강</strong><b>${escapeHtml(label)}</b><small>점검 ${escapeHtml(String(report.updatedAtKst || "확인 불가").replace(/^\d{4}-/, ""))} · ${escapeHtml(trustAgeLabel(ageHours))} · 데이터셋 ${Number((report.datasets || []).length).toLocaleString()}</small></div>
+    <div class="data-health-counts">${DATA_HEALTH_CATEGORIES.map(([key, name]) => {
+      const n = Number(counts[key] || 0);
+      return `<div><span>${escapeHtml(name)}</span><strong class="${n ? "neg" : ""}">${n.toLocaleString()}</strong></div>`;
+    }).join("")}</div>
+    ${items || more ? `<ul class="data-health-list">${items}${more}</ul>` : ""}`;
+  box.hidden = false;
+}
+
 function renderDataTrustCenter() {
   const grid = byId("dataTrustGrid");
   const summary = byId("dataTrustSummary");
@@ -7425,6 +7471,7 @@ function renderDataTrustCenter() {
       });
     });
 
+  renderDataHealth();
   const counts = sources.reduce((acc, row) => { acc[row.status.key] = (acc[row.status.key] || 0) + 1; return acc; }, {});
   summary.innerHTML = `
     <div><span>정상</span><strong class="pos">${counts.good || 0}</strong></div>
@@ -7463,6 +7510,8 @@ function renderDataTrustCenter() {
     refresh.addEventListener("click", () => {
       trustLoadAttempted.clear();   // 수동 재확인은 실패했던 로드도 다시 시도한다
       clearFeatureDataFailures();
+      delete window.MIR_DATA_HEALTH;   // 데이터 건강 보고서도 새로 받는다
+      if (typeof _featureDataPromises !== "undefined") delete _featureDataPromises.dataHealth;
       renderDataTrustCenter();
       showAppToast("데이터 상태를 다시 확인했습니다");
     });

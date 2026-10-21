@@ -105,7 +105,7 @@ def reapply_today_card_news(repo, now: datetime | None = None) -> list[str]:
             changed.append(SNAPSHOT)
 
     # 2) 경량 파일 cardnews.json/.js — KR 모드와 스냅샷에 cardNews 가 없을 때의 폴백.
-    #    스키마는 update_data.write_cardnews_file 과 같다({updatedAtKst, us, kr}, 덱은 title·images).
+    #    스키마는 update_data.write_cardnews_file 과 같다({updatedAtKst, us, kr}, 덱은 title·images·thumbs?).
     light_path = repo / CARDNEWS_JSON
     light = _load(light_path) if light_path.exists() else None
     light = light if isinstance(light, dict) else {}
@@ -118,6 +118,10 @@ def reapply_today_card_news(repo, now: datetime | None = None) -> list[str]:
         }
         for v in stale:
             payload[v] = {"title": decks[v].get("title") or "", "images": decks[v]["images"]}
+            # 축소본(720px WebP)도 함께 — 없으면 KR 홈이 원본 PNG(장당 ~1.4MB)를 받는다(2026-10-21).
+            thumbs = decks[v].get("thumbs")
+            if isinstance(thumbs, list) and len(thumbs) == len(decks[v]["images"]):
+                payload[v]["thumbs"] = thumbs
         body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         light_path.parent.mkdir(parents=True, exist_ok=True)
         _atomic_write(light_path, body + "\n")

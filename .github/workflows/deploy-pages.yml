@@ -293,6 +293,14 @@ jobs:
           fi
           echo "artifact size:" && du -sh _site | cut -f1
 
+      # 시장 스냅샷 JSON 공백 제거(2026-10-21 성능). 레포 파일은 빌더가 들여쓰기로 써서 US 12.5MB 인데
+      # 같은 값을 공백 없이 쓰면 6.7MB(gzip 전송 1.65→1.43MB)라 폰의 부팅 JSON.parse 도 절반이 된다.
+      # 스테이징 사본만 바꾸고 값은 그대로다(다시 읽어 같은지 확인). 실패해도 원본 그대로 배포한다.
+      - name: Compact snapshot JSON (staging copy)
+        if: steps.gate.outputs.deploy != 'false'
+        continue-on-error: true
+        run: python3 scripts/compact_site_json.py --root _site data/market_snapshot.json data/korea/market_snapshot.json
+
       # 구독 피드(.ics 캘린더 + 공시 RSS). 데이터가 여러 워크플로우에서 따로 커밋되므로 전부가
       # 합쳐지는 여기(배포 스테이징)에서 만든다 — 레포에는 커밋하지 않는다(data/feeds/ 는
       # .gitignore). 경제지표는 워커 ?calendar=1 을 한 번 부르고, 실패해도 FOMC·산업 지표로

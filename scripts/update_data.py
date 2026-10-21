@@ -4071,9 +4071,9 @@ def load_today_content():
             return None
     card_news = {}
     for variant in ("us", "kr"):
-        deck = raw.get(variant)
-        if isinstance(deck, dict) and isinstance(deck.get("images"), list) and deck["images"]:
-            card_news[variant] = {"title": deck.get("title") or "", "images": deck["images"]}
+        deck = light_card_deck(raw.get(variant))
+        if deck:
+            card_news[variant] = deck
     return card_news or None
 
 
@@ -4081,15 +4081,38 @@ CARDNEWS_JSON = ROOT / "data" / "cardnews.json"
 CARDNEWS_JS = ROOT / "data" / "cardnews.js"
 
 
+def light_card_deck(deck, root=None):
+    """스냅샷 cardNews·경량 파일에 싣는 덱 {title, images[, thumbs]} — 덱이 아니면 None.
+
+    thumbs(720px WebP 축소본, build_today_content.make_card_thumb)는 images 와 개수가 같을 때만
+    싣는다. 예전엔 여기서 thumbs 를 버려 KR 홈이 원본 PNG 5장(~7MB)을 받았다(2026-10-21 성능).
+    root 를 주면 thumbs 가 없는 덱도 `<원본>.thumb.webp` 파일이 전부 실제로 있을 때만 붙인다
+    (만들어진 적 없는 축소본을 가리키지 않게).
+    """
+    if not (isinstance(deck, dict) and isinstance(deck.get("images"), list) and deck["images"]):
+        return None
+    images = deck["images"]
+    out = {"title": deck.get("title") or "", "images": images}
+    thumbs = deck.get("thumbs")
+    if isinstance(thumbs, list) and len(thumbs) == len(images) and all(isinstance(t, str) and t for t in thumbs):
+        out["thumbs"] = thumbs
+    elif root is not None:
+        derived = [re.sub(r"\.[A-Za-z0-9]+$", ".thumb.webp", str(p)) for p in images]
+        if all(d != str(p) and (Path(root) / d).is_file() for d, p in zip(derived, images)):
+            out["thumbs"] = derived
+    return out
+
+
 def write_cardnews_file(market_key, deck):
     """카드뉴스 경량 파일(data/cardnews.json + .js)을 merge-write 한다.
 
     KR 모드 홈이 카드뉴스 하나를 채우려고 US market_snapshot.json(~11MB) 전체를
     받아오던 것을 없애기 위한 소형 파일. 스키마(프론트 계약):
-      {updatedAtKst, us: {title, images: [...]}|null, kr: {...}|null}
+      {updatedAtKst, us: {title, images: [...], thumbs?: [...]}|null, kr: {...}|null}
     각 스냅샷 빌더는 자기 시장 키만 갱신하고 상대 시장 키는 기존 파일 값을
     보존한다. deck 이 없으면(오늘 덱 미발행) 기존 값을 유지한다 — 빈 날이
-    지난 덱 참조를 지우지 않게.
+    지난 덱 참조를 지우지 않게. 유지하는 자기 시장 덱에 thumbs 가 없으면 실제 축소본
+    파일이 있을 때만 채운다(light_card_deck).
     """
     from briefing_store import atomic_write_text
 
@@ -4105,8 +4128,11 @@ def write_cardnews_file(market_key, deck):
         "us": existing.get("us"),
         "kr": existing.get("kr"),
     }
-    if isinstance(deck, dict) and isinstance(deck.get("images"), list) and deck["images"]:
-        payload[market_key] = {"title": deck.get("title") or "", "images": deck["images"]}
+    fresh = light_card_deck(deck, ROOT)
+    if fresh:
+        payload[market_key] = fresh
+    elif isinstance(payload.get(market_key), dict):
+        payload[market_key] = light_card_deck(payload[market_key], ROOT) or payload[market_key]
     body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     atomic_write_text(CARDNEWS_JSON, body + "\n")
     atomic_write_text(CARDNEWS_JS, f"window.MIR_CARDNEWS = {body};\n")

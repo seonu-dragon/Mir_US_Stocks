@@ -45,7 +45,8 @@ def test_stale_snapshot_and_light_file_are_fixed_other_keys_kept(tmp_path):
     assert snap["stocks"] == [1, 2] and snap["updatedAtKst"] == "x"
     assert snap["cardNews"]["us"] == NEW_US and snap["cardNews"]["kr"] == NEW_KR
     light = _read(tmp_path, cr.CARDNEWS_JSON)
-    assert light["us"] == {"title": "오늘 US", "images": NEW_US["images"]}
+    assert light["us"] == {"title": "오늘 US", "images": NEW_US["images"], "thumbs": NEW_US["thumbs"]}
+    assert light["kr"] == {"title": "오늘 KR", "images": NEW_KR["images"]}  # 축소본이 없으면 싣지 않는다
     assert (tmp_path / cr.CARDNEWS_JS).read_text(encoding="utf-8").startswith("window.MIR_CARDNEWS = {")
 
 

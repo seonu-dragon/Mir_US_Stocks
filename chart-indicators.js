@@ -169,6 +169,10 @@ function stockByTicker(ticker) {
   if (index && typeof index.get === "function") {
     const hit = index.get(key);
     if (hit) return hit;
+    // 인덱스가 지금 배열(같은 참조·길이)·시장으로 만들어졌으면 선형 탐색도 같은 미스다 — 생략한다.
+    // KR 모드에서 별칭 사전의 미국 티커 수천 개가 매번 3,800행을 훑어 부팅이 4~6초 멈췄다(2026-10-21).
+    const rows = data && data.stocks;
+    if (rows && index.src === rows && index.srcLen === rows.length && index.srcMarket === marketCfg().id) return null;
   }
   return (data.stocks || []).find((row) => normalizeTickerKey(row.ticker) === key) || null;
 }

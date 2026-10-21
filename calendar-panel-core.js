@@ -110,10 +110,14 @@
     return `${m}월 ${d}일 (${WEEKDAY_KO[weekday(iso)]})`;
   }
 
+  // 포맷터 재사용(2026-10-21 성능 — toLocaleString 은 호출마다 NumberFormat 을 새로 만든다). 출력은 같다.
+  const FMT_NUM = {};
   function fmtNum(v, digits) {
     const n = Number(v);
     if (!Number.isFinite(n)) return "";
-    return n.toLocaleString("en-US", { minimumFractionDigits: digits || 0, maximumFractionDigits: digits || 0 });
+    const d = digits || 0;
+    if (typeof Intl === "undefined" || !Intl.NumberFormat) return n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+    return (FMT_NUM[d] || (FMT_NUM[d] = new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }))).format(n);
   }
 
   // ---------------------------------------------------------------------------

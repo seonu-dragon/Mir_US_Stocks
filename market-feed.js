@@ -67,6 +67,22 @@ function mfeedPayload(g) {
   return window[map[g]] || null;
 }
 
+// collect 는 전 데이터셋(내부자 수만 건·Form 144 수천 건)을 매번 다시 훑는다. 피드는 데이터셋이 하나 도착할
+// 때마다(refreshFeatureViews) 다시 그려 폰에서 렌더당 1~2초씩 반복됐다(2026-10-21 성능). 입력(전역 객체 참조·
+// 시장·오늘·스냅샷 배열)이 모두 같으면 지난 결과를 그대로 쓴다 — 전역은 통째로 바꿔 끼우지 제자리 수정하지 않는다.
+const MFEED_PAY_KEYS = ["events", "releases", "usCalendar", "earnSnap", "insider", "form144", "dart", "ir", "lockups", "movers", "econ"];
+let mfeedCollectCache = null;
+function mfeedCollect(core, market, today, pay) {
+  const stocks = (typeof data !== "undefined" && data && data.stocks) || null;
+  const len = stocks ? stocks.length : 0;
+  const c = mfeedCollectCache;
+  if (c && c.market === market && c.today === today && c.stocks === stocks && c.len === len
+    && MFEED_PAY_KEYS.every((g) => c.pay[g] === pay[g])) return c.items;
+  const items = core.collect({ market, names: mfeedNames(), today, ...pay });
+  mfeedCollectCache = { market, today, stocks, len, pay: { ...pay }, items };
+  return items;
+}
+
 function mfeedNames() {
   const out = {};
   ((typeof data !== "undefined" && data && data.stocks) || []).forEach((s) => {
@@ -142,8 +158,8 @@ function renderMarketFeed() {
 
   const today = core.marketToday(market);
   const pay = {};
-  ["events", "releases", "usCalendar", "earnSnap", "insider", "form144", "dart", "ir", "lockups", "movers", "econ"].forEach((g) => { pay[g] = mfeedPayload(g); });
-  const items = core.collect({ market, names: mfeedNames(), today, ...pay });
+  MFEED_PAY_KEYS.forEach((g) => { pay[g] = mfeedPayload(g); });
+  const items = mfeedCollect(core, market, today, pay);
   const pick = core.pickDate(items, today, mfeedState.date, mfeedHolidays(market));
   const loadingAny = Object.keys(mfeedLoading).length > 0;
 

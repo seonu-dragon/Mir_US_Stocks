@@ -1185,6 +1185,25 @@ await test("/sync/prefs PUT: 시장별 관심종목·투자 가설을 보존하�
   eq(got2.prefs.watchlistUs, undefined, "보내지 않은 필드는 만들지 않는다");
 });
 
+await test("/sync/prefs PUT: 관심 사용자 리스트·종목 메모를 정리해 보존하고, 없거나 형식이 틀리면 만들지 않는다", async () => {
+  const env = kvEnv();
+  const groups = [{ id: "g1", name: "AI", tickers: ["nvda", "MSFT"] }, { id: "g1", name: "중복", tickers: [] }, { name: "id 없음", tickers: [] }];
+  const notes = { nvda: { t: "가".repeat(250), u: 5 }, MSFT: { t: "", u: 6 }, BAD: { t: "x" }, "005930": "문자열" };
+  const body = { clientId: "client-wl", prefs: { watchlist: [], portfolio: [], alertSettings: {}, watchGroupsUs: groups, watchNotesUs: notes, watchGroupsKr: [], watchNotesKr: {} } };
+  eq((await handleFetch(req("https://w/sync/prefs", { method: "PUT", origin: ALLOWED, body }), env)).status, 200, "PUT 200");
+  const got = await (await handleFetch(req("https://w/sync/prefs?clientId=client-wl"), env)).json();
+  eq(JSON.stringify(got.prefs.watchGroupsUs), JSON.stringify([{ id: "g1", name: "AI", tickers: ["NVDA", "MSFT"] }]), "리스트 정리·보존");
+  eq(Object.keys(got.prefs.watchNotesUs).sort().join(","), "MSFT,NVDA", "깨진 메모 버림, 삭제 표식 유지");
+  eq(got.prefs.watchNotesUs.NVDA.t.length, 200, "메모 200자");
+  eq(JSON.stringify(got.prefs.watchGroupsKr), "[]", "빈 리스트 배열은 '모두 지움'으로 보존");
+  const plain = { clientId: "client-wl2", prefs: { watchlist: [], portfolio: [], alertSettings: {}, watchGroupsUs: "x", watchNotesUs: [1] } };
+  await handleFetch(req("https://w/sync/prefs", { method: "PUT", origin: ALLOWED, body: plain }), env);
+  const got2 = await (await handleFetch(req("https://w/sync/prefs?clientId=client-wl2"), env)).json();
+  eq(got2.prefs.watchGroupsUs, undefined, "배열 아닌 리스트는 버린다");
+  eq(got2.prefs.watchNotesUs, undefined, "객체 아닌 메모는 버린다");
+  eq(got2.prefs.watchGroupsKr, undefined, "보내지 않은 필드는 만들지 않는다");
+});
+
 await test("신고 자동 숨김은 건수가 아니라 서로 다른 신고자(해시 IP) 수를 센다", () => {
   eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h1" }, { clientId: "c", ipHash: "h1" }] }), 1, "같은 IP 3건 = 1명");
   eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h2" }, { clientId: "c", ipHash: "h3" }] }), 3, "서로 다른 IP 3명");

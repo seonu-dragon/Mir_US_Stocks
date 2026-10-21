@@ -1196,8 +1196,18 @@ function renderPortfolioXray() {
 
 // 관심 리스트 표(2026-10-03) — 보기 전환: 기본(현재가·오늘·1개월·52주 고점 대비) · 기술(RSI·거래량·신호) ·
 // 펀더멘털(섹터·시총·PER·EPS·실적). 리스트(전체/사용자 리스트)는 watchlist.js wlActiveTickers.
+// 2026-10-21: 머리글 클릭 정렬(기본 방향 → 반대 → 해제), 정렬이 꺼져 있을 때 손잡이 끌기(마우스·터치)·Alt+↑↓ 로
+// '내 순서' 바꾸기, 종목 메모(200자). 계산은 watchlist-core.js(MirWatchCore).
 const WL_VIEW_KEY = "mir.watch.view";
 let wlView = (() => { try { const v = window.safeStorage.get(WL_VIEW_KEY); return ["basic", "tech", "fund"].includes(v) ? v : "basic"; } catch (_) { return "basic"; } })();
+// 보기마다 따로 기억한다: { basic: {key, dir}|null, tech: …, fund: … }
+const WL_SORT_KEY = "mir.watch.sort";
+let wlSorts = (() => { try { const v = JSON.parse(window.safeStorage.get(WL_SORT_KEY) || "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch (_) { return {}; } })();
+let wlNoteOpen = "";
+let wlNoteFocus = false; // 방금 연 메모칸에만 포커스를 준다(다른 갱신으로 다시 그릴 때 포커스를 빼앗지 않게)
+// 끄는 중에는 다른 갱신(실시간 시세 등)이 표를 다시 그리지 않게 미룬다 — 들고 있는 행이 새 표에 끼어 중복됐다.
+let wlDragActive = false;
+let wlRenderDeferred = false;
 
 function wlCapLabel(item) {
   const v = Number(item.marketCapB);
@@ -1206,12 +1216,93 @@ function wlCapLabel(item) {
   return v >= 1000 ? `$${(v / 1000).toFixed(2)}T` : `$${v.toFixed(v >= 100 ? 0 : 1)}B`;
 }
 
+const WL_SIGNAL_RANK = { "강한 상승 추세": 4, "상승 추세": 3, "과매도 관찰": 2, "중립": 1 };
+
+// 보기별 열: [머리글, 클래스, 정렬 키, 기본 방향(-1 큰 값부터, 1 작은 값부터)]
+function wlColumns(view) {
+  return {
+    basic: [["현재가", "num wl-col-price", "price", -1], ["오늘", "num", "changePct", -1], ["1개월", "num", "monthChangePct", -1], ["52주 고점 대비", "num wl-col-hi", "hi", 1]],
+    tech: [["오늘", "num", "changePct", -1], ["RSI", "num", "rsi", -1], ["거래량", "num", "volumeRatio", -1], ["신호", "wl-col-sig", "signal", -1]],
+    fund: [["섹터", "wl-col-sec", "sector", 1], ["시총", "num", "cap", -1], ["PER", "num", "pe", 1], ["EPS", "num wl-col-eps", "eps", -1]],
+  }[view] || [];
+}
+
+function wlSortValue(item, key) {
+  const num = (v) => { const n = Number(v); return v == null || v === "" || !Number.isFinite(n) ? null : n; };
+  switch (key) {
+    case "name": return stockLabel(item);
+    case "price": return num(item.price);
+    case "changePct": return num(item.changePct);
+    case "monthChangePct": return num(item.monthChangePct);
+    case "hi": return num(item.newHighDistancePct);
+    case "rsi": return rsiValue(item);
+    case "volumeRatio": return num(item.volumeRatio);
+    case "signal": return WL_SIGNAL_RANK[signalFor(item)] || null;
+    case "sector": return sectorLabelKo(item.sector) || null;
+    case "cap": return num(item.marketCapB) > 0 ? num(item.marketCapB) : null;
+    case "pe": {
+      const mf = typeof mapFundamentalsFor === "function" ? (mapFundamentalsFor(item.ticker) || {}) : {};
+      const pe = num(mf.pe);
+      return pe > 0 ? pe : null;
+    }
+    case "eps": return typeof epsTtmValue === "function" ? num(epsTtmValue(item)) : null;
+    default: return null;
+  }
+}
+
+// 지금 보기의 정렬(그 보기에 없는 열 키면 정렬 없음).
+function wlCurrentSort() {
+  const s = wlSorts[wlView];
+  if (!s || !s.key) return null;
+  if (s.key !== "name" && !wlColumns(wlView).some((c) => c[2] === s.key)) return null;
+  return { key: s.key, dir: s.dir < 0 ? -1 : 1 };
+}
+
+// 화면 순서대로의 종목 행(표·레일이 같이 쓴다).
+function wlOrderedRows(tickers) {
+  const rows = tickers.map((ticker) => stockByTicker(ticker)).filter(Boolean);
+  const core = window.MirWatchCore;
+  const sort = wlCurrentSort();
+  return core && sort ? core.sortRows(rows, sort, wlSortValue) : rows;
+}
+
+// 레일 '관심' 목록 — 전체(★) 목록을 표와 같은 정렬로(rail.js 가 부른다).
+function wlRailTickers() {
+  return wlOrderedRows(watchlist.slice()).map((s) => s.ticker);
+}
+
+// 표에 보인 순서(newOrder)를 지금 리스트의 '내 순서'로 저장한다.
+function wlCommitOrder(newOrder) {
+  const core = window.MirWatchCore;
+  if (!core) return;
+  if (typeof wlActiveGroup !== "undefined" && wlActiveGroup) {
+    const list = wlGroups();
+    const g = list.find((x) => x.id === wlActiveGroup);
+    if (!g) return;
+    g.tickers = core.reorderSubset(g.tickers, newOrder);
+    wlSaveGroups(list);
+  } else {
+    watchlist = core.reorderSubset(watchlist, newOrder);
+    persistWatchlist();
+  }
+  renderBulk();
+  if (window.MirRail) window.MirRail.refresh();
+}
+
+function wlSortHeader(label, klass, key, defDir, sort) {
+  const on = sort && sort.key === key;
+  const arrow = on ? (sort.dir < 0 ? " ▼" : " ▲") : "";
+  const aria = on ? (sort.dir < 0 ? "descending" : "ascending") : "none";
+  return `<th class="${klass}${on ? " is-sorted" : ""}" scope="col" aria-sort="${aria}"><button type="button" class="wl-sort" data-wl-sort="${key}" data-wl-dir="${defDir}" title="${escapeHtml(label)} 기준으로 정렬 (한 번 더: 반대로, 세 번째: 내 순서)">${escapeHtml(label)}${arrow}</button></th>`;
+}
+
 function renderBulk() {
+  if (wlDragActive) { wlRenderDeferred = true; return; }
   renderPortfolio();
   renderCorrelationMatrix();
   if (typeof renderWatchGroups === "function") renderWatchGroups();
   const tickers = typeof wlActiveTickers === "function" ? wlActiveTickers() : watchlist.slice();
-  const rows = tickers.map((ticker) => stockByTicker(ticker)).filter(Boolean);
+  const rows = wlOrderedRows(tickers);
   renderWatchlistStats(rows);
   const sum = byId("wlSummary");
   if (sum) {
@@ -1224,13 +1315,14 @@ function renderBulk() {
     b.classList.toggle("is-active", on);
     b.setAttribute("aria-pressed", String(on));
   });
-  const cols = {
-    basic: [["현재가", "num wl-col-price"], ["오늘", "num"], ["1개월", "num"], ["52주 고점 대비", "num wl-col-hi"]],
-    tech: [["오늘", "num"], ["RSI", "num"], ["거래량", "num"], ["신호", "wl-col-sig"]],
-    fund: [["섹터", "wl-col-sec"], ["시총", "num"], ["PER", "num"], ["EPS", "num wl-col-eps"]],
-  }[wlView];
+  const cols = wlColumns(wlView);
+  const sort = wlCurrentSort();
+  // 정렬 중에는 '내 순서'를 옮길 수 없다(보이는 순서와 저장 순서가 달라서) — 손잡이를 숨기고 안내한다.
+  const canDrag = !sort && rows.length > 1 && Boolean(window.MirWatchCore);
   const head = byId("bulkHead");
-  if (head) head.innerHTML = `<tr><th class="wl-col-star"><span class="sr-only">관심</span></th><th>종목</th>${cols.map(([l, c]) => `<th class="${c}">${l}</th>`).join("")}<th class="wl-col-x"><span class="sr-only">빼기</span></th></tr>`;
+  if (head) {
+    head.innerHTML = `<tr><th class="wl-col-star"><span class="sr-only">순서·관심</span></th>${wlSortHeader("종목", "", "name", 1, sort)}${cols.map(([l, c, k, d]) => wlSortHeader(l, c, k, d, sort)).join("")}<th class="wl-col-x"><span class="sr-only">메모·빼기</span></th></tr>`;
+  }
   const cell = (item) => {
     if (wlView === "tech") {
       return `<td class="num ${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td><td class="num">${fmtRsi(item)}</td><td class="num">${Number(item.volumeRatio || 0).toFixed(1)}x</td><td class="wl-col-sig">${signalFor(item)}</td>`;
@@ -1243,21 +1335,43 @@ function renderBulk() {
     const hi = Number(item.newHighDistancePct);
     return `<td class="num wl-col-price">${marketCfg().formatPrice(Number(item.price))}</td><td class="num ${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td><td class="num ${cls(item.monthChangePct)}">${fmtPct(Number(item.monthChangePct))}</td><td class="num wl-col-hi">${Number.isFinite(hi) ? (hi <= 0.05 ? '<span class="wl-hi">신고가</span>' : `-${hi.toFixed(1)}%`) : "—"}</td>`;
   };
+  const span = cols.length + 3;
+  const noteMax = window.MirWatchCore ? window.MirWatchCore.NOTE_MAX : 200;
   const empty = wlActiveGroupEmptyText();
-  byId("bulkTable").innerHTML = rows.length ? rows.map((item) => `
-    <tr>
-      <td class="wl-col-star">${watchStarButton(item.ticker)}</td>
-      <th scope="row"><button type="button" class="ticker-link wl-name" data-ticker="${escapeHtml(item.ticker)}">${typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, stockLabel(item), 20) : ""}<span><b>${escapeHtml(stockLabel(item))}</b><small>${escapeHtml(stockSubLabel(item))}</small></span></button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}</th>
+  // 늦게 도착한 데이터(refreshFeatureViews) 등으로 다시 그려도 쓰던 메모·커서는 그대로 둔다.
+  const prevInput = byId("bulkTable").querySelector(".wl-note-form input");
+  const typing = prevInput && prevInput.closest("[data-wl-note-form]").dataset.wlNoteForm === wlNoteOpen
+    ? { v: prevInput.value, focus: document.activeElement === prevInput, s: prevInput.selectionStart, e: prevInput.selectionEnd } : null;
+  byId("bulkTable").innerHTML = rows.length ? rows.map((item) => {
+    const t = escapeHtml(item.ticker);
+    const label = escapeHtml(stockLabel(item));
+    const note = typeof wlNoteText === "function" ? wlNoteText(item.ticker) : "";
+    const editing = wlNoteOpen === item.ticker;
+    return `
+    <tr data-wl-row="${t}">
+      <td class="wl-col-star"><span class="wl-lead">${canDrag ? `<button type="button" class="wl-drag" data-wl-drag="${t}" aria-label="${label} 순서 옮기기 (Alt+위·아래 화살표)" title="끌어서 순서 바꾸기 · Alt+↑↓">⋮⋮</button>` : ""}${watchStarButton(item.ticker)}</span></td>
+      <th scope="row"><button type="button" class="ticker-link wl-name" data-ticker="${t}">${typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, stockLabel(item), 20) : ""}<span><b>${label}</b><small>${escapeHtml(stockSubLabel(item))}</small></span></button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}${note && !editing ? `<p class="wl-note-text">${escapeHtml(note)}</p>` : ""}</th>
       ${cell(item)}
-      <td class="wl-col-x"><button type="button" class="ghost wl-x" data-wl-remove="${escapeHtml(item.ticker)}" title="${typeof wlActiveGroup !== "undefined" && wlActiveGroup ? "이 리스트에서 빼기" : "관심 해제"}" aria-label="빼기">✕</button></td>
-    </tr>
-  `).join("") : `<tr><td colspan="${cols.length + 3}" class="muted">${empty}</td></tr>`;
-  byId("bulkTable").querySelectorAll(".ticker-link").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
-  byId("bulkTable").querySelectorAll("[data-wl-remove]").forEach((btn) => {
-    btn.addEventListener("click", () => wlRemoveTicker(btn.dataset.wlRemove));
-  });
+      <td class="wl-col-x"><span class="wl-row-tools"><button type="button" class="ghost wl-note-btn${note ? " has-note" : ""}" data-wl-note="${t}" aria-label="${label} 메모${note ? " 고치기" : " 쓰기"}" aria-expanded="${editing}" title="메모">✎</button><button type="button" class="ghost wl-x" data-wl-remove="${t}" title="${typeof wlActiveGroup !== "undefined" && wlActiveGroup ? "이 리스트에서 빼기" : "관심 해제"}" aria-label="빼기">✕</button></span></td>
+    </tr>${editing ? `
+    <tr class="wl-note-row"><td colspan="${span}"><form class="wl-note-form" data-wl-note-form="${t}"><input maxlength="${noteMax}" value="${escapeHtml(note)}" placeholder="${label} 메모 — 매수 이유·목표가·확인할 것 (${noteMax}자)" aria-label="${label} 메모"><span class="wl-note-count">${note.length}/${noteMax}</span><button type="submit" class="primary compact-btn">저장</button><button type="button" class="ghost compact-btn" data-wl-note-cancel="1">취소</button></form></td></tr>` : ""}`;
+  }).join("") : `<tr><td colspan="${span}" class="muted">${empty}</td></tr>`;
+  const sortHint = byId("wlSortHint");
+  if (sortHint) {
+    sortHint.hidden = !(sort && rows.length > 1);
+    sortHint.innerHTML = sort ? `정렬 중 — 순서를 바꾸려면 <button type="button" class="wl-link" data-wl-sort-off="1">내 순서로 보기</button>` : "";
+  }
+  const input = byId("bulkTable").querySelector(".wl-note-form input");
+  if (input && typing) {
+    input.value = typing.v;
+    const c = input.parentNode.querySelector(".wl-note-count");
+    if (c) c.textContent = `${typing.v.length}/${noteMax}`;
+    if (typing.focus) { input.focus(); try { input.setSelectionRange(typing.s, typing.e); } catch (_) { /* 무시 */ } }
+  } else if (input && wlNoteFocus) {
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+  wlNoteFocus = false;
   wlSetupUi();
 }
 
@@ -1265,6 +1379,47 @@ function wlActiveGroupEmptyText() {
   return typeof wlActiveGroup !== "undefined" && wlActiveGroup
     ? "이 리스트가 비어 있습니다. 위 입력칸으로 종목을 추가해 보세요."
     : "관심종목이 없습니다. 위 입력칸으로 추가하거나 종목 화면에서 ☆ 를 누르세요.";
+}
+
+function wlVisibleOrder(tbody) {
+  return [...tbody.querySelectorAll("tr[data-wl-row]")].map((tr) => tr.dataset.wlRow);
+}
+
+// 손잡이 끌기(마우스·터치·펜 공통 pointer 이벤트). 끄는 동안은 행 DOM 만 옮기고, 놓을 때 한 번 저장한다.
+function wlStartDrag(handle, ev) {
+  const tbody = byId("bulkTable");
+  const row = handle.closest("tr[data-wl-row]");
+  if (!tbody || !row) return;
+  ev.preventDefault();
+  const before = wlVisibleOrder(tbody).join(",");
+  row.classList.add("is-dragging");
+  tbody.classList.add("is-dragging");
+  wlDragActive = true;
+  wlRenderDeferred = false;
+  // 행을 DOM 에서 옮기면 포인터 캡처가 풀리므로 이동·놓기는 document 에서 받는다.
+  const onMove = (e) => {
+    const others = [...tbody.querySelectorAll("tr[data-wl-row]")].filter((tr) => tr !== row);
+    const next = others.find((tr) => { const r = tr.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+    if (next) { if (row.nextElementSibling !== next) tbody.insertBefore(row, next); } else if (others.length) {
+      const last = others[others.length - 1];
+      if (last.nextElementSibling !== row) last.after(row);
+    }
+  };
+  const onEnd = () => {
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onEnd);
+    document.removeEventListener("pointercancel", onEnd);
+    row.classList.remove("is-dragging");
+    tbody.classList.remove("is-dragging");
+    wlDragActive = false;
+    const order = wlVisibleOrder(tbody);
+    if (order.join(",") !== before) wlCommitOrder(order);
+    else if (wlRenderDeferred) renderBulk();
+    wlRenderDeferred = false;
+  };
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onEnd);
+  document.addEventListener("pointercancel", onEnd);
 }
 
 function wlSetupUi() {
@@ -1290,6 +1445,86 @@ function wlSetupUi() {
       renderBulk();
     });
   }
+  const setSort = (s) => {
+    wlSorts = { ...wlSorts, [wlView]: s };
+    try { window.safeStorage.set(WL_SORT_KEY, JSON.stringify(wlSorts)); } catch (_) { /* 무시 */ }
+    renderBulk();
+    if (window.MirRail) window.MirRail.refresh();
+  };
+  const head = byId("bulkHead");
+  if (head && !head.dataset.bound) {
+    head.dataset.bound = "1";
+    head.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-wl-sort]");
+      if (!b || !window.MirWatchCore) return;
+      setSort(window.MirWatchCore.nextSort(wlCurrentSort(), b.dataset.wlSort, Number(b.dataset.wlDir)));
+      head.querySelector(`[data-wl-sort="${b.dataset.wlSort}"]`)?.focus();
+    });
+  }
+  const hint = byId("wlSortHint");
+  if (hint && !hint.dataset.bound) {
+    hint.dataset.bound = "1";
+    hint.addEventListener("click", (e) => { if (e.target.closest("[data-wl-sort-off]")) setSort(null); });
+  }
+  const tbody = byId("bulkTable");
+  if (!tbody || tbody.dataset.bound) return;
+  // 행은 렌더마다 innerHTML 로 바뀌므로 tbody 에 한 번만 위임한다.
+  tbody.dataset.bound = "1";
+  tbody.addEventListener("click", (e) => {
+    const link = e.target.closest(".ticker-link");
+    if (link) { selectTicker(link.dataset.ticker, { openSearch: true }); return; }
+    const rm = e.target.closest("[data-wl-remove]");
+    if (rm) { wlRemoveTicker(rm.dataset.wlRemove); return; }
+    const nb = e.target.closest("[data-wl-note]");
+    if (nb) { wlNoteOpen = wlNoteOpen === nb.dataset.wlNote ? "" : nb.dataset.wlNote; wlNoteFocus = Boolean(wlNoteOpen); renderBulk(); return; }
+    if (e.target.closest("[data-wl-note-cancel]")) {
+      const t = wlNoteOpen;
+      wlNoteOpen = "";
+      renderBulk();
+      tbody.querySelector(`[data-wl-note="${t}"]`)?.focus();
+    }
+  });
+  tbody.addEventListener("submit", (e) => {
+    const f = e.target.closest("[data-wl-note-form]");
+    if (!f) return;
+    e.preventDefault();
+    const t = f.dataset.wlNoteForm;
+    wlSetNote(t, f.querySelector("input")?.value || "");
+    wlNoteOpen = "";
+    renderBulk();
+    tbody.querySelector(`[data-wl-note="${t}"]`)?.focus();
+  });
+  tbody.addEventListener("input", (e) => {
+    const f = e.target.closest("[data-wl-note-form]");
+    const c = f && f.querySelector(".wl-note-count");
+    if (c) c.textContent = `${e.target.value.length}/${e.target.maxLength}`;
+  });
+  tbody.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && e.target.closest("[data-wl-note-form]")) {
+      e.preventDefault();
+      const t = wlNoteOpen;
+      wlNoteOpen = "";
+      renderBulk();
+      tbody.querySelector(`[data-wl-note="${t}"]`)?.focus();
+      return;
+    }
+    const h = e.target.closest("[data-wl-drag]");
+    if (!h || !e.altKey || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    e.preventDefault();
+    const order = wlVisibleOrder(tbody);
+    const i = order.indexOf(h.dataset.wlDrag);
+    const j = i + (e.key === "ArrowUp" ? -1 : 1);
+    if (i < 0 || j < 0 || j >= order.length) return;
+    const t = h.dataset.wlDrag;
+    wlCommitOrder(window.MirWatchCore.moveItem(order, i, j));
+    tbody.querySelector(`[data-wl-drag="${t}"]`)?.focus();
+    if (typeof showAppToast === "function") showAppToast(`${stockLabel(t)} ${j + 1}번째로 옮겼습니다.`);
+  });
+  tbody.addEventListener("pointerdown", (e) => {
+    const h = e.target.closest("[data-wl-drag]");
+    if (!h || (e.pointerType === "mouse" && e.button !== 0)) return;
+    wlStartDrag(h, e);
+  });
 }
 
 function signalFor(item) {

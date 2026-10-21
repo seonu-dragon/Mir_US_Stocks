@@ -122,11 +122,21 @@
 
 ---
 
-## E. R2(자리만 — 다른 PR 이 준비 중)
+## E. R2 — 종목 상세(data/details·data/korea/details)를 R2 로
 
-- [ ] (메인 세션이 R2 PR 내용으로 채움: 버킷 이름, 바인딩 이름, 업로드 방식, 공개 URL/커스텀 도메인, 프런트 설정 위치)
+전부 기본 꺼짐. 자세한 절차·CORS JSON·되돌리기는 DEPLOY.md 'R2 종목 상세(details)' 절. **순서를 지킬 것**(되돌릴 땐 역순 3→2→1).
 
-출처 PR: (미정)
+- [ ] 0. 대시보드: 버킷 생성(예 `mir-details`) → 공개 액세스(운영은 커스텀 도메인, 임시 r2.dev) → CORS(`https://seonu-dragon.github.io`, GET/HEAD) →
+      API 토큰(Object Read & Write, 그 버킷만). 워커 바인딩은 **필요 없다**(업로드는 Actions 가 S3 API 로, 읽기는 공개 URL).
+- [ ] 1. GitHub Secrets `R2_ACCOUNT_ID`·`R2_ACCESS_KEY_ID`·`R2_SECRET_ACCESS_KEY`·`R2_BUCKET` + 변수 `MIR_R2_DETAILS=true`
+      → `gh workflow run deploy-pages.yml`(첫 실행이 곧 전체 업로드, rclone copy --checksum). 요약에 `R2 details 동기화: 성공` 확인,
+      `curl.exe -sI -H "Origin: https://seonu-dragon.github.io" https://<공개 호스트>/data/details/NVDA.json` → 200 + allow-origin.
+- [ ] 2. `details-source.js` 의 `detailsBase` 에 공개 호스트(끝 슬래시 없이) → stamp → PR/머지. 워커 `worker/yahoo-proxy.js` 의
+      `MIR_DETAILS_BASE` 도 같은 값으로 → 붙여넣기 배포(A 와 같은 방식). R2 실패 시 프런트는 Pages 로 1회 폴백.
+- [ ] 3. 변수 `MIR_R2_DETAILS_SKIP_PAGES=true` → 다음 배포부터 아티팩트에서 details 제외(그 run 의 업로드가 성공했을 때만).
+- 되돌리기: `gh variable delete MIR_R2_DETAILS_SKIP_PAGES` → 배포 1회(Pages 에 다시 실림) → 필요하면 `detailsBase`·`MIR_DETAILS_BASE` 비우기 → `MIR_R2_DETAILS` 삭제.
+
+출처 PR: #338
 
 ---
 

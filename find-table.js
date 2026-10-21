@@ -71,10 +71,17 @@ function ftSet(k, v) { try { window.localStorage.setItem(k, v); } catch (_) { /*
 
 function ftView() { return ftGet(FT_VIEW_KEY) === "card" ? "card" : "table"; }
 
+// lazy 열(추정치·의견·배당 성장·옵션)은 그 데이터가 이 시장에서 꺼져 있으면(features === false) 쓰지 않는다.
+function ftColAllowed(c) {
+  return Boolean(c) && (!c.lazy || (typeof xmEnabled === "function" && xmEnabled(c.key)));
+}
+
 function ftColumns() {
   const core = ftCore();
   if (!core) return [];
-  return core.sanitizeColumns(core.parseSaved(ftGet(`mir.find.cols.${ftMarket()}`)), ftMarket());
+  const list = core.sanitizeColumns(core.parseSaved(ftGet(`mir.find.cols.${ftMarket()}`)), ftMarket())
+    .filter((k) => ftColAllowed(core.columnByKey(k)));
+  return list.length ? list : core.defaultColumns(ftMarket());
 }
 
 function ftSaveColumns(list) { ftSet(`mir.find.cols.${ftMarket()}`, JSON.stringify(list)); }
@@ -140,7 +147,13 @@ function ftCell(item, key) {
     case "epsTtm": { const v = n(item.epsTtm); return v == null ? ["—", ""] : [ftDash(fmtEpsValue(v)), ""]; }
     case "newHigh": { const v = n(item.newHighDistancePct); return v == null ? ["—", ""] : [v <= 0.2 ? "신고가" : `−${v.toFixed(1)}%`, ""]; }
     case "sector": return [escapeHtml([ftSector(item.sector), item.industry].filter(Boolean).join(" · ") || "—"), "ft-text"];
-    default: return ["—", ""];
+    default: {
+      if (typeof XM_BY_KEY === "object" && XM_BY_KEY[key]) {
+        const v = extraMetricValue(item, key);
+        return v == null ? ["—", ""] : [escapeHtml(xmFormatMetric(v, key)), xmMetricClass(v, key)];
+      }
+      return ["—", ""];
+    }
   }
 }
 
@@ -178,6 +191,9 @@ function renderFindTable(rows, metric) {
   if (!wrap || !core) return;
   if (ftList) { ftRenderList(wrap, core); return; }
   const cols = ftColumns().map((k) => core.columnByKey(k)).filter(Boolean);
+  // 켜 둔 lazy 열의 데이터는 표를 그릴 때 처음 받는다 — 오면 같은 결과로 다시 그린다.
+  const lazyCols = cols.filter((c) => c.lazy).map((c) => c.key);
+  if (lazyCols.length && typeof xmEnsure === "function") xmEnsure(lazyCols).then((started) => { if (started) ftRerender(); });
   if (!ftLast.rows.length) {
     wrap.innerHTML = `<p class="ft-empty muted">조건에 맞는 종목이 없습니다. 고급 필터를 완화해 보세요.</p>`;
     return;
@@ -536,7 +552,7 @@ function ftRenderPanel() {
   const core = ftCore();
   if (!panel || !core) return;
   const cur = ftColumns();
-  const avail = core.availableColumns(ftMarket());
+  const avail = core.availableColumns(ftMarket()).filter(ftColAllowed);
   const ordered = cur.map((k) => core.columnByKey(k)).concat(avail.filter((c) => !cur.includes(c.key)));
   panel.innerHTML = `
     <div class="ft-cols-head"><strong>표에 보일 열</strong><button type="button" class="ia-link" data-ft-reset>기본값</button></div>

@@ -129,6 +129,10 @@ jobs:
         run: node scripts/tests/test_market_indicators_core.mjs
       - name: VIX term · analyst revisions · dividend growth core tests
         run: node scripts/tests/test_new_data_cores.mjs
+      # 수식 스크리너·찾기 표·클래식 스크리너의 추정치·의견·배당 성장·옵션 필드(formula-screener.js XM_METRICS):
+      # 시장별 표시(국내·features false 숨김)·결측 null·lazy 받기·프리셋 판정.
+      - name: Screener extra fields tests
+        run: node scripts/tests/test_screen_extra_fields.mjs
       # 통합 캘린더 순수 계산(calendar-panel-core.js): 날짜·주/월 격자·데이터셋 정규화·칩/관심종목 필터·날짜별 묶음.
       - name: Calendar panel core tests
         run: node scripts/tests/test_calendar_panel_core.mjs

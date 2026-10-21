@@ -47,12 +47,12 @@ test("이름·설명에 평가어가 없다", () => {
   assert.deepEqual(core.evaluativeWordsIn("저평가 우량주"), ["우량", "저평가"]);
 });
 
-test("시장마다 10~14개, 모든 수식이 수식 스크리너 필드로 컴파일된다", () => {
+test("시장마다 10~16개, 모든 수식이 수식 스크리너 필드로 컴파일된다", () => {
   for (const m of ["us", "kr"]) {
     const list = core.forMarket(m, FX_KEYS, fcore);
     const all = core.FILTERS.filter((f) => f.markets.includes(m));
     assert.equal(list.length, all.length, `${m}: 컴파일 실패한 정의가 있다 (${all.filter((f) => !list.some((x) => x.id === f.id)).map((f) => f.id)})`);
-    assert.ok(list.length >= 10 && list.length <= 14, `${m}: ${list.length}개`);
+    assert.ok(list.length >= 10 && list.length <= 16, `${m}: ${list.length}개`);
     list.forEach((f) => assert.ok(f.compiled && f.compiled.ok && f.compiled.type === "bool", f.id));
   }
   // 정의 필드는 전부 수식 스크리너 필드다.

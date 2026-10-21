@@ -243,6 +243,11 @@ function renderNamedFilters() {
   }
   nfBind();
   const list = nfList();
+  // 추정치·의견·배당 성장 필드(lazy, US)는 이 시장 필터가 쓸 때만 받는다 — 오면 개수를 다시 센다.
+  if (typeof xmEnsure === "function") {
+    const used = [...new Set(list.flatMap((f) => (f.live ? f.live.fields : [])))];
+    xmEnsure(used).then((started) => { if (started) scheduleFeatureViewRefresh(); });
+  }
   if (nfPendingId != null) {
     const want = core.sanitizeId(nfPendingId);
     nfPendingId = null;

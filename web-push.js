@@ -367,6 +367,8 @@ function renderPushAlerts() {
       <label class="watch-alert-toggle-only">${chk("pushUseLevel", p.kinds.level)}<span>가격 도달(아래 직접 입력 + 가설·매매일지 목표가·손절가 ${autoCount}개)</span></label>
       <label class="watch-alert-toggle-only">${chk("pushUseEarnings", p.kinds.earnings)}<span>실적 발표 하루 전(D-1)</span></label>
       <label class="watch-alert-toggle-only">${chk("pushUseDisclosure", p.kinds.disclosure)}<span>새 공시(미국 8-K · 국내 DART 주요 공시)</span></label>
+      <label>${chk("pushUseRating", p.kinds.rating)}<span>미국 애널리스트 의견 상향·하향 · 목표가 ±</span><input id="pushTargetPct" type="number" min="5" max="100" step="1" value="${p.targetPct}" aria-label="목표가 변경 기준 퍼센트"${dis}><em>%</em></label>
+      <label>${chk("pushUseEstimate", p.kinds.estimate)}<span>미국 EPS 추정치 7일 ±</span><input id="pushEstPct" type="number" min="1" max="50" step="0.5" value="${p.estPct}" aria-label="EPS 추정치 변화 기준 퍼센트"${dis}><em>%</em></label>
       <div class="push-alert-digest"><label class="watch-alert-toggle-only">${chk("pushUseDigest", p.kinds.digest)}<span>하루 한 번 '오늘 내 주식은' 요약</span></label>
         <span class="push-alert-markets"><label>${chk("pushDigestUs", p.digestMarkets.includes("us"))}<span>미국 07:30</span></label><label>${chk("pushDigestKr", p.digestMarkets.includes("kr"))}<span>국내 20:00</span></label></span></div>
       <label class="watch-alert-toggle-only">${chk("pushUseSync", p.useSync)}<span>클라우드 동기화 목록 자동 사용(다른 기기에서 바꾼 관심·보유도 반영)</span></label>
@@ -394,8 +396,12 @@ function mirPushReadPrefsFromUi(prev) {
       earnings: Boolean(v("pushUseEarnings") && v("pushUseEarnings").checked),
       disclosure: Boolean(v("pushUseDisclosure") && v("pushUseDisclosure").checked),
       digest: Boolean(v("pushUseDigest") && v("pushUseDigest").checked),
+      rating: Boolean(v("pushUseRating") && v("pushUseRating").checked),
+      estimate: Boolean(v("pushUseEstimate") && v("pushUseEstimate").checked),
     },
     movePct: v("pushMovePct") ? v("pushMovePct").value : prev.movePct,
+    targetPct: v("pushTargetPct") ? v("pushTargetPct").value : prev.targetPct,
+    estPct: v("pushEstPct") ? v("pushEstPct").value : prev.estPct,
     maxPerDay: v("pushMaxPerDay") ? v("pushMaxPerDay").value : prev.maxPerDay,
     digestMarkets: markets,
     useSync: Boolean(v("pushUseSync") && v("pushUseSync").checked),

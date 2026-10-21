@@ -22,6 +22,7 @@
     { id: "fin", label: "재무·밸류" },
     { id: "div", label: "배당·지분" },
     { id: "risk", label: "재무 위험 점검" },
+    { id: "est", label: "추정치·의견" },
   ];
 
   // markets: 이 정의를 쓰는 시장. 같은 id 를 두 시장이 쓰면 딥링크가 시장을 바꿔도 이어진다.
@@ -85,6 +86,16 @@
     { id: "risk-warn0", group: "risk", markets: ["us", "kr"], name: "재무 위험 경고 0개(6항목 이상 판정)",
       formula: "riskWarnings == 0 and riskChecked >= 6",
       rule: "재무 위험 점검(F-Score·Altman Z·희석·이자보상·이익의 질·부채 급증 등)에서 판정 가능한 항목이 6개 이상이고 경고가 하나도 없는 종목입니다." },
+    // ---- 추정치·의견(US, 야후 earningsTrend·upgradeDowngradeHistory 시총 상위 800 · 배당 기록 — 2026-10-21) ----
+    { id: "eps-rev-up-div10", group: "est", markets: ["us"], name: "EPS 추정치 30일 상향 + 배당 연속 증가 10년 이상",
+      formula: "epsRev30 > 0 and divGrowthYears >= 10",
+      rule: "올해 회계연도 컨센서스 EPS 가 30일 전보다 높고, 연간 배당이 마지막 완료 연도까지 10년 이상 연속으로 늘어난 종목입니다." },
+    { id: "rating-up-2", group: "est", markets: ["us"], name: "30일 의견 상향 2건 이상",
+      formula: "ratingUp30 >= 2",
+      rule: "최근 30일 동안 증권사 투자의견 상향이 2건 이상 나온 종목입니다(같은 증권사의 목표가만 바꾼 유지 의견은 세지 않습니다)." },
+    { id: "eps-up3-down0", group: "est", markets: ["us"], name: "30일 추정치 상향 3명 이상 + 하향 0명",
+      formula: "epsUp30 >= 3 and epsDown30 == 0",
+      rule: "최근 30일 동안 올해 회계연도 EPS 추정치를 올린 애널리스트가 3명 이상이고 내린 애널리스트는 없는 종목입니다." },
   ];
   const BY_ID = Object.fromEntries(FILTERS.map((f) => [f.id, f]));
   const ID_RE = /^[a-z0-9][a-z0-9-]{0,40}$/;

@@ -139,6 +139,49 @@ test("배당 성장 기록·표기", () => {
   assert.equal(dg.sortValue(ko), 39);
 });
 
+// ----- 스크리너 필드(ratingIndex · screenMetrics) -----
+test("스크리너 필드: 30일 창·상향/하향 수·목표가 중앙값·결측은 null", () => {
+  const EST = {
+    cols: ["period", "end", "cur", "d7", "d30", "d60", "d90", "up7", "up30", "dn7", "dn30", "n"],
+    tickers: {
+      AAA: { p: [["0q", "2026-12-31", 1, 1, 1, 1, 1, 0, 0, 0, 0, 9], ["0y", "2026-12-31", 5.5, 5.4, 5.0, 4.9, 4.4, 1, 4, 0, 1, 20]] },
+      BBB: { p: [["0y", "2026-12-31", 0.5, 0.5, 0.02, 0.02, 0.02, 0, 0, 0, 0, 3]] },
+    },
+  };
+  const RAT = {
+    asOf: "2026-10-21", windowDays: 30,
+    cols: ["t", "d", "firm", "act", "from", "to", "pt", "ptPrev", "ptAct"],
+    rows: [
+      ["AAA", "2026-10-20", "F1", "up", "Hold", "Buy", 120, 100, "Raises"],
+      ["AAA", "2026-10-10", "F2", "up", "Sell", "Hold", 90, 100, "Lowers"],
+      ["AAA", "2026-10-01", "F3", "main", "Buy", "Buy", 130, 100, "Raises"],
+      ["AAA", "2026-09-01", "F4", "up", "Hold", "Buy", 200, 100, "Raises"],   // 30일 창 밖
+      ["CCC", "2026-10-15", "F5", "down", "Buy", "Hold", null, null, ""],
+    ],
+  };
+  const idx = ar.ratingIndex(RAT);
+  const a = ar.screenMetrics(EST, idx, "AAA");
+  assert.equal(Math.round(a.epsRev30 * 100) / 100, 10);           // 5.5 / 5.0 − 1
+  assert.equal(Math.round(a.epsRev90 * 100) / 100, 25);
+  assert.equal(a.epsUp30, 4);
+  assert.equal(a.epsDown30, 1);
+  assert.equal(a.ratingUp30, 2);                                    // 창 밖 1건 제외
+  assert.equal(a.ratingDown30, 0);
+  assert.equal(a.targetChg30, 20);                                  // [+20, −10, +30] 중앙값
+  const b = ar.screenMetrics(EST, idx, "BBB");
+  assert.equal(b.epsRev30, null, "기준 |0.05| 미만은 비율 없음");
+  assert.equal(b.ratingUp30, 0, "수집 대상인데 의견 변경이 없으면 0");
+  assert.equal(b.targetChg30, null);
+  const c = ar.screenMetrics(EST, idx, "CCC");
+  assert.equal(c.epsRev30, null);
+  assert.equal(c.ratingDown30, 1);
+  assert.equal(c.targetChg30, null, "목표가 없는 행은 중앙값에서 뺀다");
+  const z = ar.screenMetrics(EST, idx, "ZZZ");
+  Object.values(z).forEach((v) => assert.equal(v, null, "수집 밖 종목은 전부 null(0 아님)"));
+  const noRat = ar.screenMetrics(EST, null, "AAA");
+  assert.equal(noRat.ratingUp30, null, "의견 파일이 없으면 0 이 아니라 null");
+});
+
 if (failures.length) {
   console.error(`new-data-cores: ${passed} passed, ${failures.length} failed`);
   failures.forEach((f) => console.error(`  FAIL ${f}`));

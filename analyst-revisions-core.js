@@ -109,6 +109,66 @@
     return out;
   }
 
+  // ----- 스크리너 필드(수식 스크리너·찾기 표·클래식 스크리너·필터 목록, 2026-10-21) -----
+  // 의견 변경 행을 종목별로 한 번 묶는다. 창은 asOf 기준 days 일(기본 payload.windowDays 또는 30).
+  // 반환 { asOf, byTicker: { T: { up, down, init, pt: [목표가 변화율 %...] } } }
+  function ratingIndex(payload, opts) {
+    const o = opts || {};
+    const out = { asOf: (payload && payload.asOf) || null, byTicker: {} };
+    const rows = feedRows(payload);
+    const days = o.days || (payload && payload.windowDays) || 30;
+    let floor = "";
+    if (out.asOf && /^\d{4}-\d{2}-\d{2}$/.test(out.asOf)) {
+      const d = new Date(`${out.asOf}T00:00:00Z`);
+      floor = new Date(d.getTime() - days * 86400000).toISOString().slice(0, 10);
+    }
+    rows.forEach((r) => {
+      if (!r.t || (floor && (!r.d || r.d < floor))) return;
+      const rec = out.byTicker[r.t] || (out.byTicker[r.t] = { up: 0, down: 0, init: 0, pt: [] });
+      if (r.act === "up") rec.up += 1;
+      else if (r.act === "down") rec.down += 1;
+      else if (r.act === "init") rec.init += 1;
+      if (r.ptChg != null) rec.pt.push(r.ptChg);
+    });
+    return out;
+  }
+
+  function median(list) {
+    const a = (list || []).filter((v) => Number.isFinite(v)).sort((x, y) => x - y);
+    if (!a.length) return null;
+    const m = Math.floor(a.length / 2);
+    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+  }
+
+  // 한 종목의 스크리너 값. 값이 없으면 null(0 으로 채우지 않는다).
+  //   epsRev7/30/90  올해 회계연도(0y) 컨센서스 EPS N일 변화율(%) — changePct 규칙(기준 |0.05| 미만은 null)
+  //   epsUp30/epsDown30  30일 동안 그 추정치를 올린/내린 애널리스트 수
+  //   ratingUp30/ratingDown30  30일 의견 상향/하향 건수 — 수집 대상(추정치 파일에 있거나 의견 행이 있는 종목)만 0 을 갖는다
+  //   targetChg30  30일 목표가 변경(이전 → 새 값) 변화율의 중앙값(%)
+  function screenMetrics(estPayload, ratingIdx, ticker) {
+    const out = { epsRev7: null, epsRev30: null, epsRev90: null, epsUp30: null, epsDown30: null, ratingUp30: null, ratingDown30: null, targetChg30: null };
+    if (!ticker) return out;
+    const row = estPayload ? estimateRows(estPayload, ticker).find((r) => r.period === "0y") : null;
+    if (row) {
+      out.epsRev7 = row.chg7;
+      out.epsRev30 = row.chg30;
+      out.epsRev90 = row.chg90;
+      out.epsUp30 = num(row.up30);
+      out.epsDown30 = num(row.dn30);
+    }
+    const scanned = Boolean(estPayload && estPayload.tickers && estPayload.tickers[ticker]);
+    const rec = ratingIdx && ratingIdx.byTicker ? ratingIdx.byTicker[ticker] : null;
+    if (ratingIdx && (rec || scanned)) {
+      out.ratingUp30 = rec ? rec.up : 0;
+      out.ratingDown30 = rec ? rec.down : 0;
+    }
+    if (rec && rec.pt.length) {
+      const m = median(rec.pt);
+      out.targetChg30 = m == null ? null : Math.round(m * 100) / 100;
+    }
+    return out;
+  }
+
   function actionLabel(act) { return ACTION_LABEL[act] || act || "—"; }
 
   // '매수 → 보유' / '비중확대 유지' / '신규 매수'
@@ -127,7 +187,7 @@
     return `${n > 0 ? "+" : ""}${n.toFixed(digits == null ? 1 : digits)}%`;
   }
 
-  const api = { PERIOD_LABEL, ACTION_LABEL, KIND_LABEL, num, changePct, estimateRows, tickerRatings, revisionLeaders, feedRows, filterFeed, kindCounts, actionLabel, gradeText, fmtPct };
+  const api = { PERIOD_LABEL, ACTION_LABEL, KIND_LABEL, num, changePct, estimateRows, tickerRatings, revisionLeaders, feedRows, filterFeed, kindCounts, ratingIndex, screenMetrics, actionLabel, gradeText, fmtPct };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirAnalystRevCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

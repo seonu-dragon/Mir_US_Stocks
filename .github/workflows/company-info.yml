@@ -13,6 +13,8 @@ name: Company profile & price targets
 #   전체 채우기는 몇 주에 걸친다(dispatch 로 max_docs 를 늘려 앞당길 수 있다). 수요일 profile 잡(DART 2,500콜)과
 #   날을 나눴다. Gemini 는 쓰지 않는다(2026-10-02) — 이 단계에 GEMINI_API_KEY 를 넘기지 않아서, 규칙으로
 #   애매한 문장(보류)은 편입하지 않는다. 무료 한도(모델별 하루 ~20건)는 브리핑 몫으로 남긴다.
+# - dividends 잡(수요일): scripts/build_dividend_growth.py — 미국 시총 상위 1,000 의 야후 배당 기록(1985~, 키 없음,
+#   ~6분)으로 연속 배당 증가·연속 지급·5/10년 연평균(data/dividend_growth.js). 주주환원 카드·배당 랭킹 '연속 증가' 열.
 # 네 잡 모두 바뀐 파일만 다시 쓴다(data/company_profile/, data/us_price_targets/, data/logos/, data/korea/themes/).
 
 on:
@@ -24,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: "profile | targets | logos | themes | all"
+        description: "profile | targets | logos | themes | dividends | all"
         default: "all"
       theme_max_docs:
         description: "KR 테마 — 이번 실행에 읽을 사업보고서 원문 상한(처음 전체 채우기는 2800, DART 호출 여유가 있는 날에)"
@@ -213,4 +215,40 @@ jobs:
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
           MSG="[Mir Actions 실패] ${{ github.workflow }} (logos) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
+  dividends:
+    if: ${{ (github.event.schedule || inputs.cron) == '17 1 * * 3' || (github.event_name == 'workflow_dispatch' && inputs.cron == '' && (inputs.job == 'dividends' || inputs.job == 'all')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Dividend growth history (Yahoo)
+        run: python -u scripts/build_dividend_growth.py --top 1000 --push
+
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group dividend-growth
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} (dividends) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

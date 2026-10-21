@@ -7,7 +7,7 @@
 //   · 외국인 비율(foreignPct)은 국내 MAP_FUNDAMENTALS 에만 있다.
 //   · PER·PBR·ROE·배당수익률은 MAP_FUNDAMENTALS(부팅 몇 초 뒤 도착) — 값이 없으면 화면은 "—".
 //   · 주당배당금·배당성향: 국내는 MAP_FUNDAMENTALS(dps·payoutRatio), 미국은 US_STOCK_CALENDAR
-//     (시총 상위 ~200종목의 divRate·payout)에만 있다. 연속 배당 연수는 두 시장 모두 소스가 없어 열을 두지 않는다.
+//     (시총 상위 ~200종목의 divRate·payout)에만 있다. 연속 배당 증가 연수는 미국만 DIVIDEND_GROWTH(build_dividend_growth.py)로 find-table.js 가 열을 붙인다(국내는 소스 없음).
 //
 // 아래쪽 '목록' 로직(배당 랭킹·신규상장·관리/경보)도 여기 둔다 — 전부 입력 객체만 보고 계산한다.
 (function (root) {

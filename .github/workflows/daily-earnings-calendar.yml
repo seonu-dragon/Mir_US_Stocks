@@ -48,7 +48,15 @@ jobs:
         continue-on-error: true
         run: python scripts/build_earnings_move_compare.py --push
       - name: Data freshness gate
+        if: ${{ !cancelled() }}
         run: python scripts/check_data_freshness.py --group earnings-move
+      # 애널리스트 의견 변경(30일) + 종목별 EPS 추정치 7·30·60·90일 변화(야후 quoteSummary, 크럼 — 키 없음, ~8분).
+      - name: US analyst revisions (Yahoo)
+        if: ${{ !cancelled() }}
+        run: python -u scripts/build_us_analyst_revisions.py --top 800 --push
+      - name: Analyst revisions freshness gate
+        if: ${{ !cancelled() }}
+        run: python scripts/check_data_freshness.py --group analyst-revisions
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

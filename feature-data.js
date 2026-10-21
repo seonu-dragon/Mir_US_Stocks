@@ -204,6 +204,17 @@ const FEATURE_DATA = {
   // 국내 ETF 구성(KRX ETF PDF, build_kr_etf_holdings.py) — 시총 상위 ETF 의 상위 25 구성·섹터 분포(한 파일).
   // 내 투자 › 보유의 ETF 룩스루(lookthrough.js)가 보유 ETF 가 있을 때만 받는다(lazy).
   krEtfHoldings: { global: "KR_ETF_HOLDINGS", path: "data/korea/etf_holdings.js", krOnly: true, lazy: true },
+  // VIX 기간구조(build_vix_term_structure.py, Cboe 현물 지수 + VX 선물 정산가, ~14KB). 미국 변동성이지만 위험자산 공통
+  // 배경이라 두 시장 모두 — 시그널 탭 'VIX 기간구조' 위젯을 처음 그릴 때만 받는다(lazy, vix-term.js).
+  vixTerm: { global: "VIX_TERM_STRUCTURE", path: "data/vix_term_structure.js", feature: "vixTerm", lazy: true },
+  // 미국 애널리스트 의견 변경 30일 피드(build_us_analyst_revisions.py, 야후). 시그널 탭 위젯을 처음 그릴 때만(lazy).
+  usRatingChanges: { global: "US_RATING_CHANGES", path: "data/us_rating_changes.js", feature: "analystRevisions", usOnly: true, lazy: true },
+  // 같은 빌더의 종목별 컨센서스 EPS 7·30·60·90일 전 값 + 상향·하향 애널리스트 수 + 최근 의견 8건. 종목 상세 '실적 추정치
+  // 변화' 카드와 시그널 탭 'EPS 추정치 변화' 위젯이 처음 필요할 때만(lazy, analyst-revisions.js).
+  usEstimateRevisions: { global: "US_ESTIMATE_REVISIONS", path: "data/us_estimate_revisions.js", feature: "analystRevisions", usOnly: true, lazy: true },
+  // 배당 성장 이력(build_dividend_growth.py, 야후 배당 1985~ — 연속 증가·연속 지급·5/10년 연평균). 미국 전용(국내를 뺀
+  // 이유는 빌더 주석). 주주환원 카드·찾기 › 배당 랭킹이 처음 그릴 때만(lazy).
+  dividendGrowth: { global: "DIVIDEND_GROWTH", path: "data/dividend_growth.js", feature: "dividendGrowth", usOnly: true, lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 잠시(FEATURE_DATA_RETRY_MS) 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다

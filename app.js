@@ -5597,6 +5597,9 @@ function estimateChange(current, baseline, kind) {
 function renderEstimateRevision(item) {
   const box = byId("estimateRevisionCard");
   if (!box || !item) return;
+  // 미국: 서버가 모은 컨센서스 이력(7·30·60·90일 전 + 상향·하향 수, analyst-revisions.js)이 있으면 그걸 그린다.
+  // 없는 종목·국내·도착 전에는 아래의 브라우저 기록 카드.
+  if (typeof renderEstimateRevisionServer === "function" && renderEstimateRevisionServer(item)) return;
   const rows = recordEstimateSnapshot(item);
   const current = rows[rows.length - 1] || currentEstimateSnapshot(item);
   const week = estimateBaseline(rows, 7);
@@ -7090,6 +7093,15 @@ function dataTrustSources() {
   // 2026-08-06 신규 무키 피드 — 등록하지 않으면 신뢰도 센터의 감시 사각지대가 된다.
   rows.push(source("COT 포지셔닝", "CFTC", window.COT_POSITIONING, ["markets"], 336, "매주 금요일 발표", "cotPositioning"));
   rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
+  // 2026-10-21 신규 무키 피드. VIX 기간구조는 평일 07:30·16:10 KST(시장지표 워크플로우) — 주말 감안 4일(96시간).
+  if (cfg.features?.vixTerm !== false) rows.push(source("VIX 기간구조", "Cboe 지수 · Cboe 선물(VX 정산가)", window.VIX_TERM_STRUCTURE, ["futures"], 96, "평일 07:30 · 16:10", "vixTerm"));
+  // 애널리스트 의견 변경·EPS 추정치 — 매일 06:30 KST(실적 캘린더 워크플로우). 연휴 감안 4일.
+  if (cfg.id === "us" && cfg.features?.analystRevisions !== false) {
+    rows.push(source("애널리스트 의견 변경", "Yahoo Finance", window.US_RATING_CHANGES, ["rows"], 96, "매일 06:30", "usRatingChanges", "", true));
+    rows.push(source("EPS 추정치 변화", "Yahoo Finance", window.US_ESTIMATE_REVISIONS, ["tickers"], 96, "매일 06:30", "usEstimateRevisions"));
+  }
+  // 배당 성장 이력 — 주 1회(수요일 기업개요 워크플로우). 10일(240시간).
+  if (cfg.id === "us" && cfg.features?.dividendGrowth !== false) rows.push(source("배당 성장 이력", "Yahoo Finance 배당 기록(1985~)", window.DIVIDEND_GROWTH, ["tickers"], 240, "매주 수요일", "dividendGrowth"));
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
   // 조용한 날은 0종목이 정상이라 allowEmpty.
   if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · AI 자동 요약" : "SEC 8-K · 뉴스 헤드라인 · AI 자동 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));

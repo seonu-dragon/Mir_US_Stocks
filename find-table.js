@@ -271,7 +271,18 @@ function ftRenderDividend(wrap, core) {
     return;
   }
   const outlierTip = window.MirFundSanity ? window.MirFundSanity.describe("divYield") : "";
-  const head = `<th scope="col" class="ft-name">종목</th><th scope="col" class="num">현재가</th><th scope="col" class="num is-sorted" aria-sort="descending">배당수익률 ▼</th><th scope="col" class="num">주당배당금</th><th scope="col" class="num">배당성향</th><th scope="col" class="num">PER</th><th scope="col" class="num">시가총액</th><th scope="col">섹터</th>`;
+  // 연속 배당 증가(DIVIDEND_GROWTH, 미국 전용 lazy) — 받기 전·국내에는 열이 없다.
+  const cfgFeats = (typeof marketCfg === "function" && marketCfg().features) || {};
+  const dgOn = ftMarket() !== "kr" && cfgFeats.dividendGrowth !== false;
+  if (dgOn && !window.DIVIDEND_GROWTH && typeof ensureFeatureData === "function") {
+    ensureFeatureData("dividendGrowth").then((ok) => { if (ok && typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); });
+  }
+  const dgCore = dgOn && window.DIVIDEND_GROWTH ? window.MirDivGrowthCore : null;
+  const dgCol = (item) => {
+    const rec = dgCore.record(window.DIVIDEND_GROWTH, item.ticker);
+    return `<td class="num"${rec ? ` title="${escapeHtml(dgCore.subText(rec))}"` : ""}>${rec ? escapeHtml(dgCore.streakText(rec)) : "—"}</td>`;
+  };
+  const head = `<th scope="col" class="ft-name">종목</th><th scope="col" class="num">현재가</th><th scope="col" class="num is-sorted" aria-sort="descending">배당수익률 ▼</th><th scope="col" class="num">주당배당금</th><th scope="col" class="num">배당성향</th>${dgCore ? '<th scope="col" class="num">연속 증가</th>' : ""}<th scope="col" class="num">PER</th><th scope="col" class="num">시가총액</th><th scope="col">섹터</th>`;
   const body = rows.map((r, i) => {
     const item = r.item;
     const pe = Number(metricValue(item, "pe"));
@@ -283,6 +294,7 @@ function ftRenderDividend(wrap, core) {
       <td class="num"${r.divSrc ? ` title="${escapeHtml(FT_DIV_SRC_LABEL[r.divSrc] || "")}"` : ""}>${r.divYield.toFixed(2)}%${flag}</td>
       <td class="num">${ftFmtDps(r.dps)}</td>
       <td class="num">${payHtml}</td>
+      ${dgCore ? dgCol(item) : ""}
       <td class="num">${Number.isFinite(pe) && pe > 0 ? pe.toFixed(1) : "—"}</td>
       <td class="num">${ftDash(fmtBillions(item.marketCapB))}</td>
       <td class="ft-text">${escapeHtml([ftSector(item.sector), item.industry].filter(Boolean).join(" · ") || "—")}</td>

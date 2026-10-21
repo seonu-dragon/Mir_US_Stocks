@@ -5650,82 +5650,9 @@ footer {
   }
 }
 
-/* 관심종목 바(지수 차트 아래)는 요약밴드로 이동 → 숨김 */
-.watchlist-bar {
-  display: none;
-  margin-bottom: var(--space-3);
-  padding: 10px 12px;
-  border-radius: var(--r-lg);
-  background: var(--panel);
-}
-
-.watchlist-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: var(--space-2);
-}
-
-.watchlist-head strong { font-size: var(--fs-body); }
-.watchlist-head .muted { margin-left: 6px; font-size: var(--fs-sub); }
-
-.watchlist-head-actions {
-  display: flex;
-  gap: 6px;
-}
-
 .compact-btn {
   padding: 4px 8px;
   font-size: var(--fs-cap);
-}
-
-.watchlist-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.watch-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--chip-border);
-  border-radius: var(--r-pill);
-  background: var(--chip-bg);
-  color: var(--text);
-  font-size: var(--fs-cap);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.watch-chip-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.watch-chip em {
-  font-style: normal;
-  font-size: var(--fs-cap);
-  font-weight: 600;
-}
-
-.watch-chip-remove {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 2px;
-  font-size: var(--fs-body);
-  line-height: 1;
 }
 
 .watch-star {
@@ -6354,7 +6281,6 @@ html[data-theme="dark"] .earn-star { color: #fbbf24; }
 
 @media (max-width: 640px) {
   .watchlist-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .watchlist-head { flex-direction: column; align-items: flex-start; }
 }
 
 .backtest-panel {
@@ -10454,7 +10380,6 @@ body.ai-mode-active .market-summary,
 body.ai-mode-active .index-strip,
 body.ai-mode-active .index-visuals,
 body.ai-mode-active .summary-band,
-body.ai-mode-active .watchlist-bar,
 body.ai-mode-active .daily-action-board,
 body.ai-mode-active .tabs-scroll-wrap,
 body.ai-mode-active .panel:not(#tab-ai-chat),
@@ -13074,7 +12999,6 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 }
 .ia-today-news-card img { display: block; width: 100%; height: auto; }
 #tab-today .daily-action-board { margin: 16px 0 0; }
-#tab-today .watchlist-bar { margin: 0 0 12px; }
 
 /* --- 시장 탭: 트리맵 툴바 --- */
 .ia-heatmap-bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
@@ -13377,7 +13301,6 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .score-help-button,
   .session-menu-trigger,
   .watch-star,
-  .watch-chip-remove,
   .screener-delta-chip,
   .hl-chip,
   .earn-hl-chip,
@@ -13397,7 +13320,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
     align-items: center;
     justify-content: center;
   }
-  .watch-star, .watch-chip-remove, .session-menu-trigger, .copy-msg-btn, .chat-close {
+  .watch-star, .session-menu-trigger, .copy-msg-btn, .chat-close {
     min-width: 44px;
     height: auto;
   }
@@ -15402,6 +15325,9 @@ html.rail-enabled body:not(.ai-mode-active) .chatbot { display: none; }
 .calp-title { flex: 1 1 auto; text-align: center; font-size: var(--fs-body); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
 .calp-view { display: inline-flex; gap: 4px; }
 .calp-view button { padding: 0 10px; min-height: 30px; }
+.calp-title-short { display: none; }
+.calp.is-compact .calp-title-long { display: none; }
+.calp.is-compact .calp-title-short { display: inline; }
 .calp-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .calp-grid th, .calp-grid td { padding: 2px; border: 0; text-align: center; }
 .calp-grid th { font-size: var(--fs-cap); color: var(--muted); background: none; }
@@ -15461,8 +15387,10 @@ button.calp-who:hover strong { text-decoration: underline; }
 .calp.is-compact .calp-chips button { flex: 0 0 auto; padding: 0 10px; }
 .calp.is-compact .calp-body { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .calp.is-compact .calp-cal { max-width: none; padding: 8px 6px; }
-.calp.is-compact .calp-nav { justify-content: space-between; }
-.calp.is-compact .calp-title { font-size: var(--fs-sub); white-space: nowrap; }
+.calp.is-compact .calp-nav { justify-content: space-between; flex-wrap: nowrap; gap: 4px; }
+.calp.is-compact .calp-nav > * { flex-shrink: 0; }
+.calp.is-compact .calp-title { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-sub); white-space: nowrap; }
+.calp.is-compact .calp-view button { padding: 0 8px; }
 .calp.is-compact .calp-day { min-height: 38px; }
 .calp.is-compact .calp-list { gap: 12px; }
 .calp.is-compact .calp-item { grid-template-columns: 52px minmax(0, 1fr); gap: 8px; }
@@ -17199,8 +17127,14 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   .calp-watch.check-label { height: auto; min-height: 44px; padding: 0 4px; }
   .calendar-filter-group .check-label input[type="checkbox"],
   .calp-watch input[type="checkbox"] { width: 20px; height: 20px; }
-  /* 캘린더 ‹ › 이동 */
-  .calp-nav .compact-btn { min-width: 44px; min-height: 44px; }
+  /* 캘린더 이동 줄: ‹ 제목 › 오늘 주/월 을 한 줄로(360px 까지). 주 제목은 '10.21~10.27' 짧은 형식 */
+  .calp-nav { flex-wrap: nowrap; gap: 3px; }
+  .calp-nav .compact-btn { flex: 0 0 auto; min-width: 40px; min-height: 44px; padding: 0 6px; }
+  .calp-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sub); letter-spacing: -0.01em; }
+  .calp-title-long { display: none; }
+  .calp-title-short { display: inline; }
+  .calp-view { flex: 0 0 auto; gap: 2px; }
+  .calp-view button { min-width: 34px; min-height: 44px; padding: 0 6px; }
   /* 오늘 요약 AI 브리핑 '전체 펼치기' */
   .home-brief-more > summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
   /* 공시 '이 유형의 과거 반응 보기' */
@@ -17238,6 +17172,23 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .draw-handle { fill: var(--chart-bg); stroke: #f59e0b; stroke-width: 1.6; }
 .draw-tag rect { fill: #f59e0b; }
 .draw-tag text { fill: #111; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* 그린 도형 끌기(이동·끝점 편집) 커서 */
+#priceChart.is-draw-hover { cursor: move; }
+#priceChart.is-draw-handle-hover { cursor: crosshair; }
+#priceChart.is-draw-editing { cursor: grabbing; }
+
+/* 폰: 보기 줄 ✎ → 그리기 도구 줄(#chartDrawControls 를 보기 줄 아래로 옮겨 온다). 데스크톱에선 ✎ 숨김 */
+.chart-view-draw { display: none; }
+@media (max-width: 640px) {
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  #chartViewGroup.chart-view-mobile .chart-view-draw { display: inline-flex; align-items: center; justify-content: center; font-size: var(--fs-body); }
+  #chartViewGroup.chart-view-mobile .chart-view-draw[aria-expanded="true"] { background: #f59e0b; color: #111; border-color: #f59e0b; }
+  #chartViewGroup.chart-view-mobile:not(.is-draw-open) > #chartDrawControls { display: none; }
+  #chartViewGroup.chart-view-mobile > #chartDrawControls { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+  #chartViewGroup.chart-view-mobile > #chartDrawControls > button { grid-column: span 1; min-width: 0; min-height: 42px; padding: 0; font-size: var(--fs-body); }
+  #chartViewGroup.chart-view-mobile > #chartDrawControls > #chartDrawMagnet { font-size: var(--fs-cap); }
+}
 
 /* 비교 겹쳐 보기: 가격 축의 % 태그(배경 = 그 종목 선 색), 머리글 범례, 비교 칩 색 점 */
 .chart-cmp-tag text { fill: #0b1220; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }

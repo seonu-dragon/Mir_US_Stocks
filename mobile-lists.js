@@ -9,9 +9,13 @@
   const isPhone = () => typeof window.matchMedia === "function" && window.matchMedia(PHONE_MQ).matches;
 
   // group 이 없으면 호스트 자체가 목록이다. 버튼은 목록 요소 바로 뒤(표 본문이면 표 뒤)에 붙는다.
+  // persist: 렌더러가 같은 목록을 주기적으로 새로 그리는 호스트(프리·애프터 보드는 2분마다)에서 펼친 개수를
+  //   지키는 열쇠. 같은 열쇠(= 같은 탭)로 다시 그려지면 펼친 개수를 이어 쓰고, 탭을 바꾸면 그 탭의 개수를 쓴다.
+  const activeTabsKey = (host) => [...host.querySelectorAll(".movers-tab.is-active")]
+    .map((b) => b.dataset.extTab || b.dataset.moversSide || b.dataset.moversUniverse || b.textContent.trim()).join("|");
   const SPECS = [
-    { host: "moversBoard", group: ".movers-list", item: ":scope > li", limit: 5, step: 5 },
-    { host: "extHoursBoard", group: ".movers-list", item: ":scope > li", limit: 5, step: 5 },
+    { host: "moversBoard", group: ".movers-list", item: ":scope > li", limit: 5, step: 5, persist: activeTabsKey },
+    { host: "extHoursBoard", group: ".movers-list", item: ":scope > li", limit: 5, step: 5, persist: activeTabsKey },
     { host: "levEtfGroups", item: ":scope > .lev-etf-section", limit: 6, step: 10, unit: "묶음" },
     { host: "levEtfGroups", group: ".lev-etf-grid", item: ":scope > .lev-etf-card", limit: 4, step: 12 },
     { host: "sectorEtfGrid", item: ":scope > .etf-rs-card", limit: 8, step: 10 },
@@ -21,16 +25,18 @@
 
   const shownBy = new WeakMap(); // 목록 요소 → { key: 보이는 개수 }
   const btnBy = new WeakMap(); // 목록 요소 → { key: 버튼 }
+  const persisted = new Map(); // `${key}|${persist 열쇠}|${목록 순번}` → 보이는 개수(다시 그려도 유지)
   let applying = false;
 
   function anchorOf(list) {
     return list.tagName === "TBODY" ? (list.closest("table")?.parentElement?.classList.contains("table-wrap") ? list.closest("table").parentElement : list.closest("table")) : list;
   }
 
-  function applyOne(list, spec, key) {
+  function applyOne(list, spec, key, pkey) {
     const items = [...list.querySelectorAll(spec.item)];
     const state = shownBy.get(list) || {};
     shownBy.set(list, state);
+    if (pkey != null && state[key] == null && persisted.has(pkey)) state[key] = persisted.get(pkey);
     const shown = isPhone() ? (state[key] ?? spec.limit) : Infinity;
     let hidden = 0;
     items.forEach((el, i) => {
@@ -48,6 +54,7 @@
     btn.textContent = `더 보기 (${Math.min(spec.step, hidden)}${spec.unit || "개"} · 남은 ${hidden}${spec.unit || "개"})`;
     btn.addEventListener("click", () => {
       state[key] = (state[key] ?? spec.limit) + spec.step;
+      if (pkey != null) persisted.set(pkey, state[key]);
       run(spec, key);
     });
     anchorOf(list).after(btn);
@@ -60,7 +67,8 @@
     applying = true;
     try {
       const lists = spec.group ? [...host.querySelectorAll(spec.group)] : [host];
-      lists.forEach((list) => applyOne(list, spec, key));
+      const base = spec.persist ? `${key}|${spec.persist(host)}` : null;
+      lists.forEach((list, i) => applyOne(list, spec, key, base == null ? null : `${base}|${i}`));
     } finally {
       applying = false;
     }

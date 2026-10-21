@@ -3,7 +3,7 @@
 // app.js 에서 기계적으로 분리한 클래식 스크립트(모듈 아님). index.html 이 app.js 보다
 // 먼저 싣고 같은 전역 스코프를 공유한다. 선언만 있고 로드 시점 실행문이 없다.
 // 담는 것: 관심종목 저장/이관/렌더(migrateLegacyWatchlist·initWatchlist·
-// persistWatchlist·toggleWatchlist·renderWatchlistBar·renderWatchlistStats),
+// persistWatchlist·toggleWatchlist·renderWatchlistStats),
 // 관심종목 알림(watchAlert*·renderWatchAlerts), 시장 실적 캘린더
 // (loadEarningsCalendar·renderEarningsCalendarMarket·setupEarningsEvents),
 // 클라우드 동기화(cloudSyncPayload·pushCloudSync·pullCloudSync).
@@ -109,7 +109,6 @@ function toggleWatchlist(ticker) {
   if (isInWatchlist(t)) watchlist = watchlist.filter((x) => x !== t);
   else watchlist.push(t);
   persistWatchlist();
-  renderWatchlistBar();
   // ★ 한 번에 무거운 렌더(시장 요약·알림·내 투자 표+상관행렬·오늘 액션보드)를 다 돌리지 않는다 —
   // 지금 보이는 화면만 바로 그리고, 가려진 화면은 다음에 보일 때(탭 전환·접힘 펼침) 그린다.
   watchRenderWhenVisible("summary", "marketSummary", renderSummary);
@@ -258,45 +257,8 @@ function saveWatchlistFromInput(text) {
   if (!tickers.length) return;
   watchlist = [...new Set(tickers)];
   persistWatchlist();
-  renderWatchlistBar();
   renderWatchAlerts();
   renderActionBoard();
-}
-
-function renderWatchlistBar() {
-  const bar = byId("watchlistBar");
-  const chips = byId("watchlistChips");
-  const summary = byId("watchlistSummary");
-  if (!bar || !chips) return;
-  if (!watchlist.length) { bar.hidden = true; return; }
-  bar.hidden = false;
-  const items = watchlist.map((t) => stockByTicker(t)).filter(Boolean);
-  const up = items.filter((s) => Number(s.changePct) > 0).length;
-  if (summary) summary.textContent = `${items.length}개 · 상승 ${items.length ? Math.round((up / items.length) * 100) : 0}%`;
-  // 칩 = 종목 열기 버튼 + 제거 버튼(형제). 예전엔 × 가 버튼 안의 span 이라 키보드로 지울 수 없었다.
-  chips.innerHTML = items.map((item) => {
-    const label = escapeHtml(stockLabel(item));
-    return `
-    <span class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
-      <button type="button" class="watch-chip-open" data-ticker="${escapeHtml(item.ticker)}">
-        <strong>${label}</strong>
-        <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
-      </button>
-      <button type="button" class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거" aria-label="${label} 관심종목에서 제거">×</button>
-    </span>
-  `;
-  }).join("");
-  chips.querySelectorAll(".watch-chip-open").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      selectTicker(chip.dataset.ticker, { openSearch: true });
-    });
-  });
-  chips.querySelectorAll("[data-remove]").forEach((btn) => {
-    btn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      toggleWatchlist(btn.dataset.remove);
-    });
-  });
 }
 
 function renderWatchlistStats(rows) {
@@ -455,24 +417,6 @@ function setupWatchAlertEvents() {
     });
   });
   renderWatchAlerts();
-}
-
-function setupWatchlistUi() {
-  const openBulk = byId("watchlistOpenBulk");
-  if (openBulk) openBulk.addEventListener("click", () => activateTab("bulk", { push: true }));
-  const share = byId("watchlistShare");
-  if (share) share.addEventListener("click", async () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("watchlist", watchlist.join(","));
-    url.searchParams.delete("tab");
-    try {
-      await navigator.clipboard.writeText(url.toString());
-      share.textContent = "복사됨!";
-      setTimeout(() => { share.textContent = "링크 공유"; }, 1500);
-    } catch (e) {
-      window.prompt("관심종목 링크", url.toString());
-    }
-  });
 }
 
 // ===== 시장 실적 캘린더 =====
@@ -908,7 +852,6 @@ function updateCloudSyncStatus(text) {
 
 function setupCloudSyncEvents() {
   byId("cloudSyncPull")?.addEventListener("click", () => pullCloudSync().then(() => {
-    renderWatchlistBar();
     renderPortfolio();
     renderWatchAlerts();
   }));

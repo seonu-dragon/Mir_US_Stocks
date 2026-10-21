@@ -1033,15 +1033,41 @@ function setupMobileChartViewControls() {
     });
     byId("chartReset")?.insertAdjacentElement("afterend", more);
   }
+  // 2026-10-21: 폰에서 드로잉 도구가 '⋯ 차트 설정' 안에만 있었다 → 보기 줄에 ✎ 를 두고, 누르면 그리기 도구
+  // 줄(#chartDrawControls)을 보기 줄 바로 아래로 옮겨 펼친다. 데스크톱에선 원래 자리(차트 설정 '그리기')로 돌린다.
+  const drawCtl = byId("chartDrawControls");
+  const drawHome = drawCtl ? drawCtl.parentNode : null;
+  let drawBtn = byId("chartViewDraw");
+  if (!drawBtn && drawCtl) {
+    drawBtn = document.createElement("button");
+    drawBtn.type = "button";
+    drawBtn.id = "chartViewDraw";
+    drawBtn.className = "chart-view-draw";
+    drawBtn.textContent = "✎";
+    drawBtn.title = "그리기 도구";
+    drawBtn.setAttribute("aria-label", "그리기 도구 열기");
+    drawBtn.setAttribute("aria-expanded", "false");
+    drawBtn.setAttribute("aria-controls", "chartDrawControls");
+    drawBtn.addEventListener("click", () => {
+      const open = group.classList.toggle("is-draw-open");
+      drawBtn.setAttribute("aria-expanded", String(open));
+      drawBtn.setAttribute("aria-label", open ? "그리기 도구 닫기" : "그리기 도구 열기");
+      // 닫으면 켜 둔 도구도 끈다(차트 드래그가 다시 이동으로 돌아오게).
+      if (!open && typeof drawTool !== "undefined" && drawTool) setDrawTool(drawTool);
+    });
+    more.insertAdjacentElement("beforebegin", drawBtn);
+  }
   const apply = () => {
     if (mq.matches) {
       if (chart.nextElementSibling !== group) chart.insertAdjacentElement("afterend", group);
       group.classList.add("chart-view-mobile");
+      if (drawCtl && drawCtl.parentNode !== group) group.appendChild(drawCtl);
     } else {
       if (group.parentNode !== homeParent || group.nextSibling !== homeNext) {
         homeParent.insertBefore(group, homeNext);
       }
       group.classList.remove("chart-view-mobile");
+      if (drawCtl && drawHome && drawCtl.parentNode !== drawHome) drawHome.appendChild(drawCtl);
     }
   };
   apply();
@@ -1198,7 +1224,36 @@ function setChartCompareMode(mode) {
   redrawChart();
 }
 
+// 겹쳐 보기의 세로 자동 맞춤 기준(2026-10-21): 기본은 메인 종목만(TradingView 'Scale price chart only' 와 같다) —
+// 비교 종목 수익률 폭이 크면 메인 캔들이 납작해졌다. 범위를 벗어난 비교선은 플롯에서 잘리고 % 태그가
+// 가장자리에 ▲/▼ 로 붙는다. '비교선까지 맞춤'을 켜면 예전처럼 비교선까지 넣어 맞춘다.
+const CHART_COMPARE_FIT_KEY = "mir_chart_compare_fit_v1";
+let chartCompareFitAll = null;
+
+function getChartCompareFitAll() {
+  if (chartCompareFitAll == null) {
+    let v = "";
+    try { v = window.safeStorage.get(CHART_COMPARE_FIT_KEY) || ""; } catch (_) { v = ""; }
+    chartCompareFitAll = v === "all";
+  }
+  return chartCompareFitAll;
+}
+
+function setChartCompareFitAll(on) {
+  chartCompareFitAll = Boolean(on);
+  try { window.safeStorage.set(CHART_COMPARE_FIT_KEY, chartCompareFitAll ? "all" : "main"); } catch (_) { /* ignore */ }
+  syncChartCompareModeUi();
+  redrawChart();
+}
+
 function syncChartCompareModeUi() {
+  const fit = byId("chartCompareFit");
+  if (fit) {
+    const on = getChartCompareFitAll();
+    fit.classList.toggle("is-active", on);
+    fit.setAttribute("aria-pressed", on ? "true" : "false");
+    fit.hidden = getChartCompareMode() !== "overlay";
+  }
   const mode = getChartCompareMode();
   byId("chartCompareMode")?.querySelectorAll("button[data-cmode]").forEach((b) => {
     const on = b.dataset.cmode === mode;
@@ -1214,6 +1269,7 @@ function setupChartCompareControls() {
   byId("chartCompareMode")?.querySelectorAll("button[data-cmode]").forEach((b) => {
     b.addEventListener("click", () => setChartCompareMode(b.dataset.cmode));
   });
+  byId("chartCompareFit")?.addEventListener("click", () => setChartCompareFitAll(!getChartCompareFitAll()));
   syncChartCompareModeUi();
   add.addEventListener("click", () => addChartCompareTicker(input.value));
   // 비교 입력도 다른 티커 입력 상자와 같은 자동완성·같은 리졸버·같은 키보드 모델을 쓴다.
@@ -1361,6 +1417,7 @@ function setupChartInteractions() {
     const yp = chartYAxisPoint(event);
     const onAxis = Boolean(yp && yp.onAxis);
     if (drawTool && !onAxis) return; // 드로잉 중에도 가격 축 드래그는 받는다
+    if (!drawTool && !onAxis && chartDrawEditGrab(event)) return; // 그린 도형 끌기(이동·끝점 편집)가 우선
     if (touchMode === "pinch" || touchMode === "ypinch") return;
     const item = currentChartItem();
     if (!item) return;
@@ -1771,6 +1828,10 @@ function chartTimeFromXn(g, xn) {
     const step = (t[n - 1] - t[n - 2]) || 86400000;
     return Math.round(t[n - 1] + (xn - 1) * (n - 1) * step);
   }
+  if (xn < 0) { // 첫 봉 왼쪽(드로잉을 화면 밖으로 끌었을 때) — 첫 봉 간격으로 외삽(chartXnFromTime 과 짝)
+    const step = (t[1] - t[0]) || 86400000;
+    return Math.round(t[0] + xn * (n - 1) * step);
+  }
   const fidx = Math.max(0, Math.min(n - 1, xn * (n - 1)));
   const lo = Math.floor(fidx);
   const hi = Math.min(n - 1, lo + 1);
@@ -1858,7 +1919,7 @@ function renderChartDrawings() {
       return; // 모르는 종류(새 버전이 저장한 것)는 건너뛴다
     }
     out += body;
-    if (sel) out += handles.map(([x, y]) => `<circle cx="${f1(x)}" cy="${f1(y)}" r="3.5" class="draw-handle"></circle>`).join("");
+    if (sel) out += handles.map(([x, y]) => `<circle cx="${f1(x)}" cy="${f1(y)}" r="${g.mobile ? 5.5 : 3.5}" class="draw-handle"></circle>`).join("");
   });
   return out;
 }
@@ -1917,6 +1978,58 @@ function chartPriceLabel(value) {
   const abs = Math.abs(n);
   const dec = abs < 10 ? 2 : abs < 100 ? 1 : 0;
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
+}
+
+// 포인터 → viewBox 좌표.
+function chartSvgPoint(evt) {
+  const g = lastChartGeom;
+  const svg = byId("priceChart");
+  if (!g || !svg) return null;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  return { px: (evt.clientX - rect.left) * (g.width / rect.width), py: (evt.clientY - rect.top) * (g.height / rect.height) };
+}
+
+// 그린 도형 끌기 대상: 고른 도형의 손잡이·몸통을 먼저, 마우스면 고르지 않은 도형도 바로 끌 수 있다
+// (TradingView 와 같다). 터치는 차트 이동과 헷갈리지 않게 먼저 탭해서 고른 도형만 끈다.
+// → { idx, grab, shape, px, py } | null
+function chartDrawEditGrab(evt) {
+  const g = lastChartGeom;
+  const core = chartDrawTools();
+  if (!g || !core || !core.editGrabAt || drawTool) return null;
+  const items = chartDrawings[g.ticker] || [];
+  if (!items.length) return null;
+  const pt = chartSvgPoint(evt);
+  if (!pt || pt.py > g.padT + g.plotH + 2 || pt.px > g.padL + g.plotW) return null;
+  const touch = evt.pointerType === "touch" || evt.pointerType === "pen";
+  const tol = touch ? 16 : 7;
+  const sel = chartDrawSelectedIdx();
+  if (sel >= 0) {
+    const shape = chartDrawingShape(g, items[sel]);
+    const grab = shape && core.editGrabAt(shape, pt.px, pt.py, tol);
+    if (grab) return { idx: sel, grab, shape, px: pt.px, py: pt.py };
+  }
+  if (touch) return null;
+  const shapes = items.map((d) => chartDrawingShape(g, d));
+  const idx = core.hitTest(shapes, pt.px, pt.py, tol);
+  if (idx < 0 || !shapes[idx]) return null;
+  const grab = core.editGrabAt(shapes[idx], pt.px, pt.py, tol) || { kind: "body" };
+  return { idx, grab, shape: shapes[idx], px: pt.px, py: pt.py };
+}
+
+// 끌기 결과(화면 좌표) → 저장 모델. 바뀐 좌표만 날짜·가격으로 되돌리고 나머지 앵커는 그대로 둔다.
+function chartDrawingFromEdit(g, d, moved) {
+  const dataW = g.dataW || g.plotW;
+  const next = { ...d };
+  const ch = new Set(moved.changed || []);
+  const timeOf = (x) => chartTimeFromXn(g, (x - g.padL) / dataW);
+  const priceOf = (y) => g.scale.value(y);
+  if (ch.has("x1")) next.t1 = timeOf(moved.x1);
+  if (ch.has("x2")) next.t2 = timeOf(moved.x2);
+  if (ch.has("y1")) next.p1 = priceOf(moved.y1);
+  if (ch.has("y2")) next.p2 = priceOf(moved.y2);
+  if (d.type === "hline") { next.p2 = next.p1; next.t2 = next.t1; }
+  return chartDrawingValid(next) && next.p1 > 0 && next.p2 > 0 ? next : null;
 }
 
 // 클릭(거의 안 움직인 포인터) 자리에서 드로잉 고르기. 맞은 게 없으면 선택 해제.
@@ -1985,6 +2098,16 @@ function setupChartDrawing() {
     let pickPointerId = null;
     let pickX = 0;
     let pickY = 0;
+    // 그린 도형 끌기(이동·끝점 편집). 끄는 동안은 저장 배열의 그 항목만 바꿔 보여 주고, 뗄 때 한 번에
+    // commitChartDrawings 로 확정한다(실행취소 한 단계 = 끌기 한 번).
+    let edit = null; // { pointerId, ticker, idx, grab, shape, px, py, orig: items, moved }
+    const restoreEdit = () => {
+      if (!edit) return;
+      chartDrawings[edit.ticker] = edit.orig;
+      edit = null;
+      byId("priceChart")?.classList.remove("is-draw-editing");
+      updateDrawLayer();
+    };
     const cancelDraw = () => {
       drawPointerId = null;
       drawStart = null; drawPreview = null; updateDrawLayer();
@@ -2000,6 +2123,17 @@ function setupChartDrawing() {
       // 키보드(Delete·Ctrl+Z·Esc)가 바로 먹도록 차트에 포커스를 둔다(스크롤은 움직이지 않음).
       if (document.activeElement !== svg) { try { svg.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
       if (!drawTool) {
+        if (edit) return;
+        const hit = chartDrawEditGrab(e);
+        if (hit && lastChartGeom) {
+          e.preventDefault();
+          const t = lastChartGeom.ticker;
+          if (chartDrawSelectedIdx() !== hit.idx) selectChartDrawing(hit.idx);
+          edit = { pointerId: e.pointerId, ticker: t, idx: hit.idx, grab: hit.grab, shape: hit.shape, px: hit.px, py: hit.py, orig: (chartDrawings[t] || []).slice(), moved: false };
+          svg.classList.add("is-draw-editing");
+          try { svg.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+          return;
+        }
         if (pickPointerId == null) { pickPointerId = e.pointerId; pickX = e.clientX; pickY = e.clientY; }
         return;
       }
@@ -2012,7 +2146,39 @@ function setupChartDrawing() {
       if (drawTool === "hline") { drawPreview = previewOf(start, start); updateDrawLayer(); }
       try { svg.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     });
+    const moveEdit = (e) => {
+      const g = lastChartGeom;
+      const core = chartDrawTools();
+      const pt = chartSvgPoint(e);
+      if (!g || !core || !pt || g.ticker !== edit.ticker) return;
+      const d0 = edit.orig[edit.idx];
+      if (!d0) return;
+      let dx = pt.px - edit.px;
+      let dy = pt.py - edit.py;
+      if (!edit.moved && Math.hypot(dx, dy) < (e.pointerType === "touch" ? 4 : 2)) return;
+      // 끝점을 끌 때 자석이 켜져 있으면 그 끝점을 가까운 봉의 시·고·저·종에 붙인다.
+      if (edit.grab.kind === "handle" && chartDrawMagnetOn()) {
+        const snap = chartPointToData(e, true);
+        if (snap && snap.snapped) {
+          const dataW = g.dataW || g.plotW;
+          dx = g.padL + snap.xn * dataW - edit.shape[edit.grab.xs];
+          dy = snap.y - edit.shape[edit.grab.ys];
+        }
+      }
+      const next = chartDrawingFromEdit(g, d0, core.applyEditDrag(edit.shape, edit.grab, dx, dy));
+      if (!next) return;
+      edit.moved = true;
+      chartDrawings[edit.ticker] = edit.orig.map((d, i) => (i === edit.idx ? next : d));
+      updateDrawLayer();
+    };
     const moveDraw = (e) => {
+      if (edit && e.pointerId === edit.pointerId) { moveEdit(e); e.preventDefault(); return; }
+      // 마우스로 도형 위에 올리면 끌 수 있다는 커서(손잡이 = 이동 십자, 몸통 = 잡기)
+      if (!drawTool && e.pointerType === "mouse" && !e.buttons) {
+        const hit = e.target && svg.contains(e.target) ? chartDrawEditGrab(e) : null;
+        svg.classList.toggle("is-draw-hover", Boolean(hit && hit.grab.kind === "body"));
+        svg.classList.toggle("is-draw-handle-hover", Boolean(hit && hit.grab.kind === "handle"));
+      }
       if (pickPointerId != null && e.pointerId === pickPointerId && Math.hypot(e.clientX - pickX, e.clientY - pickY) > 6) pickPointerId = null;
       if (!drawTool || !drawStart || drawPointerId == null || e.pointerId !== drawPointerId) return;
       const p = chartPointToData(e, chartDrawMagnetOn());
@@ -2022,6 +2188,21 @@ function setupChartDrawing() {
       e.preventDefault();
     };
     const endDraw = (e) => {
+      if (edit && e.pointerId === edit.pointerId) {
+        try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+        const done = edit;
+        const finalItems = chartDrawings[done.ticker];
+        chartDrawings[done.ticker] = done.orig;
+        edit = null;
+        svg.classList.remove("is-draw-editing");
+        if (done.moved && finalItems !== done.orig) {
+          commitChartDrawings(done.ticker, finalItems);
+          drawSelected = done.idx;
+          drawSelectedTicker = done.ticker;
+        }
+        updateDrawLayer();
+        return;
+      }
       if (pickPointerId != null && e.pointerId === pickPointerId) {
         pickPointerId = null;
         if (!drawTool && Math.hypot(e.clientX - pickX, e.clientY - pickY) <= (e.pointerType === "touch" ? 10 : 5)) pickChartDrawingAt(e);
@@ -2053,6 +2234,7 @@ function setupChartDrawing() {
     document.addEventListener("pointermove", moveDraw);
     document.addEventListener("pointerup", endDraw);
     document.addEventListener("pointercancel", (e) => {
+      if (edit && e.pointerId === edit.pointerId) { try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ } restoreEdit(); return; }
       if (pickPointerId != null && e.pointerId === pickPointerId) pickPointerId = null;
       if (drawPointerId == null || e.pointerId !== drawPointerId) return;
       try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
@@ -2067,7 +2249,8 @@ function setupChartDrawing() {
       } else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.code === "KeyZ" || e.key === "z" || e.key === "Z")) {
         if (undoChartDrawing()) e.preventDefault();
       } else if (e.key === "Escape") {
-        if (drawTool) { setDrawTool(drawTool); e.preventDefault(); }
+        if (edit) { restoreEdit(); e.preventDefault(); }
+        else if (drawTool) { setDrawTool(drawTool); e.preventDefault(); }
         else if (chartDrawSelectedIdx() >= 0) { selectChartDrawing(-1); e.preventDefault(); }
       }
     });
@@ -2797,7 +2980,9 @@ function drawChart(item, options = {}) {
       cmpSeries.push({ ticker, color: CHART_COMPARE_COLORS[i % CHART_COMPARE_COLORS.length], ...ov });
     });
   }
-  const cmpVals = cmpSeries.flatMap((c) => c.prices.filter((v) => v != null && Number.isFinite(v) && v > 0));
+  const cmpVals = getChartCompareFitAll()
+    ? cmpSeries.flatMap((c) => c.prices.filter((v) => v != null && Number.isFinite(v) && v > 0))
+    : [];
   const autoLo = Math.min(...lows, ...cmpVals);
   const autoHi = Math.max(...highs, ...cmpVals);
   // 세로 축: 자동 맞춤이면 보이는 봉 고가·저가, 수동이면 사용자가 정한 범위. 로그면 log10 공간.
@@ -3130,17 +3315,36 @@ function drawChart(item, options = {}) {
   let cmpSvg = "";
   let cmpTags = "";
   if (cmpSeries.length) {
-    cmpSvg = cmpSeries.map((c) => pathFromSeries(clipRange(c.prices), xFor, yFor, c.color, 1.5, "")).join("");
+    // 범위 밖 구간은 끊지 않고(clipRange 는 자동 맞춤에서 null 로 끊는다) 전용 clipPath 로 자른다 —
+    // 메인 기준 맞춤에서 비교선이 화면 위·아래로 나갔다 들어오는 모양을 그대로 보여 준다.
+    const cmpValid = (arr) => arr.map((v) => (v == null || !Number.isFinite(v) || (yLog && v <= 0) ? null : v));
+    cmpSvg = `<clipPath id="chartCmpClip"><rect x="${padL}" y="${padT}" width="${plotW.toFixed(1)}" height="${plotH}"></rect></clipPath>`
+      + `<g clip-path="url(#chartCmpClip)">${cmpSeries.map((c) => pathFromSeries(cmpValid(c.prices), xFor, yFor, c.color, 1.5, "")).join("")}</g>`;
+    // 태그 자리: 현재가 태그(축에 보일 때)는 고정하고 % 태그만 위아래로 비켜 놓는다(겹치던 문제).
+    // 마지막 값이 범위 밖이면 그 방향 가장자리에 ▲/▼ 를 붙여 둔다.
+    const tagTop = padT + 8;
+    const tagBottom = padT + plotH - 8;
     const lastYMain = yFor(rows[rows.length - 1].c);
-    const want = [lastYMain].concat(cmpSeries.map((c) => yFor(c.prices[c.lastIdx])));
-    const placed = toolsCore.spreadLabels(want, 16, padT + 8, padT + plotH - 8);
+    const mainShown = Number.isFinite(lastYMain) && lastYMain >= padT - 1 && lastYMain <= padT + plotH + 1;
+    const edges = cmpSeries.map((c) => toolsCore.edgeOf ? toolsCore.edgeOf(c.prices[c.lastIdx], min, max) : "");
+    const want = [mainShown ? lastYMain : null].concat(cmpSeries.map((c, k) => {
+      if (edges[k] === "up") return tagTop;
+      if (edges[k] === "down") return tagBottom;
+      return yFor(c.prices[c.lastIdx]);
+    }));
+    const placed = toolsCore.spreadLabelsPinned
+      ? toolsCore.spreadLabelsPinned(want, 0, 16, tagTop, tagBottom)
+      : toolsCore.spreadLabels(want, 16, tagTop, tagBottom);
     const tagW = width - xPlotRight - 4;
     cmpTags = cmpSeries.map((c, k) => {
       const y = placed[k + 1];
-      if (!Number.isFinite(y) || !Number.isFinite(want[k + 1]) || want[k + 1] < padT - 1 || want[k + 1] > padT + plotH + 1) return "";
+      if (!Number.isFinite(y) || !Number.isFinite(want[k + 1])) return "";
       const p = c.lastPct;
-      const txt = `${p >= 0 ? "+" : ""}${Math.abs(p) >= 100 ? p.toFixed(0) : p.toFixed(1)}%`;
-      return `<g class="chart-cmp-tag"><title>${escapeHtml(c.ticker)} ${txt}</title><rect x="${(xPlotRight + 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" width="${tagW.toFixed(1)}" height="16" rx="3" fill="${c.color}"></rect><text x="${(width - 6).toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(txt)}</text></g>`;
+      const pctTxt = `${p >= 0 ? "+" : ""}${Math.abs(p) >= 100 ? p.toFixed(0) : p.toFixed(1)}%`;
+      const arrow = edges[k] === "up" ? "▲" : edges[k] === "down" ? "▼" : "";
+      // 가장자리 태그는 화살표 자리만큼 소수점을 덜어 축 폭(폰 48)에 맞춘다(정확한 값은 툴팁).
+      const txt = arrow ? `${arrow}${p >= 0 ? "+" : ""}${Math.abs(p) >= 10 ? p.toFixed(0) : p.toFixed(1)}%` : pctTxt;
+      return `<g class="chart-cmp-tag${arrow ? " is-edge" : ""}"><title>${escapeHtml(c.ticker)} ${pctTxt}</title><rect x="${(xPlotRight + 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" width="${tagW.toFixed(1)}" height="16" rx="3" fill="${c.color}"></rect><text x="${(width - 6).toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(txt)}</text></g>`;
     }).join("");
   }
   const cmpLegend = cmpSeries.length

@@ -976,7 +976,6 @@ function boot(options = {}) {
   initWatchlist(route.get("watchlist"));
   loadPortfolio();
   pullCloudSync().catch(reportBootFailure("클라우드 동기화")).finally(() => {
-    renderWatchlistBar();
     renderPortfolio();
     renderWatchAlerts();
   });
@@ -3538,7 +3537,6 @@ function setupEvents() {
     byId("compareInput").value = watchlist.map(stockInputValue).join(", ");
     activateTab("search", { sub: "compare", push: true });
   });
-  setupWatchlistUi();
   setupScreenerEvents();
   setupNlScreener();
   setupUiPrefs();
@@ -3674,7 +3672,6 @@ function renderAll() {
   Object.keys(tabRendered).forEach((k) => delete tabRendered[k]);
   signalsDirty = true;
   // 탭과 무관하게 항상 보이는 표면
-  renderWatchlistBar();
   renderWatchAlerts();
   renderActionBoard();
   renderDataFreshnessStatus();

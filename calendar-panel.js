@@ -166,6 +166,9 @@ function renderCalendarPanel(host, opts) {
   const [ay, am] = st.anchor.split("-").map(Number);
   const title = st.view === "month" ? `${ay}년 ${am}월`
     : `${Number(range.start.slice(5, 7))}월 ${Number(range.start.slice(8))}일 ~ ${Number(range.end.slice(5, 7))}월 ${Number(range.end.slice(8))}일`;
+  // 폰·오른쪽 레일은 이동 줄(‹ › 오늘 주/월)을 한 줄에 넣으려고 주 제목을 '10.21~10.27' 로 줄여 보인다.
+  const titleShort = st.view === "month" ? title
+    : `${Number(range.start.slice(5, 7))}.${Number(range.start.slice(8))}~${Number(range.end.slice(5, 7))}.${Number(range.end.slice(8))}`;
 
   let list;
   if (loading && !all.length) {
@@ -194,7 +197,7 @@ function renderCalendarPanel(host, opts) {
       <div class="calp-cal">
         <div class="calp-nav">
           <button type="button" class="ghost compact-btn" data-cal-move="-1" aria-label="이전">‹</button>
-          <strong class="calp-title">${escapeHtml(title)}</strong>
+          <strong class="calp-title"><span class="calp-title-long">${escapeHtml(title)}</span><span class="calp-title-short">${escapeHtml(titleShort)}</span></strong>
           <button type="button" class="ghost compact-btn" data-cal-move="1" aria-label="다음">›</button>
           <button type="button" class="ghost compact-btn" data-cal-today>오늘</button>
           <div class="segmented calp-view" role="group" aria-label="보기">

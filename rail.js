@@ -350,7 +350,7 @@
     // 관심 ☆ 토글 등 다른 화면의 변경은 다음 틱에 다시 그린다(watchlist 전역을 직접 읽음).
     document.addEventListener("click", (event) => {
       if (!openId || openId === "chat") return;
-      if (event.target.closest && event.target.closest("[data-watch], .pf-del, #pfClear, #pfAdd, .watch-chip-remove")) {
+      if (event.target.closest && event.target.closest("[data-watch], .pf-del, #pfClear, #pfAdd")) {
         setTimeout(refresh, 0);
       }
     });

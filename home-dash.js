@@ -350,7 +350,9 @@ function hdIntradayPlot(ix, row, price, chg) {
   const kstShift = mkt === "crypto" ? 540 : 0;
   const tLabel = (t) => core.fmtMin(t + kstShift);
   const lastY = yp(last.v);
-  const yLabels = vTicks.filter((v) => Math.abs(yp(v) - lastY) > 7)
+  // 현재가 태그(약 18px)와 겹치는 눈금 글자는 뺀다. 폰 플롯 높이 170px 기준 ±10.5% ≈ 18px
+  // (예전 7% 는 폰에서 12px 라 태그가 눈금 글자를 반쯤 덮었다).
+  const yLabels = vTicks.filter((v) => Math.abs(yp(v) - lastY) > 10.5)
     .map((v) => `<span style="top:${yp(v).toFixed(2)}%">${hdAxisFmt(v, step)}</span>`).join("");
   const xLabels = tTicks.map((t, i) => `<span class="${i % 2 ? "is-odd" : ""}${t === t0 ? " is-first" : ""}${t === t1 ? " is-last" : ""}" style="left:${xp(t).toFixed(2)}%">${tLabel(t)}</span>`).join("");
   const lastCls = prevClose == null ? "" : last.v > prevClose ? "pos" : last.v < prevClose ? "neg" : "";

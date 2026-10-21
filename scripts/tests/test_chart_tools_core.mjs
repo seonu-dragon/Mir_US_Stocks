@@ -141,6 +141,54 @@ test("spreadLabels: 순서 유지·최소 간격·범위 안", () => {
   assert.equal(withNull[1], 10);
 });
 
+test("spreadLabelsPinned: 현재가 태그는 그대로, 나머지만 비켜 놓는다", () => {
+  const ys = T.spreadLabelsPinned([100, 104, 96, 150], 0, 16, 0, 200);
+  assert.equal(ys[0], 100, "고정 라벨 불변");
+  assert.ok(Math.abs(ys[1] - 100) >= 16 - 1e-9 && Math.abs(ys[2] - 100) >= 16 - 1e-9, JSON.stringify(ys));
+  assert.ok(ys[2] < 100 && ys[1] > 100, "원래 위·아래 쪽 유지");
+  assert.equal(ys[3], 150);
+  // 현재가가 바닥 근처: 아래 자리가 없으면 위로 넘긴다
+  const low = T.spreadLabelsPinned([195, 198, 199], 0, 16, 0, 200);
+  assert.equal(low[0], 195);
+  assert.ok(low.slice(1).every((y) => Math.abs(y - 195) >= 16 - 1e-9 && y >= 0 && y <= 200), JSON.stringify(low));
+  // 고정 라벨이 없으면(null) 그냥 spreadLabels
+  assert.deepEqual(T.spreadLabelsPinned([null, 10], 0, 16, 0, 100), [null, 10]);
+});
+
+test("editGrabAt: 손잡이 우선, 그다음 몸통, 멀면 null", () => {
+  const tr = { type: "trend", x1: 0, y1: 0, x2: 100, y2: 0 };
+  assert.deepEqual(T.editGrabAt(tr, 2, 1, 6), { kind: "handle", xs: "x1", ys: "y1" });
+  assert.deepEqual(T.editGrabAt(tr, 99, 0, 6), { kind: "handle", xs: "x2", ys: "y2" });
+  assert.deepEqual(T.editGrabAt(tr, 50, 3, 6), { kind: "body" });
+  assert.equal(T.editGrabAt(tr, 50, 30, 6), null);
+  const rc = { type: "rect", x1: 0, y1: 0, x2: 100, y2: 50 };
+  assert.deepEqual(T.editGrabAt(rc, 1, 49, 6), { kind: "handle", xs: "x1", ys: "y2" });
+  assert.deepEqual(T.editGrabAt(rc, 50, 25, 6), { kind: "body" }, "사각형 안쪽은 몸통");
+  const hl = { type: "hline", x1: 10, y1: 40, x2: 10, y2: 40, left: 0, right: 200 };
+  assert.deepEqual(T.editGrabAt(hl, 10, 41, 6), { kind: "body" }, "수평선은 손잡이 없이 몸통");
+});
+
+test("applyEditDrag: 몸통 평행 이동·손잡이 한 점·수평선 세로만", () => {
+  const tr = { type: "trend", x1: 0, y1: 0, x2: 100, y2: 10 };
+  const b = T.applyEditDrag(tr, { kind: "body" }, 5, -3);
+  assert.deepEqual([b.x1, b.y1, b.x2, b.y2], [5, -3, 105, 7]);
+  assert.deepEqual(b.changed, ["x1", "x2", "y1", "y2"]);
+  const h = T.applyEditDrag(tr, { kind: "handle", xs: "x2", ys: "y2" }, 5, -3);
+  assert.deepEqual([h.x1, h.y1, h.x2, h.y2], [0, 0, 105, 7]);
+  assert.deepEqual(h.changed, ["x2", "y2"]);
+  const hl = T.applyEditDrag({ type: "hline", x1: 10, y1: 40, x2: 10, y2: 40 }, { kind: "body" }, 50, 6);
+  assert.deepEqual([hl.x1, hl.y1, hl.x2, hl.y2], [10, 46, 10, 46]);
+  assert.deepEqual(hl.changed, ["y1", "y2"]);
+  assert.deepEqual(T.applyEditDrag(tr, null, 1, 1).changed, []);
+});
+
+test("edgeOf: 범위 밖 방향", () => {
+  assert.equal(T.edgeOf(120, 50, 100), "up");
+  assert.equal(T.edgeOf(40, 50, 100), "down");
+  assert.equal(T.edgeOf(70, 50, 100), "");
+  assert.equal(T.edgeOf(null, 50, 100), "");
+});
+
 test("rightPadBars: 최소 2봉, 봉 수의 약 4%", () => {
   assert.equal(T.rightPadBars(1), 0);
   assert.equal(T.rightPadBars(22), 2);

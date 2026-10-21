@@ -516,6 +516,7 @@ def sector_context(snap: dict, cfg: dict, market: str, stock: dict) -> dict | No
     peers_all = [s for s in snap.get("stocks") or []
                  if not is_excluded(s, cfg, market) and s["ticker"] != stock["ticker"]
                  and fnum(s.get("changePct")) is not None
+                 and not s.get("changePctSuspect")  # 분할 미반영 의심 등락률(update_data.flag_implausible_change)
                  and (fnum(s.get("marketCapB")) or 0) >= cfg["min_cap"] * 0.25]
     for key in ("industry", "sector"):
         name = stock.get(key)

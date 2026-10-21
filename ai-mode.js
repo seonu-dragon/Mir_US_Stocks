@@ -850,16 +850,15 @@ function aiEvidenceCard(title, value, detail, tone = "") {
 
 function aiSectorEvidence(item) {
   const peers = (data.stocks || []).filter((row) => row.sector === item.sector && row.ticker !== item.ticker);
-  const sectorAvg = peers.length
-    ? peers.reduce((sum, row) => sum + Number(row.changePct || 0), 0) / peers.length
-    : 0;
+  // 시총가중·신뢰 불가 등락률 제외(signals.js capWeightedChange) — 단순 평균은 초소형 이상치 하나에 휘둘린다.
+  const sectorAvg = capWeightedChange(peers) ?? 0;
   const ranked = peers.concat(item).sort((a, b) => (Number(rsiValue(b)) || 0) - (Number(rsiValue(a)) || 0));
   const rank = ranked.findIndex((row) => row.ticker === item.ticker) + 1;
   const rel = Number(item.changePct || 0) - sectorAvg;
   return aiEvidenceCard(
     "섹터 흐름",
     `${item.sector || "섹터"} ${rel >= 0 ? "대비 강함" : "대비 약함"}`,
-    `섹터 평균 ${fmtPct(sectorAvg)} · 종목 ${fmtDailyPct(item.changePct)} · RS 순위 ${rank || "—"}/${ranked.length || "—"}`,
+    `섹터 시총가중 ${fmtPct(sectorAvg)} · 종목 ${fmtDailyPct(item.changePct)} · RS 순위 ${rank || "—"}/${ranked.length || "—"}`,
     rel >= 0 ? "is-positive" : "is-negative"
   );
 }

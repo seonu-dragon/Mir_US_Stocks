@@ -379,7 +379,104 @@ const MIR_WORKER_ERROR_KO = {
   no_community_kv: "게시판을 일시적으로 사용할 수 없습니다.",
   community_do_unavailable: "게시판을 일시적으로 사용할 수 없습니다.",
   already_voted: "오늘은 이미 투표했습니다.",
+  turnstile_required: "보안 확인이 필요합니다. 다시 시도해 주세요.",
+  turnstile_failed: "보안 확인에 실패했습니다. 다시 시도해 주세요.",
+  turnstile_unavailable: "보안 확인 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
+
+// ===== Cloudflare Turnstile(봇 방지, 2026-10-21) =====
+// market_config.js 의 window.MIR_CLOUDFLARE.turnstileSiteKey 가 **비어 있으면 아무것도 안 한다** —
+// 스크립트를 받지 않고, 요청 본문도 예전과 글자 하나 다르지 않다. 키가 있으면:
+//   · 쓰기 폼(글 본문·댓글·투표 종목 입력)에 처음 포커스가 갈 때 위젯 스크립트를 지연 로드하고,
+//   · 글·댓글·투표를 보낼 때마다 새 토큰을 하나 받아 본문 turnstileToken 으로 싣는다(토큰은 1회용).
+// 위젯은 interaction-only 라 평소엔 보이지 않고, Cloudflare 가 사람 확인이 필요하다고 볼 때만
+// 화면 아래에 잠깐 뜬다.
+const MIR_TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+const MIR_TURNSTILE_TIMEOUT_MS = 60000;
+let mirTurnstileScriptPromise = null;
+
+function mirTurnstileSiteKey() {
+  const cfg = window.MIR_CLOUDFLARE;
+  const key = cfg && typeof cfg.turnstileSiteKey === "string" ? cfg.turnstileSiteKey.trim() : "";
+  return key;
+}
+
+function mirTurnstileLoad() {
+  if (window.turnstile && typeof window.turnstile.render === "function") return Promise.resolve(window.turnstile);
+  if (mirTurnstileScriptPromise) return mirTurnstileScriptPromise;
+  mirTurnstileScriptPromise = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = MIR_TURNSTILE_SRC;
+    s.async = true;
+    s.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("turnstile_load")));
+    s.onerror = () => reject(new Error("turnstile_load"));
+    document.head.appendChild(s);
+  }).catch((err) => {
+    mirTurnstileScriptPromise = null; // 다음 시도에서 다시 받는다
+    throw err;
+  });
+  return mirTurnstileScriptPromise;
+}
+
+// 쓰기 폼을 열 때 부른다. 키가 없으면 아무 요청도 하지 않는다.
+function mirTurnstilePreload() {
+  if (!mirTurnstileSiteKey()) return;
+  mirTurnstileLoad().catch(() => {});
+}
+
+// 키가 없으면 "" (토큰 없이 보낸다 = 기존 동작). 키가 있으면 새 토큰을 받거나 실패 시 throw.
+async function mirTurnstileToken() {
+  const sitekey = mirTurnstileSiteKey();
+  if (!sitekey) return "";
+  let ts;
+  try {
+    ts = await mirTurnstileLoad();
+  } catch (_) {
+    throw new Error("보안 확인을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  }
+  let host = document.getElementById("mirTurnstileHost");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "mirTurnstileHost";
+    host.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483000;";
+    document.body.appendChild(host);
+  }
+  const slot = document.createElement("div");
+  host.appendChild(slot);
+  return new Promise((resolve, reject) => {
+    let widgetId = null;
+    let settled = false;
+    const finish = (err, token) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try { if (widgetId != null) ts.remove(widgetId); } catch (_) { /* 이미 제거됨 */ }
+      slot.remove();
+      if (err) reject(err); else resolve(token);
+    };
+    const fail = () => finish(new Error(MIR_WORKER_ERROR_KO.turnstile_failed));
+    const timer = setTimeout(fail, MIR_TURNSTILE_TIMEOUT_MS);
+    try {
+      widgetId = ts.render(slot, {
+        sitekey,
+        action: "community",
+        appearance: "interaction-only",
+        callback: (token) => finish(null, String(token || "")),
+        "error-callback": fail,
+        "expired-callback": fail,
+        "timeout-callback": fail,
+      });
+    } catch (_) {
+      fail();
+    }
+  });
+}
+
+// 요청 본문에 토큰을 붙인다. 키가 없으면 body 를 그대로 돌려준다(필드 추가 없음).
+async function mirWithTurnstile(body) {
+  const token = await mirTurnstileToken();
+  return token ? { ...body, turnstileToken: token } : body;
+}
 
 // status 도 함께 본다 — 코드가 없는 5xx/네트워크 실패에도 한국어 문구를 준다.
 function mirWorkerErrorKo(data, status, fallback) {
@@ -738,10 +835,11 @@ async function submitCommunityVote() {
   const btn = byId("communityVoteSubmit");
   if (btn) btn.disabled = true;
   try {
+    const voteBody = await mirWithTurnstile({ ticker, choice: communityVoteSelectedChoice, clientId: getCommunityClientId() });
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker, choice: communityVoteSelectedChoice, clientId: getCommunityClientId() }),
+      body: JSON.stringify(voteBody),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1360,15 +1458,16 @@ async function postCommunityMessage() {
   }
   if (postBtn) postBtn.disabled = true;
   try {
+    const postBody = await mirWithTurnstile({
+      author,
+      ticker: ticker || "",
+      content,
+      clientId: getCommunityClientId(),
+    });
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        author,
-        ticker: ticker || "",
-        content,
-        clientId: getCommunityClientId(),
-      }),
+      body: JSON.stringify(postBody),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1416,15 +1515,16 @@ async function postCommunityComment(postId, rawContent) {
     return;
   }
   try {
+    const commentBody = await mirWithTurnstile({
+      postId,
+      author,
+      content,
+      clientId: getCommunityClientId(),
+    });
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        postId,
-        author,
-        content,
-        clientId: getCommunityClientId(),
-      }),
+      body: JSON.stringify(commentBody),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1527,6 +1627,13 @@ function setupCommunityBoard() {
         activateTab("community", { push: true, sub: "board" });
       }
     });
+  });
+
+  // Turnstile 위젯 스크립트는 쓰기 폼에 처음 들어갈 때만 받는다(사이트 키가 없으면 무동작).
+  byId("communityContent")?.addEventListener("focus", mirTurnstilePreload, { once: true });
+  byId("communityVoteTicker")?.addEventListener("focus", mirTurnstilePreload, { once: true });
+  byId("communityFeed")?.addEventListener("focusin", (event) => {
+    if (event.target && event.target.classList && event.target.classList.contains("community-reply-input")) mirTurnstilePreload();
   });
 
   // 본문 Ctrl/⌘+Enter 로 바로 등록

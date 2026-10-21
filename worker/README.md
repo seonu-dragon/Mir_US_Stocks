@@ -187,6 +187,21 @@ DO 경로에서는 요청이 이미 한 줄로 직렬화되므로, 이 플래그
 바꿔치기됩니다. 커뮤니티 저장 로직을 고칠 때 이 두 가지를 같이 보지 않으면, DO 경로에서만
 글이 사라지거나 KV 경로에서만 덮어쓰기가 나는 식으로 한쪽이 조용히 깨집니다.
 
+## Cloudflare 플랫폼 기능(전부 선택, 2026-10-21)
+
+설정 순서·대시보드 경로는 `mir_design/OWNER_TODO.md`. 아무것도 안 넣으면 동작은 예전과 같다.
+
+- **Turnstile** — Secret `TURNSTILE_SECRET` 이 있으면 `POST /community`·`/community/comment`·`/community/vote` 는
+  본문 `turnstileToken` 을 siteverify 로 확인한 뒤에만 핸들러(KV 또는 DO)로 간다. 토큰 없음 `403 turnstile_required`,
+  검증 실패 `403 turnstile_failed`, siteverify 불통 `503 turnstile_unavailable`(통과시키지 않는다). 검증은 DO 디스패치
+  앞(엣지)에서 한다. 토큰을 헤더가 아닌 본문으로 받는 건 CORS Allow-Headers 를 늘리지 않기 위해서다.
+- **Rate Limiting 바인딩** — `RL_<BUCKET>`(대문자 버킷명) 바인딩이 있으면 `ipRateLimited` 가 그것만 쓴다(키 `버킷:IP`).
+  없거나 `limit()` 이 throw 하면 KV 고정창. 코드의 `RATE_LIMIT_BUCKETS` 가 권장 한도표이고, 테스트가 실제 호출부와
+  일치하는지 확인한다.
+- **엣지 캐시** — `?fx=`(60초)·`?fng=`(300초)·`?indices=`(30초)·`?calendar=`(600초)·`?earnings_calendar=`(1800초)는
+  `caches.default` 를 거친다. 신선하고 비어 있지 않은 200 만 저장(stale·partial·빈 값은 저장 안 함). 응답 헤더
+  `X-Mir-Edge-Cache: HIT|MISS`. Origin 에 따라 본문이 달라지는 `?ticker=`·`move_analysis`·`event_news` 에는 쓰지 않는다.
+
 ## 자체 검증
 
 ```bash

@@ -29,6 +29,9 @@
 // 없으면 커뮤니티는 KV 경로로 그대로 동작한다),
 // Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_APIHUB_KEY_ID/KEY(또는 옛 NAVER_CLIENT_ID/SECRET), COMMUNITY_ADMIN_KEY,
 // (선택) GEMINI_MODEL, IP_HASH_SALT.
+// (선택, 2026-10-21) TURNSTILE_SECRET — 있으면 커뮤니티 글·댓글·투표 쓰기에 Turnstile 검증 필수,
+// 없으면 검증 생략. Rate Limiting 바인딩 RL_<BUCKET>(RL_POST·RL_VOTE 등) — 있으면 그 버킷은
+// KV 카운터 대신 바인딩으로 센다. 둘 다 없어도 기존 동작 그대로(mir_design/OWNER_TODO.md).
 // =============================================================================
 
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
@@ -66,13 +69,40 @@ export function llmOriginAllowed(request) {
   return LLM_LOCAL_ORIGIN_RE.test(origin);
 }
 
-// KV 고정창 카운터 기반의 소프트 IP 리밋. KV 는 엣지 간 최종 일관성이라
-// 정확하진 않지만, 쿼터를 태우는 봇 루프를 끊는 데는 충분하다.
+// IP 리밋. 두 단계다(2026-10-21):
+//   1) 버킷별 Cloudflare Rate Limiting 바인딩 `RL_<BUCKET>`(예: RL_POST, RL_VOTE)이 있으면
+//      그것만 쓴다. 한도·기간은 바인딩 설정이 정한다(아래 RATE_LIMIT_BUCKETS 가 권장값 =
+//      지금 코드의 KV 한도). KV 쓰기를 한 번도 하지 않는다 — 무료 플랜 KV 쓰기 1,000/일을
+//      리밋 카운터가 태우던 것을 덜어 준다.
+//   2) 바인딩이 없거나 호출이 실패하면 지금까지의 KV 고정창 카운터(동작 불변).
+// KV 는 엣지 간 최종 일관성이라 정확하진 않지만, 쿼터를 태우는 봇 루프를 끊는 데는 충분하다.
+// 하나의 공용 바인딩을 모든 버킷에 쓰지 않는 이유: 바인딩 하나는 한도가 하나라
+// 글쓰기(분당 3)와 공감(분당 30)을 같은 한도로 묶게 된다.
+export const RATE_LIMIT_BUCKETS = {
+  chat: 10, summary: 10, move: 6, evnews: 20,
+  post: 3, comment: 6, like: 30, report: 5, vote: 5, clear: 2, sync_put: 10,
+};
+
+export function rateLimitBinding(env, bucket) {
+  const name = `RL_${String(bucket || "").toUpperCase()}`;
+  const b = env && env[name];
+  return b && typeof b.limit === "function" ? b : null;
+}
+
 async function ipRateLimited(request, env, bucket, limit, windowSec) {
+  const ip = (request && request.headers && request.headers.get("CF-Connecting-IP")) || "unknown";
+  const binding = rateLimitBinding(env, bucket);
+  if (binding) {
+    try {
+      const res = await binding.limit({ key: `${bucket}:${ip}` });
+      return !(res && res.success);
+    } catch (err) {
+      console.error(`rate limit binding RL_${String(bucket).toUpperCase()} failed — KV 폴백:`, err && err.message);
+    }
+  }
   try {
     const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
     if (!kv) return false;
-    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const slot = Math.floor(Date.now() / (windowSec * 1000));
     const key = `rl:${bucket}:${ip}:${slot}`;
     const n = Number(await kv.get(key)) || 0;
@@ -293,6 +323,114 @@ export default {
   },
 };
 
+// =============================================================================
+// Cloudflare Turnstile — 커뮤니티 글·댓글·투표 쓰기의 봇 방지(2026-10-21)
+//
+// env.TURNSTILE_SECRET 이 **없으면 검증을 건너뛴다**(지금까지와 완전히 동일). 있으면
+// 아래 세 경로는 본문의 turnstileToken 을 siteverify 로 확인해야만 핸들러로 간다.
+// 토큰은 헤더가 아니라 JSON 본문 필드다 — 헤더로 보내면 CORS Allow-Headers 를 늘려야
+// 하고, 옛 워커가 떠 있는 동안 프런트가 먼저 키를 넣으면 preflight 에서 쓰기가 전부
+// 막힌다. 본문 필드는 옛 워커가 그냥 무시한다.
+// 검증은 엣지에서 DO 디스패치 **앞**에 한다(DO 안에서 직렬 큐를 외부 호출로 붙잡지 않게).
+// siteverify 자체가 실패(네트워크·타임아웃)하면 통과시키지 않는다 — 시크릿을 넣었다는 건
+// 검증을 필수로 하겠다는 뜻이다.
+// =============================================================================
+const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const TURNSTILE_ROUTES = new Set(["POST /community", "POST /community/comment", "POST /community/vote"]);
+const TURNSTILE_TIMEOUT_MS = 5000;
+
+export function turnstileRequired(env, method, pathname) {
+  const secret = env && typeof env.TURNSTILE_SECRET === "string" ? env.TURNSTILE_SECRET.trim() : "";
+  return Boolean(secret) && TURNSTILE_ROUTES.has(`${method} ${pathname}`);
+}
+
+// null = 통과(검증 불필요 포함), Response = 거부.
+export async function turnstileGate(request, url, env) {
+  if (!turnstileRequired(env, request.method, url.pathname)) return null;
+  let token = "";
+  try {
+    const body = await request.clone().json();
+    token = body && typeof body.turnstileToken === "string" ? body.turnstileToken.trim().slice(0, 2048) : "";
+  } catch { token = ""; }
+  if (!token) {
+    return noStoreJson({ error: "turnstile_required", message: "보안 확인이 필요합니다. 다시 시도해 주세요." }, 403);
+  }
+  const form = new URLSearchParams();
+  form.set("secret", env.TURNSTILE_SECRET.trim());
+  form.set("response", token);
+  const ip = request.headers.get("CF-Connecting-IP");
+  if (ip) form.set("remoteip", ip);
+  let result = null;
+  try {
+    const r = await fetchT(TURNSTILE_VERIFY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    }, TURNSTILE_TIMEOUT_MS);
+    result = r && r.ok ? await r.json() : null;
+  } catch (err) {
+    console.error("turnstile siteverify failed:", err && err.message);
+    result = null;
+  }
+  if (!result) {
+    return noStoreJson({ error: "turnstile_unavailable", message: "보안 확인 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 503);
+  }
+  if (!result.success) {
+    return noStoreJson({ error: "turnstile_failed", message: "보안 확인에 실패했습니다. 다시 시도해 주세요." }, 403);
+  }
+  return null;
+}
+
+// =============================================================================
+// 엣지 캐시(caches.default) — 모든 방문자가 같은 값을 받는 공개 데이터 라우트용(2026-10-21)
+//
+// ?fx= ?fng= ?indices= ?calendar= ?earnings_calendar= 는 프런트가 cache:"no-store" 로 부르고
+// workers.dev 응답은 Cloudflare 가 자동으로 캐시하지 않아서, 방문자마다 업스트림(야후·CNN·
+// investing.com)을 새로 쳤다. 같은 콜로의 반복 요청을 짧은 TTL 로 흡수한다.
+//   · 신선하고 비어 있지 않은 200 만 저장한다 — stale·partial·빈 결과는 저장하지 않아
+//     다음 요청이 곧바로 다시 시도한다(lastgood 계층과 같은 원칙).
+//   · TTL 은 화면 갱신 주기보다 짧게 잡는다(지수는 장중 1분 폴링 → 30초).
+//   · caches 가 없는 런타임(Node 테스트 등)에서는 그냥 통과한다.
+//   · Origin 에 따라 본문이 달라지는 ?ticker= / move_analysis / event_news 에는 쓰지 않는다.
+// =============================================================================
+export const EDGE_CACHE_TTL = { fx: 60, fng: 300, indices: 30, calendar: 600, earnings_calendar: 1800 };
+
+function edgeCache() {
+  try {
+    return typeof caches !== "undefined" && caches && caches.default ? caches.default : null;
+  } catch { return null; }
+}
+
+// produce() → { resp, cacheable }. 캐시 히트에는 X-Mir-Edge-Cache: HIT 가 붙는다.
+export async function edgeCached(keyPath, ttlSec, produce) {
+  const cache = edgeCache();
+  const key = new Request(`https://mir-edge.cache/${keyPath}`);
+  if (cache) {
+    try {
+      const hit = await cache.match(key);
+      if (hit) {
+        const r = new Response(hit.body, hit);
+        r.headers.set("X-Mir-Edge-Cache", "HIT");
+        return r;
+      }
+    } catch (err) { /* 캐시 조회 실패는 무시하고 원본으로 */ }
+  }
+  const { resp, cacheable } = await produce();
+  if (cache && cacheable && resp && resp.status === 200) {
+    try {
+      const stored = new Response(resp.clone().body, resp);
+      stored.headers.set("Cache-Control", `public, max-age=${ttlSec}`);
+      await cache.put(key, stored);
+    } catch (err) { /* 저장 실패는 응답에 영향 없음 */ }
+  }
+  resp.headers.set("X-Mir-Edge-Cache", "MISS");
+  return resp;
+}
+
+function lastGoodCacheable(result) {
+  return Boolean(result) && !result.stale && !result.partial && !lastGoodEmpty(result.value);
+}
+
 export async function handleFetch(request, env) {
     if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
 
@@ -311,7 +449,12 @@ export async function handleFetch(request, env) {
     // COMMUNITY_DO(Durable Object)가 있으면 전 요청을 그 객체로 몰아 직렬화하고,
     // 없으면 지금까지처럼 COMMUNITY_KV 를 직접 읽고 쓴다(아래 dispatchCommunity).
     const communityHandler = communityHandlerFor(request.method, url.pathname);
-    if (communityHandler) return cors(await dispatchCommunity(request, url, env, communityHandler));
+    if (communityHandler) {
+      // TURNSTILE_SECRET 이 없으면 turnstileGate 는 즉시 null(검증 생략, 기존 동작).
+      const denied = await turnstileGate(request, url, env);
+      if (denied) return cors(denied);
+      return cors(await dispatchCommunity(request, url, env, communityHandler));
+    }
 
     if (url.pathname === "/sync/prefs") {
       if (request.method === "GET") return cors(await handleSyncPrefsGet(url, env));
@@ -322,20 +465,33 @@ export async function handleFetch(request, env) {
     // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
     // 네 경로 모두 stale-if-error(withLastGood): 업스트림이 죽으면 KV 의 직전
     // 정상값을 stale:true 마커와 함께 준다. 신선할 땐 응답 모양이 예전과 같다.
+    // 다섯 경로 모두 엣지 캐시(edgeCached)를 거친다 — 신선한 결과만 짧게 저장.
     if (url.searchParams.get("fx")) {
-      return cors(staleAwareJson("fx", await withLastGood(env, "fx", fetchFx, [], { expectedCount: FX_LIST.length })));
+      return cors(await edgeCached("fx", EDGE_CACHE_TTL.fx, async () => {
+        const r = await withLastGood(env, "fx", fetchFx, [], { expectedCount: FX_LIST.length });
+        return { resp: staleAwareJson("fx", r), cacheable: lastGoodCacheable(r) };
+      }));
     }
     // CNN Fear & Greed index for the top header gauge.
     if (url.searchParams.get("fng")) {
-      return cors(staleAwareJson("fng", await withLastGood(env, "fng", fetchFng, null)));
+      return cors(await edgeCached("fng", EDGE_CACHE_TTL.fng, async () => {
+        const r = await withLastGood(env, "fng", fetchFng, null);
+        return { resp: staleAwareJson("fng", r), cacheable: lastGoodCacheable(r) };
+      }));
     }
     // Intraday index mini-charts (Finviz-style strip).
     if (url.searchParams.get("indices")) {
-      return cors(staleAwareJson("indices", await withLastGood(env, "indices", fetchIndices, [], { expectedCount: INDEX_LIST.length })));
+      return cors(await edgeCached("indices", EDGE_CACHE_TTL.indices, async () => {
+        const r = await withLastGood(env, "indices", fetchIndices, [], { expectedCount: INDEX_LIST.length });
+        return { resp: staleAwareJson("indices", r), cacheable: lastGoodCacheable(r) };
+      }));
     }
     // Economic calendar (Korea + US) via investing.com XHR endpoint.
     if (url.searchParams.get("calendar")) {
-      return cors(staleAwareJson("calendar", await fetchCalendar(env)));
+      return cors(await edgeCached("calendar", EDGE_CACHE_TTL.calendar, async () => {
+        const r = await fetchCalendar(env);
+        return { resp: staleAwareJson("calendar", r), cacheable: lastGoodCacheable(r) };
+      }));
     }
     if (url.searchParams.get("earnings_probe")) {
       // 야후 세션을 실제로 태우는 진단 라우트라 관리자 키 뒤에 둔다(감사 P3).
@@ -363,8 +519,12 @@ export async function handleFetch(request, env) {
         .map((t) => t.trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, ""))
         .filter(Boolean)
         .slice(0, EARNINGS_CALENDAR_MAX_TICKERS);
-      const earnings = await fetchEarningsCalendar(raw);
-      return cors(json({ earnings }));
+      // 캐시 키는 정렬·중복 제거한 티커 목록(같은 관심 목록이면 순서와 무관하게 같은 키).
+      const keyTickers = [...new Set(raw)].sort().join(",");
+      return cors(await edgeCached(`earnings_calendar/${encodeURIComponent(keyTickers)}`, EDGE_CACHE_TTL.earnings_calendar, async () => {
+        const earnings = await fetchEarningsCalendar(raw);
+        return { resp: json({ earnings }), cacheable: Array.isArray(earnings) && earnings.length > 0 };
+      }));
     }
 
     // 가장 긴 실제 심볼이 005930.KS(9자)라 16자면 넉넉하다. 무제한이면 긴 문자열이

@@ -11,6 +11,7 @@
   // group 이 없으면 호스트 자체가 목록이다. 버튼은 목록 요소 바로 뒤(표 본문이면 표 뒤)에 붙는다.
   const SPECS = [
     { host: "moversBoard", group: ".movers-list", item: ":scope > li", limit: 5, step: 5 },
+    { host: "extHoursBoard", group: ".movers-list", item: ":scope > li", limit: 5, step: 5 },
     { host: "levEtfGroups", item: ":scope > .lev-etf-section", limit: 6, step: 10, unit: "묶음" },
     { host: "levEtfGroups", group: ".lev-etf-grid", item: ":scope > .lev-etf-card", limit: 4, step: 12 },
     { host: "sectorEtfGrid", item: ":scope > .etf-rs-card", limit: 8, step: 10 },

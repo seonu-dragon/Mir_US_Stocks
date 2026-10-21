@@ -280,6 +280,9 @@
       // 돌파/되돌림 통계(build_breakout_retest.py)는 US 만 산출한다.
       // 없는 파일을 요청해 콘솔에 404 를 남기지 않도록 꺼 둔다.
       breakoutStats: false,
+      // 프리·애프터 급등락 보드(ext-hours.js) — TradingView /korea/scan 은 장전·장후 시간외 값(premarket_*·
+      // postmarket_*)이 전부 null 이다(2026-10-21 실측). 정규장 등락은 오늘의 특징주·시장경보가 이미 보여 준다.
+      extHoursBoard: false,
       // FINRA 일일 공매도 거래량은 US 전용 데이터(finraShort, usOnly). AI 모드 패널 게이트용.
       finraShortVolume: false,
       krDart: true,

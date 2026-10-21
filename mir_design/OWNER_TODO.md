@@ -18,7 +18,11 @@
 워커는 머지해도 반영되지 않는다(대시보드 붙여넣기 수동 배포). 아래 PR 이 **전부 main 에 머지된 뒤** 한 번만 하면 된다.
 
 - [ ] 미반영 PR: #292 · #295 · #298 · #300 (이미 머지됨, 라이브 워커에는 아직 없음)
-- [ ] 이번 라운드 PR: #337(Cloudflare 플랫폼) · (메인 세션이 머지 후 번호 추가 — 데이터 라우트 ?symsearch ?insights ?options PR 등)
+- [ ] 이번 라운드 PR(2026-10-21, 전부 머지됨):
+  - #337 Turnstile 검증·Rate Limiting 바인딩 지원·엣지 캐시(`X-Mir-Edge-Cache`)
+  - #338 실적 이력 폴백이 R2 → Pages 순으로 읽는 `MIR_DETAILS_BASE`(기본 빈 값 = 예전과 같음)
+  - #340 새 라우트 `?symsearch=` `?insights=` `?options=` + **crumb 요청 Accept 헤더 406 수정**(09-15 부터 야후 crumb 이
+    실패하던 원인 중 하나 — 재배포하면 `?ticker=` 실적 조회도 살아난다). 재배포 전엔 프런트가 이 기능들을 조용히 숨긴다.
 
 절차
 1. 로컬에서 최신 main 받기 → 붙여넣기 전 검증:
@@ -31,7 +35,7 @@
 3. 에디터 내용을 전부 지우고 main 의 `worker/yahoo-proxy.js` **전체**를 붙여넣기 → **Deploy**
 4. 아래 F 의 확인 명령으로 새 코드가 떴는지 본다.
 
-출처 PR: #292 · #295 · #298 · #300
+출처 PR: #292 · #295 · #298 · #300 · #337 · #338 · #340
 
 ---
 
@@ -136,6 +140,10 @@
 - [ ] 3. 변수 `MIR_R2_DETAILS_SKIP_PAGES=true` → 다음 배포부터 아티팩트에서 details 제외(그 run 의 업로드가 성공했을 때만).
 - 되돌리기: `gh variable delete MIR_R2_DETAILS_SKIP_PAGES` → 배포 1회(Pages 에 다시 실림) → 필요하면 `detailsBase`·`MIR_DETAILS_BASE` 비우기 → `MIR_R2_DETAILS` 삭제.
 
+- 비용 메모(추정, 미실측): R2 무료 한도는 저장 10GB·Class A(쓰기·목록) 월 100만 건. 스냅샷 1회에 바뀌는 details 가
+  US 약 7,200 · KR 약 3,200~3,700 파일이라, US 하루 3회 + KR 하루 2회면 월 ~85만 PUT 으로 한도 근처다. 켠 뒤 첫 달은
+  대시보드 **R2 → Metrics** 에서 Class A 사용량을 볼 것(넘으면 100만 건당 약 $4.5).
+
 출처 PR: #338
 
 ---
@@ -162,7 +170,16 @@ curl -s "$W/community?limit=1" | head -c 200
 # 4) 데이터 라우트 기본 동작
 curl -s "$W/?fx=1" | head -c 200
 curl -s "$W/?indices=1" | head -c 200
+
+# 5) #340 새 라우트(재배포 뒤) — 404 not_found 면 아직 옛 코드
+curl -s "$W/?symsearch=palantir" | head -c 300
+curl -s "$W/?insights=NVDA" | head -c 300
+curl -s "$W/?options=NVDA" | head -c 300   # 503 이면 crumb 세션 실패 — 잠시 뒤 다시
 ```
+
+- 사이트(#340): 종목 분석 → 테마 칩 아래 '비슷한 종목' 칩·지지/저항, '투자정보 더보기' 안 옵션 요약 카드,
+  ⌘K 에 스냅샷에 없는 종목(예 `nintendo`)을 치면 아래에 원격 검색 결과가 붙는지.
+  옛 워커 판정은 브라우저 localStorage 에 6시간 기억되니, 재배포 직후 안 보이면 시크릿 창으로 확인.
 
 - 사이트: 라이브에서 종목 토론 탭 → 글쓰기 한 번(사이트 키를 넣은 뒤라면 위젯이 필요할 때만 잠깐 뜬다).
 - Web Analytics: 토큰을 넣고 배포한 뒤 몇 분 지나 대시보드 **Web Analytics** 에 방문이 잡히는지.

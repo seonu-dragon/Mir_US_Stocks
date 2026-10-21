@@ -9,8 +9,8 @@
   - 파일데이터(CSV, 로그인·인증키 불필요). 인코딩은 EUC-KR(cp949).
   - 컬럼: 번호, 종목명, 평가액(억 원), 자산군 내 비중(%), 지분율(%).
   - **연 1회 갱신**(연말 기준, 이듬해 하반기 공개 — 현재분 기준일 2024-12-31,
-    다음 갱신 예정 2026-09-30). asOf 로 기준일을 명시하고, 값이 1년 내내 같은 게
-    정상이므로 check_data_freshness.py 의 나이 기반 감시에는 넣지 않는다.
+    다음 갱신 예정 2026-09-30). asOf 로 기준일을 명시한다. 값이 1년 내내 같은 게 정상이라
+    check_data_freshness.py 는 '빌더가 주간으로 돌고 있나'(updatedAtKst 나이 15일 = 주간 2회 연속 실패)만 본다.
   - 다운로드 식별자(atchFileId)는 연차 갱신 때 바뀌므로 매 실행 시 데이터셋
     페이지에서 다시 긁는다. 실행이 저비용이라 주간 워크플로우에 실어도 무해하다.
 
@@ -29,6 +29,8 @@ import argparse
 import json
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -69,13 +71,32 @@ def fnum(v) -> float | None:
         return None
 
 
-def http_get(url: str, referer: str | None = None) -> bytes:
+# 2026-10-17 러너에서 데이터셋 페이지가 60초 timed out 한 번으로 실패해 주간 갱신을 통째로 놓쳤다(같은 실행의
+# 공정위 기업집단도 같은 구간 타임아웃). 해외 러너↔공공데이터포털 간헐 지연이라 build_kr_corp_groups 처럼 재시도한다.
+RETRY_WAITS = (5, 15, 30)
+
+
+def http_get(url: str, referer: str | None = None, *, waits=RETRY_WAITS, sleep=time.sleep) -> bytes:
     headers = dict(UA)
     if referer:
         headers["Referer"] = referer
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read()
+    last: Exception | None = None
+    for attempt in range(len(waits) + 1):
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code < 500 and e.code != 429:
+                raise  # 4xx 는 다시 쳐도 같다
+            last = e
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            last = e
+        if attempt < len(waits):
+            print(f"  [재시도 {attempt + 1}/{len(waits)}] {type(last).__name__}: {last} — {waits[attempt]}초 후")
+            sleep(waits[attempt])
+    assert last is not None
+    raise last
 
 
 def discover_file(page_html: str) -> tuple[str, str, str | None]:

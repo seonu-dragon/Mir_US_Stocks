@@ -237,7 +237,7 @@ def test_spliced_cache_stays_incremental():
 
 
 def test_splice_skips_dates_yahoo_does_not_have():
-    rows = [{"date": "2026-09-30", "open": 1, "high": 1, "low": 1, "close": 1.0, "volume": 1},
+    rows = [{"date": "2026-09-30", "open": 5, "high": 5, "low": 5, "close": 5.4, "volume": 1},
             {"date": "2026-10-01", "open": 2, "high": 2, "low": 2, "close": 2.0, "volume": 2}]
     n = K.splice_krx_bars(rows, [{"date": "2026-09-30", "open": 5, "high": 6, "low": 4, "close": 5.5, "volume": 9}])
     assert n == 1 and rows[0]["close"] == 5.5 and rows[1]["close"] == 2.0   # 없는 날은 지어내지 않는다

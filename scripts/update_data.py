@@ -36,6 +36,13 @@ OUT_JS = ROOT / "data" / "market_snapshot.js"
 DETAILS_DIR = ROOT / "data" / "details"
 TODAY_CONTENT_FILE = ROOT / "data" / "today_content.json"
 MAX_REAL_HISTORY = 1400
+# '묵은 캐시' 재수집(KR update_korea_data.HISTORY_STALE_REFRESH_PER_RUN 과 같은 설계, 2026-10-21).
+# preferHistory 가 아닌 종목(상위 1,400·활성 소형주 밖)은 build_one 이 직전 detail 을 yahoo-cache 로 무기한
+# 이월만 했다 — 2026-10-21 실측 US details 4,799개 중 1,024개의 마지막 봉이 7일 넘게 멈춰 있었고(261개가
+# 09-18), 그중 1,010개는 같은 날 spark 시세 기준일이 10-20 인 '거래 중' 종목이었다. 이월 종목 1,547개를
+# 하루 한 번 실행으로 순환하려면 실행당 500개 ≈ 3일 주기(감시 기준 7일 안). 오래된 순 — 0 이면 끈다.
+HISTORY_STALE_REFRESH_PER_RUN = int(os.environ.get("US_HISTORY_STALE_REFRESH", "500") or 0)
+STALE_CACHE_DAYS = 5
 MAX_FUNDAMENTALS = 3500
 ACTIVE_SMALL_CAP_MIN_CAP_B = 0.3
 ACTIVE_SMALL_CAP_MIN_VOLUME = 1_000_000
@@ -2646,8 +2653,16 @@ def _cached_dividends(detail):
     return out
 
 
-def drop_corrupted_last_bar(rows):
-    """캐시 rows 의 마지막 봉 종가가 그 봉의 고가·저가 범위를 2% 넘게 벗어나면 그 봉을 버린다. 버렸으면 True.
+# US 야후 봉은 종가가 늘 [저가, 고가] 안이고 chartSeries 는 셋 다 round(·, 2) 라(단조 함수) 반올림으로도 밖으로
+# 나갈 수 없다 — 0.1%(감시 data_health_core 와 같은 기준)만 넘어도 오염이다. 2% 여유를 두면 2026-10-21 실측
+# 오염 봉 1,131개 중 255개(ABCB 고 83.50·저 82.03·종 80.68 등, 전부 yahoo-cache)가 살아남았다. KR 은 마지막 봉
+# 종가를 KRX 종가로 맞추고(align_last_bar_to_close) 고·저는 다른 원천일 수 있어 2% 그대로 둔다.
+US_CORRUPT_BAR_TOL = 0.001
+KR_CORRUPT_BAR_TOL = 0.02
+
+
+def drop_corrupted_last_bar(rows, tol=KR_CORRUPT_BAR_TOL):
+    """캐시 rows 의 마지막 봉 종가가 그 봉의 고가·저가 범위를 tol(기본 2%) 넘게 벗어나면 그 봉을 버린다. 버렸으면 True.
 
     make_stock 이 묵은 캐시 마지막 봉의 종가 칸에 다른 날 가격을 덮던 버그(US 2026-10-21 수정, KR 은 2026-09-30
     이전 코드)로 오염된 캐시가 남아 있다 — 진짜 종가를 알 수 없으므로 봉을 통째로 뺀다(다음 실측 수집이 그 날짜를
@@ -2660,10 +2675,67 @@ def drop_corrupted_last_bar(rows):
         high, low, close = float(last["high"]), float(last["low"]), float(last["close"])
     except (KeyError, TypeError, ValueError):
         return False
-    if high > 0 and low > 0 and not (low * 0.98 <= close <= high * 1.02):
+    if high > 0 and low > 0 and not (low * (1 - tol) <= close <= high * (1 + tol)):
         rows.pop()
         return True
     return False
+
+
+def _cached_last_bar_date(symbol):
+    """직전 US detail 의 chartSeries 마지막 '온전한' 봉 날짜(없거나 못 읽으면 None).
+
+    마지막 봉이 오염(종가가 고·저 밖 — drop_corrupted_last_bar 기준)이면 load_cached_history 가 그 봉을 버리므로
+    그 앞 봉 날짜를 돌려준다(재수집 순번이 실제로 쓰일 rows 기준이 되게)."""
+    try:
+        with open(DETAILS_DIR / f"{_detail_safe_name(symbol)}.json", encoding="utf-8") as handle:
+            series = json.load(handle).get("chartSeries") or []
+        rows = [
+            {"high": bar[1], "low": bar[2], "close": bar[3], "date": bar[5]}
+            for bar in series[-2:] if isinstance(bar, list) and len(bar) > 5 and bar[5]
+        ]
+        drop_corrupted_last_bar(rows, US_CORRUPT_BAR_TOL)
+        return str(rows[-1]["date"]) if rows else None
+    except Exception:
+        return None
+
+
+def stale_cache_refresh_symbols(metas, prev_stocks, quota, today=None, last_bar_fn=None):
+    """yahoo-cache 로 이월만 되던 종목 중 마지막 봉이 STALE_CACHE_DAYS 넘게 지난 것을 오래된 순으로 quota 개.
+
+    호출부가 이 종목들을 preferHistory 로 올리면 build_one 이 야후 일봉을 다시 받아(캐시가 7일 넘게 묵었으면
+    fetch_history_smart 가 5y 전체) 빠진 날짜·오염 봉을 버린 날짜를 실측으로 채운다. 지어낸 봉은 없다 —
+    받지 못하면 직전 캐시 이월(현행)으로 돌아간다. 같은 날짜면 시총 큰 순.
+    """
+    if quota <= 0:
+        return set()
+    if today is None:
+        today = datetime.now(ET_TZ).date()
+    cutoff = (today - timedelta(days=STALE_CACHE_DAYS)).isoformat()
+    last_bar = last_bar_fn or _cached_last_bar_date
+    listed = {meta["symbol"] for meta in metas if not meta.get("preferHistory")}
+    stale = []
+    for item in prev_stocks or []:
+        ticker = str(item.get("ticker") or "")
+        if item.get("historySource") != "yahoo-cache" or ticker not in listed:
+            continue
+        last = last_bar(ticker)
+        if last and last < cutoff:
+            stale.append((last, -float(item.get("marketCapB") or 0), ticker))
+    stale.sort()
+    return {ticker for _last, _cap, ticker in stale[:quota]}
+
+
+def promote_stale_cache_refresh(universe, prev_stocks, quota=None, **kwargs):
+    """stale_cache_refresh_symbols 대상을 preferHistory 로 올리고 그 수를 돌려준다."""
+    quota = HISTORY_STALE_REFRESH_PER_RUN if quota is None else quota
+    stale = stale_cache_refresh_symbols(universe, prev_stocks, quota, **kwargs)
+    for meta in universe:
+        if meta["symbol"] in stale:
+            meta["preferHistory"] = True
+            meta["staleCacheRefresh"] = True
+    if stale:
+        print(f"[이력] 마지막 봉이 {STALE_CACHE_DAYS}일 넘게 묵은 캐시 {len(stale)}개를 다시 수집(실행당 상한 {quota})")
+    return len(stale)
 
 
 def load_cached_history(symbol):
@@ -2690,7 +2762,7 @@ def load_cached_history(symbol):
                 "close": float(entry[3]),
                 "volume": float(entry[4] or 0),
             })
-        drop_corrupted_last_bar(rows)
+        drop_corrupted_last_bar(rows, US_CORRUPT_BAR_TOL)
         if len(rows) < 30:
             return None
         remember_cached_splits(symbol, detail)
@@ -3696,6 +3768,9 @@ def build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_c
 def build_snapshot():
     universe, etf_category_map, etf_universe_count, lev_etf_count, exchange_backfill_count = build_universe()
     small_cap_check = apply_dated_small_cap_quotes(universe)
+    prev = load_existing_snapshot() or {}
+    # spark 로 날짜 붙은 시세를 먼저 받은 뒤에 올린다 — 재수집이 실패해 캐시로 돌아가도 가격은 기준일 값이다.
+    small_cap_check["staleCacheRefresh"] = promote_stale_cache_refresh(universe, prev.get("stocks") or [])
     # '아무 날짜'가 아니라 마지막 완료 거래일 기준. 전 거래일 봉만 잔뜩 있어도
     # 95% 로 세지 않는다(그러면 스크리너 재조회까지 건너뛰고 게이트가 죽는다).
     on_session = small_cap_check.get("onSession")
@@ -3730,7 +3805,6 @@ def build_snapshot():
     # 이력 대상이 줄어든 날을 야후 스로틀로 오인해 발행이 영원히 잠긴다
     # (KR 2026-08-24~26). 절대 임계(합성 5%)는 평상시 실패분(~380 초소형)에
     # 오탐했다(2026-07-23).
-    prev = load_existing_snapshot() or {}
     prefer_tickers = {meta["symbol"] for meta in universe if meta.get("preferHistory")}
     honesty = enforce_history_honesty_gate(stocks, prefer_tickers, prev.get("stocks") or [])
     print(history_fetch_summary(_history_stats, _history_stats_lock))

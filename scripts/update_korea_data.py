@@ -17,6 +17,7 @@ import argparse
 import html
 import importlib.util
 import json
+import math
 import os
 import re
 import shutil
@@ -1282,7 +1283,13 @@ def attach_week52_from_history(stock: dict, rows: list) -> None:
 # 그래서 주식은 NAVER_INTEGRATED_SINCE 이후 봉을 야후 일봉(KRX)으로 덮는다(splice_krx_bars). 그 전 구간·ETF 는
 # 네이버(수정주가) 그대로. 야후 봉은 배당·분할 이벤트용으로 이미 받던 응답을 쓴다(추가 요청 없음).
 NAVER_INTEGRATED_SINCE = "2026-09-14"
-_krx_splice_stats = {"stocks": 0, "bars": 0, "noYahoo": 0}
+_krx_splice_stats = {"stocks": 0, "bars": 0, "noYahoo": 0, "rejected": 0}
+# 야후 봉이 같은 날 네이버 봉과 이 비율 넘게 다르면 덮지 않는다(2026-10-21). 통합 종가(NXT 포함)와 KRX 종가는
+# 같은 날 같은 기준가의 가격제한폭 안이라 실측 차이가 수 % 다. 그런데 거래정지 중 감자·병합이 있었던 종목은 야후가
+# 분할 계수를 거꾸로 적용한 엉터리 종가를 준다 — 000300 DH오토넥스 야후 21,086,206 vs 네이버 4,200(거래량 0),
+# 011810 STX 410,465 vs 3,530, 001470 9,429 vs 5,820. 이 봉이 그대로 덮여 스냅샷 등락률이 −100%·−99%·−38% 로
+# 발행됐다(감시 2026-10-21: |등락률|>30.5% 6종목, 전부 거래정지·야후 분할 이벤트 보유). 네이버 봉을 그대로 둔다.
+KRX_SPLICE_MAX_DIFF = 0.15
 
 # 증분: 직전 detail 이 네이버 봉이고 최근이면 마지막 봉 21일 전부터만 받아 겹침을 비교한다. 수정주가는 권리락
 # 날 과거 전체가 바뀌므로 겹치는 종가가 하나라도 다르면 5년 전체를 다시 받는다. 야후 봉 캐시(전환 첫날)도 전체.
@@ -1502,6 +1509,12 @@ def splice_krx_bars(rows: list, yahoo_rows: list, since: str = NAVER_INTEGRATED_
         y = by_date.get(row["date"])
         if not y:
             continue
+        base = row.get("close")
+        if base and abs(y["close"] / base - 1) > KRX_SPLICE_MAX_DIFF:
+            # 같은 날 KRX 종가와 통합 종가가 15% 넘게 다를 수 없다 — 야후 쪽 오류(위 KRX_SPLICE_MAX_DIFF 주석).
+            with _history_stats_lock:
+                _krx_splice_stats["rejected"] += 1
+            continue
         rows[i] = {**row, "open": y["open"], "high": max(y["high"], y["close"]), "low": min(y["low"], y["close"]),
                    "close": y["close"], "volume": y.get("volume", row.get("volume", 0.0))}
         n += 1
@@ -1571,7 +1584,8 @@ def bars_source_summary() -> str:
         samples = list(_bars_fallback_samples)
         krx = dict(_krx_splice_stats)
     line = (f"[일봉원천] 네이버 {snap.get('naver', 0)} · 야후 폴백 {snap.get('yahoo-fallback', 0)}"
-            f" · KRX(야후) 덮어쓰기 {krx['bars']}봉/{krx['stocks']}종목(야후 없음 {krx['noYahoo']})")
+            f" · KRX(야후) 덮어쓰기 {krx['bars']}봉/{krx['stocks']}종목(야후 없음 {krx['noYahoo']}"
+            f" · 네이버와 {KRX_SPLICE_MAX_DIFF:.0%} 넘게 달라 버림 {krx['rejected']}봉)")
     return line + (f" (예: {' | '.join(samples)})" if samples else "")
 
 
@@ -2133,8 +2147,50 @@ def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
     return etf_relative, lev_stocks, lev_catalog
 
 
+# 국내 가격제한폭은 ±30% 다(반올림 여유 0.5%p — data_health_core.CHANGE_MAX["kr"] 와 같은 값). 그 밖의 당일 등락률은
+# 신규상장일(공모가 대비, 제한 없음)이 아니면 나올 수 없다 — 거래정지 중 감자·병합·분할을 반영하지 못한 직전 종가와
+# 비교한 값이다(2026-10-21 감시: 000300 −100%·011810 −99.1%·412540 −95.2%·080720 −70.5%·245620 −70.2%·
+# 001470 −38.3%, 전부 거래정지 + 야후 분할 이벤트). 값은 바꾸지 않고(진짜 등락률을 모른다) changePctSuspect 로
+# 표시해 집계(섹터·시장 폭·요약·특징주)만 뺀다 — US update_data.flag_implausible_change 와 같은 계약.
+KR_PRICE_LIMIT_PCT = 30.5
+
+
+def flag_kr_implausible_change(stock: dict) -> str | None:
+    """가격제한폭 밖 등락률이면 stock["changePctSuspect"] 에 사유("split"|"limit")를 넣고 돌려준다. 아니면 None.
+
+    근거가 있을 때만 표시한다: 실측 일봉(chartSeries)에 기준일 **전** 봉이 있어야 한다(= 오늘이 상장 첫날이 아니다).
+    일봉이 없거나 기준일 봉 하나뿐이면 신규상장일일 수 있어 건드리지 않는다.
+    """
+    chg = stock.get("changePct")
+    if not isinstance(chg, (int, float)) or isinstance(chg, bool) or not math.isfinite(chg):
+        return None
+    if abs(chg) <= KR_PRICE_LIMIT_PCT:
+        return None
+    ref = str(stock.get("priceDate") or datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat())[:10]
+    series = stock.get("chartSeries") or []
+    earlier = [bar for bar in series if isinstance(bar, (list, tuple)) and len(bar) > 5 and bar[5] and str(bar[5]) < ref]
+    if not earlier:
+        return None  # 신규상장일(또는 일봉 없음) — 공모가 대비 등락은 제한이 없다
+    recent_split = False
+    try:
+        ref_day = date.fromisoformat(ref)
+        for entry in stock.get("splits") or []:
+            try:
+                gap = (ref_day - date.fromisoformat(str(entry[0])[:10])).days
+            except (TypeError, ValueError, IndexError):
+                continue
+            if 0 <= gap <= 90:
+                recent_split = True
+                break
+    except ValueError:
+        pass
+    reason = "split" if recent_split else "limit"
+    stock["changePctSuspect"] = reason
+    return reason
+
+
 def build_summary(stocks: list[dict]) -> dict:
-    stock_rows = [s for s in stocks if s.get("sector") != "ETF"]
+    stock_rows = [s for s in stocks if s.get("sector") != "ETF" and UD.change_trusted(s)]
     sector_scores: dict[str, list[float]] = {}
     for item in stock_rows:
         sector_scores.setdefault(item["sector"], []).append(item["changePct"])
@@ -2398,6 +2454,11 @@ def build_snapshot(limit: int | None = None) -> dict:
             stocks.append(stock)
             if err:
                 errors.append(err)
+
+    suspect = [s["ticker"] for s in stocks if flag_kr_implausible_change(s)]
+    if suspect:
+        print(f"[등락률 가드] |등락률|>{KR_PRICE_LIMIT_PCT}%(가격제한폭 밖, 신규상장일 아님) {len(suspect)}종목 → 집계 제외: "
+              f"{', '.join(suspect[:10])}")
 
     # 데이터 정직성 게이트: 오늘 preferHistory 티커만 직전과 비교한다.
     # 스냅샷 전체 실측 수와 비교하면 공시 창이 줄어든 날을 야후 스로틀로

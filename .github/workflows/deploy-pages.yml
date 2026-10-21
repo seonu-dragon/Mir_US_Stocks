@@ -85,8 +85,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # push 이벤트는 main 의 *지금* 최신을 받는다. 기본값(github.sha = 푸시된 커밋)이면 늦게 도착한 push
+      # 이벤트가 옛 커밋을 배포해 라이브를 되돌린다 — 2026-10-21 밤 GitHub 의 push 이벤트가 1시간 넘게 밀려
+      # #353 의 push 배포(15:25Z)가 그보다 새 #354 수동 배포(15:20Z)를 덮었다. 다른 이벤트는 그대로
+      # (workflow_run·workflow_dispatch 의 github.sha 는 이미 실행 시점의 브랜치 최신이다).
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || '' }}
 
       # 같은 내용을 여러 번 올리지 않는다. 데이터 워크플로우가 각각 완료마다 배포를
       # 트리거하는데, 그중 다수는 앞선 배포가 이미 올린 커밋을 다시 올리거나 서빙하지

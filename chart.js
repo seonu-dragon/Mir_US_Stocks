@@ -379,6 +379,7 @@ function syncChartOverlayCheckboxes() {
     const el = byId(id);
     if (el) el.checked = chartState[id];
   });
+  if (typeof syncChartIndPicker === "function") syncChartIndPicker();
 }
 
 function snapshotChartOverlaysForProb() {
@@ -759,8 +760,9 @@ function groupIntradayRows(rows, n) {
 }
 
 // 지금 종목·간격의 분봉 상태. 없거나 60초 지났으면 받아 오고, 도착하면 차트를 다시 그린다.
-function chartIntradayState(item) {
-  const spec = CHART_INTRADAY[chartState.barTf];
+// tf 를 주면(멀티 차트 칸) 그 간격, 아니면 메인 봉 종류.
+function chartIntradayState(item, tf) {
+  const spec = CHART_INTRADAY[tf || chartState.barTf];
   if (!spec || !item) return { status: "error", rows: [], msg: "분봉 간격을 알 수 없습니다." };
   if (!LIVE_DATA_PROXY) return { status: "error", rows: [], msg: "분봉 서버가 설정돼 있지 않습니다." };
   const sym = liveProxyTicker(item);
@@ -793,6 +795,7 @@ function chartIntradayState(item) {
     }).finally(() => {
       const now = currentChartItem();
       if (isIntradayTf(chartState.barTf) && now && now.ticker === item.ticker) redrawChart();
+      if (typeof chartMultiRefresh === "function") chartMultiRefresh(true);
     });
   }
   const st = _chartIntraday[key];
@@ -938,10 +941,11 @@ function markChartGestureActive() {
 // 폰: viewBox 폭을 실제 표시 폭(≈290~360px)에 가깝게 둬야 SVG 글자·눈금이 줄지 않는다.
 // 예전엔 480 폭을 ~316px 로 줄여 그려 축 글자가 12 → 약 8px 로 보였다(2026-09-27 모바일 점검).
 // 왼쪽은 그릴 것이 없어 여백을 줄이고, 가격 축(오른쪽)만 자리를 둔다.
+// 멀티 차트(2·4칸, chart-multi.js)에선 메인이 반 폭 칸에 들어가므로 viewBox 도 좁혀 글자 크기를 지킨다.
 function priceChartGeom() {
-  return window.matchMedia("(max-width: 768px)").matches
-    ? { width: 340, padL: 12, padR: 52, plotH: 240, mobile: true }
-    : { width: 860, padL: 54, padR: 58, plotH: 300, mobile: false };
+  if (window.matchMedia("(max-width: 768px)").matches) return { width: 340, padL: 12, padR: 52, plotH: 240, mobile: true };
+  if (typeof chartMultiActive === "function" && chartMultiActive()) return { width: 600, padL: 40, padR: 56, plotH: 260, mobile: false, multi: true };
+  return { width: 860, padL: 54, padR: 58, plotH: 300, mobile: false };
 }
 
 function setupChartControls() {
@@ -981,13 +985,9 @@ function setupChartControls() {
   const intradaySel = byId("barIntradaySelect");
   if (intradaySel) intradaySel.addEventListener("change", () => setChartBarTf(intradaySel.value || "D"));
   syncChartBarTfUi();
-  ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showTechLevels", "showPatterns",
-   "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
-   "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci", "showCmf", "showMfi",
-   "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze",
-   "showMarketStructure", "showChandelier", "showAnchoredVwap",
-   "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
+  // 지표 고르기(검색·분류·즐겨찾기·파라미터) 목록을 먼저 만든다 — 체크박스 id 는 예전 그대로라 아래 바인딩이 같다.
+  if (typeof setupChartIndPicker === "function") setupChartIndPicker();
+  chartSettingIds().forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", (event) => {
       chartState[id] = event.target.checked;
@@ -995,6 +995,7 @@ function setupChartControls() {
         chartState.techLevelTypes = Object.fromEntries(TECH_LEVEL_LABELS.map(([k]) => [k, true]));
       }
       syncCprobChartControlChips();
+      if (typeof syncChartIndPicker === "function") syncChartIndPicker();
       redrawChart();
     });
   });
@@ -1112,6 +1113,8 @@ function currentChartPreset() {
     // (마스터 토글만 저장하면 기술레벨·패턴 세부 선택이 유실).
     techLevelTypes: { ...chartState.techLevelTypes },
     patternTypes: { ...chartState.patternTypes },
+    // 지표 파라미터(기간·배수·추가 이평) — 기본값과 다른 것만(chart-ind-core.js normalize).
+    indParams: window.MirChartInd ? window.MirChartInd.normalize(chartState.indParams) : {},
     compareTickers: compareTickers.slice()
   };
 }
@@ -1136,6 +1139,7 @@ function syncChartControlUi() {
     const el = byId(id);
     if (el) el.checked = Boolean(chartState[id]);
   });
+  if (typeof syncChartIndPicker === "function") syncChartIndPicker();
   // 기술레벨·패턴 체크박스 그룹(기술 점수 패널 칩)도 프리셋 상태로 맞춘다.
   syncCprobChartControlChips();
 }
@@ -1159,6 +1163,11 @@ function applyChartPreset(name) {
   }
   if (preset.patternTypes && typeof preset.patternTypes === "object") {
     chartState.patternTypes = { ...chartState.patternTypes, ...preset.patternTypes };
+  }
+  // 파라미터 없는 옛 프리셋은 지금 파라미터를 그대로 둔다.
+  if (preset.indParams && typeof preset.indParams === "object" && window.MirChartInd) {
+    chartState.indParams = window.MirChartInd.normalize(preset.indParams);
+    if (typeof saveChartIndParams === "function") saveChartIndParams();
   }
   compareTickers = Array.isArray(preset.compareTickers)
     ? preset.compareTickers.filter((ticker) => stockByTicker(ticker)).slice(0, 5)
@@ -1413,6 +1422,7 @@ function setupChartInteractions() {
 
   const beginPan = (event) => {
     if (event.target.closest && event.target.closest("[data-yscale]")) return; // A/L 버튼
+    if (event.target.closest && event.target.closest("[data-panel-resize]")) return; // 보조 패널 높이(chart-ind-picker.js)
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const yp = chartYAxisPoint(event);
     const onAxis = Boolean(yp && yp.onAxis);
@@ -1536,7 +1546,7 @@ function setupChartInteractions() {
   // 마우스 더블클릭 → 초기화(상단 '초기화' 버튼과 동일). 드로잉 중엔 무시.
   // 가격 축 더블클릭 → 세로 자동 맞춤만(가로 줌은 유지). A/L 버튼 더블클릭은 무시.
   svg.addEventListener("dblclick", (event) => {
-    if (event.target.closest && event.target.closest("[data-yscale]")) return;
+    if (event.target.closest && event.target.closest("[data-yscale], [data-panel-resize]")) return;
     const yp = chartYAxisPoint(event);
     if (yp && yp.onAxis) {
       event.preventDefault();
@@ -2117,7 +2127,7 @@ function setupChartDrawing() {
       : { type: drawTool, x1: a.xn, p1: a.price, x2: b.xn, p2: b.price });
     svg.addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse" && e.button !== 0) return;
-      if (e.target.closest && e.target.closest("[data-yscale]")) return;
+      if (e.target.closest && e.target.closest("[data-yscale], [data-panel-resize]")) return;
       const yp = chartYAxisPoint(e);
       if (yp && yp.onAxis) return; // 가격 축은 세로 배율 조작(beginPan)이 받는다
       // 키보드(Delete·Ctrl+Z·Esc)가 바로 먹도록 차트에 포커스를 둔다(스크롤은 움직이지 않음).
@@ -2669,6 +2679,7 @@ function renderChartCrosshair(vbX, vbY) {
   if (!layer) return;
   if (!g || !g.rows || !g.rows.length || vbX < g.padL || vbX > g.padL + g.plotW || vbY < g.padT || vbY > g.axisBottom) {
     layer.innerHTML = "";
+    if (typeof chartMultiSyncCrosshair === "function") chartMultiSyncCrosshair(null);
     return;
   }
   const n = g.rows.length;
@@ -2686,6 +2697,7 @@ function renderChartCrosshair(vbX, vbY) {
       out += `<g class="chart-xhair-tag"><rect x="${(xR + 2).toFixed(1)}" y="${(vbY - 8).toFixed(1)}" width="${(g.width - xR - 4).toFixed(1)}" height="16" rx="3"></rect><text x="${(g.width - 6).toFixed(1)}" y="${(vbY + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(chartPriceLabel(price))}</text></g>`;
     }
   }
+  if (typeof chartMultiSyncCrosshair === "function") chartMultiSyncCrosshair(raw.d);
   const dateLabel = chartCrosshairDate(raw.d);
   const dw = Math.max(54, dateLabel.length * 6.4 + 10);
   const dx = Math.max(g.padL, Math.min(xR - dw, x - dw / 2));
@@ -2742,7 +2754,27 @@ function setupChartCrosshair() {
     pending = null;
     const layer = byId("chartCrosshair");
     if (layer) layer.innerHTML = "";
+    if (typeof chartMultiSyncCrosshair === "function") chartMultiSyncCrosshair(null);
   });
+}
+
+// 멀티 차트 칸에서 가리킨 시각 d 를 메인 차트에 세로선+날짜 태그로(같은 날짜 동기화). d 가 없으면 지운다.
+function renderChartCrosshairAtDate(d) {
+  const layer = byId("chartCrosshair");
+  const g = lastChartGeom;
+  if (!layer) return;
+  const core = window.MirChartInd;
+  if (!d || !g || !g.rawRows || !g.rawRows.length || !core) { layer.innerHTML = ""; return; }
+  const idx = core.barIndexForDate(g.rawRows.map((r) => r.d), d);
+  if (idx < 0) { layer.innerHTML = ""; return; }
+  const n = g.rawRows.length;
+  const x = g.padL + (idx / Math.max(1, n - 1)) * (g.dataW || g.plotW);
+  const dateLabel = chartCrosshairDate(g.rawRows[idx].d);
+  const dw = Math.max(54, dateLabel.length * 6.4 + 10);
+  const xR = g.padL + g.plotW;
+  const dx = Math.max(g.padL, Math.min(xR - dw, x - dw / 2));
+  layer.innerHTML = `<line class="chart-xhair" x1="${x.toFixed(1)}" y1="${g.padT}" x2="${x.toFixed(1)}" y2="${g.axisBottom.toFixed(1)}"></line>`
+    + `<g class="chart-xhair-tag"><rect x="${dx.toFixed(1)}" y="${(g.height - 22).toFixed(1)}" width="${dw.toFixed(1)}" height="18" rx="3"></rect><text x="${(dx + dw / 2).toFixed(1)}" y="${(g.height - 9).toFixed(1)}" text-anchor="middle">${escapeHtml(dateLabel)}</text></g>`;
 }
 
 // ===== 차트 PNG 저장 =====
@@ -2882,12 +2914,35 @@ function setupChartKeyboard() {
   });
 }
 
+// 이동평균 선(고정 슬롯 SMA 5칸·EMA 2칸 + 추가 이평). 기간은 chartState.indParams(기본: 슬롯 이름의 기간).
+// 메인 차트와 멀티 차트 칸(chart-multi.js)이 같이 쓴다. clip 은 화면 범위 밖 값을 끊는 함수(없으면 그대로).
+function chartMaOverlaysSvg(ctxCloses, visN, clip, xFor, yFor, strokeScale = 1) {
+  const cut = typeof clip === "function" ? clip : (a) => a;
+  const core = window.MirChartInd;
+  const out = [];
+  [["showSma5", "sma"], ["showSma10", "sma"], ["showSma20", "sma"], ["showSma60", "sma"], ["showSma120", "sma"],
+   ["showEma20", "ema"], ["showEma60", "ema"]].forEach(([id, kind]) => {
+    if (!chartState[id]) return;
+    const period = chartIndP(id).p || Number(id.replace(/\D/g, ""));
+    const color = (core && core.entry(id) && core.entry(id).overlay) || "#8b5cf6";
+    const series = kind === "ema" ? emaArray(ctxCloses, period) : smaSeries(ctxCloses, period);
+    out.push(pathFromSeries(cut(lastN(series, visN)), xFor, yFor, color, (kind === "ema" ? 1.6 : 1.8) * strokeScale, ""));
+  });
+  const extra = core ? core.sanitizeExtra(chartState.indParams && chartState.indParams.extra) : [];
+  extra.forEach((x, i) => {
+    const series = x.t === "ema" ? emaArray(ctxCloses, x.p) : smaSeries(ctxCloses, x.p);
+    out.push(pathFromSeries(cut(lastN(series, visN)), xFor, yFor, core.EXTRA_COLORS[i % core.EXTRA_COLORS.length], 1.6 * strokeScale, x.t === "ema" ? "6 3" : ""));
+  });
+  return out.join("");
+}
+
 function drawChart(item, options = {}) {
   setupChartDrawing();
   setupChartEventToggles();
   setupChartEventInteractions();
   setupChartCrosshair();
   setupChartKeyboard();
+  if (typeof ensureChartIndParams === "function") ensureChartIndParams();
   const mainChart = !options.svgElement;
   const svg = options.svgElement || byId("priceChart");
   const intraday = isIntradayTf(chartState.barTf);
@@ -2930,25 +2985,27 @@ function drawChart(item, options = {}) {
   // Bottom panels stack below the price plot (dynamic height).
   const gap = 18;
   const panels = [];
-  if (chartState.showVolume || chartState.showVolMa20 || chartState.showVolumeRatio) panels.push({ t: "volume", h: 52 });
-  if (chartState.showObv) panels.push({ t: "obv", h: 56 });
-  if (chartState.showAd) panels.push({ t: "ad", h: 56 });
-  if (chartState.showRsi) panels.push({ t: "rsi", h: 60 });
-  if (chartState.showMacd) panels.push({ t: "macd", h: 70 });
-  if (chartState.showStoch) panels.push({ t: "stoch", h: 60 });
-  if (chartState.showRoc) panels.push({ t: "roc", h: 58 });
-  if (chartState.showMomentum) panels.push({ t: "momentum", h: 58 });
-  if (chartState.showWilliams) panels.push({ t: "williams", h: 58 });
-  if (chartState.showAtr) panels.push({ t: "atr", h: 58 });
-  if (chartState.showAdx) panels.push({ t: "adx", h: 62 });
-  if (chartState.showCci) panels.push({ t: "cci", h: 58 });
-  if (chartState.showCmf) panels.push({ t: "cmf", h: 56 });
-  if (chartState.showMfi) panels.push({ t: "mfi", h: 56 });
-  if (chartState.showTtmSqueeze) panels.push({ t: "ttm", h: 58 });
+  // 보조 패널 높이: 기본값, 사용자가 경계를 끌어 바꿨으면 그 값(chart-ind-picker.js, 기기별 저장).
+  const ph = (t, h) => (mainChart && typeof chartPanelHeight === "function" ? chartPanelHeight(t, h) : h);
+  if (chartState.showVolume || chartState.showVolMa20 || chartState.showVolumeRatio) panels.push({ t: "volume", h: ph("volume", 52) });
+  if (chartState.showObv) panels.push({ t: "obv", h: ph("obv", 56) });
+  if (chartState.showAd) panels.push({ t: "ad", h: ph("ad", 56) });
+  if (chartState.showRsi) panels.push({ t: "rsi", h: ph("rsi", 60) });
+  if (chartState.showMacd) panels.push({ t: "macd", h: ph("macd", 70) });
+  if (chartState.showStoch) panels.push({ t: "stoch", h: ph("stoch", 60) });
+  if (chartState.showRoc) panels.push({ t: "roc", h: ph("roc", 58) });
+  if (chartState.showMomentum) panels.push({ t: "momentum", h: ph("momentum", 58) });
+  if (chartState.showWilliams) panels.push({ t: "williams", h: ph("williams", 58) });
+  if (chartState.showAtr) panels.push({ t: "atr", h: ph("atr", 58) });
+  if (chartState.showAdx) panels.push({ t: "adx", h: ph("adx", 62) });
+  if (chartState.showCci) panels.push({ t: "cci", h: ph("cci", 58) });
+  if (chartState.showCmf) panels.push({ t: "cmf", h: ph("cmf", 56) });
+  if (chartState.showMfi) panels.push({ t: "mfi", h: ph("mfi", 56) });
+  if (chartState.showTtmSqueeze) panels.push({ t: "ttm", h: ph("ttm", 58) });
   // 상대강도·비교는 일봉 날짜로 맞춘다 — 분봉에선 그리지 않는다.
-  if (!intraday && hasRelativePanel(item)) panels.push({ t: "relative", h: 70 });
+  if (!intraday && hasRelativePanel(item)) panels.push({ t: "relative", h: ph("relative", 70) });
   const cmpOverlayOn = !intraday && compareTickers.length > 0 && getChartCompareMode() === "overlay";
-  if (!intraday && compareTickers.length && !cmpOverlayOn) panels.push({ t: "compare", h: 72 });
+  if (!intraday && compareTickers.length && !cmpOverlayOn) panels.push({ t: "compare", h: ph("compare", 72) });
   const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
   const axisH = 26;
   // 이벤트 마커 띠: 켜진 종류의 이벤트가 하나라도 있으면(보이는 구간 밖이어도) 자리를 잡아
@@ -3040,7 +3097,8 @@ function drawChart(item, options = {}) {
   // Bollinger Bands (20, 2σ) overlay.
   let bollSvg = "";
   if (chartState.showBoll) {
-    const bb0 = bollinger(ctxCloses, 20, 2);
+    const bp = chartIndP("showBoll");
+    const bb0 = bollinger(ctxCloses, bp.p || 20, bp.m || 2);
     const bb = { upper: lastN(bb0.upper, visN), lower: lastN(bb0.lower, visN), mid: lastN(bb0.mid, visN) };
     const upPts = bb.upper.map((v, i) => (v == null ? null : [xFor(i), yFor(v)])).filter(Boolean);
     const loPts = bb.lower.map((v, i) => (v == null ? null : [xFor(i), yFor(v)])).filter(Boolean);
@@ -3066,21 +3124,18 @@ function drawChart(item, options = {}) {
     return `<g class="${up ? "candle-up" : "candle-down"}"><line x1="${x.toFixed(1)}" y1="${yFor(row.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yFor(row.l).toFixed(1)}"></line><rect x="${(x - candleW / 2).toFixed(1)}" y="${bodyY.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}"></rect></g>`;
   }).join("");
 
-  const keltner = chartState.showKeltner ? tailCh(keltnerChannels(indRows, 20, 2)) : null;
-  const donchian = chartState.showDonchian ? tailCh(donchianChannels(indRows, 20)) : null;
+  const kp = chartIndP("showKeltner");
+  const dp = chartIndP("showDonchian");
+  const stp = chartIndP("showSupertrend");
+  const keltner = chartState.showKeltner ? tailCh(keltnerChannels(indRows, kp.p || 20, kp.m || 2)) : null;
+  const donchian = chartState.showDonchian ? tailCh(donchianChannels(indRows, dp.p || 20)) : null;
   const ichimoku = chartState.showIchimoku ? tailObj(ichimokuArrays(indRows)) : null;
-  const supertrend = chartState.showSupertrend ? lastN(supertrendArray(indRows, 10, 3), visN) : null;
+  const supertrend = chartState.showSupertrend ? lastN(supertrendArray(indRows, stp.p || 10, stp.m || 3), visN) : null;
 
   // 이평/지표는 컨텍스트로 계산 후 보이는 구간으로 잘라 그린다. 단일 라인은 clipRange로
   // 화면 밖 구간을 끊고, 채널(밴드 채움)은 기존 overlayYFor(클램프)를 유지한다.
   const overlays = [
-    chartState.showSma5 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 5), visN)), xFor, yFor, "#3b82f6", 1.8, "") : "",
-    chartState.showSma10 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 10), visN)), xFor, yFor, "#0d9488", 1.8, "") : "",
-    chartState.showSma20 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 20), visN)), xFor, yFor, "#8b5cf6", 1.8, "") : "",
-    chartState.showSma60 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 60), visN)), xFor, yFor, "#d97706", 1.8, "") : "",
-    chartState.showSma120 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 120), visN)), xFor, yFor, "#a16207", 1.8, "") : "",
-    chartState.showEma20 ? pathFromSeries(clipRange(lastN(emaArray(ctxCloses, 20), visN)), xFor, yFor, "#db2777", 1.6, "") : "",
-    chartState.showEma60 ? pathFromSeries(clipRange(lastN(emaArray(ctxCloses, 60), visN)), xFor, yFor, "#0284c7", 1.6, "") : "",
+    chartMaOverlaysSvg(ctxCloses, visN, clipRange, xFor, yFor),
     chartState.showVwap ? pathFromSeries(clipRange(lastN(vwapArray(indRows), visN)), xFor, yFor, "#ea580c", 1.7, "") : "",
     supertrend ? pathFromSeries(clipRange(supertrend), xFor, yFor, "#22c55e", 1.6, "5 3") : "",
     ichimoku ? renderIchimokuOverlay(ichimoku, xFor, overlayYFor) : "",
@@ -3411,6 +3466,8 @@ function drawChart(item, options = {}) {
     else if (p.t === "ttm") panelsSvg += renderTtmSqueezePanel(indRows, xFor, padL, padL + plotW, cursorY, p.h, candleW, visN);
     else if (p.t === "relative") panelsSvg += renderRelativePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "compare") panelsSvg += renderComparePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
+    // 패널 아래 경계(다음 패널과의 틈) — 위아래로 끌어 이 패널 높이를 바꾼다. 더블클릭은 기본 높이.
+    if (mainChart) panelsSvg += `<rect class="chart-panel-resize" data-panel-resize="${p.t}" data-panel-h="${p.h}" x="${padL}" y="${(cursorY + p.h + 1).toFixed(1)}" width="${plotW.toFixed(1)}" height="${(gap - 2).toFixed(1)}"><title>패널 높이</title></rect>`;
     cursorY += p.h + gap;
   }
 
@@ -3515,6 +3572,8 @@ function drawChart(item, options = {}) {
   `;
   // 일별 시세 표(daily-table.js)는 같은 일봉을 쓴다. 시계열이 그대로면 즉시 돌아간다.
   if (mainChart) syncChartDrawButtons();
+  if (mainChart && typeof renderChartIndChips === "function") renderChartIndChips(item);
+  if (mainChart && typeof chartMultiRefresh === "function") chartMultiRefresh(false);
   if (mainChart && typeof renderDailyTable === "function") renderDailyTable(item);
   if (mainChart && typeof renderSeasonality === "function") renderSeasonality(item);
 }

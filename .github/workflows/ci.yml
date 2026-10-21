@@ -163,6 +163,11 @@ jobs:
       - name: Chart tools core tests
         run: node scripts/tests/test_chart_tools_core.mjs
 
+      # 차트 지표 고르기·파라미터·멀티 차트(chart-ind-core.js): 초성·한글·영문 검색 매칭·분류/즐겨찾기 필터·
+      # 파라미터 범위/직렬화(프리셋 하위호환)·라벨 'SMA(50)'·MACD 기간·레이아웃 맞바꾸기·크로스헤어 날짜 동기화·패널 높이.
+      - name: Chart indicator core tests
+        run: node scripts/tests/test_chart_ind_core.mjs
+
       # 투자 가설 추적 순수 계산(thesis-core.js): 조건 위반/근접 판정·이력 보존·벤치마크 대비 성적·병합·클라우드 축약.
       - name: Thesis tracker tests
         run: node scripts/tests/test_thesis_core.mjs

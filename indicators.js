@@ -102,15 +102,16 @@
     return out;
   }
 
-  function macdSeries(values) {
-    const fast = emaRaw(values, 12);
-    const slow = emaRaw(values, 26);
+  // 기간은 기본 12/26/9(종목 분석 차트에서 바꿀 수 있다 — chart-ind-core.js 파라미터).
+  function macdSeries(values, fastP = 12, slowP = 26, signalP = 9) {
+    const fast = emaRaw(values, fastP);
+    const slow = emaRaw(values, slowP);
     const macd = values.map((_, i) => fast[i] - slow[i]);
-    const signal = emaRaw(macd, 9);
+    const signal = emaRaw(macd, signalP);
     const hist = macd.map((v, i) => v - signal[i]);
     // 워밍업: 느린 EMA 26 + 시그널 EMA 9 → 첫 유효 인덱스는 26+9-2 = 33.
     // 25 로 두면 시그널이 아직 자기 초기값에 끌려 있는 구간을 실값처럼 보여 준다.
-    const warm = Math.min(33, values.length);
+    const warm = Math.min(Math.max(fastP, slowP) + signalP - 2, values.length);
     for (let i = 0; i < warm; i += 1) { macd[i] = null; signal[i] = null; hist[i] = null; }
     return { macd, signal, hist };
   }

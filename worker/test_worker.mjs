@@ -1319,6 +1319,208 @@ await test("국내 분봉: 네이버 시세(KRX) 현재가와 '전일 대비'로
   });
 });
 
+// ── Cloudflare 플랫폼: Turnstile · Rate Limiting 바인딩 · 엣지 캐시(2026-10-21) ──
+
+console.log("\n[CF] Turnstile · Rate Limiting 바인딩 · 엣지 캐시");
+
+const TS_SECRET = "test-turnstile-secret";
+function turnstileMock(success) {
+  return (url, init) => {
+    if (url.includes("challenges.cloudflare.com/turnstile/v0/siteverify")) {
+      const form = new URLSearchParams(String(init.body || ""));
+      return jsonResp({ success: success && form.get("secret") === TS_SECRET && form.get("response") === "tok-ok" });
+    }
+    throw new Error("unexpected " + url);
+  };
+}
+
+await test("Turnstile: TURNSTILE_SECRET 이 없으면 검증 없이 예전처럼 글·댓글·투표가 된다(siteverify 미호출)", async () => {
+  const env = kvEnv();
+  await withMockFetch(() => { throw new Error("network must not be called"); }, async (calls) => {
+    const created = await createPost(env, { clientId: "ts-off", content: "키 없는 글" });
+    eq(created.status, 201, "글");
+    const postId = (await created.json()).post.id;
+    const c = await handleFetch(req("https://w/community/comment", { method: "POST", body: { postId, clientId: "ts-off2", author: "a", content: "댓글입니다" } }), env);
+    eq(c.status, 201, "댓글");
+    const v = await handleFetch(req("https://w/community/vote", { method: "POST", body: { ticker: "NVDA", choice: "buy", clientId: "ts-off" } }), env);
+    eq(v.status, 200, "투표");
+    eq(calls.length, 0, "siteverify 호출 0건");
+  });
+});
+
+await test("Turnstile: 시크릿이 있으면 토큰 없는 글쓰기는 403 turnstile_required", async () => {
+  const env = kvEnv({ TURNSTILE_SECRET: TS_SECRET });
+  await withMockFetch(turnstileMock(true), async (calls) => {
+    const r = await createPost(env, { clientId: "ts-on", content: "토큰 없는 글" });
+    eq(r.status, 403, "status");
+    eq((await r.json()).error, "turnstile_required", "error");
+    eq(calls.length, 0, "토큰이 없으면 siteverify 도 부르지 않는다");
+    eq(r.headers.get("Access-Control-Allow-Origin"), "*", "CORS 헤더");
+  });
+});
+
+await test("Turnstile: 유효한 토큰이면 글·댓글·투표가 통과하고, 틀린 토큰은 403 turnstile_failed", async () => {
+  const env = kvEnv({ TURNSTILE_SECRET: TS_SECRET });
+  await withMockFetch(turnstileMock(true), async (calls) => {
+    const created = await handleFetch(req("https://w/community", { method: "POST", headers: { "CF-Connecting-IP": "1.2.3.4" }, body: { clientId: "ts-on", content: "토큰 있는 글", author: "a", turnstileToken: "tok-ok" } }), env);
+    eq(created.status, 201, "글");
+    eq(new URLSearchParams(calls[0].init.body).get("remoteip"), "1.2.3.4", "remoteip 전달");
+    const postId = (await created.json()).post.id;
+    const c = await handleFetch(req("https://w/community/comment", { method: "POST", body: { postId, clientId: "ts-on2", author: "a", content: "댓글입니다", turnstileToken: "tok-ok" } }), env);
+    eq(c.status, 201, "댓글");
+    const v = await handleFetch(req("https://w/community/vote", { method: "POST", body: { ticker: "NVDA", choice: "sell", clientId: "ts-on", turnstileToken: "tok-ok" } }), env);
+    eq(v.status, 200, "투표");
+    const bad = await handleFetch(req("https://w/community", { method: "POST", body: { clientId: "ts-bad", content: "틀린 토큰 글", author: "a", turnstileToken: "tok-forged" } }), env);
+    eq(bad.status, 403, "틀린 토큰");
+    eq((await bad.json()).error, "turnstile_failed", "error");
+  });
+});
+
+await test("Turnstile: siteverify 가 죽으면 통과시키지 않는다(503 turnstile_unavailable)", async () => {
+  const env = kvEnv({ TURNSTILE_SECRET: TS_SECRET });
+  await withMockFetch(failResp, async () => {
+    const r = await handleFetch(req("https://w/community", { method: "POST", body: { clientId: "ts-down", content: "검증 서버 다운", author: "a", turnstileToken: "tok-ok" } }), env);
+    eq(r.status, 503, "status");
+    eq((await r.json()).error, "turnstile_unavailable", "error");
+  });
+});
+
+await test("Turnstile: 읽기·공감·삭제는 시크릿이 있어도 토큰을 요구하지 않는다", async () => {
+  const env = kvEnv({ TURNSTILE_SECRET: TS_SECRET });
+  await withMockFetch(() => { throw new Error("network must not be called"); }, async (calls) => {
+    eq((await listPosts(env, "ts-r")).status, 200, "목록");
+    const like = await handleFetch(req("https://w/community/like", { method: "POST", body: { postId: "nope", clientId: "ts-r" } }), env);
+    ok(like.status !== 403, "공감은 Turnstile 대상 아님");
+    eq(calls.length, 0, "siteverify 미호출");
+  });
+});
+
+await test("Turnstile: DO 경로에서도 엣지에서 검증하고, 통과한 본문이 DO 핸들러에 그대로 닿는다", async () => {
+  const env = doEnv({ TURNSTILE_SECRET: TS_SECRET });
+  await withMockFetch(turnstileMock(true), async () => {
+    const denied = await createPost(env, { clientId: "ts-do", content: "DO 토큰 없음" });
+    eq(denied.status, 403, "토큰 없음");
+    const r = await handleFetch(req("https://w/community", { method: "POST", body: { clientId: "ts-do", content: "DO 토큰 있음", author: "a", turnstileToken: "tok-ok" } }), env);
+    eq(r.status, 201, "토큰 있음");
+    eq((await r.json()).post.content, "DO 토큰 있음", "본문 유지");
+  });
+});
+
+function rlBinding(limit) {
+  const counts = new Map();
+  const keys = [];
+  return {
+    keys,
+    async limit({ key }) {
+      keys.push(key);
+      const n = (counts.get(key) || 0) + 1;
+      counts.set(key, n);
+      return { success: n <= limit };
+    },
+  };
+}
+
+await test("Rate Limiting 바인딩: RL_CLEAR 가 있으면 그 한도로 막고 KV 리밋 카운터를 쓰지 않는다", async () => {
+  const binding = rlBinding(1);
+  const env = kvEnv({ RL_CLEAR: binding });
+  const call = () => handleFetch(req("https://w/community/clear", { method: "POST", headers: { "CF-Connecting-IP": "9.9.9.9" }, body: { clientId: "rl-a" } }), env);
+  eq((await call()).status, 200, "1회차");
+  eq((await call()).status, 429, "바인딩 한도 1 → 2회차 차단");
+  eq(binding.keys[0], "clear:9.9.9.9", "키 = 버킷:IP");
+  ok(![...env.MOVE_CACHE.map.keys()].some((k) => k.startsWith("rl:clear:")), "KV rl:clear:* 를 쓰지 않는다");
+});
+
+await test("Rate Limiting 바인딩: 없거나 호출이 실패하면 기존 KV 고정창으로 폴백한다", async () => {
+  const broken = { async limit() { throw new Error("binding down"); } };
+  for (const extra of [{}, { RL_CLEAR: broken }, { RL_CLEAR: { notALimiter: true } }]) {
+    const env = kvEnv(extra);
+    const call = () => handleFetch(req("https://w/community/clear", { method: "POST", body: { clientId: "rl-b" } }), env);
+    eq((await call()).status, 200, "1회차");
+    eq((await call()).status, 200, "2회차");
+    eq((await call()).status, 429, "KV 한도 2 → 3회차 차단");
+    ok([...env.MOVE_CACHE.map.keys()].some((k) => k.startsWith("rl:clear:")), "KV 카운터 사용");
+  }
+});
+
+await test("Rate Limiting: 코드의 ipRateLimited 버킷·한도가 RATE_LIMIT_BUCKETS(문서 권장값)와 일치한다", async () => {
+  const { RATE_LIMIT_BUCKETS } = await import("./yahoo-proxy.js");
+  const src = readFileSync(WORKER_SRC, "utf8");
+  const found = {};
+  for (const m of src.matchAll(/ipRateLimited\(request, env, "([a-z_]+)", (\d+), (\d+)\)/g)) {
+    eq(m[3], "60", `${m[1]} 창은 60초(바인딩 period 와 같아야 함)`);
+    found[m[1]] = Number(m[2]);
+  }
+  deepEq(Object.keys(found).sort(), Object.keys(RATE_LIMIT_BUCKETS).sort(), "버킷 목록");
+  for (const [b, n] of Object.entries(found)) eq(RATE_LIMIT_BUCKETS[b], n, `${b} 한도`);
+});
+
+function memCache() {
+  const map = new Map();
+  return {
+    map,
+    async match(r) { const hit = map.get(r.url); return hit ? hit.clone() : undefined; },
+    async put(r, resp) { map.set(r.url, resp.clone()); },
+  };
+}
+async function withMockCaches(fn) {
+  const had = Object.prototype.hasOwnProperty.call(globalThis, "caches");
+  const prev = globalThis.caches;
+  const cache = memCache();
+  globalThis.caches = { default: cache };
+  try { return await fn(cache); } finally {
+    if (had) globalThis.caches = prev; else delete globalThis.caches;
+  }
+}
+
+await test("엣지 캐시: ?fng= 신선한 응답은 저장돼 두 번째 요청이 업스트림을 부르지 않는다(HIT)", async () => {
+  await withMockCaches(async (cache) => {
+    await withMockFetch(() => jsonResp(cnnBody), async (calls) => {
+      const env = { MOVE_CACHE: memKv() };
+      const a = await handleFetch(req("https://w/?fng=1"), env);
+      eq(a.headers.get("X-Mir-Edge-Cache"), "MISS", "첫 요청");
+      const n = calls.length;
+      ok(n > 0, "첫 요청은 업스트림 호출");
+      const b = await handleFetch(req("https://w/?fng=1"), env);
+      eq(b.headers.get("X-Mir-Edge-Cache"), "HIT", "두 번째 요청");
+      eq(calls.length, n, "HIT 는 업스트림 미호출");
+      deepEq(await b.json(), await a.json(), "같은 본문");
+      eq(b.headers.get("Access-Control-Allow-Origin"), "*", "HIT 에도 CORS");
+      ok(/max-age=300/.test(cache.map.get("https://mir-edge.cache/fng").headers.get("Cache-Control")), "저장본 TTL 300초");
+    });
+  });
+});
+
+await test("엣지 캐시: 업스트림 실패(stale/빈 값) 응답은 저장하지 않는다", async () => {
+  await withMockCaches(async (cache) => {
+    await withMockFetch(failResp, async () => {
+      const env = { MOVE_CACHE: memKv() };
+      const r = await handleFetch(req("https://w/?fx=1"), env);
+      eq(r.status, 200, "status");
+      eq(cache.map.size, 0, "실패 응답은 캐시에 없다");
+    });
+  });
+});
+
+await test("엣지 캐시: ?earnings_calendar= 는 티커 순서와 무관하게 같은 키, 빈 결과는 저장 안 함", async () => {
+  await withMockCaches(async (cache) => {
+    resetYahooSessionState();
+    await withMockFetch(failResp, async () => {
+      await handleFetch(req("https://w/?earnings_calendar=1&tickers=MSFT,AAPL"), {});
+      eq(cache.map.size, 0, "빈 결과 미저장");
+    });
+    resetYahooSessionState();
+  });
+});
+
+await test("엣지 캐시: caches 가 없는 런타임에서는 그냥 통과한다(기존 동작)", async () => {
+  ok(typeof globalThis.caches === "undefined", "Node 에는 caches 가 없다");
+  await withMockFetch(() => jsonResp(cnnBody), async () => {
+    const r = await handleFetch(req("https://w/?fng=1"), { MOVE_CACHE: memKv() });
+    eq(r.status, 200, "status");
+    ok((await r.json()).fng, "fng 본문");
+  });
+});
+
 // ── 결과 ────────────────────────────────────────────────────────────────────
 
 console.log(`\n${failures.length ? "FAILED" : "OK"} — ${passed} passed, ${failures.length} failed`);

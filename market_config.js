@@ -468,3 +468,34 @@
     storage.set(STORAGE_KEY, DEFAULT_MARKET_MODE);
   }
 })();
+
+/**
+ * Cloudflare 플랫폼 설정(2026-10-21). **둘 다 비어 있으면 아무 요청도 하지 않는다**(기존 동작).
+ * 값은 둘 다 공개값이다(페이지 소스에 그대로 실린다) — 비밀값(TURNSTILE_SECRET)은 워커 Secret 에만.
+ *  - turnstileSiteKey: Cloudflare 대시보드 → Turnstile → 사이트 → Site Key.
+ *    채우면 커뮤니티 글·댓글·투표를 보낼 때 Turnstile 토큰을 함께 보낸다(community.js).
+ *    워커에 TURNSTILE_SECRET 을 먼저 넣고 재배포한 뒤 채울 것(mir_design/OWNER_TODO.md).
+ *  - webAnalyticsToken: Cloudflare 대시보드 → Analytics & Logs → Web Analytics → 사이트 추가 →
+ *    JS 스니펫의 data-cf-beacon '{"token": "…"}' 값. 채우면 이 파일을 읽는 페이지(index·analysis)에
+ *    쿠키 없는 방문 통계 비콘을 넣는다. 로컬(localhost·127.0.0.1·file://)에서는 넣지 않는다.
+ */
+(function () {
+  const MIR_CLOUDFLARE_DEFAULTS = {
+    turnstileSiteKey: "",
+    webAnalyticsToken: "",
+  };
+  const cfg = Object.assign({}, MIR_CLOUDFLARE_DEFAULTS, window.MIR_CLOUDFLARE || {});
+  window.MIR_CLOUDFLARE = cfg;
+
+  const token = typeof cfg.webAnalyticsToken === "string" ? cfg.webAnalyticsToken.trim() : "";
+  if (!token) return;
+  const loc = window.location || {};
+  if (loc.protocol !== "https:" || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(loc.hostname || "")) return;
+  if (document.querySelector("script[data-mir-cf-beacon]")) return;
+  const s = document.createElement("script");
+  s.defer = true;
+  s.src = "https://static.cloudflareinsights.com/beacon.min.js";
+  s.setAttribute("data-cf-beacon", JSON.stringify({ token }));
+  s.setAttribute("data-mir-cf-beacon", "1");
+  (document.head || document.documentElement).appendChild(s);
+})();

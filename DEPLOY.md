@@ -1,5 +1,9 @@
 # 웹사이트 배포 메모
 
+> **사람이 직접 해야 할 Cloudflare 설정은 [`mir_design/OWNER_TODO.md`](mir_design/OWNER_TODO.md) 에 순서대로 모아 둔다**
+> (워커 재배포 · 워커 Secrets · Rate Limiting 바인딩 · Turnstile/Web Analytics 키 · R2 · 배포 후 확인 curl).
+> 키·바인딩이 없으면 코드는 예전 동작 그대로다 — 설정은 그 문서대로 한 번에 하면 된다.
+
 이 프로젝트는 정적 사이트입니다. 서버 프로그램 없이 `index.html`, `app.js`, `styles.css`, `data/` 폴더만 올리면 동작합니다.
 
 ## 권장 구조
@@ -145,6 +149,10 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
      업스트림(야후·CNN·investing.com)이 죽으면 7일 이내 값을 `stale: true, storedAt`
      마커와 함께 서빙한다. `MOVE_CACHE` 가 없으면 `COMMUNITY_KV` 를 대신 쓴다)
    - Workers AI 바인딩: `AI`
+   - (선택, 2026-10-21) Secret `TURNSTILE_SECRET` — 있으면 커뮤니티 글·댓글·투표 POST 에 Turnstile 토큰
+     (본문 `turnstileToken`) 검증 필수, 없으면 검증 생략. 사이트 키는 `market_config.js` 의 `MIR_CLOUDFLARE_DEFAULTS`.
+   - (선택, 2026-10-21) Rate Limiting 바인딩 `RL_<버킷>`(RL_POST·RL_COMMENT·RL_VOTE·RL_LIKE 등) — 있으면 그 버킷은
+     KV 카운터 대신 바인딩으로 센다. 없거나 실패하면 KV. 권장 한도표는 `mir_design/OWNER_TODO.md` C-1.
    - 관리자 호출은 `X-Admin-Key` 헤더로(쿼리 `adminKey=` 는 한 릴리스만 폴백 유지)
    - (선택) Durable Object: `COMMUNITY_DO` → class `CommunityStore`.
      **없어도 된다** — 없으면 커뮤니티는 지금까지처럼 `COMMUNITY_KV` 를 직접

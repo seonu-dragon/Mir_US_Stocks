@@ -47,3 +47,36 @@ class_name = "CommunityStore"
 [[migrations]]
 tag = "v1"
 new_classes = ["CommunityStore"]
+
+# --- Secrets (선택, 2026-10-21) ---------------------------------------------------
+#   wrangler secret put TURNSTILE_SECRET   # 있으면 커뮤니티 글·댓글·투표 쓰기에 Turnstile 검증 필수
+#                                          # (없으면 검증 생략 = 기존 동작). 사이트 키는 프런트 market_config.js.
+
+# --- Rate Limiting 바인딩 (선택, 2026-10-21) -----------------------------------------
+# 이름이 RL_<버킷> 인 바인딩이 있으면 그 버킷은 KV 카운터 대신 바인딩으로 센다(KV 쓰기 0).
+# 없거나 호출이 실패하면 기존 KV 고정창 그대로. 한도는 코드의 RATE_LIMIT_BUCKETS 와 같게
+# 잡는 것을 권장한다(period 는 10 또는 60 만 가능 — 이 워커의 창은 전부 60초).
+# namespace_id 는 계정 안에서 겹치지 않는 아무 정수 문자열.
+# 필요한 것만 주석을 풀면 된다(커뮤니티 쓰기 4개가 KV 쓰기를 가장 많이 태운다).
+# [[ratelimits]]
+# name = "RL_POST"
+# namespace_id = "1001"
+# simple = { limit = 3, period = 60 }
+#
+# [[ratelimits]]
+# name = "RL_COMMENT"
+# namespace_id = "1002"
+# simple = { limit = 6, period = 60 }
+#
+# [[ratelimits]]
+# name = "RL_VOTE"
+# namespace_id = "1003"
+# simple = { limit = 5, period = 60 }
+#
+# [[ratelimits]]
+# name = "RL_LIKE"
+# namespace_id = "1004"
+# simple = { limit = 30, period = 60 }
+#
+# 나머지 버킷(같은 형식): RL_REPORT 5 · RL_CLEAR 2 · RL_SYNC_PUT 10 · RL_CHAT 10 ·
+# RL_SUMMARY 10 · RL_MOVE 6 · RL_EVNEWS 20 (전부 period = 60)

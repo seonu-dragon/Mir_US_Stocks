@@ -312,6 +312,11 @@ jobs:
       - name: Changelog core tests
         run: node scripts/tests/test_changelog_core.mjs
 
+      # 종목 › 비교(compare-core.js): 기간 수익률 재기준(시작일 이전 마지막 봉 = 0%, 상장 늦은 종목 표시, 범위 밖 null),
+      # 최고/최저·정렬(결측은 뒤), ?cmp= 파싱(최대 8), 재무 시계열(달력 분기 정렬·금융업 FCF 숨김·ROE 연간만).
+      - name: Compare core tests
+        run: node scripts/tests/test_compare_core.mjs
+
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)
         run: |

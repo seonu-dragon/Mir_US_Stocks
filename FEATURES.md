@@ -227,7 +227,10 @@
 - **급등/거래량 (Jump/Volume)**:
   - 강세 신고가+거래량, 거래량 급증, 당일 급등 종목 조건별 카드 리스트 렌더링.
 - **종목 비교 보드 (Compare Board)**:
-  - 최대 6개 종목의 주요 지표(가격, 시총, 변동률, RS, 밸류에이션, 수익성 등)를 한 표로 병렬 비교.
+  - 최대 8개 종목(2026-10-21, `compare-core.js` + `compare-board.js`). **수익률 겹쳐 보기**: 기간 1M·3M·6M·YTD·1Y·3Y·5Y, 시작일 당일 또는 그 이전 마지막 봉 종가 = 0%(기준일 = 가장 늦은 마지막 봉, YTD = 전년 12-31), 상장이 늦은 종목은 첫 봉 기준 + 범례에 시작일, 크로스헤어 툴팁(날짜·종목별 %), 벤치마크 토글(US SPY·QQQ / KR KODEX 200·KODEX 코스닥150 — 지수 일봉이 없어 추종 ETF). 일봉은 `loadStockDetail`(details-source.js 경유). 
+  - **지표 표**: 가격·당일·1주·1개월·3개월·6개월·1년(상세 일봉으로 계산)·YTD·시총·PER·선행 PER·PSR·PBR·영업이익률·순이익률·ROE·배당수익률·EPS·RSI·거래량·52주 신고가 대비·섹터·신호. 값이 하나도 없는 행은 숨김. 종목 3개 이상일 때 행마다 최고/최저 굵게 + 표시(색은 기간 수익률의 부호 등락색만), 지표 이름을 누르면 종목 열 정렬(내림→오름→원래), CSV 내보내기(`downloadCsv`).
+  - **재무 추이**: 연간(회계연도)/분기(결산 종료일 기준 달력 분기, 툴팁에 회사 회계 분기) 매출·영업이익률·순이익률·희석 EPS·FCF·ROE(연간만, 기초·기말 자본 평균) 작은 차트. 원천은 `loadFinancials`(SEC·DART 다년재무, FINANCIALS_INDEX 에 있는 종목만), 금융업 FCF 제외, 값이 없는 지표 카드는 숨김.
+  - **딥링크**: `?tab=search&sub=compare&cmp=AAPL,MSFT,NVDA[&cmpp=3Y][&cmpb=QQQ]`, 이 화면에서는 주소창을 따라 맞추고 '링크 복사' 버튼. 시장을 바꾸면 cmp·cmpb 는 지운다. 종목 추가는 공용 자동완성(`setupTickerAutocomplete`), 칩 × 로 빼기. 단위 테스트 `test_compare_core.mjs`.
 - **AI 자연어 스크리너 (Natural Language Screener)**:
   - "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주" 등의 자연어 입력을 파싱해 자동 스크리닝 필터를 적용하여 종목 발굴.
 - **조건 저장형 스크리너 (Saved Screener)**:

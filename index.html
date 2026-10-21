@@ -367,11 +367,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5e448b191d" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5e448b191d"></noscript>
+    <link rel="preload" href="styles.css?v=e35f534756" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=e35f534756"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=b296180b8a"></script>
+    <script src="build_id.js?v=3472bba8d3"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2138,20 +2138,53 @@ html[data-market="kr"][data-theme="dark"] {
 
         <div class="sub-panel" id="sub-compare">
         <div class="section-title">
-          <h2>종목 비교 보드</h2>
-          <p>최대 6개 종목의 핵심 지표를 한 표에서 비교합니다.</p>
+          <h2>종목 비교</h2>
         </div>
-        <div class="toolbar">
+        <div class="toolbar cmp-toolbar">
           <label class="grow">
-            비교 종목
+            비교 종목 (최대 8)
             <input id="compareInput" placeholder="한국어·티커·영문 (예: 테슬라, Apple)" autocomplete="off">
           </label>
           <button type="button" id="compareRun" class="primary">비교</button>
           <button type="button" class="ghost" id="compareFromWatchlist">관심종목 불러오기</button>
+          <button type="button" class="ghost" id="compareShare">링크 복사</button>
+          <button type="button" class="ghost" id="compareCsv">CSV</button>
         </div>
+        <div class="compare-chip-list cmp-chips" id="compareChips"></div>
+        <section class="cmp-card" id="compareReturnCard" hidden>
+          <div class="cmp-card-head">
+            <h3>수익률</h3>
+            <div class="segmented" id="comparePeriodSeg" role="group" aria-label="기간">
+              <button type="button" data-period="1M">1M</button>
+              <button type="button" data-period="3M">3M</button>
+              <button type="button" data-period="6M">6M</button>
+              <button type="button" data-period="YTD">YTD</button>
+              <button type="button" data-period="1Y" class="is-active">1Y</button>
+              <button type="button" data-period="3Y">3Y</button>
+              <button type="button" data-period="5Y">5Y</button>
+            </div>
+            <div class="segmented" id="compareBenchSeg" role="group" aria-label="벤치마크"></div>
+          </div>
+          <div class="cmp-chart-wrap">
+            <svg id="compareReturnChart" class="cmp-return-svg" viewBox="0 0 800 300" role="img" aria-label="기간 수익률 겹쳐 보기"></svg>
+            <div class="dca-tip cmp-tip" id="compareReturnTip" hidden></div>
+          </div>
+          <div class="cmp-legend" id="compareReturnLegend"></div>
+          <div class="cmp-asof muted" id="compareReturnAsof"></div>
+        </section>
         <div class="table-wrap compare-table-wrap">
           <table class="compare-board" id="compareBoard"></table>
         </div>
+        <section class="cmp-card" id="compareFinCard" hidden>
+          <div class="cmp-card-head">
+            <h3>재무 추이</h3>
+            <div class="segmented" id="compareFinKind" role="group" aria-label="재무 기간">
+              <button type="button" data-fin="annual" class="is-active">연간</button>
+              <button type="button" data-fin="quarterly">분기</button>
+            </div>
+          </div>
+          <div class="cmp-fin-grid" id="compareFinGrid"></div>
+        </section>
         </div>
 
 
@@ -3402,7 +3435,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="portfolio-risk.js?v=f525ddf596"></script>
     <script src="thesis-core.js?v=c15fe03cd1"></script>
     <script src="thesis.js?v=7e27c93e95"></script>
-    <script src="screener.js?v=da7e5b74e3"></script>
+    <script src="screener.js?v=bd352180e9"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=9928ec38f6"></script>
@@ -3473,6 +3506,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="mcap-core.js?v=d0d2d05df5"></script>
     <script src="shareholder-core.js?v=29bba37222"></script>
     <script src="financials.js?v=781bc6bcff"></script>
+    <script src="compare-core.js"></script>
+    <script src="compare-board.js"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
     <script src="segments.js?v=8269869238"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>

@@ -17209,3 +17209,22 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 @media (max-width: 768px) {
   #priceChart .chart-yscale-btn text { font-size: 11px; }
 }
+
+/* ── 비슷한 종목 · 지지/저항 · 옵션 요약(worker-extras.js, 워커 ?insights= · ?options=) ── */
+.wx-chips + .wx-levels { margin-top: 10px; }
+.wx-chip .pos { color: var(--pos); }
+.wx-chip .neg { color: var(--neg); }
+.wx-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.wx-levels > div, .wx-grid > div { min-width: 0; }
+.wx-levels dt, .wx-grid dt { color: var(--text-muted); font-size: var(--fs-cap); font-weight: 500; }
+.wx-levels dd, .wx-grid dd { margin: 2px 0 0; font-size: var(--fs-sub); font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.wx-asof { margin: 8px 0 0; }
+.wx-options .qi-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: var(--space-2); }
+.wx-options .qi-head span { color: var(--text-muted); font-size: var(--fs-cap); }
+.wx-opt-exp + .wx-opt-exp { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.wx-opt-exp h4 { margin: 0 0 8px; font-size: var(--fs-sub); font-weight: 700; }
+.wx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 0; }
+.wx-sub { margin: 10px 0 4px; color: var(--text-muted); font-size: var(--fs-cap); }
+.wx-oi { margin: 0; padding: 0; list-style: none; }
+.wx-oi li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; padding: 3px 0; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.wx-oi li span { color: var(--text-muted); text-align: right; }

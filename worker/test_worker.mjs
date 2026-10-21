@@ -47,6 +47,16 @@ import {
   crc32Shard,
   fetchNaverLiveQuote,
   parseNaverBasicQuote,
+  normalizeTradingViewSearch,
+  normalizeYahooSearch,
+  mergeSymbolSearch,
+  sanitizeSymbolQuery,
+  normalizeInsights,
+  optionMaxPain,
+  summarizeOptionExpiry,
+  normalizeOptionsChain,
+  crumbHeaders,
+  routeSymbol,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1519,6 +1529,247 @@ await test("엣지 캐시: caches 가 없는 런타임에서는 그냥 통과한
     eq(r.status, 200, "status");
     ok((await r.json()).fng, "fng 본문");
   });
+});
+
+// ── 데이터 라우트(2026-10-21): ?symsearch= · ?insights= · ?options= ─────────────────
+
+await test("symsearch 파서: 트레이딩뷰는 주식·ETF 만, KRX 6자리=KR, 미국 거래소=US, 나머지는 심볼:거래소", () => {
+  const tv = { symbols: [
+    { symbol: "<em>PLTR</em>", description: "Palantir Technologies Inc. Class A", type: "stock", exchange: "NASDAQ", typespecs: ["common"] },
+    { symbol: "BRK.B", description: "Berkshire Hathaway Inc. Class B", type: "stock", exchange: "NYSE", typespecs: ["common"] },
+    { symbol: "005930", description: "Samsung Electronics Co., Ltd.", type: "stock", exchange: "KRX", typespecs: ["common"] },
+    { symbol: "069500", description: "KODEX 200", type: "fund", exchange: "KRX", typespecs: ["etf"] },
+    { symbol: "8P9", description: "Palantir Futures", type: "futures", exchange: "ICEEUR" },
+    { symbol: "52M539", description: "Warrant", type: "warrant", exchange: "KRX" },
+    { symbol: "PTX", description: "Palantir", type: "stock", exchange: "XETR", typespecs: ["common"] },
+    { symbol: "IONQ", description: "IonQ", type: "stock", exchange: "BOATS", typespecs: ["common"] },
+  ] };
+  const rows = normalizeTradingViewSearch(tv);
+  deepEq(rows.map((r) => [r.ticker, r.market, r.type]), [
+    ["PLTR", "US", "stock"], ["BRK.B", "US", "stock"], ["005930", "KR", "stock"], ["069500", "KR", "etf"],
+    ["PTX:XETR", "OTHER", "stock"], ["IONQ:BOATS", "OTHER", "stock"],
+  ], "선물·워런트 제외, 하이라이트 태그 제거");
+});
+
+await test("symsearch 파서: 야후는 EQUITY/ETF 만, BRK-B→BRK.B, .KS/.KQ→코드+코스피/코스닥, 해외 상장·암호화폐 제외", () => {
+  const yh = { quotes: [
+    { symbol: "BRK-B", longname: "Berkshire Hathaway Inc.", quoteType: "EQUITY", exchange: "NYQ", exchDisp: "NYSE" },
+    { symbol: "247540.KQ", shortname: "ECOPROBM", longname: "EcoPro BM Co., Ltd.", quoteType: "EQUITY", exchange: "KOE" },
+    { symbol: "005930.KS", longname: "Samsung Electronics Co., Ltd.", quoteType: "EQUITY", exchange: "KSC" },
+    { symbol: "PLTR.TO", longname: "Palantir CDR", quoteType: "ETF", exchange: "TOR", exchDisp: "Toronto" },
+    { symbol: "SPLTR=F", shortname: "Palantir Fut", quoteType: "FUTURE", exchange: "CME" },
+    { symbol: "005930-USD", shortname: "x", quoteType: "CRYPTOCURRENCY", exchange: "CCC" },
+    { symbol: "IONQ-WT", longname: "IonQ WT", quoteType: "EQUITY", exchange: "NYQ" },
+    { symbol: "ABCD", longname: "Foreign same-shape", quoteType: "EQUITY", exchange: "LSE" },
+  ] };
+  const rows = normalizeYahooSearch(yh);
+  deepEq(rows.map((r) => [r.ticker, r.market, r.exchange]), [
+    ["BRK.B", "US", "NYSE"], ["247540", "KR", "KOSDAQ"], ["005930", "KR", "KOSPI"], ["PLTR.TO", "OTHER", "Toronto"], ["IONQ-WT", "OTHER", "NYQ"],
+  ], "미국형 심볼이라도 비미국 거래소(ABCD@LSE)는 제외");
+  eq(normalizeYahooSearch(null).length, 0, "빈 응답");
+});
+
+await test("symsearch 병합: 야후 먼저, 같은 (시장, 티커)는 한 번, 최대 개수", () => {
+  const merged = mergeSymbolSearch(
+    [{ ticker: "005930", market: "KR", name: "Samsung", exchange: "KOSPI", type: "stock" }],
+    [{ ticker: "005930", market: "KR", name: "Samsung TV", exchange: "KRX", type: "stock" }, { ticker: "005935", market: "KR", name: "Pfd", exchange: "KRX", type: "stock" }],
+    2,
+  );
+  deepEq(merged.map((r) => `${r.ticker}:${r.exchange}`), ["005930:KOSPI", "005935:KRX"], "야후 쪽 거래소가 남는다");
+  eq(sanitizeSymbolQuery("  <script>  nv\"da  "), "script nv da", "태그·따옴표 제거");
+  eq(sanitizeSymbolQuery("x".repeat(80)).length, 40, "40자 상한");
+});
+
+await test("?symsearch= 라우트: 한글 질의는 야후를 부르지 않는다, 둘 다 죽으면 502, 한쪽만 죽으면 partial", async () => {
+  await withMockFetch((url, init) => {
+    if (url.includes("tradingview")) {
+      ok(init.headers.Origin === "https://www.tradingview.com", "트레이딩뷰는 Origin 헤더가 필요하다");
+      return jsonResp({ symbols: [{ symbol: "005930", description: "Samsung", type: "stock", exchange: "KRX" }] });
+    }
+    throw new Error("unexpected " + url);
+  }, async (calls) => {
+    const r = await handleFetch(req(`https://w/?symsearch=${encodeURIComponent("삼성전자")}`), {});
+    const got = await r.json();
+    eq(r.status, 200, "200");
+    eq(got.results[0].ticker, "005930", "KR 결과");
+    eq(got.partial, false, "야후를 건너뛴 건 실패가 아니다");
+    ok(!calls.some((c) => c.url.includes("finance.yahoo.com")), "야후 미호출");
+    eq(r.headers.get("Access-Control-Allow-Origin"), "*", "CORS");
+  });
+  await withMockFetch(failResp, async () => {
+    const r = await handleFetch(req("https://w/?symsearch=nvda"), {});
+    eq(r.status, 502, "둘 다 실패 → 502");
+    ok((await r.json()).error, "{error}");
+  });
+  await withMockFetch((url) => (url.includes("yahoo") ? jsonResp({ quotes: [{ symbol: "NVDA", longname: "NVIDIA", quoteType: "EQUITY", exchange: "NMS", exchDisp: "NASDAQ" }] }) : failResp()), async () => {
+    const r = await handleFetch(req("https://w/?symsearch=nvda"), {});
+    const got = await r.json();
+    eq(got.partial, true, "트레이딩뷰 실패 → partial");
+    eq(got.results[0].ticker, "NVDA", "야후 결과는 나온다");
+    eq(r.headers.get("Cache-Control"), "public, max-age=300", "부분 결과는 짧게 캐시");
+  });
+  const bad = await handleFetch(req("https://w/?symsearch="), {});
+  eq(bad.status, 400, "빈 질의 400");
+});
+
+const INSIGHTS_FIXTURE = { finance: { result: { symbol: "NVDA", instrumentInfo: {
+  technicalEvents: {
+    shortTermOutlook: { direction: "Bearish", score: 4, stateDescription: "x" },
+    intermediateTermOutlook: { direction: "Bearish", score: 3 },
+    longTermOutlook: { direction: "Bullish", score: 1 },
+  },
+  keyTechnicals: { support: 182.7, resistance: 224.48, stopLoss: 200.56 },
+  valuation: { description: "Undervalued", discount: "51%", relativeValue: "Discount" },
+}, reports: [{ big: "x".repeat(1000) }] }, error: null } };
+const REC_FIXTURE = { finance: { result: [{ symbol: "NVDA", recommendedSymbols: [{ symbol: "AMD", score: 0.12 }, { symbol: "BRK-B", score: 0.1 }, { symbol: "000660.KS", score: 0.05 }, { symbol: "SMSN.IL", score: 0.01 }] }], error: null } };
+
+await test("insights 파서: 전망·지지/저항·밸류에이션·비슷한 종목만 남긴다(원문 보고서는 버린다)", () => {
+  const n = normalizeInsights(INSIGHTS_FIXTURE, REC_FIXTURE, "NVDA");
+  deepEq(n.outlook, { short: { direction: "bearish", score: 4 }, mid: { direction: "bearish", score: 3 }, long: { direction: "bullish", score: 1 } }, "outlook");
+  deepEq(n.levels, { support: 182.7, resistance: 224.48, stopLoss: 200.56 }, "levels");
+  deepEq(n.valuation, { verdict: "under", discount: "51%" }, "valuation");
+  deepEq(n.similar.map((s) => `${s.market}:${s.ticker}`), ["US:AMD", "US:BRK.B", "KR:000660", "OTHER:SMSN.IL"], "similar 시장 판정");
+  ok(!JSON.stringify(n).includes("xxxx"), "reports 원문 제외");
+  // 국내: 야후 insights 에 기술 지표가 없다 → 전부 null, 비슷한 종목만.
+  const kr = normalizeInsights({ finance: { result: { symbol: "005930.KS", sigDevs: [] } } }, { finance: { result: [{ recommendedSymbols: [{ symbol: "000660.KS", score: 0.19 }] }] } }, "005930.KS");
+  eq(kr.outlook, null, "KR outlook null");
+  eq(kr.levels, null, "KR levels null");
+  eq(kr.valuation, null, "KR valuation null");
+  eq(kr.similar[0].ticker, "000660", "KR similar");
+  const junk = normalizeInsights({ finance: { result: { instrumentInfo: { keyTechnicals: { support: "abc" }, valuation: { description: "<b>hi</b>" }, technicalEvents: { shortTermOutlook: { direction: "Up" } } } } } }, null, "X");
+  eq(junk.levels, null, "숫자 아닌 지지선 무시");
+  eq(junk.valuation, null, "모르는 판정 무시");
+  eq(junk.outlook, null, "모르는 방향 무시");
+  deepEq(junk.similar, [], "추천 실패 → 빈 배열");
+});
+
+await test("?insights= 라우트: 둘 다 실패면 502, 한쪽만 되면 partial 200", async () => {
+  await withMockFetch((url) => {
+    if (url.includes("ws/insights")) { ok(url.includes("symbol=BRK-B"), "BRK.B → BRK-B"); return jsonResp(INSIGHTS_FIXTURE); }
+    if (url.includes("recommendationsbysymbol/BRK-B")) return jsonResp(REC_FIXTURE);
+    throw new Error("unexpected " + url);
+  }, async () => {
+    const r = await handleFetch(req("https://w/?insights=BRK.B"), {});
+    const got = await r.json();
+    eq(r.status, 200, "200");
+    eq(got.partial, false, "full");
+    eq(got.levels.support, 182.7, "support");
+  });
+  await withMockFetch((url) => (url.includes("recommendations") ? jsonResp(REC_FIXTURE) : jsonResp({}, 500)), async () => {
+    const got = await (await handleFetch(req("https://w/?insights=NVDA"), {})).json();
+    eq(got.partial, true, "insights 실패 → partial");
+    eq(got.levels, null, "levels null");
+    eq(got.similar.length, 4, "similar 는 있다");
+  });
+  await withMockFetch(failResp, async () => {
+    eq((await handleFetch(req("https://w/?insights=NVDA"), {})).status, 502, "502");
+  });
+  eq((await handleFetch(req("https://w/?insights=%20"), {})).status, 400, "빈 심볼 400");
+});
+
+// 옵션 체인 최소형: 행사가 90·100·110, 현재가 101.
+function optRow(strike, { oi = 0, vol = 0, bid = 0, ask = 0, last = null, iv = 0.00001 } = {}) {
+  return { strike, openInterest: oi, volume: vol, bid, ask, lastPrice: last, impliedVolatility: iv };
+}
+const EXP1 = 1792540800; // 2026-10-21
+const EXP2 = 1792713600; // 2026-10-23
+function optChain(expTs, { live = true } = {}) {
+  const q = live ? { bid: 1.9, ask: 2.1, iv: 0.42 } : { bid: 0, ask: 0, iv: 0.0156 };
+  return { optionChain: { result: [{
+    underlyingSymbol: "TEST", expirationDates: [EXP1, EXP2], strikes: [90, 100, 110],
+    quote: { regularMarketPrice: 101, currency: "USD" },
+    options: [{ expirationDate: expTs, calls: [
+      optRow(90, { oi: live ? 100 : 0, vol: 10, last: 11 }),
+      optRow(100, { oi: live ? 500 : 0, vol: 300, bid: q.bid, ask: q.ask, last: 2.5, iv: q.iv }),
+      optRow(110, { oi: live ? 900 : 0, vol: 50, last: 0.2 }),
+    ], puts: [
+      optRow(90, { oi: live ? 800 : 0, vol: 40, last: 0.1 }),
+      optRow(100, { oi: live ? 400 : 0, vol: 200, bid: q.bid, ask: q.ask, last: 1.5, iv: q.iv }),
+      optRow(110, { oi: live ? 50 : 0, vol: 5, last: 9 }),
+    ] }],
+  }] } };
+}
+
+await test("옵션 파서: P/C·맥스페인·ATM IV·예상 변동폭·행사가별 OI 상위", () => {
+  const nowMs = Date.UTC(2026, 9, 20, 12);
+  const s = summarizeOptionExpiry(optChain(EXP1).optionChain.result[0].options[0], 101, nowMs);
+  eq(s.expiry, "2026-10-21", "만기");
+  eq(s.daysToExpiry, 1, "D-1");
+  eq(s.callOI, 1500, "콜 OI");
+  eq(s.putOI, 1250, "풋 OI");
+  eq(s.putCallOI, 0.83, "풋/콜 OI");
+  eq(s.putCallVolume, 0.68, "풋/콜 거래량 245/360");
+  // 지급액: S=90 → 풋 10*400+20*50=5000 / S=100 → 콜 10*100 + 풋 10*50 = 1500 / S=110 → 콜 20*100+10*500 = 7000
+  eq(s.maxPain, 100, "맥스페인");
+  eq(optionMaxPain([{ strike: 1, oi: 1 }], [{ strike: 2, oi: 1 }]), null, "행사가 3개 미만 → null");
+  eq(s.atmStrike, 100, "ATM");
+  eq(s.atmIV, 42, "ATM IV %");
+  eq(s.straddle, 4, "스트래들 = 콜 mid 2 + 풋 mid 2");
+  eq(s.expectedMovePct, 4, "4/101 = 3.96% → 4.0");
+  deepEq(s.topOI.map((r) => r.strike), [110, 90, 100], "OI 합 상위(950·900·900, 같은 합은 입력 순)");
+});
+
+await test("옵션 파서: 장외(호가 0·OI 0)에는 OI 기반 값과 IV 를 내지 않는다 — 0 으로 만든 맥스페인 금지", () => {
+  const s = summarizeOptionExpiry(optChain(EXP1, { live: false }).optionChain.result[0].options[0], 101, Date.UTC(2026, 9, 20));
+  eq(s.callOI, null, "callOI null");
+  eq(s.putCallOI, null, "P/C OI null");
+  eq(s.maxPain, null, "맥스페인 null");
+  deepEq(s.topOI, [], "OI 상위 없음");
+  eq(s.atmIV, null, "자리표시 IV(0.0156) 무시");
+  eq(s.putCallVolume, 0.68, "거래량(직전 세션)은 그대로");
+  eq(s.straddle, 4, "스트래들은 직전 체결가(2.5+1.5)");
+});
+
+await test("옵션 체인 정규화: 두 만기, 만기 없음 → null", () => {
+  const n = normalizeOptionsChain(optChain(EXP1), optChain(EXP2), "TEST", Date.UTC(2026, 9, 20));
+  deepEq(n.expiries.map((e) => e.expiry), ["2026-10-21", "2026-10-23"], "가장 가까운 만기 + 다음 만기");
+  eq(n.price, 101, "현재가");
+  eq(n.expirationCount, 2, "만기 수");
+  eq(normalizeOptionsChain(optChain(EXP1), optChain(EXP1), "TEST").expiries.length, 1, "같은 만기 중복 제거");
+  eq(normalizeOptionsChain({ optionChain: { result: [{ expirationDates: [], options: [] }] } }, null, "005930.KS"), null, "국내(만기 없음) → null");
+});
+
+await test("?options= 라우트: crumb 은 Accept */* 로 받는다(json 이면 406), 세션 없으면 503, 만기 없으면 404", async () => {
+  resetYahooSessionState();
+  await withMockFetch((url, init) => {
+    if (url.startsWith("https://fc.yahoo.com")) return new Response("", { status: 404, headers: { "Set-Cookie": "A3=abc; Path=/" } });
+    if (url.includes("getcrumb")) {
+      const accept = String((init.headers || {}).Accept || "");
+      if (accept.includes("application/json")) return new Response('{"finance":{"error":{"code":"Not Acceptable"}}}', { status: 406 });
+      return new Response("CRUMB123", { status: 200 });
+    }
+    if (url.includes("/v7/finance/options/TEST")) {
+      ok(url.includes("crumb=CRUMB123"), "crumb 부착");
+      return jsonResp(url.includes(`date=${EXP2}`) ? optChain(EXP2) : optChain(EXP1));
+    }
+    if (url.includes("/v7/finance/options/005930.KS")) return jsonResp({ optionChain: { result: [{ expirationDates: [], options: [] }] } });
+    throw new Error("unexpected " + url);
+  }, async () => {
+    const r = await handleFetch(req("https://w/?options=TEST"), {});
+    eq(r.status, 200, "200");
+    const got = await r.json();
+    eq(got.expiries.length, 2, "두 만기");
+    eq(got.expiries[0].maxPain, 100, "맥스페인");
+    const kr = await handleFetch(req("https://w/?options=005930.KS"), {});
+    eq(kr.status, 404, "만기 없음 404");
+    eq((await kr.json()).error, "no_options", "no_options");
+  });
+  resetYahooSessionState();
+  await withMockFetch(() => new Response("", { status: 403 }), async () => {
+    const r = await handleFetch(req("https://w/?options=TEST"), {});
+    eq(r.status, 503, "세션 없음 503");
+    eq((await r.json()).error, "no_session", "no_session");
+  });
+  resetYahooSessionState();
+  eq(crumbHeaders("A3=1").Accept, "*/*", "crumbHeaders");
+  eq(routeSymbol("brk.b"), "BRK-B", "routeSymbol 미국");
+  eq(routeSymbol("005930.ks"), "005930.KS", "routeSymbol 국내");
+});
+
+await test("옛 워커 호환 감지 전제: 모르는 경로는 여전히 404 not_found + no-store", async () => {
+  const r = await handleFetch(req("https://w/?unknownroute=1"), {});
+  eq(r.status, 404, "404");
+  eq((await r.json()).error, "not_found", "not_found");
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

@@ -5283,6 +5283,8 @@ function renderSearch(options = {}) {
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
+  // 비슷한 종목·지지/저항·옵션 요약(worker-extras.js — 새 워커 라우트, 옛 워커면 숨김)
+  if (typeof renderWorkerExtras === "function") renderWorkerExtras(item);
   if (typeof renderStockThemes === "function") renderStockThemes(item);
   // 한눈 요약 · 오늘·임박 이벤트(stock-summary.js) — 타임라인·재무가 위에서 준비된 뒤
   if (typeof renderStockSummary === "function") { renderStockSummary(item); renderStockEventStrip(item); }
@@ -6299,6 +6301,9 @@ function setupTickerAutocomplete(inputId, options = {}) {
   const onUnresolved = typeof options.onUnresolved === "function" ? options.onUnresolved : null;
   // 소유 모듈이 이미 Enter 를 처리하는 상자(#backtestTickerInput)만 false.
   const submitOnEnter = options.submitOnEnter !== false;
+  // 원격 종목 검색(worker-extras.js, 워커 ?symsearch=) — 고른 종목을 라이브 스텁으로 열 수 있는 상자만(#tickerSearch).
+  const remoteSearch = Boolean(options.remoteSearch) && typeof wxMaybeRemoteSearch === "function";
+  let remoteHits = [];
   const label = input.closest("label");
   let wrap = input.parentElement;
   if (label && label.parentElement) {
@@ -6354,6 +6359,8 @@ function setupTickerAutocomplete(inputId, options = {}) {
   }
 
   function applySuggestion(ticker) {
+    const remote = remoteHits.find((h) => h.ticker === ticker);
+    if (remote) wxRegisterRemoteHit(remote);
     if (!multi) {
       input.value = stockInputValue(ticker);
       closeList();
@@ -6373,7 +6380,12 @@ function setupTickerAutocomplete(inputId, options = {}) {
       closeList();
       return;
     }
-    list.innerHTML = items.map((item, index) => `
+    list.innerHTML = items.map((item, index) => item.remote ? `
+      <button type="button" class="ticker-ac-item ticker-ac-remote${index === activeIdx ? " is-active" : ""}" role="option" id="${listId}-${index}" tabindex="-1" aria-selected="${index === activeIdx ? "true" : "false"}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
+        <strong>${escapeHtml(wxHitLabel(item))}</strong>
+        <span>${escapeHtml(isKrMarket() ? "" : item.name || "")}</span>
+        ${item.exchange ? `<em>${escapeHtml(item.exchange)}</em>` : ""}
+      </button>` : `
       <button type="button" class="ticker-ac-item${index === activeIdx ? " is-active" : ""}" role="option" id="${listId}-${index}" tabindex="-1" aria-selected="${index === activeIdx ? "true" : "false"}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
         <strong>${escapeHtml(stockLabel(item))}</strong>
         <span>${escapeHtml(stockSubLabel(item) || (isKrCodeTicker(item.ticker) ? (stockByTicker(item.ticker)?.industry || stockByTicker(item.ticker)?.sector || "") : ""))}</span>
@@ -6425,8 +6437,18 @@ function setupTickerAutocomplete(inputId, options = {}) {
       closeList();
       return;
     }
-    renderList(searchTickerSuggestions(token, 8), token);
+    const local = searchTickerSuggestions(token, 8);
+    // 로컬 후보가 적을 때만 원격 결과(받아 둔 것)를 아래에 붙이고, 없으면 디바운스 뒤 받아서 다시 그린다.
+    remoteHits = remoteSearch && local.length < WX_LOCAL_ENOUGH
+      ? wxRemoteSearchCached(token, local.map((h) => h.ticker)).map((h) => ({ ...h, remote: true }))
+      : [];
+    renderList(local.concat(remoteHits), token);
     activeIdx = -1;
+    if (remoteSearch) {
+      wxMaybeRemoteSearch(`ac:${inputId}`, token, local.length, () => {
+        if (document.activeElement === input && input.value.trim() === token) refresh();
+      });
+    }
   }
 
   input.addEventListener("input", () => {
@@ -6482,6 +6504,7 @@ function setupTickerSearchHelpers() {
   buildTickerSearchIndex();
   // 종목 분석: 스냅샷에 없는 티커는 selectTicker 가 실시간 스텁으로 받아 준다.
   setupTickerAutocomplete("tickerSearch", {
+    remoteSearch: true,
     onCommit: (ticker) => selectTicker(ticker),
     onUnresolved: (raw) => selectTicker(raw),
   });
@@ -9271,7 +9294,24 @@ function cmdkBuildActions(query) {
     try {
       searchTickerSuggestions(q, 5).forEach((hit) => pushStock(stockByTicker(hit.ticker)));
     } catch (_) { /* ignore */ }
+    // 로컬 종목이 적으면 원격 검색 결과(worker-extras.js, 받아 둔 것만)를 그 아래에 — 라이브 스텁으로 연다.
+    cmdkState.localStocks = seen.size;
+    if (typeof wxRemoteSearchCached === "function" && seen.size < WX_LOCAL_ENOUGH && !/\s|\?/.test(q)) {
+      wxRemoteSearchCached(q, seen).forEach((hit) => {
+        actions.push({
+          label: [wxHitLabel(hit), isKrMarket() ? "" : hit.name].filter(Boolean).join(" · "),
+          hint: hit.exchange || "종목",
+          keep: true,
+          run: () => {
+            if (cmdkIsAiActive()) window.MirAI?.exit?.();
+            wxRegisterRemoteHit(hit);
+            selectTicker(hit.ticker);
+          },
+        });
+      });
+    }
   } else {
+    cmdkState.localStocks = 0;
     // 빈 질의: 최근 본 종목(우측 레일과 같은 기록)을 맨 위에.
     let recent = [];
     try { recent = window.MirRail && typeof window.MirRail.recent === "function" ? window.MirRail.recent() : []; } catch (_) { recent = []; }
@@ -9365,6 +9405,11 @@ function cmdkRender(query) {
   if (!list) return;
   cmdkState.query = query;
   cmdkState.items = cmdkBuildActions(query);
+  if (typeof wxMaybeRemoteSearch === "function") {
+    wxMaybeRemoteSearch("cmdk", String(query || "").trim(), cmdkState.localStocks || 0, () => {
+      if (cmdkState.open && cmdkState.query === query) cmdkRender(query);
+    });
+  }
   cmdkState.index = Math.min(cmdkState.index, Math.max(0, cmdkState.items.length - 1));
   if (!cmdkState.items.length) {
     list.innerHTML = `<li class="cmdk-empty muted">일치하는 명령이 없습니다.</li>`;

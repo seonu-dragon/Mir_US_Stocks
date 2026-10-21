@@ -493,6 +493,21 @@ export async function handleFetch(request, env) {
         return { resp: staleAwareJson("calendar", r), cacheable: lastGoodCacheable(r) };
       }));
     }
+    // 전 세계 종목 검색(트레이딩뷰 + 야후 병합) · 야후 insights(기술 전망·지지/저항·비슷한 종목) ·
+    // 옵션 체인 요약. LLM 없음 — 개방 + 엣지 캐시. 옛 워커는 이 셋을 404 로 답한다(프론트 기능 감지).
+    if (url.searchParams.has("symsearch")) {
+      return cors(await handleSymbolSearch(url.searchParams.get("symsearch")));
+    }
+    if (url.searchParams.has("insights")) {
+      const sym = routeSymbol(url.searchParams.get("insights"));
+      if (!sym) return cors(json({ error: "invalid symbol" }, 400, 0));
+      return cors(await handleInsights(sym));
+    }
+    if (url.searchParams.has("options")) {
+      const sym = routeSymbol(url.searchParams.get("options"));
+      if (!sym) return cors(json({ error: "invalid symbol" }, 400, 0));
+      return cors(await handleOptions(sym));
+    }
     if (url.searchParams.get("earnings_probe")) {
       // 야후 세션을 실제로 태우는 진단 라우트라 관리자 키 뒤에 둔다(감사 P3).
       if (!(await communityAdminOk(env, request, url.searchParams.get("adminKey")))) {
@@ -1030,6 +1045,12 @@ function normalizeEarningsDateValue(value) {
   return null;
 }
 
+// getcrumb 은 text/plain 을 준다 — UA 의 Accept: application/json 을 그대로 보내면 406 Not Acceptable 이다
+// (2026-10-21 실측: 같은 쿠키로 Accept json → 406, */* → 200). 2026-09-15 부터의 'crumb 발급 실패'의 한 원인.
+export function crumbHeaders(cookie) {
+  return { "User-Agent": UA["User-Agent"], Accept: "*/*", Cookie: cookie };
+}
+
 async function bootstrapYahooSessionBasic() {
   // fc.yahoo.com returns 404 but still sets the A3 session cookie Yahoo requires.
   let cookie = "";
@@ -1042,7 +1063,7 @@ async function bootstrapYahooSessionBasic() {
   }
   if (!cookie) return null;
   const crumbResponse = await fetchT("https://query1.finance.yahoo.com/v1/test/getcrumb", {
-    headers: { ...UA, Cookie: cookie },
+    headers: crumbHeaders(cookie),
     redirect: "follow",
   });
   const crumb = String(await crumbResponse.text() || "").trim();
@@ -1087,7 +1108,7 @@ async function bootstrapYahooSessionCsrf() {
   }
   if (!cookie) return null;
   const crumbResponse = await fetchT("https://query2.finance.yahoo.com/v1/test/getcrumb", {
-    headers: { ...UA, Cookie: cookie },
+    headers: crumbHeaders(cookie),
     redirect: "follow",
   });
   const crumb = String(await crumbResponse.text() || "").trim();
@@ -2243,6 +2264,371 @@ async function fetchFx() {
   const order = FX_LIST.map((f) => f[0]);
   out.sort((a, b) => order.indexOf(a.symbol) - order.indexOf(b.symbol));
   return out;
+}
+
+// =============================================================================
+// 데이터 라우트(2026-10-21) — ?symsearch= · ?insights= · ?options=
+//
+// LLM 없음 → Origin 게이트·KV 리밋 없이 개방(다른 데이터 프록시와 같다). 대신 엣지 Cache API 로
+// 같은 질의를 흡수한다. 응답은 화면이 쓰는 필드만 정규화해서 준다(업스트림 원문을 그대로 넘기지 않는다 —
+// 야후 insights 원문은 종목당 350KB 다). 옛 워커는 이 경로들을 모르는 경로(404 not_found)로 답하므로,
+// 프론트(worker-extras.js)는 404·모양 불일치면 기능을 조용히 숨긴다.
+//   파서는 전부 순수 함수로 export — worker/test_worker.mjs 가 네트워크 없이 검증한다.
+// =============================================================================
+const SYMSEARCH_CACHE_SEC = 6 * 3600;
+const INSIGHTS_CACHE_SEC = 6 * 3600;
+const OPTIONS_CACHE_SEC = 10 * 60;
+const SYMSEARCH_MAX = 12;
+const OPTIONS_MIN_OI = 200;
+
+// 미국 거래소(야후 exchange 코드 · 트레이딩뷰 exchange 이름). OTC 도 미국 종목으로 본다.
+const US_YAHOO_EXCHANGES = new Set(["NMS", "NGM", "NCM", "NAS", "NYQ", "NYS", "ASE", "PCX", "BTS", "CBO", "PNK", "OQB", "OQX", "OEM", "OGM"]);
+const US_TV_EXCHANGES = new Set(["NASDAQ", "NYSE", "AMEX", "NYSE ARCA", "ARCA", "CBOE", "OTC"]);
+const KR_YAHOO_EXCHANGES = { KSC: "KOSPI", KOE: "KOSDAQ" };
+
+function stripTags(value) {
+  return String(value == null ? "" : value).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function cacheGet(key) {
+  const cache = typeof caches !== "undefined" ? caches.default : null;
+  return cache ? cache.match(new Request(key)) : Promise.resolve(null);
+}
+async function cachePut(key, resp) {
+  const cache = typeof caches !== "undefined" ? caches.default : null;
+  if (cache) await cache.put(new Request(key), resp.clone());
+}
+
+export function sanitizeSymbolQuery(raw) {
+  return String(raw == null ? "" : raw).replace(/[\u0000-\u001f<>"'`\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, 40);
+}
+
+// 사이트 티커 표기: 미국 BRK.B(점), 국내 6자리 코드. 야후 심볼 BRK-B · 005930.KS 에서 바꾼다.
+function siteTickerFromYahoo(symbol) {
+  const s = String(symbol || "").toUpperCase();
+  const kr = s.match(/^(\d{6})\.(KS|KQ)$/);
+  if (kr) return { ticker: kr[1], market: "KR", exchange: kr[2] === "KQ" ? "KOSDAQ" : "KOSPI" };
+  if (/^[A-Z]{1,5}(-[A-Z])?$/.test(s)) return { ticker: s.replace("-", "."), market: "US", exchange: "" };
+  return { ticker: s, market: "OTHER", exchange: "" };
+}
+
+// 야후 v1/finance/search quotes → [{ ticker, market, name, exchange, type, symbol(야후) }]
+export function normalizeYahooSearch(json) {
+  const out = [];
+  for (const q of (json && Array.isArray(json.quotes)) ? json.quotes : []) {
+    const type = String(q.quoteType || "").toUpperCase();
+    if (type !== "EQUITY" && type !== "ETF") continue;
+    const sym = String(q.symbol || "").toUpperCase();
+    if (!sym) continue;
+    const site = siteTickerFromYahoo(sym);
+    const exch = String(q.exchange || "").toUpperCase();
+    if (site.market === "US" && !US_YAHOO_EXCHANGES.has(exch)) continue; // 미국형 심볼이라도 다른 거래소면 제외
+    if (site.market === "KR" && !KR_YAHOO_EXCHANGES[exch]) continue;
+    const name = stripTags(q.longname || q.shortname || "");
+    out.push({
+      ticker: site.market === "OTHER" ? sym : site.ticker,
+      market: site.market,
+      name: name || site.ticker,
+      exchange: site.market === "KR" ? KR_YAHOO_EXCHANGES[exch] : stripTags(q.exchDisp || exch),
+      type: type === "ETF" ? "etf" : "stock",
+      symbol: sym,
+    });
+  }
+  return out;
+}
+
+// 트레이딩뷰 symbol_search v3 → 같은 모양. 주식(stock)·ETF(fund+etf)만. 국내는 KRX 6자리(코스피·코스닥 구분 없음).
+export function normalizeTradingViewSearch(json) {
+  const out = [];
+  const rows = Array.isArray(json) ? json : (json && Array.isArray(json.symbols) ? json.symbols : []);
+  for (const r of rows) {
+    const type = String(r.type || "").toLowerCase();
+    const specs = Array.isArray(r.typespecs) ? r.typespecs.map((x) => String(x).toLowerCase()) : [];
+    const isEtf = type === "fund" && specs.includes("etf");
+    if (type !== "stock" && !isEtf) continue;
+    const sym = stripTags(r.symbol).toUpperCase();
+    const exch = stripTags(r.exchange).toUpperCase();
+    if (!sym) continue;
+    let market = "OTHER";
+    let ticker = sym;
+    if (exch === "KRX" && /^\d{6}$/.test(sym)) market = "KR";
+    else if (US_TV_EXCHANGES.has(exch) && /^[A-Z]{1,5}(\.[A-Z])?$/.test(sym)) market = "US";
+    else ticker = `${sym}:${exch}`;
+    out.push({ ticker, market, name: stripTags(r.description) || sym, exchange: exch, type: isEtf ? "etf" : "stock", symbol: sym });
+  }
+  return out;
+}
+
+// 두 소스를 합친다. 야후가 먼저(관련도 점수 순), 트레이딩뷰는 야후에 없는 것만 뒤에. (시장, 티커)로 중복 제거.
+// 국내는 야후가 코스피/코스닥을 구분해 주므로 같은 코드면 야후 쪽 exchange 를 쓴다.
+export function mergeSymbolSearch(yahooRows, tvRows, max = SYMSEARCH_MAX) {
+  const seen = new Set();
+  const out = [];
+  for (const row of [...(yahooRows || []), ...(tvRows || [])]) {
+    const key = `${row.market}:${row.ticker}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ ticker: row.ticker, market: row.market, name: row.name, exchange: row.exchange, type: row.type });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+async function handleSymbolSearch(rawQuery) {
+  const q = sanitizeSymbolQuery(rawQuery);
+  if (q.length < 1) return json({ error: "invalid query" }, 400, 0);
+  const key = `https://mir-symsearch.cache/v1/${encodeURIComponent(q.toLowerCase())}`;
+  const hit = await cacheGet(key);
+  if (hit) return hit;
+  const enc = encodeURIComponent(q);
+  const asciiOnly = /^[ -~]+$/.test(q);
+  const [tv, yh] = await Promise.allSettled([
+    fetchT(`https://symbol-search.tradingview.com/symbol_search/v3/?text=${enc}&search_type=undefined&domain=production`, {
+      headers: { "User-Agent": BROWSER_UA, Accept: "application/json", Origin: "https://www.tradingview.com", Referer: "https://www.tradingview.com/" },
+    }, 5000).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`tv ${r.status}`)))),
+    // 야후 검색은 한글 등 비 ASCII 질의에 400 을 준다(2026-10-21 실측) — 부르지 않고 트레이딩뷰만 쓴다.
+    asciiOnly
+      ? fetchT(`https://query2.finance.yahoo.com/v1/finance/search?q=${enc}&quotesCount=8&newsCount=0`, { headers: UA }, 5000)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`yahoo ${r.status}`))))
+      : Promise.resolve({ quotes: [] }),
+  ]);
+  if (tv.status !== "fulfilled" && yh.status !== "fulfilled") return json({ error: "upstream", results: [] }, 502, 0);
+  const results = mergeSymbolSearch(
+    yh.status === "fulfilled" ? normalizeYahooSearch(yh.value) : [],
+    tv.status === "fulfilled" ? normalizeTradingViewSearch(tv.value) : [],
+  );
+  const resp = json({ q, results, partial: tv.status !== "fulfilled" || yh.status !== "fulfilled", updatedAt: new Date().toISOString() },
+    200, tv.status === "fulfilled" && yh.status === "fulfilled" ? SYMSEARCH_CACHE_SEC : 300);
+  await cachePut(key, resp);
+  return resp;
+}
+
+// ── insights ────────────────────────────────────────────────────────────────
+function finiteOrNull(v) {
+  const n = Number(v);
+  return v != null && v !== "" && Number.isFinite(n) ? n : null;
+}
+function outlookOf(o) {
+  if (!o || typeof o !== "object") return null;
+  const dir = String(o.direction || "");
+  if (!/^(Bullish|Bearish|Neutral)$/.test(dir)) return null;
+  return { direction: dir.toLowerCase(), score: finiteOrNull(o.score) };
+}
+
+// 야후 ws/insights/v2 + v6 recommendationsbysymbol → 화면용 요약. 없는 칸은 null(국내 종목은 기술 지표가 없다).
+export function normalizeInsights(insJson, recJson, symbol) {
+  const res = (insJson && insJson.finance && insJson.finance.result) || {};
+  const info = res.instrumentInfo || {};
+  const te = info.technicalEvents || {};
+  const outlook = {
+    short: outlookOf(te.shortTermOutlook),
+    mid: outlookOf(te.intermediateTermOutlook),
+    long: outlookOf(te.longTermOutlook),
+  };
+  const kt = info.keyTechnicals || {};
+  const levels = { support: finiteOrNull(kt.support), resistance: finiteOrNull(kt.resistance), stopLoss: finiteOrNull(kt.stopLoss) };
+  const val = info.valuation || {};
+  const valDesc = String(val.description || "");
+  const valuation = /^(Undervalued|Overvalued|Near Fair Value)$/i.test(valDesc)
+    ? { verdict: valDesc.toLowerCase().includes("under") ? "under" : valDesc.toLowerCase().includes("over") ? "over" : "fair",
+      discount: /^-?\d+(\.\d+)?%$/.test(String(val.discount || "")) ? String(val.discount) : null }
+    : null;
+  const recRow = ((recJson && recJson.finance && recJson.finance.result) || [])[0] || {};
+  const similar = [];
+  for (const r of Array.isArray(recRow.recommendedSymbols) ? recRow.recommendedSymbols : []) {
+    const site = siteTickerFromYahoo(r && r.symbol);
+    if (!site.ticker) continue;
+    similar.push({ ticker: site.ticker, market: site.market, score: finiteOrNull(r.score) });
+    if (similar.length >= 8) break;
+  }
+  return {
+    symbol: String(symbol || res.symbol || ""),
+    outlook: (outlook.short || outlook.mid || outlook.long) ? outlook : null,
+    levels: (levels.support != null || levels.resistance != null) ? levels : null,
+    valuation,
+    similar,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+async function handleInsights(symbol) {
+  const key = `https://mir-insights.cache/v1/${encodeURIComponent(symbol)}`;
+  const hit = await cacheGet(key);
+  if (hit) return hit;
+  const enc = encodeURIComponent(symbol);
+  const [ins, rec] = await Promise.allSettled([
+    fetchT(`https://query2.finance.yahoo.com/ws/insights/v2/finance/insights?symbol=${enc}`, { headers: UA })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`insights ${r.status}`)))),
+    fetchT(`https://query2.finance.yahoo.com/v6/finance/recommendationsbysymbol/${enc}`, { headers: UA })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`rec ${r.status}`)))),
+  ]);
+  if (ins.status !== "fulfilled" && rec.status !== "fulfilled") return json({ error: "upstream" }, 502, 0);
+  const payload = normalizeInsights(ins.status === "fulfilled" ? ins.value : null, rec.status === "fulfilled" ? rec.value : null, symbol);
+  const full = ins.status === "fulfilled" && rec.status === "fulfilled";
+  const resp = json({ ...payload, partial: !full }, 200, full ? INSIGHTS_CACHE_SEC : 300);
+  await cachePut(key, resp);
+  return resp;
+}
+
+// ── options ─────────────────────────────────────────────────────────────────
+function optionLeg(rows) {
+  const out = [];
+  for (const r of Array.isArray(rows) ? rows : []) {
+    const strike = finiteOrNull(r && r.strike);
+    if (strike == null) continue;
+    const bid = finiteOrNull(r.bid);
+    const ask = finiteOrNull(r.ask);
+    const last = finiteOrNull(r.lastPrice);
+    const price = bid != null && ask != null && ask > 0 ? (bid + ask) / 2 : last;
+    // 야후는 장외 시간에 bid/ask 를 0 으로 비우고 IV 를 0.00001·0.0156 같은 자리표시 값으로 채운다
+    // (2026-10-21 01:00 ET 실측) — 호가가 살아 있는 계약의 IV 만 쓴다.
+    const iv = finiteOrNull(r.impliedVolatility);
+    const quoted = bid != null && ask != null && bid > 0 && ask > 0;
+    out.push({ strike, oi: finiteOrNull(r.openInterest) || 0, vol: finiteOrNull(r.volume) || 0, price, iv: quoted && iv != null && iv > 0.01 ? iv : null });
+  }
+  return out;
+}
+
+// scripts/build_options_stats.py max_pain 과 같은 정의: 만기 정산가 S 후보(모든 행사가) 중
+// 매수자 지급액 Σcall max(0,S-K)·OI + Σput max(0,K-S)·OI 가 최소인 S.
+export function optionMaxPain(calls, puts) {
+  const strikes = [...new Set([...calls.map((c) => c.strike), ...puts.map((p) => p.strike)])].sort((a, b) => a - b);
+  if (strikes.length < 3) return null;
+  let best = null;
+  let bestVal = Infinity;
+  for (const s of strikes) {
+    let v = 0;
+    for (const c of calls) if (s > c.strike) v += (s - c.strike) * c.oi;
+    for (const p of puts) if (p.strike > s) v += (p.strike - s) * p.oi;
+    if (v < bestVal) { bestVal = v; best = s; }
+  }
+  return best;
+}
+
+const r2 = (v) => (v == null ? null : Math.round(v * 100) / 100);
+
+// 야후 v7 options 의 한 만기(options[0]) → 요약. spot 은 기초자산 현재가.
+export function summarizeOptionExpiry(expiry, spot, nowMs = Date.now()) {
+  if (!expiry) return null;
+  const calls = optionLeg(expiry.calls);
+  const puts = optionLeg(expiry.puts);
+  if (!calls.length && !puts.length) return null;
+  const sum = (leg, k) => leg.reduce((a, o) => a + o[k], 0);
+  const callOI = sum(calls, "oi");
+  const putOI = sum(puts, "oi");
+  const callVol = sum(calls, "vol");
+  const putVol = sum(puts, "vol");
+  // 야후는 장외 시간에 미결제약정을 0 으로 비운다(같은 실측). 합계가 얕으면(빌더와 같은 200 계약 미만)
+  // OI 기반 값(풋/콜 OI·맥스페인·행사가별 OI)은 내지 않는다 — 0 으로 계산한 맥스페인은 지어낸 값이다.
+  const oiOk = callOI + putOI >= OPTIONS_MIN_OI;
+  const expTs = finiteOrNull(expiry.expirationDate);
+  const expDate = expTs != null ? new Date(expTs * 1000).toISOString().slice(0, 10) : null;
+  // ATM: 콜·풋이 모두 있는 행사가 중 현재가에 가장 가까운 것.
+  let atm = null;
+  if (spot > 0) {
+    const putBy = new Map(puts.map((p) => [p.strike, p]));
+    for (const c of calls) {
+      const p = putBy.get(c.strike);
+      if (!p) continue;
+      if (!atm || Math.abs(c.strike - spot) < Math.abs(atm.c.strike - spot)) atm = { c, p };
+    }
+  }
+  let straddle = null;
+  let atmIV = null;
+  if (atm) {
+    if (atm.c.price > 0 && atm.p.price > 0) straddle = atm.c.price + atm.p.price;
+    const ivs = [atm.c.iv, atm.p.iv].filter((x) => x != null);
+    if (ivs.length) atmIV = (ivs.reduce((a, b) => a + b, 0) / ivs.length) * 100;
+  }
+  const byStrike = new Map();
+  for (const c of calls) byStrike.set(c.strike, { strike: c.strike, callOI: c.oi, putOI: 0 });
+  for (const p of puts) {
+    const row = byStrike.get(p.strike) || { strike: p.strike, callOI: 0, putOI: 0 };
+    row.putOI = p.oi;
+    byStrike.set(p.strike, row);
+  }
+  const topOI = !oiOk ? [] : [...byStrike.values()]
+    .filter((r) => r.callOI + r.putOI > 0)
+    .sort((a, b) => (b.callOI + b.putOI) - (a.callOI + a.putOI))
+    .slice(0, 5)
+    .map((r) => ({ strike: r.strike, callOI: Math.round(r.callOI), putOI: Math.round(r.putOI) }));
+  return {
+    expiry: expDate,
+    daysToExpiry: expTs != null ? Math.max(0, Math.ceil((expTs * 1000 - nowMs) / 86400000)) : null,
+    callVolume: Math.round(callVol),
+    putVolume: Math.round(putVol),
+    putCallVolume: callVol > 0 ? r2(putVol / callVol) : null,
+    callOI: oiOk ? Math.round(callOI) : null,
+    putOI: oiOk ? Math.round(putOI) : null,
+    putCallOI: oiOk && callOI > 0 ? r2(putOI / callOI) : null,
+    maxPain: oiOk ? optionMaxPain(calls, puts) : null,
+    atmStrike: atm ? atm.c.strike : null,
+    atmIV: atmIV != null ? Math.round(atmIV * 10) / 10 : null,
+    straddle: r2(straddle),
+    expectedMovePct: straddle != null && spot > 0 ? Math.round((straddle / spot) * 1000) / 10 : null,
+    topOI,
+  };
+}
+
+// v7 options 응답(첫 만기) + 다음 만기 응답 → 화면 payload. 만기가 없으면 null.
+export function normalizeOptionsChain(firstJson, secondJson, symbol, nowMs = Date.now()) {
+  const first = ((firstJson && firstJson.optionChain && firstJson.optionChain.result) || [])[0];
+  if (!first || !Array.isArray(first.expirationDates) || !first.expirationDates.length) return null;
+  const quote = first.quote || {};
+  const spot = finiteOrNull(quote.regularMarketPrice);
+  const expiries = [];
+  const a = summarizeOptionExpiry((first.options || [])[0], spot, nowMs);
+  if (a) expiries.push(a);
+  const second = ((secondJson && secondJson.optionChain && secondJson.optionChain.result) || [])[0];
+  const b = second ? summarizeOptionExpiry((second.options || [])[0], spot, nowMs) : null;
+  if (b && (!a || b.expiry !== a.expiry)) expiries.push(b);
+  if (!expiries.length) return null;
+  return {
+    symbol: String(symbol || first.underlyingSymbol || ""),
+    price: spot,
+    currency: quote.currency || null,
+    expiries,
+    expirationCount: first.expirationDates.length,
+    updatedAt: new Date(nowMs).toISOString(),
+  };
+}
+
+async function handleOptions(symbol) {
+  const key = `https://mir-options.cache/v1/${encodeURIComponent(symbol)}`;
+  const hit = await cacheGet(key);
+  if (hit) return hit;
+  const base = `https://query2.finance.yahoo.com/v7/finance/options/${encodeURIComponent(symbol)}`;
+  const r1 = await yahooAuthedFetch(base);
+  // crumb 세션이 없다(부트스트랩 실패·음성 캐시 중) — 짧게만 실패를 알린다.
+  if (!r1) return json({ error: "no_session" }, 503, 0);
+  if (!r1.ok) return json({ error: "upstream", status: r1.status }, 502, 0);
+  const firstJson = await r1.json();
+  const first = ((firstJson && firstJson.optionChain && firstJson.optionChain.result) || [])[0];
+  const dates = (first && Array.isArray(first.expirationDates)) ? first.expirationDates : [];
+  if (!dates.length) {
+    const none = json({ error: "no_options", symbol }, 404, 3600);
+    await cachePut(key, none);
+    return none;
+  }
+  let secondJson = null;
+  if (dates.length > 1) {
+    try {
+      const r2resp = await yahooAuthedFetch(`${base}?date=${encodeURIComponent(dates[1])}`);
+      if (r2resp && r2resp.ok) secondJson = await r2resp.json();
+    } catch (_) { /* 다음 만기 없이 첫 만기만 */ }
+  }
+  const payload = normalizeOptionsChain(firstJson, secondJson, symbol);
+  if (!payload) return json({ error: "no_data", symbol }, 404, 600);
+  const resp = json(payload, 200, OPTIONS_CACHE_SEC);
+  await cachePut(key, resp);
+  return resp;
+}
+
+// ?insights= / ?options= 의 심볼 정리 — ?ticker= 와 같은 규칙(국내 .KS/.KQ 유지, 미국 BRK.B → BRK-B).
+export function routeSymbol(raw) {
+  const t = String(raw || "").toUpperCase().replace(/[^A-Z0-9.\-]/g, "").slice(0, 16);
+  if (!t) return "";
+  return isKoreanTicker(t) ? t : t.replace(/\./g, "-");
 }
 
 function json(obj, status = 200, cacheSeconds = 900) {

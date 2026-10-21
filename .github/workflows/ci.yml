@@ -135,6 +135,9 @@ jobs:
       # 오늘 탭 지수 하루 차트 시간축(home-chart-core.js): 5분 봉 시각 배정·장 상태(장중/마감/휴장/단축)·눈금.
       - name: Home chart core tests
         run: node scripts/tests/test_home_chart_core.mjs
+      # 프리·애프터 급등락(ext-hours-core.js): ET 세션 판정(서머타임·휴장·단축)·TradingView 스캔 요청 바디·응답 파싱·표기.
+      - name: Ext hours core tests
+        run: node scripts/tests/test_ext_hours_core.mjs
 
       # PER 기준 판정(per-basis-core.js): 국내 최근 4분기/연간/KRX 사업연도 라벨·현재가 재계산.
       - name: PER basis core tests

@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=729af7cfc9" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=729af7cfc9"></noscript>
+    <link rel="preload" href="styles.css?v=eea7e5d87b" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=eea7e5d87b"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=cc08d6e781"></script>
+    <script src="build_id.js?v=c26dea6dfc"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -571,6 +571,8 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="home-status-slot" id="homeStatusSlot" hidden></section>
           <section class="home-briefing" id="homeBriefing" hidden aria-label="AI 브리핑 요약"></section>
           <section class="movers-board" id="moversBoard" hidden aria-label="오늘의 특징주"></section>
+          <!-- 프리·애프터 급등락(ext-hours.js) — TradingView 스크리너 라이브, US 전용 -->
+          <section class="movers-board ext-board" id="extHoursBoard" hidden aria-label="프리·애프터 급등락"></section>
           <!-- 간밤 미국 연관주(KR) · 국내 장 연관주(US) — cross-market.js renderCrossMarketHome -->
           <section class="xm-home" id="crossMarketHome" hidden aria-label="국내·미국 연관 종목 움직임"></section>
           <section class="industry-home-card" id="industryHomeCard" hidden aria-label="산업 신호등"></section>
@@ -3352,7 +3354,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=e85ea15c6f"></script>
+    <script src="market_config.js?v=da0eb1d867"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3374,6 +3376,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="sec-filings-core.js"></script>
     <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
     <script src="movers.js?v=33097bd4db"></script>
+    <script src="ext-hours-core.js?v=b88e6773ee"></script>
+    <script src="ext-hours.js?v=ad04bde4dd"></script>
     <script src="portfolio.js?v=a100144957"></script>
     <script src="my-invest-core.js?v=f6643ad3d2"></script>
     <script src="my-invest.js?v=9c4d59c533"></script>
@@ -3480,9 +3484,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="lockups.js?v=916fe5735b"></script>
     <script src="stock-summary-core.js?v=e89196e8f9"></script>
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
-    <script src="mobile-lists.js?v=1b5a19a0f6"></script>
+    <script src="mobile-lists.js?v=0404ed9c85"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=d8e161d353"></script>
+    <script src="app.js?v=92e19175a3"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

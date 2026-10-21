@@ -145,6 +145,9 @@ jobs:
       # 관심 리스트 표(watchlist-core.js): 열 정렬(값 없는 행 맨 뒤)·토글 순환·끌어 옮기기 재배열·메모 병합·동기화 상한 맞추기.
       - name: Watchlist core tests
         run: node scripts/tests/test_watchlist_core.mjs
+      # 다크풀(ATS) 주간 비중(ats-core.js): 최근 주·평균·빈 주 처리·막대 높이·표기.
+      - name: ATS core tests
+        run: node scripts/tests/test_ats_core.mjs
       # 오늘 탭 지수 하루 차트 시간축(home-chart-core.js): 5분 봉 시각 배정·장 상태(장중/마감/휴장/단축)·눈금.
       - name: Home chart core tests
         run: node scripts/tests/test_home_chart_core.mjs

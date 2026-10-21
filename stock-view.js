@@ -134,6 +134,7 @@ function sdEnsureFlowData() {
   if (typeof renderInstHolders === "function" && typeof selectedBaseRow === "function") {
     const row = selectedBaseRow();
     if (row) renderInstHolders(row);
+    if (row && typeof renderAtsCard === "function") renderAtsCard(row);
   }
   const keys = ["insider", "congress", "inst13f", "activist"];
   if (keys.every((k) => window[(FEATURE_DATA[k] || {}).global])) return; // 이미 있음(ensureFeatureData 도 중복 요청은 안 한다)

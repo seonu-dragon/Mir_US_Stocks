@@ -15564,6 +15564,15 @@ button.calp-who:hover strong { text-decoration: underline; }
 .ih-spark figcaption { display: flex; justify-content: space-between; gap: 6px; font-size: var(--fs-cap); color: var(--muted); }
 .ih-spark figcaption strong { color: var(--text); font-variant-numeric: tabular-nums; font-weight: var(--fw-strong); }
 .ih-spark svg { display: block; width: 100%; height: 44px; margin-top: 4px; overflow: visible; }
+/* 다크풀(ATS) 주간 비중 카드(ats.js) — 기관 보유 카드(ih-*) 모양을 그대로 쓰고 막대 차트만 더한다 */
+#atsCard { margin-top: 12px; }
+.ats-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ats-chart { margin: 0; }
+.ats-chart svg { display: block; width: 100%; height: 56px; }
+.ats-bar { fill: color-mix(in srgb, var(--primary) 45%, transparent); }
+.ats-bar.is-last { fill: var(--primary); }
+.ats-bar.is-empty { fill: var(--line); }
+@media (max-width: 640px) { .ats-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ih-spark path { fill: none; stroke: var(--primary); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .ih-spark circle { fill: var(--primary); }
 .ih-spark-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }

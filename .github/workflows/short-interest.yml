@@ -33,6 +33,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Build short interest
         run: python scripts/build_short_interest.py --top 700 --push
+      # 다크풀(ATS) 주간 비중 — FINRA 가 월요일에 공개하는 주간 ATS 체결 합계(키 없음). 공매도가 이미 발행됐으니
+      # 실패해도 잡을 멈추지 않는다(continue-on-error) — 멈추면 아래 신선도 게이트(8일)가 잡는다.
+      - name: Build FINRA ATS weekly (dark pool share)
+        continue-on-error: true
+        run: python scripts/build_finra_ats.py --push
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

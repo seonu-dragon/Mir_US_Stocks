@@ -176,6 +176,8 @@ CHECKS = {
     # short-interest.yml(화·금). 격주 공시라 나이는 넉넉히, 대신 0건은 잡는다.
     "short-interest": [
         ("data/short_interest.json", 10, True),
+        # 다크풀(ATS) 주간 비중(FINRA, 같은 워크플로우의 continue-on-error 스텝, 화·금). 주 1회 공개라 8일.
+        ("data/finra_ats.json", 8, True),
     ],
     # weekly-edge-stats.yml(일요일 04:20 KST).
     # weekly-edge-stats.yml 이 실제로 CI 에서 굽는 산출물은 breakout/retest 뿐이다.

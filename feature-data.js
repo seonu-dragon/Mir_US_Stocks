@@ -199,6 +199,8 @@ const FEATURE_DATA = {
   usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },
   // 종목별 기관 보유 변화(SEC 13F 데이터셋, build_13f_holders.py) 인덱스(~3KB). 종목 첫 글자 샤드는
   // inst-holders.js 가 수급·보유 탭을 열 때 하나만 fetch 한다.
+  // 다크풀(ATS) 주간 거래 비중(FINRA, build_finra_ats.py, 종목당 8주). 수급·보유 탭을 열 때만(ats.js).
+  finraAts: { global: "FINRA_ATS", path: "data/finra_ats.js", feature: "finraAts", usOnly: true, lazy: true },
   usInstHolders: { global: "US_INST_HOLDERS_INDEX", path: "data/institutional_holders/index.js", feature: "instHolders", usOnly: true, lazy: true },
   // 국내↔미국 연관 종목(build_cross_market_links.py) — 관계 사전 + 최근 1년 수익률 상관(~30KB, 두 시장 한 파일).
   // 오늘 탭 '간밤 미국 연관주'(KR)·'국내 장 연관주'(US) 카드가 첫 화면이라 첫 단계에서 받는다. 종목 상세 카드도 같은 파일.
@@ -454,6 +456,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderCrossMarketCard === "function") renderCrossMarketCard(item); },
           () => { if (typeof renderEtfHoldings === "function") renderEtfHoldings(item); },
           () => { if (typeof renderInstHolders === "function") renderInstHolders(item); },
+          () => { if (typeof renderAtsCard === "function") renderAtsCard(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).

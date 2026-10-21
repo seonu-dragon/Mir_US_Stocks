@@ -1464,7 +1464,7 @@ function regimeFngCardHtml() {
   const gaugeScore = live ? score : 50;
   const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "연결 실패" : "로딩 중");
   const asOf = live && marketHeader.fng.source === "snapshot" && marketHeader.fng.asOf ? ` · 스냅샷 기준 ${marketHeader.fng.asOf}` : "";
-  const color = live ? fngColor(score) : "#94a3b8";
+  const tone = live ? fngToneClass(score) : "fng-t-na";
   // 바늘은 늘 위쪽 반원만 가리키므로 점수는 허브 아래에 둔다(바늘과 겹치지 않게).
   const cx = 100, cy = 82, r = 72, w = 16;
   const deg = (s) => 180 - (s / 100) * 180;
@@ -1485,10 +1485,10 @@ function regimeFngCardHtml() {
         ${arcs}
         <line class="gauge-needle" x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke-width="3" stroke-linecap="round"></line>
         <circle class="gauge-hub" cx="${cx}" cy="${cy}" r="5"></circle>
-        <text x="${cx}" y="${cy + 34}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
+        <text x="${cx}" y="${cy + 34}" text-anchor="middle" class="fng-score ${tone}">${live ? score : "--"}</text>
       </svg>
       <div class="rf-foot">
-        <span class="rf-fng" style="color:${color}">${escapeHtml(label)}${escapeHtml(asOf)}</span>
+        <span class="rf-fng ${tone}">${escapeHtml(label)}${escapeHtml(asOf)}</span>
         <span class="rf-stat" title="당일 상승 종목 비율">상승 ${Math.round(regime.upPct * 100)}%</span>
       </div>
     </div>`;

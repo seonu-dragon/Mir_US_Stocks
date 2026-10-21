@@ -2562,7 +2562,8 @@ button.ghost {
 .calendar-legend .imp { letter-spacing: 1px; }
 .imp { font-style: normal; letter-spacing: 1px; }
 .imp-1 { color: var(--text-muted); }
-.imp-2 { color: #f59e0b; }
+.imp-2 { color: #b45309; }
+html[data-theme="dark"] .imp-2 { color: #fbbf24; }
 .imp-3 { color: var(--neg); }
 .imp-dim { color: var(--text-muted); letter-spacing: 1px; }
 
@@ -5751,7 +5752,8 @@ footer {
   padding: 0 2px;
 }
 
-.watch-star.is-on { color: #f59e0b; }
+.watch-star.is-on { color: #b45309; }  /* 흰 배경 5:1 (예전 #f59e0b 는 2.1:1) */
+html[data-theme="dark"] .watch-star.is-on { color: #fbbf24; }
 
 .stock-facts-head {
   display: flex;
@@ -6281,7 +6283,8 @@ footer {
 .earn-chip-top { display: flex; align-items: center; gap: 5px; }
 .earn-chip-top b { font-weight: 700; font-size: var(--fs-sub); }
 .earn-chip-sub { color: var(--muted); font-size: var(--fs-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.earn-star { color: #f59e0b; font-style: normal; }
+.earn-star { color: #b45309; font-style: normal; }
+html[data-theme="dark"] .earn-star { color: #fbbf24; }
 .earn-chg { font-weight: 700; font-size: var(--fs-cap); margin-left: auto; }
 .earn-chg.pos { color: var(--pos); }
 .earn-chg.neg { color: var(--neg); }
@@ -9284,6 +9287,18 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
   font-size: var(--fs-sub);
 }
 .rf-fng { font-weight: 600; }
+/* 공포탐욕 글자색(게이지 호 색보다 짙게 — 흰 배경 4.5:1 이상). 다크는 밝은 단계. */
+.fng-t-0 { color: #b91c1c; fill: #b91c1c; }
+.fng-t-1 { color: #c2410c; fill: #c2410c; }
+.fng-t-2 { color: #a16207; fill: #a16207; }
+.fng-t-3 { color: #4d7c0f; fill: #4d7c0f; }
+.fng-t-4 { color: #15803d; fill: #15803d; }
+.fng-t-na { color: var(--muted); fill: var(--muted); }
+html[data-theme="dark"] .fng-t-0 { color: #f87171; fill: #f87171; }
+html[data-theme="dark"] .fng-t-1 { color: #fb923c; fill: #fb923c; }
+html[data-theme="dark"] .fng-t-2 { color: #facc15; fill: #facc15; }
+html[data-theme="dark"] .fng-t-3 { color: #a3e635; fill: #a3e635; }
+html[data-theme="dark"] .fng-t-4 { color: #4ade80; fill: #4ade80; }
 .rf-stat { color: var(--muted); font-weight: 700; }
 
 /* 관심종목 요약 카드 행(버튼) — hx-row 형식으로 리셋 */
@@ -16755,7 +16770,8 @@ button.mfeed-who:hover strong { text-decoration: underline; }
     color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer;
   }
   .mnav-mini-star:hover { background: transparent; transform: none; }
-  .mnav-mini-star.is-on { color: #f59e0b; }
+  .mnav-mini-star.is-on { color: #b45309; }
+  html[data-theme="dark"] .mnav-mini-star.is-on { color: #fbbf24; }
   .mnav-mini-star[hidden] { display: none; }
   @keyframes mnav-mini-in { from { transform: translateY(-100%); } to { transform: none; } }
 

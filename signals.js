@@ -109,6 +109,17 @@ function fngLabel(score) {
   return "극단적 욕심";
 }
 
+// 글자용 단계 클래스(fng-t-0~4). 게이지 호 색(fngColor)은 밝은 노랑·연두라 흰 배경 글자로는 2:1 안팎이라
+// 글자는 테마별로 대비 4.5:1 이상인 색을 CSS(.fng-t-*)에서 고른다.
+function fngToneClass(score) {
+  if (!Number.isFinite(Number(score))) return "fng-t-na";
+  if (score < 25) return "fng-t-0";
+  if (score < 45) return "fng-t-1";
+  if (score <= 55) return "fng-t-2";
+  if (score <= 75) return "fng-t-3";
+  return "fng-t-4";
+}
+
 function fngColor(score) {
   if (score < 25) return "#dc2626";
   if (score < 45) return "#f97316";

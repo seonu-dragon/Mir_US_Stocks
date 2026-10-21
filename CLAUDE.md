@@ -196,7 +196,11 @@ exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P
   그때 `data/details/<TICKER>.json` 을 직접 fetch 하므로 상위 N 종목만 남기는 프루닝은
   안 된다. 남아 있는 `.json` 짝(map_fundamentals·activist·kr_disclosures 등, 합계
   ~4MB)은 더 덜어낼 여지지만 의미 있는 크기가 아니다. 실질적인 다음 수는 details 를
-  Cloudflare R2 등으로 옮기는 것이다. 한도까지의 완충을 지키려고 배포에 700MB
+  Cloudflare R2 등으로 옮기는 것이다 — **경로는 기능 플래그 뒤에 준비돼 있다**(2026-10-21, 기본 꺼짐):
+  상세 fetch 는 전부 `details-source.js`(`MirDetails.fetch` / `MirMarket.fetchDetail`)를 거치고
+  `detailsBase` 가 비면 예전 상대 경로 그대로다. 업로드·스테이징 제외는 `deploy-pages.yml` 의 리포 변수
+  `MIR_R2_DETAILS`·`MIR_R2_DETAILS_SKIP_PAGES`, 켜는 순서는 DEPLOY.md 'R2 종목 상세(details)'.
+  상세를 새로 읽는 코드는 `fetch("data/details/…")` 를 직접 쓰지 말 것. 한도까지의 완충을 지키려고 배포에 700MB
   사이즈 가드를 뒀다(넘으면 배포 실패 + 텔레그램). GitHub Pages 발행 사이트 권장
   한도는 1GB.
 - `app.js` 403KB / `styles.css` 373KB / `index.html` 151KB 단일 파일(CRLF 작업트리

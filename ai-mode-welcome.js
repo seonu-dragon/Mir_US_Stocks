@@ -94,23 +94,36 @@
     })).filter((b) => Number.isFinite(b.c));
   }
 
+  // 시도할 (키, 시장) 목록. 경로 문자열(paths)은 진단 표시용 Pages 상대 경로이고, 실제 요청은
+  // fetchDetailFromPath → details-source.js(R2 기능 플래그)를 거친다.
   function detailPathsForTicker(ticker) {
     const key = String(ticker || "").toUpperCase();
     const isKrCode = /^\d{6}$/.test(key);
-    const paths = [];
+    const rel = (k, m) => (m === "kr"
+      ? `data/korea/details/${encodeURIComponent(k)}.json`
+      : `data/details/${encodeURIComponent(k)}.json`);
+    const targets = [];
     if (isKrCode) {
-      paths.push(`data/korea/details/${encodeURIComponent(key)}.json`);
+      targets.push({ key, market: "kr" });
     } else {
-      paths.push(`data/details/${encodeURIComponent(key)}.json`);
-      paths.push(`data/korea/details/${encodeURIComponent(key)}.json`);
+      targets.push({ key, market: "us" });
+      targets.push({ key, market: "kr" });
     }
-    const active = window.MirMarket?.detailPath?.(key);
-    if (active && !paths.includes(active)) paths.unshift(active);
-    return [...new Set(paths)];
+    const MM = window.MirMarket;
+    const active = MM?.detailPath?.(key);
+    if (active && !targets.some((t) => rel(t.key, t.market) === active)) {
+      targets.unshift({ key: MM.detailKey ? MM.detailKey(key) : key, market: MM.getMode ? MM.getMode() : "us" });
+    }
+    const seen = new Set();
+    return targets
+      .map((t) => ({ ...t, path: rel(t.key, t.market) }))
+      .filter((t) => (seen.has(t.path) ? false : (seen.add(t.path), true)));
   }
 
-  async function fetchDetailFromPath(path) {
-    const res = await fetch(path, { cache: "no-store" });
+  async function fetchDetailFromPath(target) {
+    const res = window.MirDetails
+      ? await window.MirDetails.fetch(target.key, target.market, { cache: "no-store" })
+      : await fetch(target.path, { cache: "no-store" });
     if (!res.ok) return { detail: null, status: res.status };
     const text = await res.text();
     let detail = null;
@@ -156,13 +169,14 @@
   }
 
   async function loadTickerDetail(ticker) {
-    const paths = detailPathsForTicker(ticker);
+    const targets = detailPathsForTicker(ticker);
+    const paths = targets.map((t) => t.path);
     let lastStatus = 0;
     let sawDetail = false;
 
-    for (const path of paths) {
+    for (const target of targets) {
       try {
-        const { detail, status } = await fetchDetailFromPath(path);
+        const { detail, status } = await fetchDetailFromPath(target);
         lastStatus = status || lastStatus;
         if (!detail) continue;
         sawDetail = true;

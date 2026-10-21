@@ -49,6 +49,14 @@ on:
       - "Company profile & price targets"
       - "Market calendar + ETF holdings"
   workflow_dispatch:
+    inputs:
+      # R2 details 동기화(아래 'Sync details to R2', 리포 변수 MIR_R2_DETAILS=true 일 때만 돈다)에서
+      # 레포에 없는 객체(상장폐지 등으로 빠진 종목 파일)까지 지울지. 기본은 추가·갱신만(rclone copy).
+      # 첫 전체 업로드는 이 입력 없이 Run workflow 한 번이면 된다 — copy 가 체크섬으로 빠진 것만 올린다.
+      r2_prune:
+        description: "R2 details: 레포에 없는 객체도 삭제(rclone sync, 최대 500개). 평소엔 끔."
+        type: boolean
+        default: false
 
 # actions: read 는 아래 no-op 게이트의 `gh run list` 용이다. 지금은 공개 레포라
 # 없어도 통하지만, 비공개로 바꾸면 조회가 조용히 실패해 "항상 배포" 로 퇴화한다.
@@ -142,6 +150,89 @@ jobs:
         if: steps.gate.outputs.deploy != 'false'
         uses: actions/configure-pages@v5
 
+      # ── 종목 상세를 Cloudflare R2 로(기능 플래그, 기본 꺼짐) ─────────────────────────────
+      # data/details·data/korea/details 가 아티팩트의 80%다(CLAUDE.md '알려진 부채'). 리포 변수
+      # MIR_R2_DETAILS 가 'true' 이고 시크릿 4개(R2_ACCOUNT_ID·R2_ACCESS_KEY_ID·R2_SECRET_ACCESS_KEY·
+      # R2_BUCKET)가 다 있을 때만, 체크아웃의 두 폴더를 버킷의 **같은 경로**(data/details/<T>.json …)로
+      # 올린다. 변수가 없으면 이 스텝은 아예 돌지 않고, 배포는 지금과 똑같다.
+      # 데이터 워크플로우마다 넣지 않고 여기 한 곳에서 하는 이유: details 를 커밋하는 건 일일 스냅샷
+      # US·KR(update_data.py / update_korea_data.py 의 `git add data/`)인데, 그 완료가 전부 이 배포로
+      # 모이고 위 게이트가 '서빙 경로 변경 없음'을 이미 걸러 준다.
+      # rclone copy --checksum: 크기+MD5(ETag) 비교라 체크아웃 mtime 과 무관하게 바뀐 파일만 올린다.
+      # 실패해도 배포는 계속하고(continue-on-error) ok 출력이 안 나가므로, 아래 스테이징은 details 를
+      # 그대로 Pages 에 싣는다(폴백). 첫 업로드가 시간 제한에 걸려도 다음 배포가 이어서 올린다.
+      - name: Sync details to R2 (flag vars.MIR_R2_DETAILS)
+        id: r2
+        if: steps.gate.outputs.deploy != 'false' && vars.MIR_R2_DETAILS == 'true'
+        continue-on-error: true
+        timeout-minutes: 8
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_PRUNE: ${{ inputs.r2_prune && 'true' || 'false' }}
+          RCLONE_VERSION: "v1.68.2"
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=""
+          for v in R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET; do
+            [ -n "${!v:-}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning::MIR_R2_DETAILS=true 인데 시크릿이 없습니다:${missing} — R2 동기화를 건너뛰고 details 는 Pages 에 그대로 싣습니다."
+            exit 0
+          fi
+          # rclone 고정 버전 + 공식 SHA256SUMS 검증(러너에 기본 설치돼 있지 않다).
+          tmp="$(mktemp -d)"
+          zip="rclone-${RCLONE_VERSION}-linux-amd64.zip"
+          curl -fsSL --retry 3 -o "$tmp/$zip" "https://downloads.rclone.org/${RCLONE_VERSION}/${zip}"
+          curl -fsSL --retry 3 -o "$tmp/SHA256SUMS" "https://downloads.rclone.org/${RCLONE_VERSION}/SHA256SUMS"
+          (cd "$tmp" && grep " ${zip}\$" SHA256SUMS | sha256sum -c -)
+          unzip -q -j "$tmp/$zip" '*/rclone' -d "$tmp/bin"
+          RCLONE="$tmp/bin/rclone"
+          "$RCLONE" version | head -1
+          # 설정 파일 없이 환경변수로 원격 'r2' 를 정의한다(S3 호환 API).
+          # no_check_bucket: 버킷 한정 Object Read & Write 토큰은 버킷 생성·조회 권한이 없다.
+          export RCLONE_CONFIG_R2_TYPE=s3
+          export RCLONE_CONFIG_R2_PROVIDER=Cloudflare
+          export RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+          export RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+          export RCLONE_CONFIG_R2_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          export RCLONE_CONFIG_R2_REGION=auto
+          export RCLONE_CONFIG_R2_NO_CHECK_BUCKET=true
+          mode=copy; extra=()
+          if [ "$R2_PRUNE" = "true" ]; then mode=sync; extra=(--max-delete 500); fi
+          for dir in data/details data/korea/details; do
+            n="$(find "$dir" -maxdepth 1 -name '*.json' | wc -l)"
+            echo "== ${mode} ${dir} (${n} files) -> r2:${R2_BUCKET}/${dir}"
+            # Cache-Control 은 짧게: 같은 경로가 하루 여러 번 바뀐다(프론트는 no-cache 로 재검증한다).
+            "$RCLONE" "$mode" "$dir" "r2:${R2_BUCKET}/${dir}" \
+              --checksum --fast-list --include '*.json' \
+              --transfers 32 --checkers 32 --retries 3 --low-level-retries 10 \
+              --header-upload "Content-Type: application/json; charset=utf-8" \
+              --header-upload "Cache-Control: public, max-age=60" \
+              --stats 30s --stats-one-line "${extra[@]}"
+          done
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "- R2 details 동기화: 성공(${mode})" >> "$GITHUB_STEP_SUMMARY"
+
+      # R2 동기화 실패는 continue-on-error 라 맨 아래 Notify failure 에 안 걸린다 — 여기서 따로 알린다.
+      - name: Notify R2 sync failure (Telegram)
+        if: steps.r2.outcome == 'failure'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          echo "::warning::R2 details 동기화 실패 — 이번 배포는 details 를 Pages 에 그대로 싣습니다(폴백)."
+          echo "- R2 details 동기화: **실패** → details 는 Pages 에 포함(폴백)" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir R2] details 동기화 실패(배포는 Pages 폴백으로 계속) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
       # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(2026-09-15 실측 아티팩트
       # 456MB; 2026-08-06 실측 땐 추적 424MB 중 ~350MB). 예전엔 체크아웃에서 rm 으로 지운 뒤 path: '.'
       # 를 올렸는데, 2026-08-06 부터 rsync 로 _site/ 스테이징 사본을 만들어 올린다 —
@@ -157,6 +248,14 @@ jobs:
       # 목록을 바꾸기 전에 app.js 의 FEATURE_DATA / fetch 경로를 확인할 것.
       - name: Stage site artifact (exclude build-only files)
         if: steps.gate.outputs.deploy != 'false'
+        env:
+          # 셋 다 맞아야 details 를 아티팩트에서 뺀다(DEPLOY.md 'R2 종목 상세' 3단계):
+          #  ① 이번 run 의 R2 동기화 성공(steps.r2.outputs.ok — 실패·미실행이면 빈 값)
+          #  ② 리포 변수 MIR_R2_DETAILS_SKIP_PAGES == 'true'
+          #  ③ details-source.js 의 detailsBase 가 https URL 로 채워져 있음(프론트가 R2 를 본다)
+          # 하나라도 아니면 지금처럼 details 를 Pages 에 싣는다.
+          R2_OK: ${{ steps.r2.outputs.ok }}
+          R2_SKIP_PAGES: ${{ vars.MIR_R2_DETAILS_SKIP_PAGES }}
         run: |
           rsync -a \
             --exclude='_site' \
@@ -182,6 +281,15 @@ jobs:
                  _site/data/institutional_holders/state.json _site/data/institutional_holders/cusip_map.json \
                  _site/data/korea/themes_state.json _site/data/korea/target_reports_state.json \
                  _site/data/korea/valueup_state.json _site/data/korea/earnings_dates_state.json \n                 _site/data/senate_ptr_cache.json
+          if [ "${R2_OK:-}" = "true" ] && [ "${R2_SKIP_PAGES:-}" = "true" ]; then
+            if grep -Eq '^[[:space:]]*detailsBase:[[:space:]]*"https://[^"]+"' details-source.js; then
+              rm -rf _site/data/details _site/data/korea/details
+              echo "R2 details: Pages 아티팩트에서 data/details·data/korea/details 제외"
+              echo "- R2 details: Pages 아티팩트에서 제외" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::MIR_R2_DETAILS_SKIP_PAGES=true 인데 details-source.js 의 detailsBase 가 비어 있습니다 — details 를 Pages 에 그대로 싣습니다."
+            fi
+          fi
           echo "artifact size:" && du -sh _site | cut -f1
 
       # 구독 피드(.ics 캘린더 + 공시 RSS). 데이터가 여러 워크플로우에서 따로 커밋되므로 전부가

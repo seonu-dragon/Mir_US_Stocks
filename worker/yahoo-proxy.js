@@ -1409,6 +1409,11 @@ async function fetchEarnings(symbol, budget = null) {
 // 구분할 수 없었다. (earnings 를 빈 객체로 바꾸지 않는 이유: 프론트가 truthy 면
 // 라이브 값으로 캐시해 정적 캘린더 폴백을 가린다.)
 export const MIR_PAGES_DATA_BASE = "https://seonu-dragon.github.io/Mir_US_Stocks/data";
+// 종목 상세(details)를 R2 로 옮겼을 때의 공개 URL(프론트 details-source.js 의 detailsBase 와 같은 값,
+// 끝 슬래시 없이). 비어 있으면 지금처럼 Pages 만 읽는다. 채우면 R2 를 먼저 보고 실패 시 Pages.
+// Pages 스테이징에서 details 를 빼기 전에(DEPLOY.md 'R2 종목 상세' 3단계) 채워서 워커를 다시
+// 붙여넣어야 실적 이력 폴백이 끊기지 않는다.
+export const MIR_DETAILS_BASE = "";
 const PUBLISHED_EARNINGS_TTL_MS = 30 * 60 * 1000;
 let publishedEarningsMemo = { at: 0, rows: null };
 
@@ -1435,8 +1440,16 @@ async function loadPublishedEarningsCalendar() {
 async function loadPublishedEarningsHistory(ticker) {
   if (!/^[A-Z0-9.\-]{1,12}$/.test(ticker)) return [];
   try {
-    const r = await fetchT(`${MIR_PAGES_DATA_BASE}/details/${encodeURIComponent(ticker)}.json`, { headers: { Accept: "application/json" } });
-    if (!r.ok) return [];
+    const rel = `details/${encodeURIComponent(ticker)}.json`;
+    const urls = MIR_DETAILS_BASE
+      ? [`${MIR_DETAILS_BASE.replace(/\/+$/, "")}/data/${rel}`, `${MIR_PAGES_DATA_BASE}/${rel}`]
+      : [`${MIR_PAGES_DATA_BASE}/${rel}`];
+    let r = null;
+    for (const url of urls) {
+      r = await fetchT(url, { headers: { Accept: "application/json" } }).catch(() => null);
+      if (r && r.ok) break;
+    }
+    if (!r || !r.ok) return [];
     const data = await r.json();
     const rows = Array.isArray(data?.earningsHistory) ? data.earningsHistory : [];
     // 최신이 앞(야후 경로와 같은 순서), 8개까지.

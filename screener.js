@@ -526,7 +526,9 @@ async function scanPatternsForScreener(candidates) {
   let idx = 0, active = 0, done = 0;
   const scanOne = async (item) => {
     try {
-      const res = await fetch((window.MirMarket && window.MirMarket.detailPath(item.ticker)) || `data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-cache" });
+      const res = window.MirMarket
+        ? await window.MirMarket.fetchDetail(item.ticker, { cache: "no-cache" })
+        : await fetch(`data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-cache" });
       if (!res.ok) return;
       const detail = await res.json();
       const rows = (detail.chartSeries || []).map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));

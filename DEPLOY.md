@@ -124,6 +124,9 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - `ECOS_API_KEY` (한국은행 ECOS 매크로 — korea-close-briefing)
    - `DATA_GO_KR_KEY` (공공데이터포털 — NPS 보유·기업집단·나라장터·관세청 계열)
    - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` (브리핑 진행 알림 + 실패 통지)
+   - (선택) `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` + 리포 **변수**
+     `MIR_R2_DETAILS`·`MIR_R2_DETAILS_SKIP_PAGES` — 종목 상세를 Cloudflare R2 로(기본 꺼짐, deploy-pages.yml).
+     켜는 순서·CORS·되돌리기는 아래 'R2 종목 상세(details)' 절
 
 3. **Cloudflare Worker 바인딩** (`worker/yahoo-proxy.js` 가 실제 사용하는 목록.
    워커는 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포)
@@ -252,6 +255,119 @@ GitHub API 로 dispatch 한다. 워크플로우에는 `schedule:` 대신 `# mir-
   `schedule:` 을 새로 쓰면 CI 가 막는다(워커 dispatch + 늦은 schedule 로 하루 두 번 돈다). 감시자 두 개만 예외.
 - 무료 플랜: 매분 실행 = 하루 1,440회(요청 한도 10만), 실행당 GitHub 호출은 확인할 슬롯이 있을 때만 몇 회.
 - 로그: 워커 → Logs 에 dispatch·실패가 있던 분만 한 줄. 감시자가 대신 돌리면 텔레그램 "[Mir 정시 실행]" 알림.
+
+### R2 종목 상세(details) — 기능 플래그 (2026-10-21, 기본 꺼짐)
+
+**왜**: `data/details`(US)와 `data/korea/details`(KR)가 Pages 배포 아티팩트의 대부분이다.
+2026-10-21 HEAD 기준 git blob 합계 US 224.2MB / 7,247개, KR 206.3MB / 3,807개(2026-09-15 실측은
+195MB·169MB, 아티팩트 456MB). 배포에는 700MB 가드가 있고 Pages 권장 한도는 1GB다(CLAUDE.md '알려진 부채').
+
+**지금 상태**: 코드는 다 들어가 있고 **전부 꺼져 있다**. 아래를 하기 전까지 동작은 예전과 같다.
+
+| 스위치 | 위치 | 기본 | 하는 일 |
+|---|---|---|---|
+| `MIR_R2_DETAILS` | GitHub 리포 **변수** | 없음 | `true` 면 Deploy Pages 가 details 를 R2 에 올린다(`Sync details to R2` 스텝) |
+| `detailsBase` | `details-source.js` 의 `DETAILS_CONFIG` | `""` | 채우면 브라우저가 R2 에서 먼저 받고, 실패하면 Pages 로 한 번 폴백 |
+| `MIR_DETAILS_BASE` | `worker/yahoo-proxy.js` 상수 | `""` | 워커 실적 이력 폴백이 R2 를 먼저 본다(워커는 수동 배포) |
+| `MIR_R2_DETAILS_SKIP_PAGES` | GitHub 리포 **변수** | 없음 | `true` + 이번 run 의 R2 업로드 성공 + `detailsBase` 채워짐 → Pages 아티팩트에서 details 제외 |
+
+R2 업로드가 실패한 run 은 `MIR_R2_DETAILS_SKIP_PAGES` 와 상관없이 details 를 Pages 에 그대로 싣는다(폴백).
+
+#### 0. 준비(Cloudflare 대시보드)
+
+1. **버킷 생성**: R2 → Create bucket. 이름 예: `mir-details`. 위치는 Automatic.
+2. **공개 액세스**: 버킷 → Settings → Public access.
+   - 권장: **Custom Domain** 연결(예: `details.<내 도메인>`; 도메인이 Cloudflare 존에 있어야 함).
+   - 임시: **r2.dev 서브도메인** 허용 → `https://pub-<id>.r2.dev`. Cloudflare 가 r2.dev 는 개발용이고
+     요청 제한이 걸린다고 안내하므로 운영은 커스텀 도메인으로.
+3. **CORS**: 버킷 → Settings → CORS Policy → 아래 JSON. 사이트가 다른 출처(github.io)에서 `fetch` 하므로
+   `Access-Control-Allow-Origin` 이 없으면 브라우저가 응답을 버린다(그때도 Pages 폴백으로 화면은 뜬다).
+   로컬 검증 포트는 필요한 것만 넣는다.
+
+   ```json
+   [
+     {
+       "AllowedOrigins": [
+         "https://seonu-dragon.github.io",
+         "http://127.0.0.1:8113",
+         "http://localhost:8113"
+       ],
+       "AllowedMethods": ["GET", "HEAD"],
+       "AllowedHeaders": ["*"],
+       "ExposeHeaders": ["ETag", "Content-Length", "Content-Type"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+4. **API 토큰**: R2 → Manage R2 API Tokens → Create API token.
+   - Permissions: **Object Read & Write**
+   - Specify bucket(s): **Apply to specific buckets only** → 위 버킷 하나
+   - 만들면 나오는 **Access Key ID**, **Secret Access Key** 를 적어 둔다(다시 안 보여 준다).
+   - **Account ID** 는 R2 개요 화면 오른쪽(엔드포인트 `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` 의 앞부분).
+
+#### 1. GitHub 에 등록(업로드만 켜기 — 사이트는 아직 Pages 를 읽는다)
+
+리포 Settings → Secrets and variables → Actions. 또는:
+
+```powershell
+gh secret set R2_ACCOUNT_ID        -R seonu-dragon/Mir_US_Stocks   # 프롬프트에 값 붙여넣기
+gh secret set R2_ACCESS_KEY_ID     -R seonu-dragon/Mir_US_Stocks
+gh secret set R2_SECRET_ACCESS_KEY -R seonu-dragon/Mir_US_Stocks
+gh secret set R2_BUCKET            -R seonu-dragon/Mir_US_Stocks   # 예: mir-details
+gh variable set MIR_R2_DETAILS --body true -R seonu-dragon/Mir_US_Stocks
+```
+
+**첫 전체 업로드**: Actions → Deploy Pages → Run workflow(입력 기본값 그대로) 또는
+`gh workflow run deploy-pages.yml -R seonu-dragon/Mir_US_Stocks`. 따로 '전체 업로드' 모드는 없다 —
+`rclone copy --checksum` 이 R2 에 없거나 내용이 다른 파일만 올리므로 첫 실행이 곧 전체 업로드다.
+스텝 시간 제한이 8분이라 첫 회에 다 못 올리면 스텝만 실패하고(배포는 Pages 폴백으로 계속) 다음
+배포가 이어서 올린다. 실행 요약에 `R2 details 동기화: 성공(copy)` 이 찍힐 때까지 반복.
+
+확인:
+
+```powershell
+curl.exe -sI https://<공개 호스트>/data/details/NVDA.json            # 200, content-type: application/json
+curl.exe -sI -H "Origin: https://seonu-dragon.github.io" https://<공개 호스트>/data/korea/details/005930.json
+#   → access-control-allow-origin: https://seonu-dragon.github.io 가 있어야 한다
+```
+
+이후에는 데이터 워크플로우 → Deploy Pages 가 돌 때마다 바뀐 파일만 올라간다. 최근 커밋 실측으로
+US 스냅샷 1회에 details 7,239개, KR 스냅샷 1회에 3,215~3,676개가 바뀌었다 — 그만큼이 run 마다 PUT
+(Class A) 요청 수다. R2 무료 한도·요금은 Cloudflare R2 요금 페이지에서 이 수치와 비교할 것.
+
+#### 2. 사이트를 R2 로(브라우저·워커)
+
+1. `details-source.js` 의 `detailsBase` 에 공개 호스트를 넣는다(끝 슬래시 없이, 예 `"https://details.example.com"`).
+2. `py scripts/stamp_build_id.py` → PR → 머지(CLAUDE.md 절차). 라이브에서 분석 페이지를 열어 개발자
+   도구 Network 에 R2 호스트로 `data/details/<T>.json` 이 200 으로 오는지 본다. R2 가 실패하면
+   자동으로 Pages 경로를 한 번 더 요청하므로 이 단계에서는 화면이 깨질 수 없다.
+3. `worker/yahoo-proxy.js` 의 `MIR_DETAILS_BASE` 에도 같은 값 → 대시보드에 붙여넣기 배포(DEPLOY.md 3번).
+   이걸 안 하면 3단계 뒤 워커의 실적 이력 폴백(`?ticker=` 의 earnings.history)이 비게 된다.
+
+#### 3. Pages 아티팩트에서 details 빼기
+
+```powershell
+gh variable set MIR_R2_DETAILS_SKIP_PAGES --body true -R seonu-dragon/Mir_US_Stocks
+gh workflow run deploy-pages.yml -R seonu-dragon/Mir_US_Stocks
+```
+
+실행 요약에 `R2 details: Pages 아티팩트에서 제외` 와 줄어든 `배포 아티팩트: N MB` 가 보이면 끝.
+이 run 의 R2 업로드가 실패했거나 `detailsBase` 가 비어 있으면 경고만 남기고 details 를 그대로 싣는다.
+몇 주 안정적이면 `details-source.js` 의 `pagesFallback` 을 `false` 로 바꿔 없는 종목의 404 이중
+요청을 없앨 수 있다(선택).
+
+가끔(분기 1회 정도) **정리**: Run workflow 에서 `r2_prune` 을 켜면 레포에 없는 객체(빠진 종목)를
+지운다(`rclone sync`, 한 번에 최대 500개 — 넘으면 rclone 이 멈추고 스텝만 실패).
+
+#### 되돌리기
+
+- **즉시(사이트가 R2 문제로 이상할 때)**: `gh variable delete MIR_R2_DETAILS_SKIP_PAGES -R seonu-dragon/Mir_US_Stocks`
+  → `gh workflow run deploy-pages.yml` 로 details 를 Pages 에 다시 싣는다. 프론트는 R2 실패 시 Pages
+  로 폴백하므로 이것만으로 복구된다.
+- **R2 를 안 쓰기**: `detailsBase` 를 `""` 로(스탬프 → PR → 머지), 워커 `MIR_DETAILS_BASE` 도 `""`,
+  `gh variable delete MIR_R2_DETAILS` → 업로드 스텝이 돌지 않는다. 버킷·토큰은 대시보드에서 삭제.
+- 순서가 중요하다: Pages 에서 details 를 뺀 상태(3단계)로 `detailsBase` 만 비우면 상세가 전부 404 가
+  된다. 항상 **3단계 해제 → 2단계 해제 → 1단계 해제** 순.
 
 ### 키움 커뮤니티 글쓰기 (로컬 CLI)
 

@@ -206,7 +206,15 @@ function fetchMarketHeader() {
 // scKind: 신호 성적표(signal-scorecard.js)의 신호 종류 — 카드 아래 '이 신호의 과거 성적' 한 줄.
 function signalCard(title, items, note, scKind = "") {
   const body = items.length
-    ? items.map((x) => `<li><button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(stockLabel(x.ticker))}</button><span>${escapeHtml(x.note || "")}</span></li>`).join("")
+    ? items.map((x) => {
+      // 티커가 없는 항목(국내 신규 상장 — 아직 종목코드 미배정)은 누를 곳이 없으니 이름만 글자로 보인다.
+      const label = x.ticker ? stockLabel(x.ticker) : (x.label || "—");
+      const note = x.note && x.note !== label ? x.note : "";
+      const head = x.ticker
+        ? `<button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(label)}</button>`
+        : `<strong class="ins-ticker-plain">${escapeHtml(label)}</strong>`;
+      return `<li>${head}<span>${escapeHtml(note)}</span></li>`;
+    }).join("")
     : `<li class="muted">해당 신호 없음</li>`;
   const score = scKind && typeof signalScoreLine === "function" ? signalScoreLine(scKind) : "";
   return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul>${score}</div>`;
@@ -842,7 +850,16 @@ function renderSignals() {
   }
   if (cfg.features?.ipo !== false) {
     const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
-    cards.push(signalCard("신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
+    // 국내 신규 상장은 종목코드가 비어 온다 — 스냅샷에 같은 회사명이 있으면 그 코드로 잇는다.
+    const byName = (name) => (name ? data.stocks.find((s) => s.company === name) : null);
+    cards.push(signalCard("신규 상장(가격확정)", ipo.map((i) => {
+      const ticker = i.ticker || (byName(i.company) || {}).ticker || "";
+      const price = Number(i.offerPrice);
+      const parts = [];
+      if (ticker && !isKrMarket() && i.company) parts.push(i.company);
+      if (Number.isFinite(price) && price > 0) parts.push(`공모가 ${marketCfg().formatPrice(price)}`);
+      return { ticker, label: i.company || "—", note: parts.join(" · ") };
+    })));
   }
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => {

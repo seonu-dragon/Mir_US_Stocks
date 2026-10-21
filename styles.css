@@ -8369,6 +8369,7 @@ button.community-hot-ticker {
 .signal-card ul { list-style: none; margin: 0; padding: 0; }
 .signal-card li { display: flex; align-items: baseline; gap: var(--space-2); padding: 5px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sub); }
 .signal-card li span { color: var(--text-muted); font-size: var(--fs-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signal-card .ins-ticker-plain { font-weight: 600; color: var(--text); flex-shrink: 0; }
 /* 국내 시장경보·이상 종목 보드(kr-alerts.js). 시그널 카드 모양을 그대로 쓰고 칩·접기만 더한다. */
 .kr-alert-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 .kr-alert-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--fs-cap); color: var(--text-muted); }

@@ -659,9 +659,19 @@ function fearGreedComponents() {
     let posM = 0, totM = 0;
     for (const s of stocks) { const v = Number(s.monthChangePct); if (Number.isFinite(v)) { totM++; if (v > 0) posM++; } }
     if (totM > 0) comps.push({ key: "모멘텀", score: clamp(posM / totM * 100), detail: "1개월 상승 비율" });
-    const highs = stocks.filter((s) => Number(s.newHighDistancePct) <= 2).length;
-    const lows = stocks.filter((s) => { const d = (typeof low52DistPct === "function") ? low52DistPct(s) : NaN; return Number.isFinite(d) && d <= 5; }).length;
-    if (highs + lows > 0) comps.push({ key: "주가 강도", score: clamp(highs / (highs + lows) * 100), detail: "신고가 vs 신저가" });
+    // 신고가·신저가는 같은 종목 집합에서 센다. 예전엔 신고가는 스냅샷 전 종목, 신저가는 52주 저가
+    // (MAP_FUNDAMENTALS)가 있는 종목만 세서 — 그 파일이 아직 안 왔거나 저가가 빈 종목이 많으면 신저가가 0 이 되어
+    // 이 요소가 100(극단적 탐욕)으로 튀고 종합지수를 끌어올렸다. 저가를 모르는 종목은 양쪽 모두에서 뺀다.
+    let highs = 0, lows = 0, known = 0;
+    for (const s of stocks) {
+      const d = (typeof low52DistPct === "function") ? low52DistPct(s) : NaN;
+      const h = s.newHighDistancePct == null ? NaN : Number(s.newHighDistancePct);
+      if (!Number.isFinite(d) || !Number.isFinite(h)) continue;
+      known++;
+      if (h <= 2) highs++;
+      if (d <= 5) lows++;
+    }
+    if (known >= 20 && highs + lows > 0) comps.push({ key: "주가 강도", score: clamp(highs / (highs + lows) * 100), detail: "신고가 vs 신저가" });
   }
   // 옵션 풋콜·신용스프레드·VIX 는 US 전용 데이터(OPTIONS_STATS·MACRO_INDICATORS
   // 는 미국 시장만 수집). KR 모드에서 이걸 섞으면 미국이 탐욕일 때 국내 주식이

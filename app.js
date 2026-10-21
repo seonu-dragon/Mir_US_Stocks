@@ -5311,6 +5311,7 @@ function renderSearch(options = {}) {
   if (typeof renderCrossMarketCard === "function") renderCrossMarketCard(item);
   if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
   if (typeof renderInstHolders === "function") renderInstHolders(item);
+  if (typeof renderAtsCard === "function") renderAtsCard(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderStockTimeline === "function") renderStockTimeline(item);
@@ -6974,6 +6975,7 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
   },
+  "다크풀(ATS) 비중": { us: { workflow: "Short interest (Nasdaq/FINRA)", script: "scripts/build_finra_ats.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 다크풀(ATS) 거래 비중" },
   "배당 결정": {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_corp_disclosures.py" },
     tabs: "종목검색 · 배당 서브탭",
@@ -7090,6 +7092,8 @@ function dataTrustSources() {
   if (cfg.features?.materialEvents !== false) rows.push(source("주요 공시", cfg.id === "kr" ? "DART · 공시" : "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일", "events"));
   if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주", "activist"));
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
+  // 다크풀(ATS) 주간 비중(2026-10-22) — FINRA 주 1회 공개(화·금 수집). 주말·공개 지연을 넘겨도 8일이면 넉넉하다. lazy.
+  if (cfg.id === "us" && cfg.features?.finraAts !== false) rows.push(source("다크풀(ATS) 비중", "FINRA OTC Transparency(ATS 주간)", window.FINRA_ATS, ["tickers"], 24 * 8, "화·금", "finraAts"));
   if (cfg.features?.shortInterest !== false) rows.push(source("공매도", cfg.id === "kr" ? "KRX 공매도 종합포털" : "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], cfg.id === "kr" ? 120 : 1080, cfg.id === "kr" ? "T+2 매 거래일" : "월 2회", "short"));
   if (cfg.features?.sec13f !== false) {
     const row = source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f");

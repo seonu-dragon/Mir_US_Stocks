@@ -6934,6 +6934,7 @@ const TRUST_RECOVERY = {
   },
   "실적 IR 일정": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_ir_schedule.py" }, tabs: "오늘 탭 · 캘린더 · 전체 일정(실적)" },
   "보호예수 해제": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_lockups.py" }, tabs: "오늘 탭 · 캘린더(보호예수 해제) · 종목 상세 이벤트 · 증자·CB" },
+  "액면분할 일정": { us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_us_splits.py" }, tabs: "캘린더(액면분할) · 구독 캘린더(.ics)" },
   "ETF 구성 종목": { us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_us_etf_holdings.py" }, tabs: "종목 탭 · 분석 · 구성 종목 / 이 종목을 담은 ETF" },
   "기관 보유 변화(13F)": { us: { workflow: "Institutional 13F quarterly refresh", script: "scripts/build_13f_holders.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 기관 보유 변화" },
   "시장 스냅샷": {
@@ -7173,6 +7174,8 @@ function dataTrustSources() {
   if (cfg.id === "kr" && cfg.features?.krIrSchedule !== false) rows.push(source("실적 IR 일정", "DART 기업설명회 개최 공시", window.KR_IR_SCHEDULE, ["rows"], 72, "매일 06:40", "krIrSchedule", "", true));
   // 보호예수 해제(2026-09-27) — 38.co.kr 공모주 상세의 보호예수 표. 매일 06:40, 해제 일정은 늘 수십 건이라 0건이면 이상.
   if (cfg.id === "kr" && cfg.features?.krLockups !== false) rows.push(source("보호예수 해제", "38커뮤니케이션(투자설명서 보호예수 표)", window.KR_LOCKUPS, ["releases"], 96, "매일 06:40", "krLockups"));
+  // 미국 액면분할·병합(2026-10-22, Nasdaq 분할 캘린더) — 매일 06:40, 2~3주 창이라 0건인 주도 있다(빈 값 허용).
+  if (cfg.id === "us" && cfg.features?.usSplits !== false) rows.push(source("액면분할 일정", "Nasdaq 분할 캘린더", window.US_SPLITS, ["rows"], 96, "매일 06:40", "usSplits", "", true));
   if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
   // 종목별 기관 보유 변화(2026-09-27, SEC 13F 데이터셋) — 분기 데이터셋이 나올 때만 새로 쓴다(3개월 + 공개 지연).
   // 새 창이 없으면 파일을 건드리지 않으므로 130일(= 한 분기를 통째로 놓쳐야 울림). lazy 라 신뢰도 센터가 직접 받아 본다.

@@ -307,6 +307,8 @@ CHECKS = {
         ("data/korea/ir_schedule.json", 3, False),
         # 보호예수 해제 일정(38.co.kr, continue-on-error 스텝). 해제 일정은 늘 수십 건이라 0건이면 실패.
         ("data/korea/lockups.json", 4, True),
+        # 미국 액면분할(Nasdaq, continue-on-error 스텝). 2~3주 창이라 0건인 주도 있어 나이만.
+        ("data/us_splits.json", 4, False),
     ],
     "etf-holdings": [
         ("data/etf_holdings/index.json", 40, True),

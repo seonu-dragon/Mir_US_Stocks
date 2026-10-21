@@ -79,6 +79,11 @@ def site(tmp_path):
          "link": "https://www.38.co.kr/html/fund/?o=v&no=2294"},
         {"code": "111111", "company": "먼미래", "date": "2029-09-29", "shares": 1, "pct": 0.1},   # 90일 창 밖
     ]})
+    _write(root, "us_splits.json", {"rows": [
+        {"ticker": "SOXX", "name": "iShares Semiconductor ETF", "ratio": "3:1", "factor": 3.0, "kind": "forward", "date": "2026-10-05"},
+        {"ticker": "LU", "name": "Lufax", "ratio": "1:10", "factor": 0.1, "kind": "reverse", "date": "2026-09-30"},
+        {"ticker": "OLD", "name": "x", "ratio": "2:1", "kind": "forward", "date": "2025-01-02"},   # 창 밖
+    ]})
     _write(root, "industry_calendar.json", {"events": [
         {"id": "h8", "name_kr": "은행 대출 (H.8)", "date": "2026-09-30", "time_kst": "05:30", "note": "매주"},
     ]})
@@ -327,3 +332,13 @@ def test_kr_calendar_includes_lockup_releases(built):
     assert "추정일" in ev["DESCRIPTION"] and r"690\,000주" in ev["DESCRIPTION"]  # ics 는 쉼표를 \, 로 이스케이프
     assert ev["CATEGORIES"] == "보호예수"
     assert not any("먼미래" in s for s in kr)
+
+
+def test_us_calendar_includes_splits(built):
+    out, _ = built
+    us = {e["SUMMARY"]: e for e in _events((out / "calendar-us.ics").read_bytes().decode("utf-8"))}
+    ev = us["[분할] SOXX 3 : 1"]
+    assert ev["DTSTART;VALUE=DATE"] == "20261005"
+    assert ev["CATEGORIES"] == "액면분할" and "Nasdaq" in ev["DESCRIPTION"]
+    assert us["[병합] LU 1 : 10"]["DTSTART;VALUE=DATE"] == "20260930"
+    assert not any("OLD" in s for s in us)

@@ -16,6 +16,8 @@ const CAL_PANEL_KIND_DOT = {
   econ: "var(--text-2)", holiday: "var(--bad)", expiry: "var(--teal)",
   // 보호예수 해제(국내) — 두 테마 토큰을 섞어 다른 종류 점과 구분되게(다크 모드에선 두 토큰이 같이 밝아진다).
   lockup: "color-mix(in srgb, var(--primary) 50%, var(--bad))",
+  // 액면분할(미국) — 같은 방식으로 실적·배당 점과 구분.
+  split: "color-mix(in srgb, var(--teal) 55%, var(--warn))",
 };
 
 function calPanelWatchSet() {
@@ -36,7 +38,7 @@ function calPanelNames() {
 function calPanelEnsureData() {
   const cfg = marketCfg();
   const keys = ["marketCalendar", "ipo"];
-  if (cfg.id === "us") keys.push("usCalendar");
+  if (cfg.id === "us") keys.push("usCalendar", "usSplits");
   else keys.push("krIrSchedule", "krDividends", "krLockups");
   keys.forEach((k) => {
     if (typeof FEATURE_DATA === "undefined" || !FEATURE_DATA[k]) return;
@@ -56,7 +58,7 @@ function calPanelCollect(today) {
   let ev = core.fromMarketCalendar(window.MARKET_CALENDAR);
   if (cfg.id === "us") {
     ev = ev.concat(core.fromUsCalendar(window.US_STOCK_CALENDAR, window.EARNINGS_CALENDAR_SNAPSHOT, names, core.addDays(today, -7)));
-    ev = ev.concat(core.fromIpo(window.IPO_CALENDAR, "us"));
+    ev = ev.concat(core.fromIpo(window.IPO_CALENDAR, "us"), core.fromUsSplits(window.US_SPLITS));
   } else {
     ev = ev.concat(core.fromKrIr(window.KR_IR_SCHEDULE), core.fromKrDividends(window.KR_DIVIDENDS), core.fromIpo(window.IPO_CALENDAR, "kr"),
       core.fromKrLockups(window.KR_LOCKUPS));

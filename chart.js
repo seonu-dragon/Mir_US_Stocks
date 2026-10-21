@@ -5,7 +5,8 @@
 // 대입 하나뿐이고(참조 없는 순수 대입), 그마저도 예전보다 이르게 실행되므로 안전하다.
 // 담는 것: currentChartItem 캐시, 팬/줌, 오버레이 프리셋과 계산(VWAP·PSAR·갭·추세선·
 // 시장구조·거래량프로파일), 기술 점수 패널, 차트 컨트롤/프리셋/비교, 포인터 인터랙션,
-// 드로잉(추세선·피보) 영속화, drawChart 본체.
+// 드로잉(추세선·레이·수평선·사각형·피보 — 선택·삭제·실행취소·자석) 영속화, 비교 겹쳐 보기,
+// 분봉 자동 갱신, PNG 저장, drawChart 본체. 순수 기하는 chart-tools-core.js(window.MirChartTools).
 // 지표 계산 자체는 chart-indicators.js 가 갖는다 — 여기로 옮기지 말 것.
 // 이름 충돌은 scripts/check_global_name_collisions.py 가 감시한다.
 
@@ -767,7 +768,8 @@ function chartIntradayState(item) {
   const cur = _chartIntraday[key];
   const fresh = cur && (cur.status === "loading" || Date.now() - cur.at < CHART_INTRADAY_TTL_MS);
   if (!fresh) {
-    const keep = cur && cur.status === "ok" ? cur.rows : null; // 갱신 중에도 직전 봉은 계속 보여 준다
+    // 갱신 중에도·직전 갱신이 실패했어도 마지막으로 받은 봉은 계속 보여 준다.
+    const keep = cur && Array.isArray(cur.rows) && cur.rows.length ? cur.rows : null;
     _chartIntraday[key] = { status: keep ? "ok" : "loading", at: Date.now(), rows: keep || [], msg: "" };
     const url = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?intraday=1&ticker=${encodeURIComponent(sym)}&interval=${spec.iv}`;
     fetch(url, { cache: "no-store" }).then((r) => r.json()).then((d) => {
@@ -775,6 +777,13 @@ function chartIntradayState(item) {
       if (!d || !Array.isArray(d.bars)) throw new Error("no_bars_route");
       const rows = d.bars.map((b) => ({ o: Number(b[0]), h: Number(b[1]), l: Number(b[2]), c: Number(b[3]), v: Number(b[4] || 0), d: String(b[5]) }))
         .filter((r) => Number.isFinite(r.c));
+      // 자동 갱신으로 새 봉이 붙을 때, 사용자가 과거 쪽으로 옮겨 둔 화면(offset>0)은 제자리에 둔다.
+      const curSpec = CHART_INTRADAY[chartState.barTf];
+      const nowItem = currentChartItem();
+      if (keep && rows.length && chartState.offset > 0 && curSpec && curSpec.iv === spec.iv && nowItem && nowItem.ticker === item.ticker) {
+        const grew = groupIntradayRows(rows, curSpec.group).length - groupIntradayRows(keep, curSpec.group).length;
+        if (grew > 0) chartState.offset += grew;
+      }
       _chartIntraday[key] = { status: "ok", at: Date.now(), rows, msg: rows.length ? "" : "이 종목은 분봉 데이터가 없습니다." };
     }).catch((err) => {
       _chartIntraday[key] = {
@@ -788,6 +797,45 @@ function chartIntradayState(item) {
   }
   const st = _chartIntraday[key];
   return { status: st.status, rows: groupIntradayRows(st.rows, spec.group), msg: st.msg };
+}
+
+// ----- 분봉 자동 갱신 -----
+// 분봉 보기 + 정규장 중 + 탭(과 차트)이 보일 때만 60초마다 워커 분봉을 다시 받는다(live-quote.js 의
+// lqSchedule 와 같은 주기·같은 워커 경로). 일봉·주봉·월봉에선 타이머가 없다. 받는 동안·실패해도
+// 직전 봉을 그대로 보여 준다(chartIntradayState 의 keep). 정규장 판정은 오늘 탭 지수 차트와 같은
+// MirHomeChartCore.sessionState(주말·휴장·단축 거래 반영).
+let chartIntradayTimer = 0;
+
+function chartIntradaySession() {
+  const core = window.MirHomeChartCore;
+  if (!core || typeof core.sessionState !== "function") return null;
+  const cal = window.MARKET_CALENDAR;
+  return core.sessionState(isKrMarket() ? "kr" : "us", Date.now(), cal && Array.isArray(cal.events) ? cal.events : []);
+}
+
+function stopChartIntradayRefresh() {
+  if (chartIntradayTimer) clearInterval(chartIntradayTimer);
+  chartIntradayTimer = 0;
+}
+
+function chartIntradayTick() {
+  const svg = byId("priceChart");
+  const intraday = isIntradayTf(chartState.barTf);
+  const item = intraday ? currentChartItem() : null;
+  if (!intraday || !item || !svg || !svg.isConnected) { stopChartIntradayRefresh(); return; }
+  const tools = window.MirChartTools;
+  const visible = document.visibilityState === "visible" && svg.getClientRects().length > 0;
+  if (!tools || !tools.shouldRefreshIntraday({ intraday, visible, session: chartIntradaySession() })) return;
+  const spec = CHART_INTRADAY[chartState.barTf];
+  const cur = _chartIntraday[`${liveProxyTicker(item)}|${spec.iv}`];
+  if (cur && cur.status === "loading") return;
+  if (cur) cur.at = 0; // 캐시 수명과 무관하게 지금 다시 받는다 — 도착하면 chartIntradayState 가 다시 그린다
+  chartIntradayState(item);
+}
+
+function scheduleChartIntradayRefresh() {
+  if (!isIntradayTf(chartState.barTf)) { stopChartIntradayRefresh(); return; }
+  if (!chartIntradayTimer) chartIntradayTimer = setInterval(chartIntradayTick, CHART_INTRADAY_TTL_MS);
 }
 
 // 차트가 그리는 봉 전체: 분봉이면 받아 둔 분봉, 아니면 일봉(→ 주·월봉 묶음).
@@ -919,6 +967,11 @@ function setupChartControls() {
     redrawChart();
   });
   byId("chartReset").addEventListener("click", resetChartView);
+  // 상단 툴바의 작은 확대·축소·초기화(설정 패널을 열지 않아도 보이게) + PNG 저장.
+  byId("chartQuickZoomIn")?.addEventListener("click", () => zoomChartAt(0.5, 1.35));
+  byId("chartQuickZoomOut")?.addEventListener("click", () => zoomChartAt(0.5, 1 / 1.35));
+  byId("chartQuickReset")?.addEventListener("click", resetChartView);
+  byId("chartPngBtn")?.addEventListener("click", () => saveChartPng());
   const tfControls = byId("barTimeframeControls");
   if (tfControls) {
     tfControls.querySelectorAll("button[data-tf]").forEach((btn) => {
@@ -1124,10 +1177,44 @@ function setupChartPresetControls() {
 }
 
 
+// 비교 종목 표시 방식: overlay = 가격 차트 위에 보이는 첫 봉 기준 % 선(TradingView Compare),
+// panel = 아래 별도 '수익률 비교' 패널(예전 방식). 사용자별로 기억한다.
+const CHART_COMPARE_MODE_KEY = "mir_chart_compare_mode_v1";
+let chartCompareMode = null;
+
+function getChartCompareMode() {
+  if (chartCompareMode == null) {
+    let v = "";
+    try { v = window.safeStorage.get(CHART_COMPARE_MODE_KEY) || ""; } catch (_) { v = ""; }
+    chartCompareMode = v === "panel" ? "panel" : "overlay";
+  }
+  return chartCompareMode;
+}
+
+function setChartCompareMode(mode) {
+  chartCompareMode = mode === "panel" ? "panel" : "overlay";
+  try { window.safeStorage.set(CHART_COMPARE_MODE_KEY, chartCompareMode); } catch (_) { /* ignore */ }
+  syncChartCompareModeUi();
+  redrawChart();
+}
+
+function syncChartCompareModeUi() {
+  const mode = getChartCompareMode();
+  byId("chartCompareMode")?.querySelectorAll("button[data-cmode]").forEach((b) => {
+    const on = b.dataset.cmode === mode;
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+
 function setupChartCompareControls() {
   const input = byId("chartCompareInput");
   const add = byId("chartCompareAdd");
   if (!input || !add) return;
+  byId("chartCompareMode")?.querySelectorAll("button[data-cmode]").forEach((b) => {
+    b.addEventListener("click", () => setChartCompareMode(b.dataset.cmode));
+  });
+  syncChartCompareModeUi();
   add.addEventListener("click", () => addChartCompareTicker(input.value));
   // 비교 입력도 다른 티커 입력 상자와 같은 자동완성·같은 리졸버·같은 키보드 모델을 쓴다.
   // 예전엔 여기만 자동완성이 없고 toUpperCase() 만 해서 '삼전' 같은 한국어 별칭이
@@ -1171,9 +1258,10 @@ function removeChartCompareTicker(ticker) {
 function renderCompareChips() {
   const box = byId("chartCompareList");
   if (!box) return;
+  // 칩 앞 색 점 = 차트의 그 종목 선 색(CHART_COMPARE_COLORS, chart-indicators.js).
   box.innerHTML = compareTickers.length
-    ? compareTickers.map((ticker) => `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}">${escapeHtml(ticker)} <span>x</span></button>`).join("")
-    : `<span class="muted">비교 종목을 추가하면 같은 기간 수익률 패널에 표시됩니다.</span>`;
+    ? compareTickers.map((ticker, i) => `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}" title="${escapeHtml(ticker)} 빼기"><i class="compare-chip-dot" style="background:${CHART_COMPARE_COLORS[i % CHART_COMPARE_COLORS.length]}"></i>${escapeHtml(ticker)} <span>x</span></button>`).join("")
+    : `<span class="muted">최대 5종목</span>`;
   box.querySelectorAll(".compare-chip").forEach((chip) => {
     chip.addEventListener("click", () => removeChartCompareTicker(chip.dataset.ticker));
   });
@@ -1237,7 +1325,8 @@ function setupChartInteractions() {
     const g = priceChartGeom();
     const rect = svg.getBoundingClientRect();
     const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
-    const plotW = g.width - g.padL - g.padR;
+    // 봉이 차지하는 폭(오른쪽 미래 봉 여백 제외) 기준 — 마지막 봉 위 휠이 frac=1.
+    const plotW = (lastChartGeom && lastChartGeom.dataW) || (g.width - g.padL - g.padR);
     const frac = Math.max(0, Math.min(1, (vbX - g.padL) / plotW));
     markChartGestureActive();
     zoomChartAt(frac, event.deltaY < 0 ? 1.2 : 1 / 1.2, true);
@@ -1445,7 +1534,7 @@ function setupChartInteractions() {
         const g = priceChartGeom();
         const rect = svg.getBoundingClientRect();
         const vbX = rect.width ? ((mid.clientX - rect.left) / rect.width) * g.width : g.width / 2;
-        pinchFrac = Math.max(0, Math.min(1, (vbX - g.padL) / Math.max(1, g.width - g.padL - g.padR)));
+        pinchFrac = Math.max(0, Math.min(1, (vbX - g.padL) / Math.max(1, (lastChartGeom && lastChartGeom.dataW) || (g.width - g.padL - g.padR))));
       }
     }
   }, { passive: true });
@@ -1478,20 +1567,36 @@ function setupChartInteractions() {
   syncChartYScaleButtons();
 }
 
-// ===== 차트 드로잉(추세선·피보나치 되돌림) =====
+// ===== 차트 드로잉(추세선·레이·수평선·사각형·피보나치 되돌림) =====
+// 기하(선택 판정·레이 연장·자석·실행취소 스택)는 chart-tools-core.js(window.MirChartTools).
 let lastChartGeom = null;
 // ticker -> [{type, t1,p1,t2,p2}]  (t: 봉 날짜 기반 타임스탬프 ms, p: 가격).
 // 날짜+가격 앵커라 기간·줌·타임프레임을 바꿔도 같은 자리에 다시 그려진다.
-// (드래그 중 미리보기만 화면비율 x1/x2 를 임시로 쓴다.)
+// (드래그 중 미리보기만 화면비율 x1/x2 를 임시로 쓴다.) 수평선은 t1=t2·p1=p2 로 같은 모델에 담는다.
 const chartDrawings = {};
-let drawTool = null;               // null | "trend" | "fib"
+let drawTool = null;               // null | "trend" | "ray" | "hline" | "rect" | "fib"
 let drawStart = null;
 let drawPreview = null;
+// 클릭으로 고른 드로잉(현재 종목의 인덱스). Delete/Backspace 로 지운다.
+let drawSelected = -1;
+let drawSelectedTicker = "";
+let drawMagnet = null;             // 자석(OHLC 스냅) — 처음 쓸 때 저장값에서 읽는다
+const chartDrawUndo = {};          // ticker -> [변경 직전 items] (최근 20단계)
 const FIB_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+const CHART_DRAW_MAGNET_KEY = "mir_chart_draw_magnet_v1";
 
 // ----- 드로잉 영속화: 시장:티커별 localStorage, 최근에 그린 50개 종목만 보관 -----
 const CHART_DRAWINGS_STORAGE_KEY = "mir_chart_drawings_v1";
 const CHART_DRAWINGS_MAX_TICKERS = 50;
+
+function chartDrawTools() { return window.MirChartTools || null; }
+
+// 저장할 수 있는 항목: 알려진 종류 + 날짜·가격 앵커가 유한. 코어가 없으면 예전 기준(t1·t2 유한).
+function chartDrawingValid(d) {
+  const core = chartDrawTools();
+  if (core) return core.validDrawing(d);
+  return Boolean(d && Number.isFinite(d.t1) && Number.isFinite(d.t2));
+}
 
 function chartDrawStorageKey(ticker) {
   return `${isKrMarket() ? "kr" : "us"}:${ticker}`;
@@ -1511,7 +1616,7 @@ function persistChartDrawings(ticker) {
   const store = loadStoredChartDrawings();
   const key = chartDrawStorageKey(ticker);
   // 날짜 앵커가 있는 항목만 저장(미리보기·비정상 좌표 제외)
-  const items = (chartDrawings[ticker] || []).filter((d) => d && Number.isFinite(d.t1) && Number.isFinite(d.t2));
+  const items = (chartDrawings[ticker] || []).filter(chartDrawingValid);
   if (items.length) store[key] = { at: Date.now(), items };
   else delete store[key];
   const keys = Object.keys(store);
@@ -1526,9 +1631,82 @@ function persistChartDrawings(ticker) {
 function hydrateChartDrawings(ticker) {
   if (!ticker || Object.prototype.hasOwnProperty.call(chartDrawings, ticker)) return;
   const entry = loadStoredChartDrawings()[chartDrawStorageKey(ticker)];
-  chartDrawings[ticker] = entry && Array.isArray(entry.items)
-    ? entry.items.filter((d) => d && Number.isFinite(d.t1) && Number.isFinite(d.t2))
-    : [];
+  chartDrawings[ticker] = entry && Array.isArray(entry.items) ? entry.items.filter(chartDrawingValid) : [];
+}
+
+// 드로잉 변경(추가·삭제·전체 지우기)은 모두 여기로: 직전 상태를 실행취소 스택에 넣고 저장한다.
+function commitChartDrawings(ticker, nextItems) {
+  if (!ticker) return;
+  const core = chartDrawTools();
+  const prev = (chartDrawings[ticker] || []).slice();
+  chartDrawUndo[ticker] = core ? core.pushUndo(chartDrawUndo[ticker], prev, core.UNDO_MAX) : (chartDrawUndo[ticker] || []).concat([prev]).slice(-20);
+  chartDrawings[ticker] = nextItems;
+  persistChartDrawings(ticker);
+  syncChartDrawButtons();
+}
+
+function undoChartDrawing() {
+  const t = lastChartGeom && lastChartGeom.ticker;
+  const stack = t && chartDrawUndo[t];
+  if (!stack || !stack.length) return false;
+  chartDrawings[t] = stack[stack.length - 1];
+  chartDrawUndo[t] = stack.slice(0, -1);
+  drawSelected = -1;
+  persistChartDrawings(t);
+  updateDrawLayer();
+  syncChartDrawButtons();
+  return true;
+}
+
+function chartDrawSelectedIdx() {
+  const t = lastChartGeom && lastChartGeom.ticker;
+  const items = (t && chartDrawings[t]) || [];
+  return t && drawSelectedTicker === t && drawSelected >= 0 && drawSelected < items.length ? drawSelected : -1;
+}
+
+function deleteSelectedChartDrawing() {
+  const idx = chartDrawSelectedIdx();
+  if (idx < 0) return false;
+  const t = lastChartGeom.ticker;
+  commitChartDrawings(t, chartDrawings[t].filter((_, i) => i !== idx));
+  drawSelected = -1;
+  updateDrawLayer();
+  return true;
+}
+
+function selectChartDrawing(idx) {
+  drawSelected = idx;
+  drawSelectedTicker = lastChartGeom ? lastChartGeom.ticker : "";
+  updateDrawLayer();
+  syncChartDrawButtons();
+}
+
+// ✕ 는 선택이 있으면 그 하나, 없으면 전체. ↶ 는 되돌릴 게 있을 때만.
+function syncChartDrawButtons() {
+  const t = lastChartGeom && lastChartGeom.ticker;
+  const undo = byId("chartDrawUndo");
+  if (undo) undo.disabled = !(t && chartDrawUndo[t] && chartDrawUndo[t].length);
+  const clear = byId("chartDrawClear");
+  if (clear) {
+    const sel = chartDrawSelectedIdx() >= 0;
+    clear.title = sel ? "선택 지우기 (Delete)" : "전체 지우기";
+    clear.setAttribute("aria-label", sel ? "선택한 드로잉 지우기" : "그린 선 전체 지우기");
+  }
+  const mag = byId("chartDrawMagnet");
+  if (mag) {
+    const on = chartDrawMagnetOn();
+    mag.classList.toggle("is-active", on);
+    mag.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+}
+
+function chartDrawMagnetOn() {
+  if (drawMagnet == null) {
+    let v = "";
+    try { v = window.safeStorage.get(CHART_DRAW_MAGNET_KEY) || ""; } catch (_) { v = ""; }
+    drawMagnet = v === "1";
+  }
+  return drawMagnet;
 }
 
 // 봉 인덱스 → 타임스탬프(ms). 날짜가 없는 봉이 섞이면 Date.parse 가 NaN 을 주고,
@@ -1558,8 +1736,9 @@ function buildChartTimes(rows) {
   return t;
 }
 
-// 날짜(ms) ↔ 플롯 가로비율(0~1). 보이는 봉 날짜 배열(geom.times)로 변환하고,
-// 범위 밖 날짜는 가장자리 봉 간격으로 선형 외삽한다(렌더 시 clipPath 로 잘림).
+// 날짜(ms) ↔ 플롯 가로비율. 0 = 첫 보이는 봉, 1 = 마지막 봉(그 오른쪽은 미래 봉 여백).
+// 보이는 봉 날짜 배열(geom.times)로 변환하고, 범위 밖 날짜는 가장자리 봉 간격으로 선형 외삽한다
+// (렌더 시 clipPath 로 잘림).
 function chartXnFromTime(g, ts) {
   const t = g && g.times;
   const n = t ? t.length : 0;
@@ -1582,11 +1761,16 @@ function chartXnFromTime(g, ts) {
   return (lo + frac) / (n - 1);
 }
 
+// 가로비율 → 날짜(ms). 마지막 봉 오른쪽(미래 봉 여백, xn > 1)은 마지막 봉 간격으로 외삽한다.
 function chartTimeFromXn(g, xn) {
   const t = g && g.times;
   const n = t ? t.length : 0;
   if (!n || !Number.isFinite(xn)) return null;
   if (n === 1) return t[0];
+  if (xn > 1) {
+    const step = (t[n - 1] - t[n - 2]) || 86400000;
+    return Math.round(t[n - 1] + (xn - 1) * (n - 1) * step);
+  }
   const fidx = Math.max(0, Math.min(n - 1, xn * (n - 1)));
   const lo = Math.floor(fidx);
   const hi = Math.min(n - 1, lo + 1);
@@ -1604,47 +1788,99 @@ function drawingScreenXn(g, d) {
   return { x1: d.x1, x2: d.x2 };
 }
 
+// 드로잉 하나 → 현재 화면(viewBox) 좌표 도형. 선택 판정과 그리기가 같은 좌표를 쓴다.
+function chartDrawingShape(g, d) {
+  const xs = drawingScreenXn(g, d);
+  if (!xs) return null;
+  const dataW = g.dataW || g.plotW;
+  const pxX = (xn) => g.padL + xn * dataW;
+  const pxY = (price) => {
+    const y = g.scale.y(price); // 선형·로그 공통(chart-yscale-core)
+    return Number.isFinite(y) ? y : g.padT + g.plotH * 4;
+  };
+  const left = g.padL;
+  const right = g.padL + g.plotW;
+  const s = { type: d.type, x1: pxX(xs.x1), y1: pxY(d.p1), x2: pxX(xs.x2), y2: pxY(d.p2), left, right };
+  if (d.type === "fib") {
+    const hi = Math.max(d.p1, d.p2), lo = Math.min(d.p1, d.p2), span = hi - lo || 1;
+    s.fib = FIB_LEVELS.map((lv) => ({ lv, price: hi - span * lv, y: pxY(hi - span * lv) }));
+    s.levels = s.fib.map((f) => f.y);
+  } else if (d.type === "ray") {
+    const core = chartDrawTools();
+    const box = { left, right, top: g.padT, bottom: g.padT + g.plotH };
+    const end = core ? core.rayEnd(s.x1, s.y1, s.x2, s.y2, box) : { x: s.x2, y: s.y2 };
+    s.xe = end.x;
+    s.ye = end.y;
+  } else if (d.type === "hline") {
+    s.y2 = s.y1;
+  }
+  return s;
+}
+
 function renderChartDrawings() {
   const g = lastChartGeom;
   if (!g) return "";
   const items = (chartDrawings[g.ticker] || []).slice();
   if (drawPreview) items.push(drawPreview);
   if (!items.length) return "";
-  const pxX = (xn) => g.padL + xn * g.plotW;
-  const pxY = (price) => {
-    const y = g.scale.y(price); // 선형·로그 공통(chart-yscale-core)
-    return Number.isFinite(y) ? y : g.padT + g.plotH * 4;
-  };
+  const selIdx = chartDrawSelectedIdx();
+  const f1 = (v) => v.toFixed(1);
+  const xR = g.padL + g.plotW;
   let out = "";
-  for (const d of items) {
-    const xs = drawingScreenXn(g, d);
-    if (!xs) continue;
+  items.forEach((d, i) => {
+    const s = chartDrawingShape(g, d);
+    if (!s) return;
+    const sel = i === selIdx && d !== drawPreview;
+    const selCls = sel ? " is-selected" : "";
+    let body = "";
+    let handles = [];
     if (d.type === "trend") {
-      out += `<line x1="${pxX(xs.x1).toFixed(1)}" y1="${pxY(d.p1).toFixed(1)}" x2="${pxX(xs.x2).toFixed(1)}" y2="${pxY(d.p2).toFixed(1)}" class="draw-line"></line>`;
+      body = `<line x1="${f1(s.x1)}" y1="${f1(s.y1)}" x2="${f1(s.x2)}" y2="${f1(s.y2)}" class="draw-line${selCls}"></line>`;
+      handles = [[s.x1, s.y1], [s.x2, s.y2]];
+    } else if (d.type === "ray") {
+      body = `<line x1="${f1(s.x1)}" y1="${f1(s.y1)}" x2="${f1(s.xe)}" y2="${f1(s.ye)}" class="draw-line${selCls}"></line>`;
+      handles = [[s.x1, s.y1], [s.x2, s.y2]];
+    } else if (d.type === "hline") {
+      const axisW = g.width - xR;
+      body = `<line x1="${f1(s.left)}" y1="${f1(s.y1)}" x2="${f1(xR)}" y2="${f1(s.y1)}" class="draw-line${selCls}"></line>`
+        + `<g class="draw-tag"><rect x="${f1(xR + 2)}" y="${f1(s.y1 - 8)}" width="${f1(axisW - 4)}" height="16" rx="3"></rect><text x="${f1(g.width - 6)}" y="${f1(s.y1 + 3.5)}" text-anchor="end">${escapeHtml(chartPriceLabel(d.p1))}</text></g>`;
+      handles = [[Math.max(s.left, Math.min(xR, s.x1)), s.y1]];
+    } else if (d.type === "rect") {
+      const x = Math.min(s.x1, s.x2), y = Math.min(s.y1, s.y2);
+      body = `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(Math.abs(s.x2 - s.x1))}" height="${f1(Math.abs(s.y2 - s.y1))}" class="draw-rect${selCls}"></rect>`;
+      handles = [[s.x1, s.y1], [s.x2, s.y2], [s.x1, s.y2], [s.x2, s.y1]];
     } else if (d.type === "fib") {
-      const hi = Math.max(d.p1, d.p2), lo = Math.min(d.p1, d.p2), span = hi - lo || 1;
-      const xa = pxX(Math.min(xs.x1, xs.x2)), xb = pxX(Math.max(xs.x1, xs.x2));
-      out += FIB_LEVELS.map((lv) => {
-        const price = hi - span * lv;
-        const y = pxY(price);
-        return `<line x1="${xa.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xb.toFixed(1)}" y2="${y.toFixed(1)}" class="draw-fib"></line>`
-          + `<text x="${(xb + 4).toFixed(1)}" y="${(y + 3).toFixed(1)}" class="draw-fib-label">${(lv * 100).toFixed(1)}% · ${chartPriceLabel(price)}</text>`;
-      }).join("");
+      const xa = Math.min(s.x1, s.x2), xb = Math.max(s.x1, s.x2);
+      body = s.fib.map((f) => `<line x1="${f1(xa)}" y1="${f1(f.y)}" x2="${f1(xb)}" y2="${f1(f.y)}" class="draw-fib${selCls}"></line>`
+        + `<text x="${f1(xb + 4)}" y="${f1(f.y + 3)}" class="draw-fib-label">${(f.lv * 100).toFixed(1)}% · ${chartPriceLabel(f.price)}</text>`).join("");
+      handles = [[s.x1, s.y1], [s.x2, s.y2]];
+    } else {
+      return; // 모르는 종류(새 버전이 저장한 것)는 건너뛴다
     }
-  }
+    out += body;
+    if (sel) out += handles.map(([x, y]) => `<circle cx="${f1(x)}" cy="${f1(y)}" r="3.5" class="draw-handle"></circle>`).join("");
+  });
   return out;
 }
 
-function chartPointToData(evt) {
+// 포인터 → { xn, price, y }. xn 은 0(첫 봉)~1(마지막 봉), 오른쪽 여백까지 > 1 허용.
+// magnet 이면 가까운 봉의 시·고·저·종에 붙인다.
+function chartPointToData(evt, magnet) {
   const g = lastChartGeom;
   const svg = byId("priceChart");
   if (!g || !svg) return null;
   const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const dataW = g.dataW || g.plotW;
   const px = (evt.clientX - rect.left) * (g.width / rect.width);
   const py = (evt.clientY - rect.top) * (g.height / rect.height);
-  const xn = Math.max(0, Math.min(1, (px - g.padL) / g.plotW));
-  const price = g.scale.value(py);
-  return { xn, price };
+  const xn = Math.max(0, Math.min(g.plotW / dataW, (px - g.padL) / dataW));
+  const pt = { xn, price: g.scale.value(py), y: py };
+  const core = chartDrawTools();
+  if (magnet && core && g.rows && g.rows.length && xn <= 1) {
+    return core.snapToOhlc(pt, g.rows, (p) => g.scale.y(p), g.mobile ? 14 : 9);
+  }
+  return pt;
 }
 
 function updateDrawLayer() {
@@ -1655,7 +1891,12 @@ function updateDrawLayer() {
 function setDrawTool(tool) {
   drawTool = (drawTool === tool) ? null : tool;
   drawStart = null; drawPreview = null;
-  byId("chartDrawControls")?.querySelectorAll("button[data-draw]").forEach((b) => b.classList.toggle("is-active", b.dataset.draw === drawTool));
+  if (drawTool) drawSelected = -1;
+  byId("chartDrawControls")?.querySelectorAll("button[data-draw]").forEach((b) => {
+    const on = b.dataset.draw === drawTool;
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
   const svg = byId("priceChart");
   if (svg) {
     svg.classList.toggle("is-drawing", Boolean(drawTool));
@@ -1663,6 +1904,8 @@ function setDrawTool(tool) {
     // 스타일시트의 #priceChart 규칙으로 되돌린다.
     svg.style.touchAction = drawTool ? "none" : "";
   }
+  updateDrawLayer();
+  syncChartDrawButtons();
 }
 
 // 축·지지저항·피보·손절/목표·헤더 가격 라벨. US 는 가격대별 소수 자리(<$10 → 2, <$100 → 1,
@@ -1674,6 +1917,25 @@ function chartPriceLabel(value) {
   const abs = Math.abs(n);
   const dec = abs < 10 ? 2 : abs < 100 ? 1 : 0;
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
+}
+
+// 클릭(거의 안 움직인 포인터) 자리에서 드로잉 고르기. 맞은 게 없으면 선택 해제.
+function pickChartDrawingAt(evt) {
+  const g = lastChartGeom;
+  const core = chartDrawTools();
+  const svg = byId("priceChart");
+  if (!g || !core || !svg) return;
+  const items = chartDrawings[g.ticker] || [];
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width) return;
+  const px = (evt.clientX - rect.left) * (g.width / rect.width);
+  const py = (evt.clientY - rect.top) * (g.height / rect.height);
+  let idx = -1;
+  if (items.length && py <= g.padT + g.plotH + 2) {
+    const shapes = items.map((d) => chartDrawingShape(g, d));
+    idx = core.hitTest(shapes, px, py, evt.pointerType === "touch" ? 14 : 6);
+  }
+  if (idx >= 0 || chartDrawSelectedIdx() >= 0) selectChartDrawing(idx);
 }
 
 function setupChartDrawing() {
@@ -1695,12 +1957,21 @@ function setupChartDrawing() {
     drawCtl.dataset.bound = "1";
     drawCtl.querySelectorAll("button[data-draw]").forEach((b) => b.addEventListener("click", () => setDrawTool(b.dataset.draw)));
     byId("chartDrawClear")?.addEventListener("click", () => {
-      if (lastChartGeom) {
-        chartDrawings[lastChartGeom.ticker] = [];
-        persistChartDrawings(lastChartGeom.ticker); // 삭제도 저장소에 반영
+      drawPreview = null;
+      if (!deleteSelectedChartDrawing() && lastChartGeom) {
+        const t = lastChartGeom.ticker;
+        if ((chartDrawings[t] || []).length) commitChartDrawings(t, []); // 전체 지우기도 실행취소 가능
+        drawSelected = -1;
+        updateDrawLayer();
       }
-      drawPreview = null; updateDrawLayer();
     });
+    byId("chartDrawUndo")?.addEventListener("click", () => undoChartDrawing());
+    byId("chartDrawMagnet")?.addEventListener("click", () => {
+      drawMagnet = !chartDrawMagnetOn();
+      try { window.safeStorage.set(CHART_DRAW_MAGNET_KEY, drawMagnet ? "1" : "0"); } catch (_) { /* ignore */ }
+      syncChartDrawButtons();
+    });
+    syncChartDrawButtons();
   }
   // 차트 위 드래그
   const svg = byId("priceChart");
@@ -1710,59 +1981,95 @@ function setupChartDrawing() {
     // 추세선·피보를 그릴 수 없었다(터치는 팬 제스처·스크롤에 먹혔다). 드로잉 도구가 켜져 있으면
     // 팬(beginPan)은 pointerdown 에서 스스로 물러나므로(drawTool 가드) 여기서 우선권을 가진다.
     let drawPointerId = null;
+    // 도구가 꺼져 있을 때의 클릭(선택용) 추적
+    let pickPointerId = null;
+    let pickX = 0;
+    let pickY = 0;
     const cancelDraw = () => {
       drawPointerId = null;
       drawStart = null; drawPreview = null; updateDrawLayer();
     };
+    const previewOf = (a, b) => (drawTool === "hline"
+      ? { type: "hline", x1: b.xn, p1: b.price, x2: b.xn, p2: b.price }
+      : { type: drawTool, x1: a.xn, p1: a.price, x2: b.xn, p2: b.price });
     svg.addEventListener("pointerdown", (e) => {
-      if (!drawTool) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
       if (e.target.closest && e.target.closest("[data-yscale]")) return;
       const yp = chartYAxisPoint(e);
       if (yp && yp.onAxis) return; // 가격 축은 세로 배율 조작(beginPan)이 받는다
+      // 키보드(Delete·Ctrl+Z·Esc)가 바로 먹도록 차트에 포커스를 둔다(스크롤은 움직이지 않음).
+      if (document.activeElement !== svg) { try { svg.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
+      if (!drawTool) {
+        if (pickPointerId == null) { pickPointerId = e.pointerId; pickX = e.clientX; pickY = e.clientY; }
+        return;
+      }
       if (drawPointerId != null) return; // 두 번째 손가락은 무시(핀치는 touch 핸들러가 처리)
       e.preventDefault();
-      const start = chartPointToData(e);
+      const start = chartPointToData(e, chartDrawMagnetOn());
       if (!start) return;
       drawPointerId = e.pointerId;
       drawStart = start;
+      if (drawTool === "hline") { drawPreview = previewOf(start, start); updateDrawLayer(); }
       try { svg.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     });
     const moveDraw = (e) => {
+      if (pickPointerId != null && e.pointerId === pickPointerId && Math.hypot(e.clientX - pickX, e.clientY - pickY) > 6) pickPointerId = null;
       if (!drawTool || !drawStart || drawPointerId == null || e.pointerId !== drawPointerId) return;
-      const p = chartPointToData(e);
+      const p = chartPointToData(e, chartDrawMagnetOn());
       if (!p) return;
-      drawPreview = { type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price };
+      drawPreview = previewOf(drawStart, p);
       updateDrawLayer();
       e.preventDefault();
     };
     const endDraw = (e) => {
+      if (pickPointerId != null && e.pointerId === pickPointerId) {
+        pickPointerId = null;
+        if (!drawTool && Math.hypot(e.clientX - pickX, e.clientY - pickY) <= (e.pointerType === "touch" ? 10 : 5)) pickChartDrawingAt(e);
+      }
       if (drawPointerId == null || e.pointerId !== drawPointerId) return;
       try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
       if (!drawTool || !drawStart) { cancelDraw(); return; }
-      const p = chartPointToData(e);
-      const t = lastChartGeom && lastChartGeom.ticker;
-      if (p && t && (Math.abs(p.xn - drawStart.xn) > 0.005 || Math.abs(p.price - drawStart.price) > 1e-9)) {
-        // 화면비율 → 봉 날짜 앵커로 변환해 저장(줌·기간 변경에도 유지)
-        const t1 = chartTimeFromXn(lastChartGeom, drawStart.xn);
-        const t2 = chartTimeFromXn(lastChartGeom, p.xn);
-        (chartDrawings[t] = chartDrawings[t] || []).push(
-          Number.isFinite(t1) && Number.isFinite(t2)
-            ? { type: drawTool, t1, p1: drawStart.price, t2, p2: p.price }
-            : { type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price },
-        );
-        persistChartDrawings(t);
+      const p = chartPointToData(e, chartDrawMagnetOn()) || drawStart;
+      const g = lastChartGeom;
+      const t = g && g.ticker;
+      const moved = Math.abs(p.xn - drawStart.xn) > 0.005 || Math.abs(p.price - drawStart.price) > 1e-9;
+      if (t && (moved || drawTool === "hline")) {
+        // 화면비율 → 봉 날짜 앵커로 변환해 저장(줌·기간 변경에도 유지). 수평선은 뗀 자리 가격 하나.
+        const a = drawTool === "hline" ? p : drawStart;
+        const t1 = chartTimeFromXn(g, a.xn);
+        const t2 = chartTimeFromXn(g, p.xn);
+        if (Number.isFinite(t1) && Number.isFinite(t2) && Number.isFinite(a.price) && Number.isFinite(p.price)) {
+          const next = (chartDrawings[t] || []).concat([{ type: drawTool, t1, p1: a.price, t2, p2: p.price }]);
+          commitChartDrawings(t, next);
+          drawSelected = next.length - 1; // 방금 그린 것을 골라 둔다(바로 Delete 가능)
+          drawSelectedTicker = t;
+        }
       }
       cancelDraw();
+      syncChartDrawButtons();
     };
     // 캡처가 실패해도(구형 브라우저) SVG 밖에서 뗀 포인터를 놓치지 않도록 document 에서 받는다
     // (SVG 에서 시작한 이벤트도 버블링으로 여기 도착하므로 SVG 에 따로 달지 않는다).
     document.addEventListener("pointermove", moveDraw);
     document.addEventListener("pointerup", endDraw);
     document.addEventListener("pointercancel", (e) => {
+      if (pickPointerId != null && e.pointerId === pickPointerId) pickPointerId = null;
       if (drawPointerId == null || e.pointerId !== drawPointerId) return;
       try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
       cancelDraw();
+    });
+    // 차트에 포커스가 있을 때: Delete/Backspace = 고른 드로잉 지우기, Ctrl+Z = 실행취소, Esc = 도구 끄기·선택 해제.
+    // 한글 입력 상태면 e.key 가 'ㅋ' 이므로 e.code 로도 본다.
+    svg.addEventListener("keydown", (e) => {
+      if (e.target !== svg) return;
+      if ((e.key === "Delete" || e.key === "Backspace") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (deleteSelectedChartDrawing()) e.preventDefault();
+      } else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.code === "KeyZ" || e.key === "z" || e.key === "Z")) {
+        if (undoChartDrawing()) e.preventDefault();
+      } else if (e.key === "Escape") {
+        if (drawTool) { setDrawTool(drawTool); e.preventDefault(); }
+        else if (chartDrawSelectedIdx() >= 0) { selectChartDrawing(-1); e.preventDefault(); }
+      }
     });
   }
 }
@@ -2182,10 +2489,11 @@ function renderChartCrosshair(vbX, vbY) {
     return;
   }
   const n = g.rows.length;
-  const idx = Math.max(0, Math.min(n - 1, Math.round(((vbX - g.padL) / Math.max(1, g.plotW)) * (n - 1))));
+  const dataW = g.dataW || g.plotW; // 오른쪽 여백(미래 봉 자리)에선 마지막 봉에 붙는다
+  const idx = Math.max(0, Math.min(n - 1, Math.round(((vbX - g.padL) / Math.max(1, dataW)) * (n - 1))));
   const bar = g.rows[idx];
   const raw = (g.rawRows && g.rawRows[idx]) || bar;
-  const x = g.padL + (idx / Math.max(1, n - 1)) * g.plotW;
+  const x = g.padL + (idx / Math.max(1, n - 1)) * dataW;
   const xR = g.padL + g.plotW;
   let out = `<line class="chart-xhair" x1="${x.toFixed(1)}" y1="${g.padT}" x2="${x.toFixed(1)}" y2="${g.axisBottom.toFixed(1)}"></line>`;
   if (vbY <= g.padT + g.plotH) {
@@ -2214,6 +2522,12 @@ function renderChartCrosshair(vbX, vbY) {
     + (Number.isFinite(chg) ? ` <tspan class="chart-ohlc-v ${chgDir}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%</tspan>` : "")
     + vol
     + `</text>`;
+  // 비교 겹쳐 보기 중이면 그 봉의 비교 종목 수익률(보이는 첫 봉 기준)을 한 줄 더.
+  const cmpParts = (g.cmp || []).map((c) => {
+    const v = c.pct[idx];
+    return v == null ? "" : `<tspan fill="${c.color}">${escapeHtml(c.ticker)}</tspan> <tspan class="chart-ohlc-v ${v < 0 ? "is-down" : "is-up"}">${v >= 0 ? "+" : ""}${v.toFixed(2)}%</tspan>`;
+  }).filter(Boolean);
+  if (cmpParts.length) out += `<text class="chart-ohlc" x="${(g.padL + 6).toFixed(1)}" y="${(g.padT + 40).toFixed(1)}">${cmpParts.join("  ")}</text>`;
   layer.innerHTML = out;
 }
 
@@ -2246,6 +2560,112 @@ function setupChartCrosshair() {
     const layer = byId("chartCrosshair");
     if (layer) layer.innerHTML = "";
   });
+}
+
+// ===== 차트 PNG 저장 =====
+// SVG 는 CSS 클래스·변수(--pos/--neg·--chart-bg)로 색을 받으므로, 복제본의 각 요소에 계산된 스타일을
+// 인라인으로 박은 뒤 직렬화 → <img> → canvas → toBlob. 캔버스 바닥은 페이지 배경(다크 모드면 어두운 색)으로
+// 먼저 칠한다(차트 배경 사각형의 둥근 모서리 밖이 투명으로 남지 않게). 크로스헤어·축 히트 영역·A/L 버튼·
+// 툴팁(title)·드로잉 선택 손잡이는 뺀다.
+const CHART_PNG_STYLE_PROPS = [
+  "fill", "fill-opacity", "stroke", "stroke-width", "stroke-dasharray", "stroke-opacity",
+  "stroke-linecap", "stroke-linejoin", "opacity", "font-size", "font-weight", "font-family",
+  "font-variant-numeric", "paint-order", "visibility", "display",
+];
+
+function chartPngBackground(svg) {
+  const solid = (c) => c && c !== "transparent" && !/rgba?\([^)]*[,/]\s*0\s*\)$/.test(c);
+  for (const el of [document.body, document.documentElement]) {
+    if (!el) continue;
+    const c = getComputedStyle(el).backgroundColor;
+    if (solid(c)) return c;
+  }
+  const bg = svg.querySelector(".chart-bg");
+  return bg ? getComputedStyle(bg).fill : "#0b1220";
+}
+
+function chartPngFileName(g) {
+  const rows = (g && g.rawRows) || [];
+  const last = rows.length ? String(rows[rows.length - 1].d || "") : "";
+  const day = (last.slice(0, 10) || new Date().toISOString().slice(0, 10)).replace(/-/g, "");
+  const hm = isIntradayTf(chartState.barTf) ? last.slice(11, 16).replace(":", "") : "";
+  const safe = String((g && g.ticker) || "chart").replace(/[^0-9A-Za-z._-]+/g, "_");
+  return `${safe}_${chartState.barTf}_${day}${hm ? `-${hm}` : ""}.png`;
+}
+
+function saveChartPng() {
+  const svg = byId("priceChart");
+  const g = lastChartGeom;
+  if (!svg || !g) return Promise.resolve(false);
+  const btn = byId("chartPngBtn");
+  if (btn) btn.disabled = true;
+  const done = (ok) => {
+    if (btn) btn.disabled = false;
+    if (!ok && typeof showAppToast === "function") showAppToast("PNG 저장 실패");
+    return ok;
+  };
+  try {
+    const clone = svg.cloneNode(true);
+    const src = [svg, ...svg.querySelectorAll("*")];
+    const dst = [clone, ...clone.querySelectorAll("*")];
+    for (let i = 0; i < src.length && i < dst.length; i += 1) {
+      const cs = getComputedStyle(src[i]);
+      const parts = [];
+      for (const prop of CHART_PNG_STYLE_PROPS) {
+        const v = cs.getPropertyValue(prop);
+        if (v) parts.push(`${prop}:${v}`);
+      }
+      dst[i].setAttribute("style", parts.join(";"));
+    }
+    clone.querySelectorAll("title, .chart-yaxis-hit, .chart-yscale-btn, .draw-handle").forEach((el) => el.remove());
+    const xh = clone.querySelector("#chartCrosshair");
+    if (xh) xh.innerHTML = "";
+    const evh = clone.querySelector("#chartEventHover");
+    if (evh) evh.innerHTML = "";
+    const w = g.width;
+    const h = g.height;
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("width", String(w));
+    clone.setAttribute("height", String(h));
+    clone.removeAttribute("tabindex");
+    const xml = new XMLSerializer().serializeToString(clone);
+    const url = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml;charset=utf-8" }));
+    const bg = chartPngBackground(svg);
+    const scale = Math.max(2, Math.min(3, Math.round(window.devicePixelRatio || 2)));
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(w * scale);
+          canvas.height = Math.round(h * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          canvas.toBlob((blob) => {
+            if (!blob) { resolve(done(false)); return; }
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = chartPngFileName(g);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            resolve(done(true));
+          }, "image/png");
+        } catch (_) {
+          URL.revokeObjectURL(url);
+          resolve(done(false));
+        }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(done(false)); };
+      img.src = url;
+    });
+  } catch (_) {
+    return Promise.resolve(done(false));
+  }
 }
 
 // ===== 차트 키보드 조작 =====
@@ -2288,6 +2708,7 @@ function drawChart(item, options = {}) {
   const mainChart = !options.svgElement;
   const svg = options.svgElement || byId("priceChart");
   const intraday = isIntradayTf(chartState.barTf);
+  if (mainChart) scheduleChartIntradayRefresh();
   const intradayState = intraday ? chartIntradayState(item) : null;
   const allRows = intraday ? intradayState.rows : resampleBars(getChartRows(item), chartState.barTf);
   // 분봉을 처음 받았을 때 한 번: 받은 구간 전체가 아니라 간격별 기본 봉 수만큼 확대해 보여 준다.
@@ -2305,6 +2726,11 @@ function drawChart(item, options = {}) {
   const plotW = width - padL - padR;
   const plotH = geom.plotH;
   const xPlotRight = padL + plotW;
+  // 오른쪽 여백(미래 봉 자리): 마지막 봉이 가격 축에 붙지 않게 몇 봉만큼 비운다. 봉은 dataW 안에,
+  // 수평선·채널·드로잉은 plotW 끝까지. 드로잉·크로스헤어도 같은 dataW 로 좌표를 바꾼다(lastChartGeom).
+  const toolsCore = window.MirChartTools;
+  const padBars = toolsCore ? toolsCore.rightPadBars(rows.length) : 0;
+  const dataW = rows.length > 1 ? plotW * ((rows.length - 1) / (rows.length - 1 + padBars)) : plotW;
 
   if (!rows.length) {
     if (mainChart) { updateChartEventNote([]); hideChartEventTip(true); }
@@ -2338,7 +2764,8 @@ function drawChart(item, options = {}) {
   if (chartState.showTtmSqueeze) panels.push({ t: "ttm", h: 58 });
   // 상대강도·비교는 일봉 날짜로 맞춘다 — 분봉에선 그리지 않는다.
   if (!intraday && hasRelativePanel(item)) panels.push({ t: "relative", h: 70 });
-  if (!intraday && compareTickers.length) panels.push({ t: "compare", h: 72 });
+  const cmpOverlayOn = !intraday && compareTickers.length > 0 && getChartCompareMode() === "overlay";
+  if (!intraday && compareTickers.length && !cmpOverlayOn) panels.push({ t: "compare", h: 72 });
   const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
   const axisH = 26;
   // 이벤트 마커 띠: 켜진 종류의 이벤트가 하나라도 있으면(보이는 구간 밖이어도) 자리를 잡아
@@ -2357,8 +2784,22 @@ function drawChart(item, options = {}) {
   const closes = plotRows.map((row) => row.c);
   const lows = plotRows.map((row) => row.l);
   const highs = plotRows.map((row) => row.h);
-  const autoLo = Math.min(...lows);
-  const autoHi = Math.max(...highs);
+  // 비교 겹쳐 보기: 보이는 첫 봉 기준 수익률을 메인 종목 첫 종가 위에 얹어 가격 공간 선으로 그린다
+  // (TradingView Compare). 데이터는 비교 패널과 같은 경로(benchmarkRowsForTicker → 날짜 맞춤).
+  const cmpSeries = [];
+  if (cmpOverlayOn && toolsCore) {
+    requestCompareDetails(item);
+    compareTickers.forEach((ticker, i) => {
+      const bench = benchmarkRowsForTicker(ticker);
+      if (!bench.length) return;
+      const ov = toolsCore.compareOverlay(rows, alignBenchmarkRows(rows, visibleRowsForBenchmark(bench, rows.length)));
+      if (ov.lastIdx < 0) return;
+      cmpSeries.push({ ticker, color: CHART_COMPARE_COLORS[i % CHART_COMPARE_COLORS.length], ...ov });
+    });
+  }
+  const cmpVals = cmpSeries.flatMap((c) => c.prices.filter((v) => v != null && Number.isFinite(v) && v > 0));
+  const autoLo = Math.min(...lows, ...cmpVals);
+  const autoHi = Math.max(...highs, ...cmpVals);
   // 세로 축: 자동 맞춤이면 보이는 봉 고가·저가, 수동이면 사용자가 정한 범위. 로그면 log10 공간.
   // 종목·기간·봉이 바뀌면 자동 맞춤으로 돌아간다(로그 선택은 유지).
   const yKey = `${item.ticker}|${chartState.range}|${chartState.barTf}`;
@@ -2373,12 +2814,12 @@ function drawChart(item, options = {}) {
   const max = yScale.max;
   const yLog = yRes.log;
   const yManual = !yRes.auto;
-  const xFor = (index) => padL + (index / Math.max(1, rows.length - 1)) * plotW;
+  const xFor = (index) => padL + (index / Math.max(1, rows.length - 1)) * dataW;
   const yFor = (value) => yScale.y(value);
   const candleW = Math.max(2, Math.min(11, (plotW / rows.length) * 0.62));
 
   const linePath = closes.map((value, index) => `${index ? "L" : "M"} ${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)}`).join(" ");
-  const area = `${linePath} L ${(padL + plotW).toFixed(1)} ${(padT + plotH).toFixed(1)} L ${padL} ${(padT + plotH).toFixed(1)} Z`;
+  const area = `${linePath} L ${xFor(closes.length - 1).toFixed(1)} ${(padT + plotH).toFixed(1)} L ${padL} ${(padT + plotH).toFixed(1)} Z`;
   // 가격 눈금: 범위에 맞춰 1·2·2.5·5 배수(로그면 10^k × 가수)로 다시 잡는다.
   const yTicks = window.MirYScale.ticks(min, max, yLog, plotH >= 260 ? 6 : 5);
   const grid = yTicks.ticks.map((value) => {
@@ -2685,6 +3126,27 @@ function drawChart(item, options = {}) {
     }
   }
 
+  // 비교 선 + 가격 축의 % 태그(선 끝 높이, 겹치면 위아래로 비켜 놓는다).
+  let cmpSvg = "";
+  let cmpTags = "";
+  if (cmpSeries.length) {
+    cmpSvg = cmpSeries.map((c) => pathFromSeries(clipRange(c.prices), xFor, yFor, c.color, 1.5, "")).join("");
+    const lastYMain = yFor(rows[rows.length - 1].c);
+    const want = [lastYMain].concat(cmpSeries.map((c) => yFor(c.prices[c.lastIdx])));
+    const placed = toolsCore.spreadLabels(want, 16, padT + 8, padT + plotH - 8);
+    const tagW = width - xPlotRight - 4;
+    cmpTags = cmpSeries.map((c, k) => {
+      const y = placed[k + 1];
+      if (!Number.isFinite(y) || !Number.isFinite(want[k + 1]) || want[k + 1] < padT - 1 || want[k + 1] > padT + plotH + 1) return "";
+      const p = c.lastPct;
+      const txt = `${p >= 0 ? "+" : ""}${Math.abs(p) >= 100 ? p.toFixed(0) : p.toFixed(1)}%`;
+      return `<g class="chart-cmp-tag"><title>${escapeHtml(c.ticker)} ${txt}</title><rect x="${(xPlotRight + 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" width="${tagW.toFixed(1)}" height="16" rx="3" fill="${c.color}"></rect><text x="${(width - 6).toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(txt)}</text></g>`;
+    }).join("");
+  }
+  const cmpLegend = cmpSeries.length
+    ? ` <tspan class="chart-cmp-legend">${cmpSeries.map((c) => `<tspan fill="${c.color}">${escapeHtml(c.ticker)}</tspan>`).join(" ")}</tspan>`
+    : "";
+
   // 이벤트 마커(가격 플롯 아래 띠). 봉 x 는 캔들과 같은 xFor — 가로 줌·이동과 일치.
   let evSvg = "";
   let evClusters = [];
@@ -2770,7 +3232,8 @@ function drawChart(item, options = {}) {
   // 변환용(보이는 봉들의 타임스탬프, 오름차순).
   hydrateChartDrawings(item.ticker); // 저장된 드로잉 복원(최초 1회)
   lastChartGeom = {
-    padL, plotW, padT, plotH, min, max, width, height, ticker: item.ticker,
+    padL, plotW, dataW, padT, plotH, min, max, width, height, ticker: item.ticker, mobile: geom.mobile,
+    cmp: cmpSeries.map((c) => ({ ticker: c.ticker, color: c.color, pct: c.pct })),
     log: yLog, manual: yManual, scale: yScale, autoMin: autoRef.min, autoMax: autoRef.max,
     times: buildChartTimes(rows),
     rows: plotRows, rawRows: rows, axisBottom: height - axisH,
@@ -2791,9 +3254,12 @@ function drawChart(item, options = {}) {
     : "";
   const axisHit = `<rect class="chart-yaxis-hit" data-yaxis="1" x="${xPlotRight.toFixed(1)}" y="${padT}" width="${axisW.toFixed(1)}" height="${plotH}"><title>가격 축: 위아래로 끌어 세로 배율 조정 · 휠로 확대/축소 · 더블클릭 자동 맞춤</title></rect>`;
   // 모서리 토글(A=자동 맞춤, L=로그). 가격 축 아래 칸(플롯 바닥 ~ 다음 패널 사이)에 둔다.
+  // 폰은 버튼을 키우고, 보이지 않는 터치 영역(chart-yscale-pad)을 아래로 더 넓힌다(손가락 ≈ 30px).
   const btnW = Math.min(22, (axisW - 6) / 2);
   const btnY = padT + plotH + 2;
-  const yBtn = (key, label, on, x, title) => `<g class="chart-yscale-btn${on ? " is-on" : ""}" data-yscale="${key}" role="button" tabindex="0" aria-pressed="${on ? "true" : "false"}" aria-label="${title}"><title>${title}</title><rect x="${x.toFixed(1)}" y="${btnY.toFixed(1)}" width="${btnW.toFixed(1)}" height="14" rx="3"></rect><text x="${(x + btnW / 2).toFixed(1)}" y="${(btnY + 10.5).toFixed(1)}" text-anchor="middle">${label}</text></g>`;
+  const btnH = geom.mobile ? 18 : 14;
+  const padH = geom.mobile ? 32 : 18;
+  const yBtn = (key, label, on, x, title) => `<g class="chart-yscale-btn${on ? " is-on" : ""}" data-yscale="${key}" role="button" tabindex="0" aria-pressed="${on ? "true" : "false"}" aria-label="${title}"><title>${title}</title><rect class="chart-yscale-pad" x="${(x - 1).toFixed(1)}" y="${(btnY - 2).toFixed(1)}" width="${(btnW + 2).toFixed(1)}" height="${padH}"></rect><rect x="${x.toFixed(1)}" y="${btnY.toFixed(1)}" width="${btnW.toFixed(1)}" height="${btnH}" rx="3"></rect><text x="${(x + btnW / 2).toFixed(1)}" y="${(btnY + btnH / 2 + 3.5).toFixed(1)}" text-anchor="middle">${label}</text></g>`;
   const yBtns = yBtn("auto", "A", !yManual, width - 4 - btnW * 2 - 2, yManual ? "세로 자동 맞춤 켜기(꺼짐)" : "세로 자동 맞춤(켜짐)")
     + yBtn("log", "L", yLog, width - 4 - btnW, yLog ? "로그 스케일 끄기(켜짐)" : "로그 스케일 켜기(꺼짐)");
   // 수동 범위에서는 가격 플롯 밖(보조 패널·헤더)으로 캔들·선이 넘치지 않게 자른다.
@@ -2825,6 +3291,7 @@ function drawChart(item, options = {}) {
     ${chandelierSvg}
     ${patSvg}
     ${techLevelSvg}
+    ${cmpSvg}
     ${kmSvg}
     ${plotClose}
     <clipPath id="chartDrawClip"><rect x="${padL}" y="${yManual ? padT : 0}" width="${(width - padL).toFixed(1)}" height="${(yManual ? plotH : padT + plotH + 2).toFixed(1)}"></rect></clipPath>
@@ -2835,13 +3302,15 @@ function drawChart(item, options = {}) {
     ${evSvg}
     ${dateLabels}
     <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${intraday ? "" : `${chartState.range} · `}${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length}봉 · ${intraday ? "현재" : "종가"} ${chartPriceLabel(last.c)} · ${fmtPct(chartChange)}</text>
-    <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
+    <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}${cmpLegend}</text>
     ${lastTag}
+    ${cmpTags}
     ${axisHit}
     ${yBtns}
     <g id="chartCrosshair" class="chart-crosshair"></g>
   `;
   // 일별 시세 표(daily-table.js)는 같은 일봉을 쓴다. 시계열이 그대로면 즉시 돌아간다.
+  if (mainChart) syncChartDrawButtons();
   if (mainChart && typeof renderDailyTable === "function") renderDailyTable(item);
   if (mainChart && typeof renderSeasonality === "function") renderSeasonality(item);
 }

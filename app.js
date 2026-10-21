@@ -104,6 +104,11 @@ function rebuildStockIndex() {
     const key = normalizeTickerKey(row && row.ticker);
     if (key && !idx.has(key)) idx.set(key, row);
   });
+  // 어떤 배열·시장으로 만든 인덱스인지 남긴다 — stockByTicker 가 미스를 그대로 '없음'으로 확정해도
+  // 되는지(같은 배열·같은 길이·같은 시장이면 선형 탐색도 미스) 판단한다(2026-10-21 성능).
+  idx.src = data && Array.isArray(data.stocks) ? data.stocks : null;
+  idx.srcLen = idx.src ? idx.src.length : 0;
+  idx.srcMarket = marketCfg().id;
   // 스냅샷 파생 캐시는 전부 무효화한다.
   _issuerTickerIndex = null;
   _issuerResolveCache.clear();
@@ -575,6 +580,15 @@ async function fetchCardNewsLight() {
 // 순간 끊기면 멀쩡한 실제 데이터를 데모 데이터로 덮어쓰던 것을 막는다(같은 시장일 때만 유지).
 let loadedSnapshotMarket = null;
 
+// index.html <head> 인라인 스크립트가 번들보다 먼저 시작해 둔 스냅샷 요청(같은 옵션 cache:"no-cache").
+// 응답 본문은 한 번만 읽을 수 있으므로 한 번 꺼내면 비운다. 경로가 다르면(시장 판정이 달랐으면) 쓰지 않는다.
+function takeEarlySnapshot(path) {
+  const early = window.__mirEarlySnapshot;
+  if (!early || early.path !== path) return null;
+  window.__mirEarlySnapshot = null;
+  return early.promise;
+}
+
 async function loadData(options = {}) {
   const cfg = marketCfg();
   let loaded = false;
@@ -586,7 +600,7 @@ async function loadData(options = {}) {
       // no-cache 는 캐시를 쓰되 매번 서버에 재검증한다 — 데이터 신선도는 no-store 와
       // 같지만, 바뀐 게 없으면 GitHub Pages 가 ETag 로 304(0바이트)를 돌려준다.
       // no-store 는 캐시를 아예 쓰지 않아 재방문마다 스냅샷 전체를 다시 받았다.
-      const response = await fetch(cfg.snapshotPath, { cache: "no-cache" });
+      const response = await (takeEarlySnapshot(cfg.snapshotPath) || fetch(cfg.snapshotPath, { cache: "no-cache" }));
       if (response.ok) {
         data = filterBlockedStocks(await response.json());
         loaded = true;
@@ -3228,6 +3242,26 @@ function setupTabReorder(nav) {
   nav.addEventListener("pointerdown", onDown);
 }
 
+let tickerOptionsDirty = true;
+function fillTickerOptions() {
+  const host = byId("tickerOptions");
+  if (!host || !tickerOptionsDirty) return;
+  tickerOptionsDirty = false;
+  host.innerHTML = ((data && data.stocks) || []).flatMap((item) => {
+    const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
+    // 국내는 '회사명 · 코드', 미국은 회사명(값은 항상 티커).
+    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(isKrMarket() ? stockLabel(item) : item.company)}</option>`];
+    aliases.slice(0, 2).forEach((alias) => {
+      rows.push(`<option value="${escapeHtml(item.ticker)}">${isKrMarket() ? `${escapeHtml(alias)} · ${escapeHtml(stockLabel(item))}` : `${escapeHtml(alias)} · ${escapeHtml(item.ticker)}`}</option>`);
+    });
+    return rows;
+  }).join("");
+}
+document.addEventListener("focusin", (e) => {
+  const t = e.target;
+  if (t && t.getAttribute && t.getAttribute("list") === "tickerOptions") fillTickerOptions();
+}, true);
+
 function setupFilters() {
   const cfg = marketCfg();
   const buckets = cfg.buckets || [];
@@ -3251,15 +3285,11 @@ function setupFilters() {
   byId("topSector").innerHTML = sectorOptions;
   byId("topSector").value = "All";
 
-  byId("tickerOptions").innerHTML = data.stocks.flatMap((item) => {
-    const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
-    // 국내는 '회사명 · 코드', 미국은 회사명(값은 항상 티커).
-    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(isKrMarket() ? stockLabel(item) : item.company)}</option>`];
-    aliases.slice(0, 2).forEach((alias) => {
-      rows.push(`<option value="${escapeHtml(item.ticker)}">${isKrMarket() ? `${escapeHtml(alias)} · ${escapeHtml(stockLabel(item))}` : `${escapeHtml(alias)} · ${escapeHtml(item.ticker)}`}</option>`);
-    });
-    return rows;
-  }).join("");
+  // 종목 자동완성 목록(<datalist id="tickerOptions">, 보유 추가 입력이 쓴다)은 US 기준 1만5천 개 <option> 이라
+  // 부팅 때 만들면 폰에서 1.7초가 걸렸다(2026-10-21 성능). 그 입력에 처음 포커스가 갈 때 채운다(내용은 같다).
+  tickerOptionsDirty = true;
+  const focused = document.activeElement;
+  if (focused && focused.getAttribute && focused.getAttribute("list") === "tickerOptions") fillTickerOptions();
   byId("tickerSearch").value = stockInputValue(selectedTicker);
 
   const etfRows = data.health?.etfRelative?.rows || [];

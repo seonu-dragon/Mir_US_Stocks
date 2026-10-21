@@ -181,7 +181,18 @@ function sdCardVisible(node) {
   if (node.classList.contains("sd-empty") || node.classList.contains("mir-cl-card")) return false; // '새 기능' 안내 카드(changelog.js)는 내용으로 치지 않는다
   if (node.tagName === "SCRIPT" || node.tagName === "TEMPLATE") return false;
   if (node.classList.contains("analysis-balanced-grid")) return [...node.children].some(sdCardVisible);
-  return node.innerHTML.trim() !== "";
+  return sdHasMarkup(node);
+}
+
+// node.innerHTML.trim() !== "" 와 같은 판정을 직렬화 없이 한다(2026-10-21 성능 — 차트 SVG 가 든 패널을
+// 변경마다 통째로 문자열로 만들어 KR 부팅에서 1.5초를 썼다). 요소·주석 자식이 하나라도 있으면 참,
+// 텍스트만 있으면 trim 이 지우는 공백 외 글자가 있는지 본다(U+00A0 은 innerHTML 에서 &nbsp; 로 남으므로 내용).
+function sdHasMarkup(node) {
+  for (let c = node.firstChild; c; c = c.nextSibling) {
+    if (c.nodeType !== 3) return true;
+    if (/[^\s]| /.test(c.data)) return true;
+  }
+  return false;
 }
 
 function sdViewHasContent(panel) {
@@ -211,7 +222,10 @@ function sdUpdateEmpty() {
       sdPendingStart = 0;
     }
     if (empty) {
-      empty.hidden = !activeEmpty;
+      // 값이 같아도 hidden 을 대입하면 속성 변경 기록이 생겨 위 MutationObserver(attributeFilter: hidden)가
+      // 다시 이 함수를 부른다 — #stockViewEmpty 가 #stockMain 안이라 매 프레임 무한 반복됐다(2026-10-21 성능,
+      // 폰 4x CPU 에서 30초 동안 rAF 14초). 바뀔 때만 쓴다.
+      if (empty.hidden !== !activeEmpty) empty.hidden = !activeEmpty;
       const text = pending ? SD_LOADING_TEXT : SD_EMPTY_TEXT;
       if (empty.textContent !== text) empty.textContent = text;
       empty.classList.toggle("is-loading", pending);

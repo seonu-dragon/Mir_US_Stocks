@@ -20,6 +20,13 @@
   function isDate(d) {
     return typeof d === "string" && /^\d{4}-\d{2}-\d{2}/.test(d);
   }
+  // toLocaleString(locale) 는 부를 때마다 NumberFormat 을 새로 만든다 — 오늘 피드가 Form 144 수천 행에 불러
+  // 폰에서 2초가 걸렸다(2026-10-21 성능). 같은 로캘·옵션의 포맷터 하나를 재사용한다(출력은 같다).
+  const NF = {};
+  function fmtInt(n, locale) {
+    if (typeof Intl === "undefined" || !Intl.NumberFormat) return n.toLocaleString(locale);
+    return (NF[locale] || (NF[locale] = new Intl.NumberFormat(locale))).format(n);
+  }
   function usdShort(v) {
     const n = num(v);
     if (n === null) return "";
@@ -27,12 +34,12 @@
     if (a >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
     if (a >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
     if (a >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
-    return `$${Math.round(n).toLocaleString("en-US")}`;
+    return `$${fmtInt(Math.round(n), "en-US")}`;
   }
   function sharesText(v) {
     const n = num(v);
     if (n === null) return "";
-    return `${Math.round(n).toLocaleString("ko-KR")}주`;
+    return `${fmtInt(Math.round(n), "ko-KR")}주`;
   }
 
   // ── 8-K 3줄 요약 ──────────────────────────────────────────────────────────

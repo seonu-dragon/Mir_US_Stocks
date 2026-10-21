@@ -71,8 +71,20 @@
     const a = Math.abs(n);
     if (a >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
     if (a >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-    if (a >= 1e3) return `$${Math.round(n / 1e3).toLocaleString("en-US")}K`;
-    return `$${Math.round(n).toLocaleString("en-US")}`;
+    if (a >= 1e3) return `$${fmtUs(Math.round(n / 1e3))}K`;
+    return `$${fmtUs(Math.round(n))}`;
+  }
+  // toLocaleString/new Intl.* 는 호출마다 포맷터를 새로 만든다 — 피드가 수천 행에 불러 폰에서 수백 ms 였다
+  // (2026-10-21 성능). 같은 설정의 포맷터를 재사용한다(출력은 같다).
+  let usNf = null;
+  function fmtUs(n) {
+    if (typeof Intl === "undefined" || !Intl.NumberFormat) return n.toLocaleString("en-US");
+    return (usNf || (usNf = new Intl.NumberFormat("en-US"))).format(n);
+  }
+  let nyDtf = null;
+  function nyParts(d) {
+    if (!nyDtf) nyDtf = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    return nyDtf.formatToParts(d);
   }
   function weekday(iso) {
     const [y, m, d] = day(iso).split("-").map(Number);
@@ -108,7 +120,7 @@
     const [hh, mm] = t.split(":").map(Number);
     const ms = Date.UTC(y, m - 1, d, hh - 9, mm);
     try {
-      const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(ms));
+      const parts = nyParts(new Date(ms));
       const get = (k) => (parts.find((p) => p.type === k) || {}).value;
       return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
     } catch (e) {

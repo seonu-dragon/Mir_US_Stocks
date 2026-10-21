@@ -231,6 +231,9 @@ jobs:
       # 종목 분석 '현재' 시세(live-quote-core.js): 분봉/워커 quote → 현재가·전일 종가 대비 등락, 장중/마감/새 거래 없음 판정.
       - name: Live quote core tests
         run: node scripts/tests/test_live_quote_core.mjs
+      # 워커 데이터 라우트(worker-extras-core.js): 옛 워커(404 not_found) 감지, 원격 검색 시장 필터, insights·옵션 응답 검증.
+      - name: Worker extras core tests
+        run: node scripts/tests/test_worker_extras_core.mjs
       # 기업개요·목표주가 범위(company-info-core.js): 샤드 번호 = 파이썬 crc32, 결산월, 범위 바 위치(현재가 범위 밖 포함),
       # 평균 목표가 서술(권유 문구 없음), 의견 분포 비율.
       - name: Company info core tests

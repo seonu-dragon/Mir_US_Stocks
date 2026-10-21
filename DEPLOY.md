@@ -175,6 +175,14 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    node worker/test_worker.mjs   # Node 18+
    ```
 
+   **워커 재배포 시 새로 생기는 기능**(코드는 main 에 있지만 붙여넣기 전엔 꺼져 있다 — 프론트가 옛 워커의
+   404 를 보고 조용히 숨긴다. 바인딩·시크릿 추가 없음):
+   - 2026-10-21 `?symsearch=` 종목 검색 — 종목 분석 입력칸·⌘K 에서 로컬 후보가 3개 미만일 때 스냅샷 밖 종목(트레이딩뷰+야후)을 아래에 붙인다.
+   - 2026-10-21 `?insights=` — 종목 상세 '비슷한 종목' 칩 + 지지/저항(US. 국내는 비슷한 종목만).
+   - 2026-10-21 `?options=` — 종목 상세 '옵션 요약'(투자정보 더보기 안). 옵션 스냅샷(`data/options_stats`) 종목은 지금도 스냅샷으로 보이고, 그 밖의 미국 종목만 재배포 후 라이브.
+   - 같은 배포에 야후 crumb 요청 헤더 수정(`Accept: */*` — json 이면 406)이 들어 있다. `?ticker=` 실적·`?options=` 가 crumb 을 쓴다.
+   - 확인: `curl "https://mirusstocks.planbesides.workers.dev/?symsearch=palantir"` → `results` 배열, `?options=IONQ` → `expiries` 배열.
+
 4. **Actions 권한 확인**
    - Settings → Actions → General → Workflow permissions → **Read and write permissions**
 

@@ -3674,6 +3674,7 @@ function renderAll() {
   renderTodayRegime();
   if (typeof renderIndustryHomeCard === "function") renderIndustryHomeCard();
   if (typeof renderMoversBoard === "function") renderMoversBoard();
+  if (typeof renderExtHoursBoard === "function") renderExtHoursBoard();
   if (typeof renderCrossMarketHome === "function") renderCrossMarketHome();
   if (typeof renderHomeDash === "function") renderHomeDash();
   renderTodayNews();
@@ -9299,6 +9300,12 @@ function cmdkBuildActions(query) {
     scrollToTabContent();
   } });
   goto("오늘 · 요약", "today");
+  // 프리·애프터 급등락(ext-hours.js, US 전용) — 오늘 › 요약의 카드로 바로 내려간다.
+  if (!isKrMarket() && !featureOff("extHoursBoard")) actions.push({ label: "이동: 오늘 · 프리·애프터 급등락", hint: "화면", run: () => {
+    if (cmdkIsAiActive()) window.MirAI?.exit?.();
+    activateTab("today");
+    requestAnimationFrame(() => { const el = byId("extHoursBoard"); if (el && !el.hidden) el.scrollIntoView({ block: "start", behavior: "smooth" }); else scrollToTabContent(); });
+  } });
   goto("오늘 · 오늘 피드", "feed");
   goto("오늘 · AI 브리핑", "ai-briefing");
   goto("오늘 · 캘린더", "calendar");

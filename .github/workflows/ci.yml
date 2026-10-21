@@ -135,6 +135,9 @@ jobs:
       # 오늘 탭 지수 하루 차트 시간축(home-chart-core.js): 5분 봉 시각 배정·장 상태(장중/마감/휴장/단축)·눈금.
       - name: Home chart core tests
         run: node scripts/tests/test_home_chart_core.mjs
+      # 프리·애프터 급등락(ext-hours-core.js): ET 세션 판정(서머타임·휴장·단축)·TradingView 스캔 요청 바디·응답 파싱·표기.
+      - name: Ext hours core tests
+        run: node scripts/tests/test_ext_hours_core.mjs
 
       # PER 기준 판정(per-basis-core.js): 국내 최근 4분기/연간/KRX 사업연도 라벨·현재가 재계산.
       - name: PER basis core tests
@@ -144,6 +147,11 @@ jobs:
       # 눈금 간격(1·2·2.5·5)·자동 맞춤 해제/복귀. 종목 분석 차트와 AI 모드 차트가 같이 쓴다.
       - name: Chart price-axis scale tests
         run: node scripts/tests/test_chart_yscale_core.mjs
+
+      # 가격 차트 도구(chart-tools-core.js): 드로잉 선택 판정(선분·레이·수평선·사각형·피보)·자석 스냅·
+      # 실행취소 20단계·비교 겹쳐 보기 수익률 정규화·축 라벨 겹침 풀기·분봉 자동 갱신 조건.
+      - name: Chart tools core tests
+        run: node scripts/tests/test_chart_tools_core.mjs
 
       # 투자 가설 추적 순수 계산(thesis-core.js): 조건 위반/근접 판정·이력 보존·벤치마크 대비 성적·병합·클라우드 축약.
       - name: Thesis tracker tests

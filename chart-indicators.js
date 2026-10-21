@@ -297,6 +297,9 @@ function renderRelativePanel(item, rows, xFor, x1, x2, top, height) {
   return renderLinePanel(series, xFor, x1, x2, top, height, "Relative Strength", { zeroLine: true, guides: [0], formatGuide: (v) => `${v}%` });
 }
 
+// 비교 종목 색(패널·겹쳐 보기·비교 칩 공통). chart.js 도 이 배열을 쓴다. 겹쳐 보기에선 캔들 위에 그리므로
+// 등락색(미국 초록/빨강, 국내 빨강/파랑)과 이평선(보라·주황)과 헷갈리지 않는 색만 쓴다(밝은·어두운 배경 공통).
+const CHART_COMPARE_COLORS = ["#06b6d4", "#d946ef", "#ca8a04", "#ec4899", "#94a3b8"];
 function renderComparePanel(item, rows, xFor, x1, x2, top, height) {
   requestCompareDetails(item);
   const series = [{
@@ -305,7 +308,7 @@ function renderComparePanel(item, rows, xFor, x1, x2, top, height) {
     color: "var(--text)",
     width: 1.5
   }];
-  const colors = ["#60a5fa", "#34d399", "#f59e0b", "#f472b6", "#818cf8"];
+  const colors = CHART_COMPARE_COLORS;
   compareTickers.forEach((ticker, index) => {
     const bench = benchmarkRowsForTicker(ticker);
     if (!bench.length) return;

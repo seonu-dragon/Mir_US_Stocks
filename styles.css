@@ -13705,6 +13705,12 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .movers-foot b { font-variant-numeric: tabular-nums; font-weight: 600; }
 .movers-analysis-note { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 4px; padding: 10px 12px; border-left: 3px solid var(--primary); border-radius: var(--r-md); background: var(--panel-soft); }
 .movers-analysis-label { font-size: var(--fs-cap); font-weight: 700; color: var(--primary); }
+/* 프리·애프터 급등락(ext-hours.js) — 오늘의 특징주 카드 모양을 그대로 쓰고 상태 줄·지표 줄만 더한다 */
+.ext-status { font-variant-numeric: tabular-nums; }
+.ext-warn { margin-left: 4px; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--text); font-size: var(--fs-cap); font-weight: 600; line-height: 18px; }
+.ext-meta { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.ext-meta .ext-strong { color: var(--text); font-weight: 600; }
+.ext-meta b { font-weight: 600; }
 /* ===== 예측시장 확률 · 침체 신호 (macro-odds.js, 2026-09-25) ===== */
 .mo-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--fs-cap); font-weight: 500; color: var(--muted); vertical-align: middle; }
 .mo-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
@@ -17194,4 +17200,53 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   .es-link.is-inline { display: inline-block; min-height: 32px; padding: 6px 0; }
   /* AI 브리핑 본문 링크: 문장 안 링크는 줄 높이를 바꾸지 않고 눌리는 면만 위아래로 넓힌다 */
   .briefing-content a { padding: 6px 0; }
+}
+
+/* ===== 차트 도구(chart.js · chart-tools-core.js, 2026-10-21) =====
+   상단 툴바 확대·축소·초기화·PNG, 드로잉(레이·수평선·사각형·선택·자석), 비교 겹쳐 보기 태그,
+   폰에서 A/L 모서리 버튼 터치 영역. 등락색은 --pos/--neg 토큰만. */
+.chart-quick-tools { align-self: flex-end; gap: 4px; }
+.chart-quick-tools button {
+  min-width: 34px;
+  padding: 0 8px;
+  font-size: var(--fs-sub);
+  line-height: 1;
+}
+#chartPngBtn { font-size: var(--fs-cap); font-weight: 700; letter-spacing: 0.02em; }
+#chartPngBtn:disabled { opacity: 0.55; cursor: progress; }
+/* 폰에선 '보기' 줄(‹ − + › 초기화)이 차트 바로 아래에 이미 보이므로 위쪽 확대·축소·초기화는 숨기고 PNG 만 둔다 */
+@media (max-width: 640px) {
+  .chart-quick-tools .chart-quick-zoom { display: none; }
+}
+
+#chartDrawControls { flex-wrap: wrap; }
+#chartDrawControls button:disabled { opacity: 0.4; cursor: default; }
+#chartDrawControls #chartDrawMagnet { font-size: var(--fs-cap); }
+#chartDrawControls #chartDrawMagnet.is-active { background: #f59e0b; color: #111; border-color: #f59e0b; }
+.draw-line.is-selected { stroke-width: 2.6; }
+.draw-fib.is-selected { stroke: #f59e0b; stroke-width: 1.4; }
+.draw-rect { fill: rgba(245, 158, 11, 0.1); stroke: #f59e0b; stroke-width: 1.4; }
+.draw-rect.is-selected { fill: rgba(245, 158, 11, 0.18); stroke-width: 2.4; }
+.draw-handle { fill: var(--chart-bg); stroke: #f59e0b; stroke-width: 1.6; }
+.draw-tag rect { fill: #f59e0b; }
+.draw-tag text { fill: #111; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* 비교 겹쳐 보기: 가격 축의 % 태그(배경 = 그 종목 선 색), 머리글 범례, 비교 칩 색 점 */
+.chart-cmp-tag text { fill: #0b1220; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.chart-cmp-legend { font-weight: 700; }
+.compare-chip-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+.chart-compare-mode { align-self: flex-end; }
+.chart-compare-mode button { min-width: 0; padding: 0 10px; font-size: var(--fs-cap); }
+
+/* A/L 모서리 버튼: 보이지 않는 넓은 터치 영역(chart.js 가 폰에서 더 크게 그린다) */
+#priceChart .chart-yscale-btn rect.chart-yscale-pad { fill: transparent; stroke: none; }
+@media (max-width: 768px) {
+  #priceChart .chart-yscale-btn text { font-size: 11px; }
 }

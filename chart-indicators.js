@@ -70,7 +70,19 @@ function smaSeries(values, period) { return MirInd().smaArray(values, period); }
 function emaRaw(values, period) { return MirInd().emaRaw(values, period); }
 function emaArray(values, period) { return MirInd().emaArray(values, period); }
 function bollinger(values, period, mult) { return MirInd().bollinger(values, period, mult); }
-function macdSeries(values) { return MirInd().macdSeries(values); }
+function macdSeries(values, fast, slow, signal) { return MirInd().macdSeries(values, fast, slow, signal); }
+
+// 지표 파라미터(chart-ind-core.js · chartState.indParams). 코어가 없으면 기본값으로 그린다.
+function chartIndP(id) {
+  const core = window.MirChartInd;
+  return core ? core.get(chartState.indParams, id) : {};
+}
+function chartIndLabel(id) {
+  const core = window.MirChartInd;
+  if (!core) return id.replace(/^show/, "");
+  const bench = typeof etfRsSecondaryBenchmarks === "function" ? etfRsSecondaryBenchmarks().map((b) => b[1]) : null;
+  return core.label(chartState.indParams, id, { bench });
+}
 function isSyntheticRows(rows) { return MirInd().isSyntheticRows(rows); }
 function stochArrays(rows, kPeriod, dPeriod) { return MirInd().stochArrays(rows, kPeriod, dPeriod); }
 function vwapArray(rows) { return MirInd().vwapArray(rows); }
@@ -165,9 +177,10 @@ function stockByTicker(ticker) {
 function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW, ctxRows) {
   const volumes = rows.map((row) => row.v || 0);
   // MA20 은 앞쪽 이력까지로 계산해 보이는 구간 왼쪽 19봉이 비지 않게 한다.
+  const maP = chartIndP("showVolMa20").p || 20;
   const ma20 = ctxRows && ctxRows.length >= rows.length
-    ? lastN(smaSeries(ctxRows.map((row) => row.v || 0), 20), rows.length)
-    : smaSeries(volumes, 20);
+    ? lastN(smaSeries(ctxRows.map((row) => row.v || 0), maP), rows.length)
+    : smaSeries(volumes, maP);
   const maxSource = chartState.showVolMa20 ? volumes.concat(ma20.filter((v) => v != null)) : volumes;
   const volMax = Math.max(...maxSource, 1);
   const yFor = (value) => top + height - (value / volMax) * height;
@@ -184,7 +197,7 @@ function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW, ctxRows) {
     <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
     ${bars}
     ${chartState.showVolMa20 ? pathFromSeries(ma20, xFor, yFor, "#facc15", 1.3, "") : ""}
-    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">Volume${chartState.showVolMa20 ? " · MA20" : ""}${ratioLabel}</text>
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">Volume${chartState.showVolMa20 ? ` · MA(${maP})` : ""}${ratioLabel}</text>
   `;
 }
 
@@ -200,40 +213,40 @@ function renderAdPanel(rows, xFor, x1, x2, top, height, visN) {
 }
 
 function renderRocPanel(closes, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "ROC", values: lastN(rocArray(closes, 12), visN), color: "#38bdf8" }], xFor, x1, x2, top, height, "ROC(12)", { zeroLine: true, guides: [0] });
+  return renderLinePanel([{ name: "ROC", values: lastN(rocArray(closes, chartIndP("showRoc").p || 12), visN), color: "#38bdf8" }], xFor, x1, x2, top, height, chartIndLabel("showRoc"), { zeroLine: true, guides: [0] });
 }
 
 function renderMomentumPanel(closes, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "MOM", values: lastN(momentumArray(closes, 10), visN), color: "#f59e0b" }], xFor, x1, x2, top, height, "Momentum(10)", { zeroLine: true, guides: [0] });
+  return renderLinePanel([{ name: "MOM", values: lastN(momentumArray(closes, chartIndP("showMomentum").p || 10), visN), color: "#f59e0b" }], xFor, x1, x2, top, height, chartIndLabel("showMomentum"), { zeroLine: true, guides: [0] });
 }
 
 function renderWilliamsPanel(rows, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "%R", values: lastN(williamsArray(rows, 14), visN), color: "#c084fc" }], xFor, x1, x2, top, height, "Williams %R(14)", { domain: [-100, 0], guides: [-20, -80] });
+  return renderLinePanel([{ name: "%R", values: lastN(williamsArray(rows, chartIndP("showWilliams").p || 14), visN), color: "#c084fc" }], xFor, x1, x2, top, height, chartIndLabel("showWilliams"), { domain: [-100, 0], guides: [-20, -80] });
 }
 
 function renderAtrPanel(rows, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "ATR", values: lastN(atrArray(rows, 14), visN), color: "#fb7185" }], xFor, x1, x2, top, height, "ATR(14)");
+  return renderLinePanel([{ name: "ATR", values: lastN(atrArray(rows, chartIndP("showAtr").p || 14), visN), color: "#fb7185" }], xFor, x1, x2, top, height, chartIndLabel("showAtr"));
 }
 
 function renderAdxPanel(rows, xFor, x1, x2, top, height, visN) {
-  const adx = adxArrays(rows, 14);
+  const adx = adxArrays(rows, chartIndP("showAdx").p || 14);
   return renderLinePanel([
     { name: "ADX", values: lastN(adx.adx, visN), color: "#facc15", width: 1.5 },
     { name: "+DI", values: lastN(adx.plusDi, visN), color: "#22c55e", width: 1.2 },
     { name: "-DI", values: lastN(adx.minusDi, visN), color: "#ef4444", width: 1.2 }
-  ], xFor, x1, x2, top, height, "ADX(14)", { domain: [0, 60], guides: [20, 40] });
+  ], xFor, x1, x2, top, height, chartIndLabel("showAdx"), { domain: [0, 60], guides: [20, 40] });
 }
 
 function renderCciPanel(rows, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "CCI", values: lastN(cciArray(rows, 20), visN), color: "#818cf8" }], xFor, x1, x2, top, height, "CCI(20)", { zeroLine: true, guides: [-100, 0, 100] });
+  return renderLinePanel([{ name: "CCI", values: lastN(cciArray(rows, chartIndP("showCci").p || 20), visN), color: "#818cf8" }], xFor, x1, x2, top, height, chartIndLabel("showCci"), { zeroLine: true, guides: [-100, 0, 100] });
 }
 
 function renderCmfPanel(rows, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "CMF", values: lastN(cmfArray(rows, 20), visN), color: "#2dd4bf" }], xFor, x1, x2, top, height, "CMF(20)", { domain: [-0.35, 0.35], zeroLine: true, guides: [-0.1, 0, 0.1] });
+  return renderLinePanel([{ name: "CMF", values: lastN(cmfArray(rows, chartIndP("showCmf").p || 20), visN), color: "#2dd4bf" }], xFor, x1, x2, top, height, chartIndLabel("showCmf"), { domain: [-0.35, 0.35], zeroLine: true, guides: [-0.1, 0, 0.1] });
 }
 
 function renderMfiPanel(rows, xFor, x1, x2, top, height, visN) {
-  return renderLinePanel([{ name: "MFI", values: lastN(mfiArray(rows, 14), visN), color: "#a78bfa" }], xFor, x1, x2, top, height, "MFI(14)", { domain: [0, 100], guides: [20, 50, 80] });
+  return renderLinePanel([{ name: "MFI", values: lastN(mfiArray(rows, chartIndP("showMfi").p || 14), visN), color: "#a78bfa" }], xFor, x1, x2, top, height, chartIndLabel("showMfi"), { domain: [0, 100], guides: [20, 50, 80] });
 }
 
 function renderTtmSqueezePanel(rows, xFor, x1, x2, top, height, candleW, visN) {
@@ -338,7 +351,8 @@ function requestCompareDetails(item) {
   });
 }
 function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW, visN) {
-  const full = macdSeries(closes);
+  const mp = chartIndP("showMacd");
+  const full = macdSeries(closes, mp.f || 12, mp.s || 26, mp.g || 9);
   const macd = lastN(full.macd, visN);
   const signal = lastN(full.signal, visN);
   const hist = lastN(full.hist, visN);
@@ -358,12 +372,13 @@ function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW, visN) {
     ${bars}
     ${pathFromSeries(macd, xFor, yFor, "#60a5fa", 1.4, "")}
     ${pathFromSeries(signal, xFor, yFor, "#f59e0b", 1.4, "")}
-    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">MACD(12,26,9)</text>
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">${escapeHtml(chartIndLabel("showMacd"))}</text>
   `;
 }
 
 function renderStochPanel(rows, xFor, x1, x2, top, height, visN) {
-  const st = stochArrays(rows, 14, 3);
+  const sp = chartIndP("showStoch");
+  const st = stochArrays(rows, sp.k || 14, sp.d || 3);
   const k = lastN(st.k, visN);
   const d = lastN(st.d, visN);
   const yFor = (v) => top + ((100 - v) / 100) * height;
@@ -373,7 +388,7 @@ function renderStochPanel(rows, xFor, x1, x2, top, height, visN) {
     <line x1="${x1}" y1="${yFor(20)}" x2="${x2}" y2="${yFor(20)}" class="rsi-guide"></line>
     ${pathFromSeries(k, xFor, yFor, "#22d3ee", 1.4, "")}
     ${pathFromSeries(d, xFor, yFor, "#f472b6", 1.4, "")}
-    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">Stoch(14,3)</text>
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">${escapeHtml(chartIndLabel("showStoch"))}</text>
     <text x="${x2 + 44}" y="${yFor(80) + 4}" text-anchor="end" class="chart-axis">80</text>
     <text x="${x2 + 44}" y="${yFor(20) + 4}" text-anchor="end" class="chart-axis">20</text>
   `;
@@ -493,7 +508,7 @@ function chartIndicatorContextRows(allRows) {
 // 확률 패널 숫자는 분석 시점 전체 일봉 기준(srSummary)을 유지한다.
 
 function renderRsiPanel(closes, xFor, x1, x2, top, height, visN) {
-  const values = lastN(rsiSeries(closes, 14), visN);
+  const values = lastN(rsiSeries(closes, chartIndP("showRsi").p || 14), visN);
   const yFor = (value) => top + ((100 - value) / 100) * height;
   const points = values.map((value, index) => Number.isFinite(value) ? [xFor(index), yFor(value)] : null).filter(Boolean);
   const path = points.map(([x, y], index) => `${index ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
@@ -502,27 +517,23 @@ function renderRsiPanel(closes, xFor, x1, x2, top, height, visN) {
     <line x1="${x1}" y1="${yFor(70)}" x2="${x2}" y2="${yFor(70)}" class="rsi-guide"></line>
     <line x1="${x1}" y1="${yFor(30)}" x2="${x2}" y2="${yFor(30)}" class="rsi-guide"></line>
     ${path ? `<path d="${path}" class="rsi-line"></path>` : ""}
-    <text x="${x1 + 4}" y="${top + 14}" class="chart-axis">RSI(14)</text>
+    <text x="${x1 + 4}" y="${top + 14}" class="chart-axis">${escapeHtml(chartIndLabel("showRsi"))}</text>
     <text x="${x2 + 44}" y="${yFor(70) + 4}" text-anchor="end" class="chart-axis">70</text>
     <text x="${x2 + 44}" y="${yFor(30) + 4}" text-anchor="end" class="chart-axis">30</text>
   `;
 }
 
+// 차트 둘째 줄 범례(PNG 저장에도 남는다): 켜진 가격 위 오버레이를 파라미터와 함께("SMA(50)").
 function activeIndicatorLabels(item) {
-  const labels = [
-    chartState.showSma5 ? "SMA5" : "",
-    chartState.showSma10 ? "SMA10" : "",
-    chartState.showSma20 ? "SMA20" : "",
-    chartState.showSma60 ? "SMA60" : "",
-    chartState.showSma120 ? "SMA120" : "",
-    chartState.showEma20 ? "EMA20" : "",
-    chartState.showEma60 ? "EMA60" : "",
-    chartState.showBoll ? "BOLL" : "",
-    chartState.showVwap ? "VWAP" : "",
-    chartState.showSupertrend ? "Supertrend" : "",
-    chartState.showIchimoku ? "Ichimoku" : "",
-    chartState.showKeltner ? "Keltner" : "",
-    chartState.showDonchian ? "Donchian" : "",
+  const ids = [
+    "showSma5", "showSma10", "showSma20", "showSma60", "showSma120", "showEma20", "showEma60",
+    "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian",
+  ];
+  const labels = ids.filter((id) => chartState[id]).map((id) => chartIndLabel(id));
+  const core = window.MirChartInd;
+  const extra = core ? core.sanitizeExtra(chartState.indParams && chartState.indParams.extra) : [];
+  extra.forEach((x) => labels.push(core.extraLabel(x)));
+  [
     chartState.showVolumeProfile ? "VP" : "",
     chartState.showTrendlines ? "Trend" : "",
     chartState.showGapZones ? "Gap" : "",
@@ -530,10 +541,10 @@ function activeIndicatorLabels(item) {
     chartState.showChandelier ? "Chand" : "",
     chartState.showAnchoredVwap ? "AVWAP" : "",
     chartState.showRsSector ? `RS/${sectorBenchmarkTickerForItem(item) || "Sector"}` : ""
-  ].filter(Boolean);
+  ].filter(Boolean).forEach((l) => labels.push(l));
   const visible = labels.slice(0, 9);
   if (labels.length > visible.length) visible.push(`+${labels.length - visible.length}`);
-  return visible.join(" ");
+  return escapeHtml(visible.join(" "));
 }
 
 function pctFrom(now, then) {

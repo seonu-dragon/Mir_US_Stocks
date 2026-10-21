@@ -92,9 +92,15 @@ function isInWatchlist(ticker) {
   return watchlist.includes(normalizeTickerKey(ticker));
 }
 
+function watchStarLabel(ticker) {
+  const s = typeof stockByTicker === "function" ? stockByTicker(ticker) : null;
+  const name = s && typeof stockLabel === "function" ? stockLabel(s) : String(ticker || "");
+  return `${name} 관심종목`;
+}
+
 function watchStarButton(ticker) {
   const on = isInWatchlist(ticker);
-  return `<button type="button" class="watch-star${on ? " is-on" : ""}" data-watch="${escapeHtml(ticker)}" title="관심종목">${on ? "★" : "☆"}</button>`;
+  return `<button type="button" class="watch-star${on ? " is-on" : ""}" data-watch="${escapeHtml(ticker)}" title="관심종목" aria-label="${escapeHtml(watchStarLabel(ticker))}" aria-pressed="${on ? "true" : "false"}">${on ? "★" : "☆"}</button>`;
 }
 
 function toggleWatchlist(ticker) {
@@ -112,6 +118,7 @@ function toggleWatchlist(ticker) {
     const on = isInWatchlist(t);
     btn.classList.toggle("is-on", on);
     btn.textContent = on ? "★" : "☆";
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
   const facts = byId("searchFacts");
   if (facts && selectedTicker === t) {
@@ -237,16 +244,21 @@ function renderWatchlistBar() {
   const items = watchlist.map((t) => stockByTicker(t)).filter(Boolean);
   const up = items.filter((s) => Number(s.changePct) > 0).length;
   if (summary) summary.textContent = `${items.length}개 · 상승 ${items.length ? Math.round((up / items.length) * 100) : 0}%`;
-  chips.innerHTML = items.map((item) => `
-    <button type="button" class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
-      <strong>${escapeHtml(stockLabel(item))}</strong>
-      <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
-      <span class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거">×</span>
-    </button>
-  `).join("");
-  chips.querySelectorAll(".watch-chip").forEach((chip) => {
-    chip.addEventListener("click", (event) => {
-      if (event.target.closest("[data-remove]")) return;
+  // 칩 = 종목 열기 버튼 + 제거 버튼(형제). 예전엔 × 가 버튼 안의 span 이라 키보드로 지울 수 없었다.
+  chips.innerHTML = items.map((item) => {
+    const label = escapeHtml(stockLabel(item));
+    return `
+    <span class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
+      <button type="button" class="watch-chip-open" data-ticker="${escapeHtml(item.ticker)}">
+        <strong>${label}</strong>
+        <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
+      </button>
+      <button type="button" class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거" aria-label="${label} 관심종목에서 제거">×</button>
+    </span>
+  `;
+  }).join("");
+  chips.querySelectorAll(".watch-chip-open").forEach((chip) => {
+    chip.addEventListener("click", () => {
       selectTicker(chip.dataset.ticker, { openSearch: true });
     });
   });

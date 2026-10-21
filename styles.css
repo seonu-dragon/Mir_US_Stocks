@@ -123,6 +123,23 @@
 * {
   box-sizing: border-box;
 }
+
+/* 본문 바로가기: 평소엔 숨기고 키보드 포커스를 받으면 왼쪽 위에 나타난다. */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  z-index: 1000;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.skip-link:focus,
+.skip-link:focus-visible { top: 8px; outline: 2px solid #fff; outline-offset: 2px; }
+#mainContent:focus { outline: none; }
 /* === critical:end === */
 
 /* critical 밖 토큰: 첫 페인트(탑바·탭·요약 띠)에 안 쓰여 인라인 critical CSS 예산(300줄)에서 뺐다.
@@ -5693,6 +5710,18 @@ footer {
   color: var(--text);
   font-size: var(--fs-cap);
   font-weight: 600;
+  cursor: pointer;
+}
+
+.watch-chip-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
 }
 
@@ -12916,6 +12945,10 @@ body.ai-mode-active .cmdk {
 .cmdk-item.is-active { background: rgba(120, 160, 255, 0.14); }
 .cmdk-label { font-size: var(--fs-sub); font-weight: 600; }
 .cmdk-hint { font-size: var(--fs-sub); font-weight: 500; color: var(--muted); white-space: nowrap; }
+.cmdk-meta { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.cmdk-quote { display: inline-flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: var(--fs-sub); }
+.cmdk-quote b { font-weight: 600; }
+.cmdk-quote em { font-style: normal; font-weight: 600; }
 .cmdk-empty { padding: 18px 12px; text-align: center; font-size: var(--fs-sub); }
 .cmdk-foot {
   display: flex;

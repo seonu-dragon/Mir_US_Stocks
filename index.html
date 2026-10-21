@@ -382,6 +382,7 @@ html[data-market="kr"][data-theme="dark"] {
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#mainContent">본문 바로가기</a>
     <header class="topbar ia-topbar">
       <div class="topbar-left ia-topbar-left">
         <div class="brand-lockup" id="brandHome" role="button" tabindex="0" aria-label="맨 위로 이동" title="맨 위로">
@@ -450,7 +451,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </header>
 
-    <main>
+    <main id="mainContent" tabindex="-1">
       <!-- AI 모드 전용 챗 대화방 -->
       <section class="panel" id="tab-ai-chat" hidden>
         <div id="aiCosmos" class="ai-cosmos" aria-hidden="true"></div>
@@ -1773,7 +1774,7 @@ html[data-market="kr"][data-theme="dark"] {
               <option value="96">96</option>
             </select>
           </label>
-          <button type="button" class="ghost" id="topResetFilters">초기화</button>
+          <button type="button" class="ghost" id="topResetFilters" aria-label="찾기 필터 초기화">초기화</button>
         </div>
           </div>
         </details>
@@ -3067,12 +3068,17 @@ html[data-market="kr"][data-theme="dark"] {
               <strong id="journalCount">0건</strong>
             </div>
             <div class="journal-form">
+              <label class="sr-only" for="journalTicker">종목</label>
               <input id="journalTicker" placeholder="티커" autocomplete="off">
               <select id="journalStatus" aria-label="진행 상태"><option value="idea">검토</option><option value="open">보유</option><option value="closed">종료</option></select>
+              <label class="sr-only" for="journalEntry">진입가</label>
               <input id="journalEntry" type="number" min="0" step="any" placeholder="진입가">
+              <label class="sr-only" for="journalTarget">목표가</label>
               <input id="journalTarget" type="number" min="0" step="any" placeholder="목표가">
+              <label class="sr-only" for="journalStop">손절가</label>
               <input id="journalStop" type="number" min="0" step="any" placeholder="손절가">
               <input id="journalDate" type="date" aria-label="기록일">
+              <label class="sr-only" for="journalThesis">메모</label>
               <textarea id="journalThesis" rows="2" placeholder="매수 근거, 촉매, 핵심 리스크를 기록하세요."></textarea>
               <button type="button" id="journalSave">기록 저장</button>
             </div>

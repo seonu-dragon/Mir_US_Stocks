@@ -195,7 +195,8 @@
       const dps = Number(r.dps);
       const parts = [];
       if (Number.isFinite(dps) && dps > 0) parts.push(`주당 배당금 ${fmtNum(dps)}원`);
-      if (Number.isFinite(Number(r.yieldPct))) parts.push(`시가배당률 ${r.yieldPct}%`);
+      // Number(null) 은 0 이라 결측이 "시가배당률 null%" 로 찍혔다.
+      if (r.yieldPct != null && r.yieldPct !== "" && Number.isFinite(Number(r.yieldPct))) parts.push(`시가배당률 ${r.yieldPct}%`);
       const kind = r.divKind || "배당";
       [["recordDate", "배당기준일"], ["payDate", "배당 지급일"]].forEach(([key, label]) => {
         const iso = normIso(r[key]);

@@ -7930,7 +7930,7 @@ function signalCandidates() {
     const hist = Array.isArray(yc.spreadHistory) ? yc.spreadHistory.map((h) => Number(h.v)).filter(Number.isFinite) : [];
     const prev = hist.length >= 2 ? hist[hist.length - 2] : null;
     const d = prev != null ? v - prev : 0;
-    out.push({ key: "yc", label: "10Y − 2Y 스프레드", value: `${v > 0 ? "+" : ""}${v.toFixed(2)}`, unit: "%p", delta: d, deltaText: prev != null ? `${d > 0 ? "+" : ""}${d.toFixed(2)}%p` : "", norm: Math.abs(d) / 0.08, note: v < 0 ? "역전(단기>장기)" : "정상(우상향)", tone: v < 0 ? "neg" : "pos" });
+    out.push({ key: "yc", label: "10Y − 2Y 스프레드", value: `${v > 0 ? "+" : ""}${v.toFixed(2)}`, unit: "%p", delta: d, deltaText: prev != null ? `${d > 0 ? "+" : ""}${d.toFixed(2)}%p` : "", norm: Math.abs(d) / 0.08, note: v < 0 ? "역전(단기>장기)" : "정상(우상향)", tone: d > 0 ? "pos" : d < 0 ? "neg" : "muted" }); // 색은 화살표(전일 대비 방향)를 따른다
   }
   const m = window.MACRO_INDICATORS;
   const macro = (id, label, scale, noteFn) => {

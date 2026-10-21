@@ -55,6 +55,7 @@ function persistWatchlist() {
   // 스냅샷에 없는 티커도 버리지 않는다 — 저장 시점 필터는 시장 전환/스냅샷 누락 때
   // 목록을 조용히 갉아먹는다. 화면에 뿌릴 때만 stockByTicker 로 거른다.
   watchlist = [...new Set(watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))];
+  let changed = true;
   try {
     const key = watchlistStorageKey();
     const prev = window.safeStorage.get(key);
@@ -62,14 +63,17 @@ function persistWatchlist() {
     // 이미 있던 목록이 바뀌었으면 '클라우드에 아직 안 올린 로컬 편집'으로 표시한다. 부팅 때 pull 이
     // 이 편집을 옛 클라우드 사본으로 덮어쓰지 않게(예전엔 공유 링크 병합·직전 편집이 다음 부팅에 사라졌다).
     // 새 기기의 기본 목록(prev 없음)은 표시하지 않는다 — 다른 기기의 클라우드 목록이 이겨야 한다.
-    if (prev != null && prev !== next) window.safeStorage.set(WATCHLIST_DIRTY_KEY, String(Date.now()));
+    changed = prev !== next;
+    if (prev != null && changed) window.safeStorage.set(WATCHLIST_DIRTY_KEY, String(Date.now()));
     window.safeStorage.set(key, next);
   } catch (e) { /* ignore */ }
   const input = byId("bulkInput");
   // 편집창도 표시 규칙을 따른다(국내: 회사명, 미국: 티커). 회사명은 resolveTickerQuery 가
   // 다시 코드로 해석하므로 저장/불러오기 왕복에 문제가 없다. 이름을 모르는 코드는 코드 그대로.
   if (input) input.value = watchlist.map((t) => (typeof stockLabel === "function" ? stockLabel(t) : t)).join(", ");
-  scheduleCloudSyncPush();
+  // 내용이 그대로면 올리지 않는다 — 예전엔 부팅마다(initWatchlist) PUT 을 보내 IP 당 10회/분 한도(429)에
+  // 걸렸고, 정작 사용자의 편집이 그 한도에 막혔다.
+  if (changed) scheduleCloudSyncPush();
 }
 
 let _cloudSyncPushTimer = null;
@@ -815,7 +819,9 @@ async function pullCloudSync() {
       }
     }
     if (prefs.alertSettings && typeof prefs.alertSettings === "object") {
-      saveWatchAlertSettings({ ...watchAlertSettings(), ...prefs.alertSettings });
+      // 받은 값이 지금과 같으면 저장(→ 클라우드 PUT)하지 않는다 — 부팅마다 PUT 이 나가 429 한도를 먹었다.
+      const merged = { ...watchAlertSettings(), ...prefs.alertSettings };
+      if (JSON.stringify(merged) !== JSON.stringify(watchAlertSettings())) saveWatchAlertSettings(merged);
     }
     // 투자 가설: 로컬과 병합(같은 가설은 더 최근 수정본, 삭제 표식은 합집합).
     if (prefs.theses && typeof prefs.theses === "object" && window.MirThesis) {

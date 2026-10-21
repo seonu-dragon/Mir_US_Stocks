@@ -234,11 +234,11 @@ function ktSpark(series) {
 
 // 지도 타일 색 — 상승 빨강·하락 파랑(사이트 공통 --pos/--neg), 진하기는 KT_COLOR_SPAN 대비.
 function ktTileStyle(v) {
-  if (!Number.isFinite(v)) return "background:var(--surface-2)";
+  if (!Number.isFinite(v)) return "background:var(--surface-2);color:var(--text)";
   const span = KT_COLOR_SPAN[KT_VIEW.period] || 3;
   const a = Math.min(1, Math.abs(v) / span);
   const pct = Math.round(12 + a * 70);
-  const ink = pct >= 55 ? "#fff" : "var(--text)";
+  const ink = pct >= 45 ? "#fff" : "var(--text)";
   return `background:color-mix(in srgb, var(${v >= 0 ? "--pos" : "--neg"}) ${pct}%, var(--panel));color:${ink}`;
 }
 

@@ -137,7 +137,7 @@ function renderKrMarketAlerts() {
     ["limitDown", "하한가", "", rowsOf("limitDown"), (r) => `${priceOrDash(r.price)} · ${krAlertPct(r.changePct)}`],
     ["newHigh", "52주 신고가", "장중 고가 기준", rowsOf("newHigh"), (r) => `${priceOrDash(r.price)} · ${krAlertPct(r.changePct)}`],
     ["newLow", "52주 신저가", "장중 저가 기준", rowsOf("newLow"), (r) => `${priceOrDash(r.price)} · ${krAlertPct(r.changePct)}`],
-    ["valueSurge", "거래대금 급증", "20일 평균 대비 배수", rowsOf("valueSurge"), (r) => `${Number(r.ratio).toFixed(1)}배 · ${Number(r.valueEok).toLocaleString()}억 · ${krAlertPct(r.changePct)}`],
+    ["valueSurge", "거래대금 급증", "종가×거래량 · 20일 평균 대비", rowsOf("valueSurge"), (r) => `${Number(r.ratio).toFixed(1)}배 · 추정 ${Number(r.valueEok).toLocaleString()}억 · ${krAlertPct(r.changePct)}`],
   ];
   sections.forEach(([key, title, note, rows, fn]) => {
     if (!S[key]) return; // 수집해 본 적 없는 항목은 카드 자체를 뺀다

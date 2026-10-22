@@ -221,7 +221,44 @@
     };
   }
 
-  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, streakLabel, foreignRetention };
+  // 국내 ETF 구성(KR_ETF_HOLDINGS.etfs: { etf: { name, top:[{t, n, w, m?}] } }) 안에서 이 종목을 담은 ETF 를
+  // 비중 내림차순으로. 해외 종목(m="us")·비중 없는 행은 제외. 각 ETF 의 상위 25 안에 든 경우만 잡힌다.
+  function etfOwners(etfs, ticker, n) {
+    const t = String(ticker || "");
+    if (!etfs || !t) return [];
+    const out = [];
+    Object.keys(etfs).forEach((etf) => {
+      if (etf === t) return;
+      const rec = etfs[etf];
+      const top = rec && Array.isArray(rec.top) ? rec.top : [];
+      const h = top.find((x) => x && x.t === t && x.m !== "us" && finite(x.w) && x.w > 0);
+      if (h) out.push({ etf, name: (rec && rec.name) || etf, w: h.w });
+    });
+    out.sort((a, b) => b.w - a.w || (a.etf < b.etf ? -1 : 1));
+    return finite(n) && n > 0 ? out.slice(0, n) : out;
+  }
+
+  // 지분 공시(KR_OWNERSHIP: majorHolders = 5% 대량보유, insiders = 임원·주요주주) 중 이 종목 행을 최신순으로 합친다.
+  // 각 행에 kind("major"|"insider")를 붙인다. 같은 날짜면 원래 순서를 유지.
+  function ownershipRows(payload, ticker, n) {
+    const t = String(ticker || "");
+    if (!payload || !t) return [];
+    const pick = (list, kind) => (Array.isArray(list) ? list : [])
+      .map((r, i) => ({ r, i, kind }))
+      .filter((x) => x.r && String(x.r.ticker) === t);
+    const rows = pick(payload.majorHolders, "major").concat(pick(payload.insiders, "insider"));
+    rows.sort((a, b) => {
+      const da = String(a.r.fileDate || "");
+      const db = String(b.r.fileDate || "");
+      if (da !== db) return da < db ? 1 : -1;
+      if (a.kind !== b.kind) return a.kind === "major" ? -1 : 1;
+      return a.i - b.i;
+    });
+    const out = rows.map((x) => Object.assign({ kind: x.kind }, x.r));
+    return finite(n) && n > 0 ? out.slice(0, n) : out;
+  }
+
+  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, streakLabel, foreignRetention, etfOwners, ownershipRows };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrFlowCore = api;
 })(typeof window !== "undefined" ? window : null);

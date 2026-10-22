@@ -101,7 +101,7 @@ function renderQuoteInfo(item) {
     qiRow("거래량", volume === null ? "—" : escapeHtml(core.fmtShares(volume)),
       kr && barVolume !== null ? { title: "KRX·NXT 합산(네이버 일별 시세와 같은 기준)" } : undefined),
     kr
-      ? qiRow("거래대금", amount === null ? "—" : escapeHtml(qiMoneyLarge(amount)))
+      ? qiRow("거래대금(누적)", amount === null ? "—" : escapeHtml(qiMoneyLarge(amount)), { title: "네이버 당일 누적 거래대금" })
       : qiRow("거래대금", amount === null ? "—" : `≈ ${escapeHtml(qiMoneyLarge(amount))}`, { title: "종가 × 거래량 근사" }),
   ];
 

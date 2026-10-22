@@ -186,7 +186,7 @@ function krFlowTopTable(list, title) {
     <div class="kf-top-col">
       <h4>${title}</h4>
       <table class="kf-table">
-        <thead><tr><th></th><th>종목</th><th>금액(억)</th><th>등락률</th></tr></thead>
+        <thead><tr><th></th><th>종목</th><th title="순매수 수량 × 그날 종가">추정 금액(억)</th><th>등락률</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>`;
@@ -233,7 +233,7 @@ function krFlowStreakCard(payload) {
     </tr>`).join("");
   const table = rows.length
     ? `<table class="kf-table kf-streak-table">
-        <thead><tr><th></th><th>종목</th><th>연속</th><th>누적 금액(억)</th><th>기간 등락률</th></tr></thead>
+        <thead><tr><th></th><th>종목</th><th>연속</th><th title="순매수 수량 × 그날 종가">누적 추정(억)</th><th>기간 등락률</th></tr></thead>
         <tbody>${body}</tbody>
       </table>`
     : `<p class="muted">조건에 맞는 종목 없음</p>`;
@@ -325,7 +325,7 @@ function krFlowDailyTable(rows) {
   const body = rows.map((r) => `
     <tr>
       <th scope="row">${escapeHtml(krFlowDateShort(r.d))}</th>
-      <td>${r.close == null ? "—" : r.close.toLocaleString()}</td>
+      <td class="kfd-close">${r.close == null ? "—" : r.close.toLocaleString()}</td>
       <td class="${C.tone(r.pct)}">${r.pct == null ? "—" : fmtSignedPct(r.pct, 2)}</td>
       <td class="${C.tone(r.ind)}">${qty(r.ind)}</td>
       <td class="${C.tone(r.frn)}">${qty(r.frn)}</td>
@@ -335,7 +335,7 @@ function krFlowDailyTable(rows) {
   return `
     <div class="krflow-daily-scroll">
       <table class="krflow-table krflow-daily-table">
-        <thead><tr><th>날짜</th><th>종가</th><th>등락</th><th>개인</th><th>외국인</th><th>기관</th><th>외국인 보유율</th></tr></thead>
+        <thead><tr><th>날짜</th><th class="kfd-close">종가</th><th>등락</th><th>개인</th><th>외국인</th><th>기관</th><th><span class="kfd-long">외국인 </span>보유율</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>

@@ -1675,9 +1675,9 @@ function indexLabel(item) {
     if (groups.includes("idx_sp500")) labels.push("S&P 500");
     if (groups.includes("idx_nasdaq")) labels.push("Nasdaq");
     if (groups.includes("idx_nyse")) labels.push("NYSE");
-    if (groups.includes("idx_kospi200")) labels.push("코스피200");
+    if (groups.includes("idx_kospi200")) labels.push("코스피 상위200");
     if (groups.includes("idx_kospi")) labels.push("코스피");
-    if (groups.includes("idx_kosdaq150")) labels.push("코스닥150");
+    if (groups.includes("idx_kosdaq150")) labels.push("코스닥 상위150");
     if (groups.includes("idx_kosdaq")) labels.push("코스닥");
   }
   return labels.slice(0, 2).join(", ") || "-";

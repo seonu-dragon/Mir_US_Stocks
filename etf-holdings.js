@@ -1,4 +1,5 @@
-// etf-holdings.js — 종목 분석의 '구성 종목(SEC 공시)' / '이 종목을 담은 ETF' 카드 (미국 전용)
+// etf-holdings.js — 종목 분석의 '구성 종목' / '이 종목을 담은 ETF' 카드
+// 미국 = SEC N-PORT 샤드, 국내 = data/korea/etf_holdings.js(window.KR_ETF_HOLDINGS, KRX ETF PDF 상위 25, lazy).
 // =====================================================
 // 데이터: data/etf_holdings/index.js(window.US_ETF_HOLDINGS_INDEX, lazy) + 종목을 열 때 샤드 하나만 fetch
 //   - ETF: data/etf_holdings/etf/<T>.json (보유 상위 25·섹터·국가·자산 구성)
@@ -61,7 +62,8 @@ function renderEtfHoldings(item) {
   if (!host) return;
   const hide = () => { host.hidden = true; host.innerHTML = ""; };
   const ticker = item && item.ticker;
-  if (!ticker || isKrMarket() || featureOff("etfHoldings")) return hide();
+  if (!ticker || featureOff("etfHoldings")) return hide();
+  if (isKrMarket()) return renderKrEtfHoldings(item, host, hide);
   const meta = window.US_ETF_HOLDINGS_INDEX;
   if (!meta) {
     hide();
@@ -148,4 +150,85 @@ function etfhOwnersHtml(ticker, rec, meta) {
         <td class="num etfh-col-date">${escapeHtml((etfs[e] && etfs[e].asOf) || "—")}</td>
       </tr>`).join("")}</tbody></table></div>
     <p class="etfh-foot">기준일 ${escapeHtml(range)} · SPY·DIA 는 단위투자신탁이라 보고서가 없어 빠짐 · 현재 비중과 다를 수 있음</p>`;
+}
+
+// ---------------------------------------------------------------- 국내(KRX ETF PDF)
+// 한 파일(107개 ETF × 상위 25)을 통째로 받는다 — 샤드 없음. 비중 없는 해외 바스켓 등(excluded)은 '구성 없음'만 적는다
+// (계약수만으로 비중을 지어내지 않는다). 일반 종목은 이 파일 안에서 거꾸로 찾는다(각 ETF 상위 25 안에 든 경우만).
+function etfhKrCell(t, name) {
+  const row = t && typeof stockByTicker === "function" ? stockByTicker(t) : null;
+  const label = escapeHtml(name || t || "—");
+  if (row) return `<button type="button" class="etfh-link" data-etfh-ticker="${escapeHtml(row.ticker)}"><strong>${label}</strong></button><span class="etfh-sub">${escapeHtml(row.ticker)}</span>`;
+  return `<span class="etfh-plain">${label}</span>`;
+}
+
+function renderKrEtfHoldings(item, host, hide) {
+  const ticker = item.ticker;
+  const db = window.KR_ETF_HOLDINGS;
+  if (!db) {
+    hide();
+    ensureFeatureData("krEtfHoldings").then((ok) => { if (ok && selectedTicker === ticker) renderEtfHoldings(item); });
+    return;
+  }
+  etfhBind(host);
+  const etfs = db.etfs || {};
+  if (isStockEtf(item)) {
+    const rec = etfs[ticker];
+    if (rec && Array.isArray(rec.top) && rec.top.length) {
+      host.hidden = false;
+      host.innerHTML = etfhKrCompositionHtml(ticker, rec, db);
+      return;
+    }
+    const why = db.excluded && db.excluded[ticker];
+    if (!why) return hide();
+    const text = (db.excludedText && db.excludedText[why]) || "";
+    host.hidden = false;
+    host.innerHTML = `<div class="fundamental-head"><h3>구성 종목</h3><span>${escapeHtml(db.asOf || "")}</span></div><p class="muted etfh-note">구성 없음${text ? ` — ${escapeHtml(text)}` : ""}</p>`;
+    return;
+  }
+  const C = window.MirKrFlowCore;
+  const owners = C && typeof C.etfOwners === "function" ? C.etfOwners(etfs, ticker, 10) : [];
+  if (!owners.length) return hide();
+  host.hidden = false;
+  host.innerHTML = etfhKrOwnersHtml(owners, db);
+}
+
+function etfhKrCompositionHtml(ticker, rec, db) {
+  const expanded = !!_etfhExpanded[ticker];
+  const all = rec.top;
+  const rows = all.slice(0, expanded ? 25 : 10);
+  const max = Math.max(...all.map((h) => Number(h.w) || 0), 0);
+  const basis = (db.basisText && db.basisText[rec.weightBasis]) || "";
+  const headSub = [`기준일 ${rec.asOf || db.asOf || "—"}`,
+    Number(rec.holdingsCount) > 0 ? `보유 ${Number(rec.holdingsCount).toLocaleString("ko-KR")}개` : "", basis].filter(Boolean).join(" · ");
+  const table = `<div class="table-wrap"><table class="etfh-table">
+    <thead><tr><th class="etfh-rank">#</th><th>종목</th><th class="num">비중</th></tr></thead>
+    <tbody>${rows.map((h, i) => `<tr>
+      <td class="etfh-rank">${i + 1}</td>
+      <td class="etfh-name">${etfhKrCell(h.m === "us" ? "" : h.t, h.n)}</td>
+      <td class="num"><span class="etfh-w">${etfhPct(h.w)}</span>${etfhBar(h.w, max)}</td>
+    </tr>`).join("")}</tbody></table></div>
+    ${all.length > 10 ? `<button type="button" class="ghost compact-btn etfh-more" data-etfh-more="${escapeHtml(ticker)}">${expanded ? "10개만 보기" : `상위 ${Math.min(25, all.length)}개 모두 보기`}</button>` : ""}`;
+  const sectors = (rec.sectors || []).slice(0, 11);
+  const unm = Number(rec.sectorUnmapped) || 0;
+  const smax = Math.max(...sectors.map((s) => Number(s[1]) || 0), unm, 0);
+  const sectorHtml = sectors.length ? `<div class="etfh-block"><h4>섹터 노출</h4><ul class="etfh-bars">
+    ${sectors.map(([s, w]) => `<li><span class="etfh-bl">${escapeHtml(etfhSectorLabel(s))}</span>${etfhBar(w, smax)}<span class="etfh-bv">${etfhPct(w, 1)}</span></li>`).join("")}
+    ${unm >= 0.5 ? `<li class="is-muted"><span class="etfh-bl">미분류</span>${etfhBar(unm, smax)}<span class="etfh-bv">${etfhPct(unm, 1)}</span></li>` : ""}
+  </ul></div>` : "";
+  return `<div class="fundamental-head"><h3>구성 종목</h3><span>${escapeHtml(headSub)}</span></div>
+    <div class="etfh-grid"><div class="etfh-main">${table}</div><div class="etfh-side">${sectorHtml}</div></div>
+    <p class="etfh-foot">수집 ${escapeHtml(db.updatedAtKst || "—")}</p>`;
+}
+
+function etfhKrOwnersHtml(owners, db) {
+  const max = Math.max(...owners.map((o) => Number(o.w) || 0), 0);
+  return `<div class="fundamental-head"><h3>이 종목을 담은 ETF</h3><span>비중 상위 ${owners.length}개 · ETF ${Number(db.count || 0)}개 중 · 기준일 ${escapeHtml(db.asOf || "—")}</span></div>
+    <div class="table-wrap"><table class="etfh-table">
+      <thead><tr><th>ETF</th><th class="num">이 종목 비중</th></tr></thead>
+      <tbody>${owners.map((o) => `<tr>
+        <td class="etfh-name">${etfhKrCell(o.etf, o.name)}</td>
+        <td class="num"><span class="etfh-w">${etfhPct(o.w)}</span>${etfhBar(o.w, max)}</td>
+      </tr>`).join("")}</tbody></table></div>
+    <p class="etfh-foot">수집 ${escapeHtml(db.updatedAtKst || "—")}</p>`;
 }

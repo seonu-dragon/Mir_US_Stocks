@@ -1224,10 +1224,16 @@ function applyHeatmapRoute(route) {
   const metric = route.get("map_metric");
   const tile = route.get("map_tile");
   const q = route.get("map_q");
-  if (bucket && byId("bucketFilter")) byId("bucketFilter").value = bucket;
-  if (sector && byId("sectorFilter")) byId("sectorFilter").value = sector;
-  if (metric && byId("metricFilter")) byId("metricFilter").value = metric;
-  if (tile && byId("tileSizeFilter")) byId("tileSizeFilter").value = tile;
+  // 이 시장 목록에 없는 값(국내 모드로 연 미국 링크의 map_bucket=idx_sp500 등)은 무시한다 —
+  // 그대로 넣으면 select 가 빈 값이 돼 지도가 비었다.
+  const setIfOption = (id, value) => {
+    const el = byId(id);
+    if (value && el && [...el.options].some((o) => o.value === value)) el.value = value;
+  };
+  setIfOption("bucketFilter", bucket);
+  setIfOption("sectorFilter", sector);
+  setIfOption("metricFilter", metric);
+  setIfOption("tileSizeFilter", tile);
   if (q != null && byId("heatmapSearch")) byId("heatmapSearch").value = q;
 }
 

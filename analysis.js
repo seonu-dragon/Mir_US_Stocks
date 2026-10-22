@@ -2082,9 +2082,11 @@ function computeConsensusBundle(clean, horizon, meta) {
     });
   }
 
-  const shortData = (!isKrAnalysisMode() && meta.ticker) ? getShortInterest(meta.ticker) : null;
+  // 국내도 공매도 잔고(KRX 잔고비중, metric="balance")를 붙인다 — 다만 커버일수(Days to Cover)가 없어
+  // 신호 투표·스퀴즈 판정은 하지 않고 renderKrShortBalanceCard 의 사실 표시만 한다.
+  const shortData = meta.ticker ? getShortInterest(meta.ticker) : null;
   let shortSqueeze = null;
-  if (shortData && shortData.daysToCover != null) {
+  if (!isKrAnalysisMode() && shortData && shortData.daysToCover != null) {
     const dtc = shortData.daysToCover;
     const bullPat = (pat.confluence && pat.confluence.bull > pat.confluence.bear) || false;
     if (dtc >= 5) {
@@ -2765,6 +2767,7 @@ function buildResultHTML(result) {
         ${renderGapFillCard(result)}
         ${renderOptionsContextCard(result)}
         ${renderInstitutionalFlowCard(result)}
+        ${renderKrShortBalanceCard(result)}
         ${renderTechnicalLevelsCard(result)}
       </div>
     </div>
@@ -3176,6 +3179,25 @@ function renderInstitutionalFlowCard(result) {
   return `<div class="card inst-flow-card" data-inst-flow="${escapeHtml(f.ticker)}">
     <h3>기관 · 내부자 수급</h3>
     <div class="inst-flow-body">${instFlowInnerHtml(f.ticker)}</div>
+  </div>`;
+}
+
+// 국내 공매도 잔고 — KRX 잔고비중(잔고 ÷ 상장주식수, T+2) 사실 표시. US 식 커버일수·스퀴즈 문구는 쓰지 않는다.
+function renderKrShortBalanceCard(result) {
+  if (!isKrAnalysisMode()) return "";
+  const s = result.shortData;
+  const ratio = s ? Number(s.balanceRatio) : NaN;
+  if (!Number.isFinite(ratio)) return "";
+  const chg = s.changePct == null ? NaN : Number(s.changePct);
+  const trade = s.tradingRatio == null ? NaN : Number(s.tradingRatio);
+  const hist = Array.isArray(s.history) ? s.history.filter((h) => h && Number.isFinite(Number(h.r))) : [];
+  const md = (d) => (/^\d{4}$/.test(String(d)) ? `${String(d).slice(0, 2)}.${String(d).slice(2)}` : "");
+  const trend = hist.length >= 2 ? `${md(hist[0].d)} ${Number(hist[0].r).toFixed(2)}% → ${md(hist[hist.length - 1].d)} ${Number(hist[hist.length - 1].r).toFixed(2)}%` : "";
+  const date = String(s.settlementDate || "").slice(5).replace("-", ".");
+  return `<div class="card kr-short-card">
+    <h3>공매도 잔고${date ? ` <span class="muted">${escapeHtml(date)} 기준</span>` : ""}</h3>
+    <p class="base-line">잔고비중 <b>${ratio.toFixed(2)}%</b>${Number.isFinite(chg) ? ` <span class="muted">잔고 전기 대비 ${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%</span>` : ""}${Number.isFinite(trade) ? ` · 거래비중 <b>${trade.toFixed(1)}%</b>` : ""}</p>
+    ${trend ? `<p class="muted" style="margin:0;font-size:12px;">${escapeHtml(trend)}</p>` : ""}
   </div>`;
 }
 

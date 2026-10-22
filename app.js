@@ -3889,7 +3889,8 @@ function renderStockFlowPanel(item) {
   const el = byId("stockFlowPanel");
   if (!el) return;
   const foreign = typeof krForeignRetentionCard === "function" ? krForeignRetentionCard(item) : "";
-  const html = item ? [krFlowCard(item), foreign, krGroupCard(item), krNpsCard(item)].join("").trim() : "";
+  const own = typeof krOwnershipCard === "function" ? krOwnershipCard(item) : "";
+  const html = item ? [krFlowCard(item), foreign, own, krGroupCard(item), krNpsCard(item)].join("").trim() : "";
   // 일별 보기(<details>)를 열어 둔 채 늦은 데이터로 다시 그리면 접히지 않게 상태를 옮긴다.
   const wasOpen = !!el.querySelector("details[open]");
   el.innerHTML = html ? `<h3 class="sd-card-title">수급 · 보유</h3>${html}` : "";
@@ -3900,7 +3901,7 @@ function renderStockFlowPanel(item) {
 function renderStockConsensus(item) {
   const el = byId("stockConsensus");
   if (!el) return;
-  const html = item ? krConsensusCard(item).trim() : "";
+  const html = item ? krConsensusCard(item, { uncoveredLine: !item.__liveStub }).trim() : "";
   el.innerHTML = html;
   el.hidden = !html;
 }

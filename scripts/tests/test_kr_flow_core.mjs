@@ -169,6 +169,36 @@ test("foreignRetention: 점이 적거나 배열이 없으면 null(패널 숨김)
   assert.equal(core.foreignRetention([1, 2], cs, 2).pts.length, 2);
 });
 
+test("etfOwners: 비중 내림차순 · 해외(m=us)·비중 없음·자기 자신 제외 · n 제한", () => {
+  const etfs = {
+    "069500": { name: "KODEX 200", top: [{ t: "005930", w: 33.8 }, { t: "000660", w: 24.3 }] },
+    "102110": { name: "TIGER 200", top: [{ t: "005930", w: 34.1 }] },
+    "360750": { name: "TIGER 미국S&P500", top: [{ t: "005930", w: 9, m: "us" }] },
+    "111111": { name: "무비중", top: [{ t: "005930", w: null }] },
+    "005930": { name: "자기", top: [{ t: "005930", w: 100 }] },
+    "222222": { name: "빈", top: [] },
+  };
+  assert.deepEqual(core.etfOwners(etfs, "005930"), [
+    { etf: "102110", name: "TIGER 200", w: 34.1 },
+    { etf: "069500", name: "KODEX 200", w: 33.8 },
+  ]);
+  assert.equal(core.etfOwners(etfs, "005930", 1).length, 1);
+  assert.deepEqual(core.etfOwners(etfs, "999999"), []);
+  assert.deepEqual(core.etfOwners(null, "005930"), []);
+});
+
+test("ownershipRows: 이 종목만 · 최신순 · 같은 날은 5%룰 먼저 · kind 표시", () => {
+  const payload = {
+    majorHolders: [{ ticker: "005930", fileDate: "2026-10-20", filer: "A" }, { ticker: "000660", fileDate: "2026-10-22", filer: "X" }],
+    insiders: [{ ticker: "005930", fileDate: "2026-10-22", filer: "B" }, { ticker: "005930", fileDate: "2026-10-20", filer: "C" }],
+  };
+  const rows = core.ownershipRows(payload, "005930");
+  assert.deepEqual(rows.map((r) => `${r.kind}:${r.filer}`), ["insider:B", "major:A", "insider:C"]);
+  assert.equal(core.ownershipRows(payload, "005930", 2).length, 2);
+  assert.deepEqual(core.ownershipRows(payload, "035420"), []);
+  assert.deepEqual(core.ownershipRows(null, "005930"), []);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

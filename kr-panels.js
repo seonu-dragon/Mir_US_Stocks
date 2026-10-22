@@ -116,12 +116,17 @@ function krOpinionLabel(score) {
 // 중앙값 +67.6%). 그래서 '상승여력' 을 초록색 매수 신호로 칠하지 않고 중립 톤 참고
 // 수치로만 두고, 추정기관수(estimateCount)와 최근 리포트일(lastReportDate)을 눈에 잘
 // 띄게 올려 1개 기관의 낡은 목표가가 '강한 컨센서스' 로 오인되지 않게 한다.
-// KR_CONSENSUS 는 466종목만 커버 — 없는 종목은 카드를 통째로 숨긴다(빈 껍데기 금지).
-function krConsensusCard(item) {
+// KR_CONSENSUS 는 일부 종목만 커버(2026-10-22: 800종목 중 529). 없는 종목은 지도 탭(stockFacts)에선 숨기고,
+// 종목 상세(opts.uncoveredLine)에선 '컨센서스 커버 밖' 한 줄만 남긴다 — 카드가 말없이 사라지면 데이터가 늦은 건지
+// 원래 없는 건지 구분이 안 된다. ETF 는 컨센서스 대상이 아니라 그냥 뺀다.
+function krConsensusCard(item, opts = {}) {
   const book = window.KR_CONSENSUS?.stocks;
   if (!book || !isKrMarket()) return "";
   const c = book[item?.ticker];
-  if (!c) return "";
+  if (!c) {
+    if (!opts.uncoveredLine || !item?.ticker || isStockEtf(item)) return "";
+    return `<div class="krflow-card krcons-none"><div class="krflow-head"><b>애널리스트 컨센서스</b><span class="muted">컨센서스 커버 밖</span></div></div>`;
+  }
   const cfg = marketCfg();
 
   const tp = Number(c.targetPrice);
@@ -246,6 +251,44 @@ function krNpsCard(item) {
     <div class="krflow-card">
       <div style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline"><strong>국민연금 보유</strong><span class="muted" style="font-size:var(--fs-cap)">기준 ${escapeHtml(nps.asOf || "")}</span></div>
       <table class="krflow-table"><tbody>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>
+    </div>`;
+}
+
+// 지분 공시 카드(종목 분석 › 수급·보유). 소유구조(KR_OWNERSHIP_PROFILE, 사업보고서) 한 줄 + 최근 지분공시
+// (KR_OWNERSHIP, 5% 대량보유·임원 소유, 최근 windowDays 일) 최대 5건. 둘 다 없으면 카드를 그리지 않는다.
+function krOwnershipCard(item) {
+  if (!isKrMarket() || featureOff("krOwnership") || !item?.ticker || isStockEtf(item)) return "";
+  const C = window.MirKrFlowCore;
+  const prof = window.KR_OWNERSHIP_PROFILE?.profiles?.[item.ticker] || null;
+  const own = window.KR_OWNERSHIP;
+  const rows = C && typeof C.ownershipRows === "function" ? C.ownershipRows(own, item.ticker, 5) : [];
+  const pct = (v) => (Number.isFinite(Number(v)) && v !== null ? `${Number(v).toFixed(2)}%` : "");
+  const profRows = [];
+  if (prof) {
+    if (prof.topHolder || pct(prof.ownerStakePct)) profRows.push(["최대주주", [escapeHtml(prof.topHolder || ""), pct(prof.ownerStakePct)].filter(Boolean).join(" · ")]);
+    if (pct(prof.freeFloatPct)) profRows.push(["유통물량", pct(prof.freeFloatPct)]);
+    if (Number(prof.treasuryShares) > 0) profRows.push(["자기주식", `${krOwnNum(prof.treasuryShares)}주`]);
+  }
+  if (!profRows.length && !rows.length) return "";
+  const year = window.KR_OWNERSHIP_PROFILE?.year;
+  const list = rows.map((r) => {
+    const delta = (v, suffix, digits) => (Number.isFinite(v) && v !== 0 ? ` ${krOwnDelta(v, suffix, digits)}` : "");
+    const what = r.kind === "major"
+      ? `5% 보유 ${krOwnNum(r.ratio, 2)}%${delta(r.ratioChange, "%p", 2)}`
+      : `${escapeHtml(r.position && r.position !== "-" ? r.position : (r.holderType || "임원·주요주주"))}${delta(r.sharesChange, "주", 0)}`;
+    const who = r.link ? `<a href="${escapeHtml(krPanelHref(r.link))}" target="_blank" rel="noopener">${escapeHtml(r.filer || "-")}</a>` : escapeHtml(r.filer || "-");
+    return `<li style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;padding:3px 0;font-variant-numeric:tabular-nums">
+        <span class="muted" style="font-size:var(--fs-cap)">${escapeHtml(String(r.fileDate || "").slice(5))}</span>
+        <span style="font-weight:500">${who}</span>
+        <span>${what}</span>
+      </li>`;
+  }).join("");
+  return `
+    <div class="krflow-card kr-own-card">
+      <div class="krflow-head"><b>지분 공시</b>${year && profRows.length ? `<span class="muted">${escapeHtml(String(year))} 사업보고서</span>` : ""}</div>
+      ${profRows.length ? `<table class="krflow-table"><tbody>${profRows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>` : ""}
+      ${rows.length ? `<div class="muted" style="margin:8px 0 2px;font-size:var(--fs-cap)">최근 ${Number(own?.windowDays) || 7}일 지분공시</div>
+      <ul style="list-style:none;margin:0;padding:0;font-size:var(--fs-label)">${list}</ul>` : ""}
     </div>`;
 }
 

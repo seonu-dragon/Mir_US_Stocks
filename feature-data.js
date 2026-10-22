@@ -202,6 +202,8 @@ const FEATURE_DATA = {
   // 다크풀(ATS) 주간 거래 비중(FINRA, build_finra_ats.py, 종목당 8주). 수급·보유 탭을 열 때만(ats.js).
   finraAts: { global: "FINRA_ATS", path: "data/finra_ats.js", feature: "finraAts", usOnly: true, lazy: true },
   // 시장 폭 추이(build_market_breadth.py, 종목별 실측 일봉 집계 ~33KB). 시장 탭 › 시장 폭을 그릴 때만(breadth-history.js).
+  // 옵션 포지션(build_options_flow.py, 감마 노출·이상 거래 ~80종목). 수급·보유 탭·시그널 위젯에서만(options-flow.js).
+  optionsFlow: { global: "OPTIONS_FLOW", path: "data/options_flow.js", feature: "optionsFlow", usOnly: true, lazy: true },
   // 은행 건전성(FDIC 콜 리포트, build_fdic_banks.py, 은행 28곳 × 12분기 ~25KB). 은행주를 열 때만(fdic-banks.js).
   fdicBanks: { global: "FDIC_BANKS", path: "data/fdic_banks.js", feature: "fdicBanks", usOnly: true, lazy: true },
   marketBreadth: { global: "MARKET_BREADTH", path: "data/market_breadth.js", feature: "marketBreadth", marketSpecific: true, lazy: true },
@@ -462,6 +464,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderInstHolders === "function") renderInstHolders(item); },
           () => { if (typeof renderAtsCard === "function") renderAtsCard(item); },
           () => { if (typeof renderBankHealth === "function") renderBankHealth(item); },
+          () => { if (typeof renderOptionsFlowCard === "function") renderOptionsFlowCard(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).

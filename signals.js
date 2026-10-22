@@ -856,6 +856,7 @@ function renderSignals() {
   renderTreasuryAuctions();
   renderCotPositioning();
   if (typeof renderVixTerm === "function") renderVixTerm();
+  if (typeof renderUoaWidget === "function") renderUoaWidget();
   if (typeof renderRatingChanges === "function") renderRatingChanges();
   if (typeof renderEstimateRevisions === "function") renderEstimateRevisions();
   renderWikiAttention();

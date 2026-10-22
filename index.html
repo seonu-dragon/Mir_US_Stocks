@@ -370,11 +370,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=8c3fc19274" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=8c3fc19274"></noscript>
+    <link rel="preload" href="styles.css?v=9aa853b2de" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=9aa853b2de"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=89a0717e96"></script>
+    <script src="build_id.js?v=30e7768f03"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1241,6 +1241,10 @@ html[data-market="kr"][data-theme="dark"] {
             <summary>VIX 기간구조</summary>
             <div id="vixTerm"></div>
           </details>
+          <details class="ia-fold ia-widget-fold" id="fold-optionsUoa">
+            <summary>이상 옵션 거래 (미국)</summary>
+            <div id="optionsUoa"></div>
+          </details>
           <details class="ia-fold ia-widget-fold" id="fold-ratingChanges">
             <summary>애널리스트 의견 변경 (미국)</summary>
             <div id="ratingChanges"></div>
@@ -1581,6 +1585,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="ih-card animate-reveal" id="instHoldersCard" hidden></section>
               <!-- 다크풀(ATS) 주간 거래 비중(ats.js renderAtsCard) — US 전용, FINRA 주간 ATS 체결 ÷ 그 주 거래량 -->
               <section class="ih-card animate-reveal" id="atsCard" hidden></section>
+              <!-- 옵션 포지션(options-flow.js renderOptionsFlowCard) — US 전용, 행사가별 감마 노출(추정)·이상 거래 -->
+              <section class="ih-card of-card animate-reveal" id="optionsFlowCard" hidden></section>
               <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
             </div>
             <div class="sd-view" id="sdv-ai" data-view="ai" role="tabpanel">
@@ -3403,7 +3409,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=ee43bf8c08"></script>
+    <script src="feature-data.js?v=d96e3d792b"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3434,7 +3440,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=a0c51be370"></script>
-    <script src="signals.js?v=46a6740199"></script>
+    <script src="signals.js?v=14bccc7efe"></script>
     <script src="macro-odds.js?v=62883cf258"></script>
     <script src="vix-term-core.js"></script>
     <script src="vix-term.js"></script>
@@ -3486,7 +3492,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="daily-table.js?v=0f27127020"></script>
     <script src="seasonality-core.js?v=aba17c25f3"></script>
     <script src="seasonality.js?v=fee2629b20"></script>
-    <script src="stock-view.js?v=b2052294b4"></script>
+    <script src="stock-view.js?v=d88a11be8d"></script>
     <script src="subscribe-feeds.js?v=c5e0fba053"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=4e82c9ca6c"></script>
@@ -3506,7 +3512,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=aa21ba9e7e"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=048e7ee334"></script>
+    <script src="app.js?v=f1d49ed2e3"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="ats-core.js"></script>
@@ -3515,6 +3521,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="breadth-history.js"></script>
     <script src="fdic-banks-core.js"></script>
     <script src="fdic-banks.js"></script>
+    <script src="options-flow-core.js"></script>
+    <script src="options-flow.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=bf49f004ba"></script>

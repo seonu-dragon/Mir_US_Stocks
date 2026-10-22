@@ -5330,6 +5330,7 @@ function renderSearch(options = {}) {
   if (typeof renderInstHolders === "function") renderInstHolders(item);
   if (typeof renderAtsCard === "function") renderAtsCard(item);
   if (typeof renderBankHealth === "function") renderBankHealth(item);
+  if (typeof renderOptionsFlowCard === "function") renderOptionsFlowCard(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderStockTimeline === "function") renderStockTimeline(item);
@@ -6994,6 +6995,7 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
   },
+  "옵션 포지션(GEX·이상 거래)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_options_flow.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 옵션 포지션 / 시장 탭 · 시그널 · 이상 옵션 거래" },
   "은행 건전성(FDIC)": { us: { workflow: "Weekly earnings history refresh", script: "scripts/build_fdic_banks.py" }, tabs: "종목 탭 · 분석 · 재무 · 은행 건전성(은행주만)" },
   "시장 폭 추이": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_market_breadth.py --market us" },
@@ -7119,6 +7121,8 @@ function dataTrustSources() {
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
   // 다크풀(ATS) 주간 비중(2026-10-22) — FINRA 주 1회 공개(화·금 수집). 주말·공개 지연을 넘겨도 8일이면 넉넉하다. lazy.
   // 은행 건전성(2026-10-22) — FDIC 분기 자료를 매주 다시 받는다(파일 시각은 매주 갱신). lazy·은행주만.
+  // 옵션 포지션(2026-10-22) — 미국 장 마감 뒤 매일. 주말·연휴를 넘겨도 4일. lazy.
+  if (cfg.id === "us" && cfg.features?.optionsFlow !== false) rows.push(source("옵션 포지션(GEX·이상 거래)", "Yahoo Finance 옵션 체인", window.OPTIONS_FLOW, ["tickers"], 24 * 4, "매일", "optionsFlow"));
   if (cfg.id === "us" && cfg.features?.fdicBanks !== false) rows.push(source("은행 건전성(FDIC)", "FDIC BankFind 콜 리포트", window.FDIC_BANKS, ["banks"], 24 * 9, "매주", "fdicBanks"));
   // 시장 폭 추이(2026-10-22) — 스냅샷 직후 매일. 주말·연휴를 넘겨도 4일이면 넉넉하다. lazy.
   if (cfg.features?.marketBreadth !== false) rows.push(source("시장 폭 추이", "종목별 일봉 집계(자체 계산)", window.MARKET_BREADTH, ["rows"], 24 * 4, "매일", "marketBreadth"));

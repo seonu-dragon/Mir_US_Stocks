@@ -162,6 +162,74 @@ def growth_stats(vals: dict[int, float], last_year: int) -> dict | None:
             "lastCut": last_cut, "specials": 0}
 
 
+def parse_alot_pref(rows: list[dict], report_year: int) -> dict[int, float | None]:
+    """alotMatter 응답 행 → {사업연도: 우선주 주당 현금배당금(원) | None(모름)}.
+
+    '우선주' 행이 하나일 때만 쓴다(둘 이상이면 어느 종류인지 몰라 빈 결과). 옛 보고서(stock_knd '-')는 이름 없는
+    둘째 행이 우선주다. 배당금 칸이 '-' 인데 같은 해 보통주는 배당했다면 0 이 아니라 모름(None) — LG화학처럼
+    우선주 칸을 비워 두는 회사가 있다(2026-10-22 확인). 보통주도 무배당인 해의 '-' 는 0.
+    """
+    common_rows, pref_rows = [], []
+    for r in rows or []:
+        se = re.sub(r"\s+", "", str(r.get("se") or ""))
+        if not se.startswith("주당현금배당금"):
+            continue
+        knd = str(r.get("stock_knd") or "").strip()
+        cols = (r.get("thstrm"), r.get("frmtrm"), r.get("lwfr"))
+        (pref_rows if "우선" in knd else common_rows).append((knd, cols))
+    if not pref_rows and len(common_rows) == 2 and all(k in ("", "-") for k, _ in common_rows):
+        pref_rows = [common_rows.pop()]
+    if len(pref_rows) != 1 or not common_rows:
+        return {}
+    common = next((c for k, c in common_rows if k == "보통주"), common_rows[0][1])
+    out = {}
+    for i, v in enumerate(pref_rows[0][1]):
+        n = _num(v)
+        if n is None:
+            n = 0.0 if not (_num(common[i]) or 0) > 0 else None
+        out[report_year - i] = n
+    return out
+
+
+def pref_tickers(snapshot: dict, corp_map: dict, pref_rows: list[tuple[str, str]]) -> dict[str, tuple[str, str]]:
+    """보통주 티커 → (우선주 티커, 우선주 이름). 사이트 국내 유니버스는 우선주를 빼므로(update_korea_data
+    is_korean_preferred_stock) 우선주 목록은 네이버 상장 목록(pref_rows)에서 받는다. 보통주 = 앞 다섯 자리 + '0'.
+    DART 우선주 행이 하나라 회사마다 하나만 고른다: '…5'(이름 = 보통주 이름 + '우')가 있으면 그것, 없으면 그 회사
+    우선주가 하나뿐일 때 그것(현대차는 우·2우B 둘이라 '현대차우'만)."""
+    names = {str(s.get("ticker") or "").zfill(6): str(s.get("company") or "") for s in snapshot.get("stocks") or []}
+    by_common: dict[str, list[tuple[str, str]]] = {}
+    for pt, pname in pref_rows or []:
+        pt = str(pt or "").zfill(6)
+        c = pt[:5] + "0"
+        cname = names.get(c)
+        if c in corp_map and cname and str(pname).startswith(cname) and "우" in str(pname)[len(cname):]:
+            by_common.setdefault(c, []).append((pt, str(pname)))
+    out = {}
+    for c, prefs in by_common.items():
+        first = [x for x in prefs if x[0].endswith("5") and x[1] == names[c] + "우"]
+        pick = first[0] if first else (prefs[0] if len(prefs) == 1 else None)
+        if pick:
+            out[c] = pick
+    return out
+
+
+def fetch_pref_rows() -> list[tuple[str, str]]:
+    """네이버 시가총액 목록(코스피·코스닥)에서 우선주 (티커, 이름). 약 10초. 실패하면 빈 목록."""
+    from update_korea_data import fetch_market_page, is_korean_preferred_stock
+    out = []
+    for sosok in (0, 1):
+        for page in range(1, 60):
+            try:
+                rows = fetch_market_page(sosok, page)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  [warn] 우선주 목록 sosok={sosok} page={page}: {exc}")
+                return out
+            if not rows:
+                break
+            out += [(r["symbol"], r["company"]) for r in rows if is_korean_preferred_stock(r["symbol"], r["company"])]
+    return out
+
+
 def next_report(entry: dict, last_year: int) -> int | None:
     """이 회사에 더 불러야 할 사업보고서 연도(없으면 None = 계획 완료)."""
     fetched = set(int(y) for y in entry.get("fetched") or [])
@@ -206,11 +274,26 @@ def universe(snapshot: dict, corp_map: dict) -> list[tuple[str, str]]:
     return out
 
 
-def run(pairs, cache: dict, last_year: int, fetch, max_calls: int, budget=None) -> tuple[int, str]:
-    """계획이 남은 회사를 시총순으로 돌며 보고서를 받아 cache 에 쌓는다. (호출 수, 멈춘 이유)."""
+def run(pairs, cache: dict, last_year: int, fetch, max_calls: int, budget=None, pref_corps=frozenset()) -> tuple[int, str]:
+    """계획이 남은 회사를 시총순으로 돌며 보고서를 받아 cache 에 쌓는다. (호출 수, 멈춘 이유).
+    pref_corps(우선주가 상장된 회사)는 받은 보고서의 우선주 값도 entry['pref'] 에 둔다 — 우선주를 읽기 전(2026-10-22 이전)에
+    받은 보고서는 prefFetched 에 없어 한 번 더 받는다."""
     calls = 0
     for _, corp in pairs:
         entry = cache.setdefault(corp, {"years": {}, "fetched": []})
+        if corp in pref_corps:
+            for r in sorted(set(entry.get("fetched") or []) - set(entry.get("prefFetched") or []), reverse=True):
+                if calls >= max_calls:
+                    return calls, f"호출 상한 {max_calls}회"
+                if budget and budget.over():
+                    return calls, budget.reason
+                calls += 1
+                rows = fetch(corp, r)
+                if rows is None:
+                    break
+                for y, v in parse_alot_pref(rows, r).items():
+                    entry.setdefault("pref", {}).setdefault(str(y), v)
+                entry["prefFetched"] = sorted(set(entry.get("prefFetched") or []) | {r})
         while True:
             r = next_report(entry, last_year)
             if r is None:
@@ -226,7 +309,36 @@ def run(pairs, cache: dict, last_year: int, fetch, max_calls: int, budget=None) 
             for y, v in parse_alot(rows, r).items():
                 entry["years"].setdefault(str(y), v)   # 겹치는 연도는 먼저 받은 값을 둔다(보고서 간격 3년이라 보통 안 겹침)
             entry["fetched"] = sorted(set(entry["fetched"]) | {r})
+            if corp in pref_corps:
+                for y, v in parse_alot_pref(rows, r).items():
+                    entry.setdefault("pref", {}).setdefault(str(y), v)
+                entry["prefFetched"] = sorted(set(entry.get("prefFetched") or []) | {r})
     return calls, ""
+
+
+def pref_years(entry: dict) -> dict:
+    """우선주 {연도: [배당, 액면(보통주와 같음)]} — 모르는 해(None)는 뺀다(연속 기록이 거기서 끊긴다)."""
+    years = entry.get("years") or {}
+    return {y: [v, (years.get(y) or [None, None])[1]] for y, v in (entry.get("pref") or {}).items() if v is not None}
+
+
+def build_pref(pairs, cache: dict, last_year: int, prefs: dict, prev_pref: dict) -> dict:
+    """보통주 티커 → {t: 우선주 티커, name, v: [COLS…]}. 우선주 값을 다 못 받은 회사는 직전 값을 쓴다."""
+    out = {}
+    corp_of = dict(pairs)
+    for ct, (pt, pname) in prefs.items():
+        entry = cache.get(corp_of.get(ct) or "")
+        if not entry or next_report(entry, last_year) is not None or set(entry.get("fetched") or []) - set(entry.get("prefFetched") or []):
+            if ct in prev_pref:
+                out[ct] = prev_pref[ct]
+            continue
+        py = pref_years(entry)
+        if str(last_year) not in py:      # 마지막 해 우선주 배당을 모르면 내지 않는다
+            continue
+        st = growth_stats(adjusted_values(py, last_year), last_year)
+        if st and st["paid"]:
+            out[ct] = {"t": pt, "name": pname, "v": [st[c] for c in COLS]}
+    return out
 
 
 def build_payload(pairs, cache: dict, last_year: int, prev_tickers: dict) -> tuple[dict, int, int]:
@@ -282,6 +394,8 @@ def main() -> int:
         print("[error] corpCode.xml 수집 실패 — 기존 파일 유지", file=sys.stderr)
         return 1
     pairs = universe(snapshot, corp_map)
+    prefs = pref_tickers(snapshot, corp_map, fetch_pref_rows())
+    pref_corps = frozenset(corp_map[c] for c in prefs)
     errors = {"n": 0}
 
     def fetch(corp, year):
@@ -303,11 +417,12 @@ def main() -> int:
     budget = StepBudget(args.minutes)
     stopped = ""
     try:
-        calls, stopped = run(pairs, cache, last_year, fetch, args.max_calls, budget)
+        calls, stopped = run(pairs, cache, last_year, fetch, args.max_calls, budget, pref_corps)
     except SystemExit as exc:          # DART 020(한도 초과) — 여기까지 받은 캐시는 유효하니 저장한다
         calls, stopped = -1, str(exc)
     tickers, carried, pending = build_payload(pairs, cache, last_year, prev.get("tickers") or {})
-    print(f"배당 성장(국내): 대상 {len(pairs)}종목 · 호출 {calls if calls >= 0 else '?'}회 · 오류 {errors['n']} · "
+    pref_out = build_pref(pairs, cache, last_year, prefs, prev.get("pref") or {}) if prefs else (prev.get("pref") or {})
+    print(f"배당 성장(국내): 대상 {len(pairs)}종목 + 우선주 {len(prefs)}(이력 {len(pref_out)}) · 호출 {calls if calls >= 0 else '?'}회 · 오류 {errors['n']} · "
           f"계획 남음 {pending}(직전 값 이월 {carried}) · 배당 이력 {len(tickers)}종목"
           + (f" · 중단: {stopped}" if stopped else ""))
     payload = {
@@ -319,6 +434,8 @@ def main() -> int:
         "pending": pending,
         "cols": COLS,
         "tickers": dict(sorted(tickers.items())),
+        # 보통주 티커 → 우선주 배당 성장(사이트 유니버스엔 우선주가 없어 보통주 화면에 함께 보인다)
+        "pref": dict(sorted(pref_out.items())),
     }
     with repository_publish_lock(ROOT):
         # 캐시는 결과와 따로 먼저 쓴다 — 결과가 회귀 가드에 막혀도 받은 DART 값은 다음 실행이 쓴다.

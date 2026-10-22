@@ -51,7 +51,15 @@
     return parts.join(" · ");
   }
 
-  const api = { COLS, record, streakText, paidText, cagrText, sortValue, subText };
+  // 국내 우선주 — 사이트 유니버스엔 우선주가 없어 보통주 티커로 묶어 둔다(payload.pref[보통주] = {t, name, v: [COLS…]}).
+  function prefRecord(payload, ticker) {
+    const p = payload && payload.pref && payload.pref[ticker];
+    if (!p || !Array.isArray(p.v)) return null;
+    const rec = record({ tickers: { [ticker]: p.v }, cols: payload.cols, lastYear: payload.lastYear }, ticker);
+    return rec ? { ...rec, ticker: p.t || null, name: p.name || "" } : null;
+  }
+
+  const api = { COLS, record, prefRecord, streakText, paidText, cagrText, sortValue, subText };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDivGrowthCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

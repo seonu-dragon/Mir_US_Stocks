@@ -107,7 +107,7 @@ function shrDpsTable(years, cur, withPayout) {
   return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
-function shrKpis(s, cur, growth) {
+function shrKpis(s, cur, growth, pref) {
   const tiles = [];
   tiles.push(["배당 주기", s.frequency.label, s.lastDividend ? `최근 배당락 ${s.lastDividend.date}` : ""]);
   tiles.push(["최근 1년 주당배당금", s.trailing.count ? shrPerShare(s.trailing.sum, cur) : "—", s.trailing.count ? `${s.trailing.count}회 · 배당락일 기준` : "최근 1년 기록 없음"]);
@@ -119,6 +119,11 @@ function shrKpis(s, cur, growth) {
   if (growth && dg) {
     tiles.push(["연속 배당 증가", dg.streakText(growth), dg.subText(growth)]);
     tiles.push(["연속 배당 지급", dg.paidText(growth), growth.cagr10 != null ? `10년 연평균 ${dg.cagrText(growth.cagr10)}` : ""]);
+  }
+  // 국내 우선주(보통주 화면에 함께) — 최근 사업연도 주당배당금 · 연속 지급 · 연속 증가.
+  if (pref && dg) {
+    tiles.push([`우선주 배당 · ${pref.name || pref.ticker}`, Number.isFinite(pref.last) ? shrPerShare(pref.last, cur) : "—",
+      [pref.lastYear ? `${pref.lastYear}년` : "", `연속 지급 ${dg.paidText(pref)}`, `연속 증가 ${dg.streakText(pref)}`].filter(Boolean).join(" · ")]);
   }
   return `<dl class="shr-kpis${tiles.length > 4 ? " shr-kpis-6" : ""}">${tiles.map(([k, v, sub]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>${sub ? `<dd class="shr-kpi-sub">${escapeHtml(sub)}</dd>` : ""}</div>`).join("")}</dl>`;
 }
@@ -229,6 +234,8 @@ function renderShareholder(item) {
   if (feats.dividendGrowth !== false && !window.DIVIDEND_GROWTH) shrEnsure("dividendGrowth");
   const growth = feats.dividendGrowth !== false && window.DIVIDEND_GROWTH && window.MirDivGrowthCore
     ? window.MirDivGrowthCore.record(window.DIVIDEND_GROWTH, ticker) : null;
+  const pref = kr && feats.dividendGrowth !== false && window.DIVIDEND_GROWTH && window.MirDivGrowthCore
+    ? window.MirDivGrowthCore.prefRecord(window.DIVIDEND_GROWTH, ticker) : null;
 
   const hasBuyback = !!(share || (recent && recent.rows.length) || hist || us8k.length);
   // 상세 파일이 아직 없으면(배당 기록을 모름) 기다린다 — 빈 카드를 먼저 띄우지 않는다.
@@ -236,7 +243,7 @@ function renderShareholder(item) {
   if (!s.hasDividends && !hasBuyback) { shrHide(host); return; }
 
   const width = shrWidth(host);
-  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth]);
+  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth, pref]);
   shrBind(host);
   if (sig === shrSig && !host.hidden && host.firstElementChild) return;
   shrSig = sig;
@@ -290,6 +297,6 @@ function renderShareholder(item) {
       </div>
       <button type="button" class="shr-rank-link" data-shr-rank>배당 랭킹 보기 <span aria-hidden="true">›</span></button>
     </div>
-    ${s.hasDividends ? shrKpis(s, cur, growth) : `<p class="mf-note">최근 ${s.coverageStart ? `${s.coverageStart} 이후` : ""} 배당 기록이 없습니다.</p>`}
+    ${s.hasDividends ? shrKpis(s, cur, growth, pref) : `<p class="mf-note">최근 ${s.coverageStart ? `${s.coverageStart} 이후` : ""} 배당 기록이 없습니다.</p>`}
     ${mirChartGrid(cards)}`;
 }

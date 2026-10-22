@@ -55,13 +55,13 @@ jobs:
       - name: Record job start
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
           # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -136,11 +136,11 @@ jobs:
       - name: Record job start
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -160,7 +160,7 @@ jobs:
       # corpCode 지도(outputs/_cache, 7일 캐시)를 run 사이에 이어 쓴다 — DART 가 corpCode.xml 을 못 줄 때
       # load_corp_map 이 만료된 캐시로라도 진행한다(빈 지도면 5개 빌더가 전부 멈춘다).
       - name: Restore DART corpCode cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: outputs/_cache
           key: dart-corpcode-${{ github.run_id }}
@@ -271,11 +271,11 @@ jobs:
       - name: Record job start
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -325,11 +325,11 @@ jobs:
       - name: Record job start
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -373,17 +373,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main          # github.sha 가 아니라 두 잡이 push 한 뒤의 main
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Data freshness gate
-        run: python -u scripts/check_data_freshness.py --group weekly
+        # 이번 run 에서 건너뛴 잡(kr-dart 재시도 슬롯·손 실행)의 파일은 보지 않는다 — 안 돈 잡 탓에 매번 빨갛던 것.
+        shell: bash
+        env:
+          R_US: ${{ needs.us-and-public.result }}
+          R_KR: ${{ needs.kr-dart.result }}
+          R_SEG: ${{ needs.segments.result }}
+          R_RISK: ${{ needs.risk-factors.result }}
+        run: |
+          SKIP=""
+          [ "$R_US" = "skipped" ] && SKIP="$SKIP,us-and-public"
+          [ "$R_KR" = "skipped" ] && SKIP="$SKIP,kr-dart"
+          [ "$R_SEG" = "skipped" ] && SKIP="$SKIP,segments"
+          [ "$R_RISK" = "skipped" ] && SKIP="$SKIP,risk-factors"
+          python -u scripts/check_data_freshness.py --group weekly --skip-jobs "$SKIP"
 
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도 Actions 탭을 안 보면 모른다.
       - name: Notify failure (Telegram)
@@ -413,11 +426,11 @@ jobs:
       - name: Record job start
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -427,7 +440,7 @@ jobs:
         run: pip install -r scripts/requirements-actions.txt
 
       # 재무 위험 점검 집계(build_risk_check.mjs)용
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "20"
 

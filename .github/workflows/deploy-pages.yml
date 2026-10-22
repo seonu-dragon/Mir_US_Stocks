@@ -90,7 +90,7 @@ jobs:
       # #353 의 push 배포(15:25Z)가 그보다 새 #354 수동 배포(15:20Z)를 덮었다. 다른 이벤트는 그대로
       # (workflow_run·workflow_dispatch 의 github.sha 는 이미 실행 시점의 브랜치 최신이다).
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'push' && github.ref || '' }}
 
@@ -155,7 +155,7 @@ jobs:
 
       - name: Configure Pages
         if: steps.gate.outputs.deploy != 'false'
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       # ── 종목 상세를 Cloudflare R2 로(기능 플래그, 기본 꺼짐) ─────────────────────────────
       # data/details·data/korea/details 가 아티팩트의 80%다(CLAUDE.md '알려진 부채'). 리포 변수
@@ -358,7 +358,7 @@ jobs:
       # 레포의 HTML 은 그대로(로컬은 빌드 없이 서브). 자세한 건 scripts/build_bundle.mjs 머리말.
       - name: Setup Node (bundle)
         if: steps.gate.outputs.deploy != 'false'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
       - name: Bundle page scripts (esbuild minify)
@@ -370,7 +370,7 @@ jobs:
 
       - name: Upload site artifact
         if: steps.gate.outputs.deploy != 'false'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           # 스테이징 사본 = 서빙 내용. 체크아웃 루트가 아니라 _site 만 올린다.
           path: '_site'
@@ -378,7 +378,7 @@ jobs:
       - name: Deploy to GitHub Pages
         if: steps.gate.outputs.deploy != 'false'
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

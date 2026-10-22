@@ -69,8 +69,11 @@ def build() -> dict | None:
     for cfg in SERIES:
         try:
             rows = fetch_series(cfg["id"], start)
-        except Exception:
+        except Exception as e:  # noqa: BLE001
+            print(f"  [macro] {cfg['id']} 실패({type(e).__name__}: {e})")
             continue
+        if len(rows) < 2:
+            print(f"  [macro] {cfg['id']} CSV 행 없음 — FRED 가 다른 응답을 줬다")
         if len(rows) < 2:
             continue
         scale = cfg.get("scale", 1)
@@ -105,6 +108,17 @@ def build() -> dict | None:
     return sec.merge_previous_keyed_rows(payload, OUT_JSON, "macro", "indicators", "id")
 
 
+def previous_age_hours() -> float | None:
+    """직전 macro_indicators.json 의 updatedAtKst 로부터 지난 시간. 없거나 못 읽으면 None."""
+    try:
+        stamp = json.loads(OUT_JSON.read_text(encoding="utf-8"))["updatedAtKst"][:16]
+        kst = timezone(timedelta(hours=9))
+        prev = datetime.strptime(stamp, "%Y-%m-%d %H:%M").replace(tzinfo=kst)
+        return (datetime.now(kst) - prev).total_seconds() / 3600
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def main() -> int:
     if sys.platform == "win32":
         try:
@@ -118,6 +132,12 @@ def main() -> int:
         print(f"[macro] 수집 실패({type(e).__name__}: {e}) — 기존 파일 유지")
         return 1
     if not payload:
+        # GitHub 러너에서 FRED 가 몇 회씩 CSV 를 안 주는 날이 있다(2026-10-21 연속 2회). 직전 파일이 사흘 안이면
+        # 경고만 — 그보다 오래 막히면 실패(신선도 관문 168시간이 최종 안전판).
+        age = previous_age_hours()
+        if age is not None and age < 72:
+            print(f"[macro] 유효 데이터 없음 — 기존 파일 유지(직전 {age:.0f}시간 전, 72시간 안이라 경고만)")
+            return 0
         print("[macro] 유효 데이터 없음 — 기존 파일 유지")
         return 1
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

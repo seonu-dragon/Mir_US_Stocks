@@ -34,10 +34,10 @@ jobs:
     timeout-minutes: 30
     steps:
       # 상세 일봉(data/details·data/korea/details)을 전수로 보므로 전체 체크아웃(이력은 1커밋).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       # exchange_calendars: 주말·휴장 차감용 XNYS·XKRX 달력. requests·python-dotenv: 기존 텔레그램 헬퍼.

@@ -461,14 +461,37 @@ def file_date(payload: dict) -> str | None:
     return None
 
 
+# weekly 그룹 파일 → 그 파일을 만드는 weekly-earnings-history.yml 잡. kr-dart 재시도 슬롯(일요일 12:02)이나
+# 손 실행처럼 일부 잡만 돈 run 에서 weekly-gate 가 안 돈 잡의 파일까지 보고 빨갛게 되던 것(10-14~21 매번)을 막는다.
+# weekly-gate 가 건너뛴 잡을 --skip-jobs 로 넘긴다. 여기 없는 파일은 늘 본다.
+WEEKLY_JOB_OF = {
+    "data/earnings_history_meta.json": "us-and-public",
+    "data/korea/nps_holdings.json": "us-and-public",
+    "data/korea/corp_groups.json": "us-and-public",
+    "data/us_financials_history.json": "us-and-public",
+    "data/korea/earnings.json": "kr-dart",
+    "data/korea/indicators.json": "kr-dart",
+    "data/korea/ownership_profile.json": "kr-dart",
+    "data/korea/audit_opinion.json": "kr-dart",
+    "data/korea/financials_history.json": "kr-dart",
+    "data/segments_index.json": "segments",
+    "data/risk_factors/index.json": "risk-factors",
+}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="데이터 신선도 감시")
     ap.add_argument("--group", choices=sorted(CHECKS), required=True)
+    ap.add_argument("--skip-jobs", default="", help="weekly 그룹에서 이번 run 에 안 돈 잡(쉼표 구분)")
     args = ap.parse_args()
+    skip_jobs = {j.strip() for j in args.skip_jobs.split(",") if j.strip()}
 
     today = datetime.now(KST).date()
     problems = []
     for rel, max_age, require_rows in CHECKS[args.group]:
+        if args.group == "weekly" and WEEKLY_JOB_OF.get(rel) in skip_jobs:
+            print(f"SKIP {rel}: 이번 run 에서 {WEEKLY_JOB_OF[rel]} 잡이 안 돌았다")
+            continue
         path = ROOT / rel
         if not path.exists():
             problems.append(f"{rel}: 파일 없음")

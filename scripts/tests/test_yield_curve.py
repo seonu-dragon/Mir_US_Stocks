@@ -28,3 +28,14 @@ def test_missing_column_becomes_fred_missing_marker():
 def test_empty_or_header_only_is_noop():
     assert y.treasury_rows_as_fred(HEADER, [], "2026-09-29") == []
     assert y.treasury_rows_as_fred(HEADER, TREASURY[:1], "2026-09-29") == []
+
+
+def test_fred_html_response_falls_back_to_treasury_only(monkeypatch):
+    """FRED 가 CSV 대신 HTML(점검 페이지, 2026-10-21~22)을 주면 재무부 고시만으로 곡선을 만든다."""
+    monkeypatch.setattr(y, "fetch_csv", lambda url: [["<!doctype html>"], ["<html>"]])
+    full = [["Date", '"1 Mo"', '"3 Mo"', '"6 Mo"', '"1 Yr"', '"2 Yr"', '"10 Yr"']]
+    monkeypatch.setattr(y, "fetch_treasury", lambda year: full + [["09/30/%d" % year, "4.0", "4.2", "4.3", "4.5", "4.9", "5.3"]])
+    p = y.build()
+    assert p["source"].startswith("Treasury.gov")
+    assert p["spreads"]["t10y2y"] == 0.4 and len(p["curve"]) == 6
+    assert [h["d"][:4] for h in p["spreadHistory"]] == sorted(h["d"][:4] for h in p["spreadHistory"])

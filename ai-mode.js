@@ -808,7 +808,9 @@ async function ensureAiWidgetStock(ticker) {
     // 뒤쪽 패널(컨센서스·목표주가·옵션·연방계약·FINRA·배당/실적 예정일)이 쓰는 지연 데이터도 기다린다 —
     // 두 번째 paint 전에 도착하지 않으면 그 패널이 통째로 빠졌다(390px 에서 컨센서스 패널이 안 뜨던 경합).
     ...["inst13f", "insider", "short", "congress", "activist", "events",
-      "analystConsensus", "usPriceTargets", "optionsStats", "federalContracts", "finraShort", "usCalendar"].map((key) =>
+      "analystConsensus", "usPriceTargets", "optionsStats", "federalContracts", "finraShort", "usCalendar",
+      // 국내 전용(미국 모드에선 featureDataEnabled 가 즉시 false) — 대시보드 카드 목표주가 행.
+      "krConsensus", "krTargetChanges"].map((key) =>
       (typeof ensureFeatureData === "function" ? ensureFeatureData(key) : Promise.resolve(false)).catch(() => false)),
   ]);
 
@@ -984,16 +986,21 @@ function aiTechnicalPanel(item) {
 
 function aiFundamentalPanel(item) {
   const f = normalizedFundamentalsForItem(item);
-  return aiModePanel("밸류에이션", "재무·가치", aiMetricGrid([
+  const rows = [
     { label: "시가총액", value: fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB) },
-    { label: f.peLabel || "PER", value: fmtMultiple(f.pe) },
-    { label: "Forward PER", value: fmtMultiple(f.forwardPE) },
-    { label: "P/S", value: fmtMultiple(f.ps) },
-    { label: "EPS Next Y", value: moneyOrDash(f.epsNextY) },
-    { label: "매출", value: fmtFinancialB(f.salesB) },
-    { label: "순이익", value: fmtFinancialB(f.incomeB) },
-    { label: "ROE", value: fmtPercent(f.roe) },
-  ]));
+    { label: f.peLabel || "PER", value: fmtMultiple(f.pe), raw: f.pe },
+    { label: "Forward PER", value: fmtMultiple(f.forwardPE), raw: f.forwardPE },
+    { label: "P/S", value: fmtMultiple(f.ps), raw: f.ps },
+    { label: "EPS Next Y", value: moneyOrDash(f.epsNextY), raw: f.epsNextY },
+    { label: "매출", value: fmtFinancialB(f.salesB), raw: f.salesB },
+    { label: "순이익", value: fmtFinancialB(f.incomeB), raw: f.incomeB },
+    { label: "ROE", value: fmtPercent(f.roe), raw: f.roe },
+  ];
+  // 국내는 선행 추정치(Forward PER·EPS Next Y) 원천이 없다 — '—' 칸 대신 뺀다.
+  const has = (v) => v != null && v !== "" && Number.isFinite(Number(v));
+  return aiModePanel("밸류에이션", "재무·가치", aiMetricGrid(isKrMarket()
+    ? rows.filter((r) => !("raw" in r) || has(r.raw))
+    : rows));
 }
 
 // 뉴스 링크는 외부(워커 프록시 → 야후/구글뉴스)에서 온 문자열이다. javascript: · data:
@@ -1750,20 +1757,43 @@ function aiDashCardHtml(item) {
   const chgCls = chg > 0 ? "pos" : chg < 0 ? "neg" : "muted";
   const secKo = item.sector ? (SECTOR_KO[item.sector] || item.sector) : "";
   const stat = (label, val) => `<div class="ai-dash-stat"><span>${escapeHtml(label)}</span><b>${val}</b></div>`;
-  // 목표주가 + 상승 여력
+  // 국내는 13F·Forward PER 등 원천이 없는 칸이 많다 — '—' 로 채운 빈 칸 대신 행을 뺀다.
+  const kr = isKrMarket();
+  const has = (v) => v != null && v !== "" && Number.isFinite(Number(v));
+  const optStat = (label, raw, val) => (kr && !has(raw) ? "" : stat(label, val));
+  // 목표주가 + 괴리율. 괴리율은 실제 주가 움직임이 아니라 등락 색을 쓰지 않는다(중립 톤).
+  // US = 펀더멘털 평균 목표가. KR = 컨센서스(KR_CONSENSUS) → 없으면 최근 30일 증권사 목표가 변경
+  // (KR_TARGET_CHANGES) 중 가장 최근 리포트. 둘 다 없으면 행을 숨긴다.
   const price = Number(item.price) || Number(f.prevClose);
-  const tgt = Number(f.targetPrice);
-  let targetVal = "—";
-  if (Number.isFinite(tgt)) {
-    const up = (Number.isFinite(price) && price) ? (tgt - price) / price * 100 : null;
-    targetVal = `${priceOrDash(tgt)}${up != null ? ` <em class="${up >= 0 ? "pos" : "neg"}">${fmtPct(up)}</em>` : ""}`;
+  let tgt = Number(f.targetPrice);
+  let tgtWho = "";
+  if (kr && !has(f.targetPrice)) {
+    tgt = NaN;
+    const c = window.KR_CONSENSUS?.stocks?.[item.ticker];
+    if (c && Number(c.targetPrice) > 0) tgt = Number(c.targetPrice);
+    else {
+      const ch = ((window.KR_TARGET_CHANGES || {}).changes || [])
+        .filter((r) => String(r.code) === String(item.ticker) && Number(r.target) > 0)
+        .sort((x, y) => String(y.date || "").localeCompare(String(x.date || "")))[0];
+      if (ch) { tgt = Number(ch.target); tgtWho = String(ch.broker || ""); }
+    }
   }
-  // 기관 보유(13F)
-  let instVal = "—";
-  try {
-    const g = (typeof inst13fIndex === "function") ? inst13fIndex()[item.ticker] : null;
-    if (g && g.holders) instVal = `${g.holders}곳${g.valueM ? " · " + fmtBillions(g.valueM / 1000) : ""}`;
-  } catch (_) {}
+  let targetVal = "—";
+  if (Number.isFinite(tgt) && tgt > 0) {
+    const up = (Number.isFinite(price) && price) ? (tgt - price) / price * 100 : null;
+    targetVal = `${priceOrDash(tgt)}${up != null ? ` <em class="muted">${fmtPct(up)}</em>` : ""}${tgtWho ? ` <em class="muted">${escapeHtml(tgtWho)}</em>` : ""}`;
+  }
+  const targetStat = kr && targetVal === "—" ? "" : stat("목표주가", targetVal);
+  // 기관 보유(13F) — 미국 SEC 데이터라 국내는 행 자체를 뺀다.
+  let instStat = "";
+  if (!kr) {
+    let instVal = "—";
+    try {
+      const g = (typeof inst13fIndex === "function") ? inst13fIndex()[item.ticker] : null;
+      if (g && g.holders) instVal = `${g.holders}곳${g.valueM ? " · " + fmtBillions(g.valueM / 1000) : ""}`;
+    } catch (_) {}
+    instStat = stat("기관 보유(13F)", instVal);
+  }
   return `
     <div class="ai-dash-card-head">
       <div class="ai-dash-idname">
@@ -1777,13 +1807,13 @@ function aiDashCardHtml(item) {
     </div>
     <div class="ai-dash-stats">
       ${stat("시가총액", fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB))}
-      ${stat("목표주가", targetVal)}
-      ${stat(f.peLabel || "PER", fmtMultiple(f.pe))}
-      ${stat("Fwd PER", fmtMultiple(f.forwardPE))}
+      ${targetStat}
+      ${optStat(f.peLabel || "PER", f.pe, fmtMultiple(f.pe))}
+      ${optStat("Fwd PER", f.forwardPE, fmtMultiple(f.forwardPE))}
       ${stat("RSI", fmtRsi(item))}
-      ${stat("기관 보유(13F)", instVal)}
-      ${stat("52주 고", priceOrDash(f.week52High))}
-      ${stat("52주 저", priceOrDash(f.week52Low))}
+      ${instStat}
+      ${optStat("52주 고", f.week52High, priceOrDash(f.week52High))}
+      ${optStat("52주 저", f.week52Low, priceOrDash(f.week52Low))}
     </div>`;
 }
 
@@ -1845,24 +1875,22 @@ function aiVerdictPanel(item) {
     else if (insSell > insBuy * 2) sig.push({ s: -1, k: "risk", t: `내부자 순매도 (매도 ${insSell}건)` });
   }
 
-  const total = sig.reduce((a, x) => a + x.s, 0);
   const strengths = sig.filter((x) => x.k === "strength").sort((a, b) => b.s - a.s);
   const risks = sig.filter((x) => x.k === "risk").sort((a, b) => a.s - b.s);
 
   // 사이트 정책: 매수/매도/목표가 추천 금지 — 방향 판정 대신 신호 관찰 요약만 보여준다.
-  let verdict, vcls;
-  if (total >= 3.5) { verdict = "긍정 신호 뚜렷"; vcls = "buy"; }
-  else if (total >= 1.5) { verdict = "긍정 신호 우세"; vcls = "buy"; }
-  else if (total > -1.5) { verdict = "중립 · 혼조"; vcls = "hold"; }
-  else if (total > -3.5) { verdict = "부정 신호 우세"; vcls = "sell"; }
-  else { verdict = "부정 신호 뚜렷"; vcls = "sell"; }
-
-  const absSum = sig.reduce((a, x) => a + Math.abs(x.s), 0) || 1;
-  const agree = Math.abs(total) / absSum;
-  const conf = sig.length ? Math.round(Math.min(94, 42 + sig.length * 7 + agree * 22)) : 30;
+  // 예전엔 가중합으로 '긍정 신호 뚜렷' 배지(buy/sell 색)와 '신호 합의도 N%'(42 + 신호수×7 + 합치도×22,
+  // 상한 94)를 그렸다 — 확률처럼 읽히는 지어낸 수치였다. 지금은 실제로 잡힌 신호의 방향별 개수만 센다.
+  const neutrals = sig.filter((x) => x.k === "neutral");
+  const nUp = strengths.length, nDown = risks.length, nDir = nUp + nDown;
+  const nSame = Math.max(nUp, nDown);
+  const tally = !nDir ? "방향성 신호 없음"
+    : nUp === nDown ? `신호 ${nDir}개 · 방향 엇갈림`
+    : `신호 ${nDir}개 중 ${nSame}개가 같은 방향`;
 
   const name = item.company || item.ticker;
-  const dir = vcls === "buy" ? "긍정 신호가 우세합니다" : vcls === "sell" ? "부정 신호가 우세합니다" : "신호가 엇갈려 뚜렷한 방향성이 약합니다";
+  const dir = !nDir ? "방향을 가를 만한 신호가 잡히지 않았습니다"
+    : nUp > nDown ? "긍정 신호가 더 많습니다" : nDown > nUp ? "부정 신호가 더 많습니다" : "신호가 엇갈려 뚜렷한 방향성이 약합니다";
   const comment = `${escapeHtml(name)}은(는) 현재 ${dir}.` +
     (strengths[0] ? ` 눈에 띄는 신호는 ${escapeHtml(strengths[0].t)}` + (risks[0] ? `이며, 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : `입니다.`) : (risks[0] ? ` 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : ""));
 
@@ -1871,13 +1899,9 @@ function aiVerdictPanel(item) {
   return `
     <div class="ai-verdict-head">
       <h4 class="ai-dash-h">AI 의견</h4>
-      <span class="ai-verdict-badge ai-verdict-${vcls}">${verdict}</span>
+      <span class="ai-verdict-badge ai-verdict-tally">${tally}</span>
     </div>
-    <div class="ai-verdict-conf">
-      <span>신호 합의도</span>
-      <div class="ai-verdict-gauge"><i class="ai-verdict-${vcls}" style="width:${conf}%"></i></div>
-      <b>${conf}%</b>
-    </div>
+    ${nDir ? `<div class="ai-verdict-split">긍정 ${nUp} · 부정 ${nDown}</div>` : ""}
     <p class="ai-verdict-comment">${comment}</p>
     <div class="ai-verdict-cols">
       <div class="ai-verdict-pts">
@@ -1885,7 +1909,7 @@ function aiVerdictPanel(item) {
         <ul>${li(strengths, "특이 긍정 신호 없음")}</ul>
       </div>
       <div class="ai-verdict-pts">
-        <span class="ai-verdict-pts-h down">리스크</span>
+        <span class="ai-verdict-pts-h">리스크</span>
         <ul>${li(risks, "특이 리스크 신호 없음")}</ul>
       </div>
     </div>

@@ -125,6 +125,18 @@
     });
   }
 
+  // 공시 표(내부자·13D/G) 검색. 검색어가 표에 있는 티커와 정확히 같으면 그 티커 행만(종목 상세에서 'AAPL' 로
+  // 넘어왔을 때 회사명·인물에 'aapl' 이 든 다른 행이 섞이지 않게, 'F'·'MU' 같은 짧은 티커도), 아니면 fields 부분 일치.
+  function filterByQuery(rows, q, fields) {
+    const list = Array.isArray(rows) ? rows : [];
+    const needle = String(q || "").trim().toLowerCase();
+    if (!needle) return list;
+    const tick = (r) => String((r && r.ticker) || "").trim().toLowerCase();
+    if (list.some((r) => tick(r) === needle)) return list.filter((r) => tick(r) === needle);
+    const keys = Array.isArray(fields) && fields.length ? fields : ["ticker"];
+    return list.filter((r) => r && keys.some((k) => String(r[k] || "").toLowerCase().includes(needle)));
+  }
+
   function countForm144(rows) {
     const out = { all: 0, sold: 0, pending: 0, unknown: 0 };
     for (const r of Array.isArray(rows) ? rows : []) {
@@ -143,6 +155,7 @@
     form144Line,
     filterForm144,
     countForm144,
+    filterByQuery,
     usdShort,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

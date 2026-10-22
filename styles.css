@@ -8336,6 +8336,10 @@ button.community-hot-ticker {
 .sm-row strong.ins-buy { color: var(--pos); }
 .sm-row strong.ins-sell { color: var(--neg); }
 .sm-note { font-size: var(--fs-sub); color: var(--text-muted); margin: 8px 0 0; }
+/* 스마트머니 줄 → 공시 탭 전체 표(app.js renderSmartMoney) */
+button.sm-row.sm-go { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; font-family: inherit; font-size: var(--fs-sub); text-align: left; cursor: pointer; color: inherit; }
+button.sm-row.sm-go strong::after { content: " ›"; color: var(--text-muted); }
+button.sm-row.sm-go:hover strong, button.sm-row.sm-go:focus-visible strong { text-decoration: underline; }
 
 /* 52주 레인지 바 (#8) */
 .range52-card:empty { display: none; }
@@ -14994,7 +14998,8 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; --red: var(--b
 .sd-flow { padding: 16px; }
 .sd-flow .krflow-card { margin: 0; padding: 12px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
 .sd-flow .krflow-card:first-of-type { border-top: 0; }
-#stockSmartMoney { padding: 16px; }
+#stockSmartMoney, #stockShortInterest { padding: 16px; }
+#stockShortInterest .sm-row:last-child { border-bottom: 0; }
 
 /* 개요 탭의 AI 진단 한 줄 */
 .sd-ai-teaser {

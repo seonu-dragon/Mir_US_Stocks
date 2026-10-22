@@ -137,7 +137,7 @@ function sdEnsureFlowData() {
     if (row && typeof renderAtsCard === "function") renderAtsCard(row);
     if (row && typeof renderOptionsFlowCard === "function") renderOptionsFlowCard(row);
   }
-  const keys = ["insider", "congress", "inst13f", "activist"];
+  const keys = ["insider", "congress", "inst13f", "activist", "short"];
   if (keys.every((k) => window[(FEATURE_DATA[k] || {}).global])) return; // 이미 있음(ensureFeatureData 도 중복 요청은 안 한다)
   Promise.all(keys.map((k) => ensureFeatureData(k).catch(() => false)))
     .then(() => { if (typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); });

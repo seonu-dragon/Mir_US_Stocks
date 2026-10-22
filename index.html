@@ -1587,6 +1587,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="detail-panel sd-flow animate-reveal" id="stockFlowPanel" hidden></section>
               <!-- 스마트머니 종합(app.js renderSmartMoney) — US 전용 -->
               <section class="smart-money-card event-card-smart animate-reveal" id="stockSmartMoney" hidden></section>
+              <!-- 공매도 잔고(disclosure-trackers.js renderStockShortInterest) — US 전용, 공매도 보드 파일에 있는 종목만 -->
+              <section class="smart-money-card event-card-smart animate-reveal" id="stockShortInterest" hidden></section>
               <!-- 기관 보유 변화(inst-holders.js renderInstHolders) — US 전용, SEC 13F 데이터셋 첫 글자 샤드 하나만 받는다 -->
               <section class="ih-card animate-reveal" id="instHoldersCard" hidden></section>
               <!-- 다크풀(ATS) 주간 거래 비중(ats.js renderAtsCard) — US 전용, FINRA 주간 ATS 체결 ÷ 그 주 거래량 -->

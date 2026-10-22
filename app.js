@@ -3713,6 +3713,7 @@ function renderAll() {
   // 오늘 탭 요약(국면 한 문장·카드뉴스 1장)은 부팅 탭이라 여기서 그린다.
   renderTodayRegime();
   if (typeof renderIndustryHomeCard === "function") renderIndustryHomeCard();
+  if (typeof renderMarketIssues === "function") renderMarketIssues();
   if (typeof renderMoversBoard === "function") renderMoversBoard();
   if (typeof renderExtHoursBoard === "function") renderExtHoursBoard();
   if (typeof renderCrossMarketHome === "function") renderCrossMarketHome();
@@ -6995,6 +6996,11 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
   },
+  "오늘의 이슈": {
+    us: { workflow: "Daily US market snapshot", script: "scripts/build_market_issues.py --market us" },
+    kr: { workflow: "Korea close briefing", script: "scripts/build_market_issues.py --market kr" },
+    tabs: "오늘 탭 · 오늘의 이슈",
+  },
   "옵션 포지션(GEX·이상 거래)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_options_flow.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 옵션 포지션 / 시장 탭 · 시그널 · 이상 옵션 거래" },
   "은행 건전성(FDIC)": { us: { workflow: "Weekly earnings history refresh", script: "scripts/build_fdic_banks.py" }, tabs: "종목 탭 · 분석 · 재무 · 은행 건전성(은행주만)" },
   "시장 폭 추이": {
@@ -7121,6 +7127,8 @@ function dataTrustSources() {
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
   // 다크풀(ATS) 주간 비중(2026-10-22) — FINRA 주 1회 공개(화·금 수집). 주말·공개 지연을 넘겨도 8일이면 넉넉하다. lazy.
   // 은행 건전성(2026-10-22) — FDIC 분기 자료를 매주 다시 받는다(파일 시각은 매주 갱신). lazy·은행주만.
+  // 오늘의 이슈(2026-10-22) — 특징주 뒤 매일. 이슈가 없는 날도 파일 시각은 갱신된다. lazy.
+  if (cfg.features?.marketIssues !== false) rows.push(source("오늘의 이슈", "특징주 보드 + Gemini 묶음(검증)", window.MARKET_ISSUES, ["issues"], 24 * 4, "매일", "marketIssues"));
   // 옵션 포지션(2026-10-22) — 미국 장 마감 뒤 매일. 주말·연휴를 넘겨도 4일. lazy.
   if (cfg.id === "us" && cfg.features?.optionsFlow !== false) rows.push(source("옵션 포지션(GEX·이상 거래)", "Yahoo Finance 옵션 체인", window.OPTIONS_FLOW, ["tickers"], 24 * 4, "매일", "optionsFlow"));
   if (cfg.id === "us" && cfg.features?.fdicBanks !== false) rows.push(source("은행 건전성(FDIC)", "FDIC BankFind 콜 리포트", window.FDIC_BANKS, ["banks"], 24 * 9, "매주", "fdicBanks"));

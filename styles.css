@@ -15592,6 +15592,16 @@ button.calp-who:hover strong { text-decoration: underline; }
 .ih-spark svg { display: block; width: 100%; height: 44px; margin-top: 4px; overflow: visible; }
 /* 다크풀(ATS) 주간 비중 카드(ats.js) — 기관 보유 카드(ih-*) 모양을 그대로 쓰고 막대 차트만 더한다 */
 #atsCard { margin-top: 12px; }
+/* 오늘의 이슈(market-issues.js) — 특징주 보드와 같은 틀, 이슈마다 제목·요약·종목 칩·근거 */
+.mi-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.mi-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md, 10px); background: var(--surface-2); min-width: 0; }
+.mi-item h3 { margin: 0 0 4px; font-size: var(--fs-body); }
+.mi-item p { margin: 0 0 8px; color: var(--text-2); font-size: var(--fs-cap); line-height: 1.55; }
+.mi-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.mi-chip { min-height: 32px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.mi-chip:hover { border-color: var(--primary); }
+.mi-ev { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; font-size: 12px; }
+.mi-ev a { color: var(--link); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 옵션 포지션(options-flow.js) — 행사가별 감마 노출 막대(왼쪽 풋·오른쪽 콜), 콜·풋은 등락색이 아니다 */
 .of-card { margin-top: 12px; }
 .of-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }

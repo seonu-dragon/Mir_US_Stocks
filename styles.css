@@ -10957,26 +10957,9 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
   border-radius: var(--r-pill);
   white-space: nowrap;
 }
-.ai-verdict-buy  { background: color-mix(in srgb, var(--pos) 18%, transparent); color: #34d399; }
-.ai-verdict-hold { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
-.ai-verdict-sell { background: color-mix(in srgb, var(--neg) 18%, transparent); color: #fb7185; }
-.ai-verdict-conf {
-  display: flex; align-items: center; gap: 8px;
-  margin: 11px 0 9px;
-  font-size: var(--fs-cap); color: #9fb0cc; font-weight: 600;
-}
-.ai-verdict-gauge {
-  flex: 1;
-  height: 7px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-.ai-verdict-gauge i { display: block; height: 100%; border-radius: var(--r-pill); }
-.ai-verdict-gauge i.ai-verdict-buy  { background: linear-gradient(90deg, var(--pos), #34d399); }
-.ai-verdict-gauge i.ai-verdict-hold { background: linear-gradient(90deg, var(--text-muted), #94a3b8); }
-.ai-verdict-gauge i.ai-verdict-sell { background: linear-gradient(90deg, var(--neg), #fb7185); }
-.ai-verdict-conf b { color: #eaf0fb; font-size: var(--fs-sub); }
+/* 방향 집계(신호 N개 중 M개가 같은 방향)는 추천이 아니라 관찰 — 등락 색 없이 중립 톤. */
+.ai-verdict-tally { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+.ai-verdict-split { margin: 9px 0; font-size: var(--fs-cap); color: #9fb0cc; font-weight: 600; }
 .ai-verdict-comment {
   margin: 0 0 11px;
   font-size: var(--fs-sub);
@@ -10984,9 +10967,7 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
   color: #dce4f2;
 }
 .ai-verdict-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.ai-verdict-pts-h { display: block; font-size: var(--fs-cap); font-weight: 600; margin-bottom: 5px; }
-.ai-verdict-pts-h.up { color: var(--pos); }
-.ai-verdict-pts-h.down { color: #fb7185; }
+.ai-verdict-pts-h { display: block; font-size: var(--fs-cap); font-weight: 600; margin-bottom: 5px; color: #9fb0cc; }
 .ai-verdict-pts ul { margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 4px; }
 .ai-verdict-pts li { font-size: var(--fs-sub); line-height: 1.6; color: #cbd6e8; }
 .ai-verdict-pts li.muted { color: #7c8aa5; list-style: none; margin-left: -15px; }

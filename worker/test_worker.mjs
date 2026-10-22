@@ -71,6 +71,8 @@ import {
   claimGrounded,
   claimDirection,
   contradictsMove,
+  chatSystemPrompt,
+  resolveChatMarket,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1915,6 +1917,40 @@ await test("오늘 움직임과 반대 방향 이유는 버린다", () => {
 await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {
   const r = await handleFetch(req("https://w/?move_reasons=NVDA"), {});
   eq(r.status, 403, "Origin 없으면 403");
+});
+
+console.log("\n[chat] 시장별 시스템 프롬프트");
+
+await test("chatSystemPrompt — 국내는 '미르의 한국 주식'·DART, 미국은 '미르의 미국 주식'·SEC", () => {
+  const kr = chatSystemPrompt("kr");
+  const us = chatSystemPrompt("us");
+  ok(kr.includes('"미르의 한국 주식" 웹사이트') && !kr.includes("미르의 미국 주식"), "국내 사이트 이름");
+  ok(kr.includes("DART") && kr.includes("005930"), "국내 맥락·검색 예시");
+  ok(!kr.includes("티커(예: AAPL, NVDA)로 검색"), "미국 검색 예시 제거");
+  ok(us.includes('"미르의 미국 주식" 웹사이트') && us.includes("SEC"), "미국 사이트 이름·맥락");
+  ok(kr.includes("매수/매도/목표가") && us.includes("매수/매도/목표가"), "추천 금지 규칙 공통");
+  eq(chatSystemPrompt(undefined), kr, "모르면 국내(예전 기본값)");
+});
+
+await test("resolveChatMarket — market 우선, 없으면 티커 모양(6자리·.KS/.KQ = 국내)", () => {
+  eq(resolveChatMarket({ market: "us", searchHints: { tickers: ["005930"] } }), "us", "명시 market 우선");
+  eq(resolveChatMarket({ market: "KR" }), "kr", "대소문자");
+  eq(resolveChatMarket({ searchHints: { tickers: ["005930"] } }), "kr", "6자리");
+  eq(resolveChatMarket({ searchHints: { tickers: ["035720.KQ"] } }), "kr", ".KQ");
+  eq(resolveChatMarket({ searchHints: { tickers: ["NVDA"] } }), "us", "영문 티커");
+  eq(resolveChatMarket({ stockContext: "다음은 …:\n[AAPL Apple Inc.] 섹터:Technology" }), "us", "컨텍스트 티커");
+  eq(resolveChatMarket({ stockContext: "[000660 SK하이닉스] 섹터:IT" }), "kr", "컨텍스트 국내 코드");
+  eq(resolveChatMarket({}), "kr", "단서 없음 → 예전 기본값");
+  eq(resolveChatMarket(null), "kr", "body 없음");
+});
+
+await test("POST /chat — 국내 market 이면 국내 프롬프트가 모델에 전달된다", async () => {
+  let seen = "";
+  const env = kvEnv();
+  env.AI = { async run(_m, input) { seen = JSON.stringify(input); return { response: "안녕하세요, 미르입니다." }; } };
+  const r = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: { ...chatBody, market: "kr" } }), env);
+  eq(r.status, 200, "200");
+  ok(seen.includes("미르의 한국 주식") && !seen.includes("미르의 미국 주식"), "국내 프롬프트");
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

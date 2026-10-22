@@ -3881,6 +3881,48 @@ const CHAT_SYSTEM_PROMPT = `당신은 "미르의 미국 주식" 웹사이트의 
 - "이번 주 경제 일정이 궁금해요" → '경제 캘린더' 탭에서 한국·미국 주요 지표 일정을 보세요.
 - "이 종목 사도 돼요? / 목표가 알려줘" → 죄송하지만 특정 종목의 매수·매도·목표가는 안내하지 않아요. 참고용 지표만 제공하며 투자 판단은 본인 책임입니다.`;
 
+// 시장별 시스템 프롬프트. 위 본문은 미국 모드 기준으로 쓰였다 — 국내 화면(미르의 한국 주식)에서
+// 같은 프롬프트가 나가면 모델이 "미국 주식 사이트"라 자기소개하고 13F·Form 4 를 국내 종목에 찾는다.
+// 사이트 이름·검색 예시만 바꾸고, 시장 맥락 한 단락을 붙인다(규칙·용어 사전은 공통).
+const CHAT_MARKET_NOTE = {
+  us: `
+
+[현재 시장 모드: 미국]
+- 사용자는 미국 주식(NYSE·나스닥) 화면을 보고 있습니다. 가격은 달러, 공시는 SEC(10-K·10-Q·8-K) 기준입니다.`,
+  kr: `
+
+[현재 시장 모드: 국내]
+- 사용자는 한국 주식(코스피·코스닥) 화면을 보고 있습니다. 가격은 원화, 공시는 DART(전자공시) 기준이고, 종목은 6자리 코드(예: 005930)로 찾습니다.
+- 수급은 외국인·기관·개인 순매수로 봅니다. 미국 전용 데이터(13F 기관 보유·내부자 Form 4·의회 매매)는 국내 종목에 없으니 있는 것처럼 말하지 마세요.`,
+};
+const CHAT_SYSTEM_PROMPTS = {
+  us: CHAT_SYSTEM_PROMPT + CHAT_MARKET_NOTE.us,
+  kr: CHAT_SYSTEM_PROMPT
+    .replace("\"미르의 미국 주식\" 웹사이트", "\"미르의 한국 주식\" 웹사이트")
+    .replace("티커(예: AAPL, NVDA)로 검색", "종목명이나 6자리 코드(예: 삼성전자, 005930)로 검색")
+    + CHAT_MARKET_NOTE.kr,
+};
+
+export function chatSystemPrompt(market) {
+  return CHAT_SYSTEM_PROMPTS[market === "us" ? "us" : "kr"];
+}
+
+// /chat 의 시장 판정. 프런트(ai-mode.js·chat)는 market("us"|"kr")을 보낸다 — 그게 있으면 그대로.
+// 없으면(구 클라이언트) 종목 힌트·컨텍스트 티커 모양으로 추정한다: 6자리 숫자·.KS/.KQ = 국내,
+// 그 밖의 영문 티커 = 미국. 그래도 모르면 예전 기본값 kr(뉴스 RAG 가 국내 우선이던 동작 유지).
+const KR_CHAT_TICKER_RE = /^(\d{6})(\.K[SQ])?$/i;
+export function resolveChatMarket(body) {
+  const m = body && typeof body.market === "string" ? body.market.trim().toLowerCase() : "";
+  if (m === "us" || m === "kr") return m;
+  const hints = body && body.searchHints && typeof body.searchHints === "object" ? body.searchHints : {};
+  const tickers = (Array.isArray(hints.tickers) ? hints.tickers : []).map((t) => String(t || "").trim()).filter(Boolean);
+  const ctx = body && typeof body.stockContext === "string" ? body.stockContext : "";
+  parseStockContextEntities(ctx).forEach((row) => tickers.push(row.ticker));
+  if (tickers.some((t) => KR_CHAT_TICKER_RE.test(t))) return "kr";
+  if (tickers.some((t) => /^[A-Z][A-Z0-9.\-]{0,9}$/i.test(t))) return "us";
+  return "kr";
+}
+
 // -----------------------------------------------------------------------------
 // Chat RAG — retrieve recent news (Naver Open API → stock feed → Google RSS)
 // -----------------------------------------------------------------------------
@@ -4250,7 +4292,7 @@ async function handleChat(request, env) {
   const userText = history[history.length - 1].content;
   const stockContext = typeof body.stockContext === "string" ? body.stockContext.trim().slice(0, 4000) : "";
   const snapshotContext = typeof body.snapshotContext === "string" ? body.snapshotContext.trim().slice(0, 2500) : "";
-  const market = body.market === "us" ? "us" : "kr";
+  const market = resolveChatMarket(body);
   const searchHints = body.searchHints && typeof body.searchHints === "object" ? body.searchHints : {};
 
   let newsRagBlock = "";
@@ -4261,7 +4303,7 @@ async function handleChat(request, env) {
     newsRagBlock = formatChatNewsRagBlock(newsSources);
   }
 
-  let systemContent = CHAT_SYSTEM_PROMPT;
+  let systemContent = chatSystemPrompt(market);
   if (snapshotContext) {
     systemContent += `\n\n[오늘의 시장 스냅샷 요약 — 사실로만 사용]\n${snapshotContext}\n\n위 스냅샷은 매일 1회 갱신된 참고 데이터입니다. 실시간 시세가 아님을 안내하세요.`;
   }

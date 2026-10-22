@@ -580,6 +580,63 @@ function chatLikelyNeedsNews(text) {
   return /뉴스|왜\s*(올|하|떨|급|상|폭|조|강|쳤)|이슈|이유|배경|실적|어닝|공시|리포트|전망|하락|상승|급등|급락|수주|계약|인수|합병|소식|최근|무슨\s*일|요약해|분석해/i.test(String(text || ""));
 }
 
+// 국내 종목 전용 컨텍스트 — 페이지에 이미 있는 DART 공시·테마·수급·배당 성장만, 있을 때만 한 줄씩.
+// 지연 데이터(테마·배당 성장)는 받되 오래 걸리면 기다리지 않는다 — 채팅을 막지 않는 게 먼저다
+// (못 받은 항목은 그 줄이 빠질 뿐이다). 각 줄은 짧게 잘라 워커의 stockContext 상한(4,000자)을 지킨다.
+const KR_CHAT_CONTEXT_WAIT_MS = 2500;
+function krChatContextReady() {
+  if (!(typeof isKrMarket === "function" && isKrMarket()) || typeof ensureFeatureData !== "function") return Promise.resolve();
+  const load = Promise.all(["krDart", "krFlow", "krThemes", "dividendGrowth"].map((k) => ensureFeatureData(k).catch(() => false)));
+  return Promise.race([load, new Promise((r) => setTimeout(r, KR_CHAT_CONTEXT_WAIT_MS))]).catch(() => {});
+}
+
+function krChatContextLines(ticker) {
+  if (!(typeof isKrMarket === "function" && isKrMarket())) return [];
+  const t = String(ticker || "");
+  const out = [];
+  const cut = (v, n) => { const x = String(v || "").trim(); return x.length > n ? `${x.slice(0, n)}…` : x; };
+  try {
+    const disc = ((window.KR_DISCLOSURES || {}).disclosures || []).filter((d) => d.ticker === t)
+      .sort((a, b) => String(b.fileDate || "").localeCompare(String(a.fileDate || ""))).slice(0, 3);
+    if (disc.length) out.push(`최근 DART 공시: ${disc.map((d) => `${d.fileDate || "—"} ${cut(d.typeLabel || d.title, 30)}`).join(" / ")}`);
+  } catch (_) { /* 공시 없음 */ }
+  try {
+    const core = window.MirKrThemesCore;
+    const themes = core && window.KR_THEMES ? core.themesForTicker(window.KR_THEMES.themes || [], t) : [];
+    if (themes.length) out.push(`테마(사업보고서 근거): ${themes.slice(0, 5).map((x) => cut(x.name, 20)).join(", ")}`);
+  } catch (_) { /* 테마 없음 */ }
+  try {
+    const f = window.KR_INVESTOR_FLOW?.stocks?.[t];
+    if (f) {
+      const sh = (v) => {
+        if (!Number.isFinite(v)) return null;
+        const a = Math.abs(v), sign = v < 0 ? "-" : "+";
+        return a >= 1e4 ? `${sign}${Math.round(a / 1e4).toLocaleString("ko-KR")}만주` : `${sign}${Math.round(a).toLocaleString("ko-KR")}주`;
+      };
+      const part = (label, v5, v20, ratio) => {
+        const a = sh(v5), b = sh(v20);
+        if (a == null && b == null) return "";
+        return `${label} 5일 ${a ?? "—"}·20일 ${b ?? "—"}${Number.isFinite(ratio) ? `(20일 거래량 대비 ${ratio > 0 ? "+" : ""}${ratio}%)` : ""}`;
+      };
+      const bits = [part("외국인", f.f5, f.f20, f.fPct), part("기관", f.o5, f.o20, f.oPct), part("개인", f.i5, f.i20, null)].filter(Boolean);
+      if (Number.isFinite(f.hold)) bits.push(`외국인 보유율 ${f.hold}%`);
+      const asOf = f.asOf ? String(f.asOf).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3") : "";
+      if (bits.length) out.push(`수급 순매수${asOf ? `(${asOf} 기준)` : ""}: ${bits.join(" · ")}`);
+    }
+  } catch (_) { /* 수급 없음 */ }
+  try {
+    const dg = window.MirDivGrowthCore;
+    const rec = dg && window.DIVIDEND_GROWTH ? dg.record(window.DIVIDEND_GROWTH, t) : null;
+    if (rec) {
+      const bits = [`연속 증가 ${dg.streakText(rec)}`, `연속 지급 ${dg.paidText(rec)}`];
+      if (rec.cagr5 != null) bits.push(`5년 연평균 ${dg.cagrText(rec.cagr5)}`);
+      if (Number.isFinite(Number(rec.last)) && rec.last != null) bits.push(`최근 주당배당 ${Math.round(Number(rec.last)).toLocaleString("ko-KR")}원`);
+      out.push(`배당 성장(DART 사업보고서${rec.lastYear ? `, ${rec.lastYear}년까지` : ""}): ${bits.join(" · ")}`);
+    }
+  } catch (_) { /* 배당 이력 없음 */ }
+  return out;
+}
+
 async function buildStockChatContext(userText) {
   const tickers = new Set();
   if (chatFocusTicker) tickers.add(chatFocusTicker);
@@ -593,6 +650,7 @@ async function buildStockChatContext(userText) {
     ...[...tickers].map((ticker) => loadStockDetail(ticker)),
     ...["inst13f", "insider", "short", "congress", "activist", "events", "industryByTicker", "industry"].map((k) =>
       (typeof ensureFeatureData === "function" ? ensureFeatureData(k) : Promise.resolve()).catch(() => {})),
+    krChatContextReady(),
   ]);
 
   const lines = [];
@@ -692,6 +750,7 @@ async function buildStockChatContext(userText) {
       const indLine = industryContextLine(item.ticker);
       if (indLine) lines.push(`  └ ${indLine}`);
     }
+    krChatContextLines(item.ticker).forEach((l) => lines.push(`  └ ${l}`));
   });
   return lines.length
     ? `다음은 사이트 스냅샷/프록시 기준 종목 데이터입니다(실시간 투자 조언 아님, 참고용):\n${lines.join("\n")}`

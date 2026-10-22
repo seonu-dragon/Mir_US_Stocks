@@ -173,9 +173,10 @@ def build(args) -> dict:
             prev = json.loads(OUT_JSON.read_text(encoding="utf-8"))
         except Exception:
             prev = {}
-    today = dt.date.today().isoformat()
-    tomorrow = (dt.date.today() + dt.timedelta(days=1)).isoformat()
-    recent_start = (dt.date.today() - dt.timedelta(days=int(365.25 * RECENT_YEARS))).isoformat()
+    base = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).date()  # 러너는 UTC — KST 기준 날짜
+    today = base.isoformat()
+    tomorrow = (base + dt.timedelta(days=1)).isoformat()
+    recent_start = (base - dt.timedelta(days=int(365.25 * RECENT_YEARS))).isoformat()
     out = {
         "updatedAtKst": sec.kst_now_str(),
         "source": SOURCE,

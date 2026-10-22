@@ -3898,8 +3898,24 @@ function sectorNorm(stock) {
   return v;
 }
 
+// 섹터 ETF → 구성 종목 목록 캐시(2026-09-15 감사 P2: renderSectors 가 섹터 20여 개마다 전 종목을 다시 훑었다).
+// 소속은 sector·industry·groups 로만 정해져 가격 갱신과 무관하다 — 스냅샷 배열(data.stocks)이 바뀌면 새로 만든다.
+const _sectorStocksCache = new WeakMap();
+
 function getSectorStocks(meta) {
-  return data.stocks.filter((stock) => {
+  const stocks = data.stocks || [];
+  let byTicker = _sectorStocksCache.get(stocks);
+  if (!byTicker) {
+    byTicker = new Map();
+    _sectorStocksCache.set(stocks, byTicker);
+  }
+  const key = `${isKrMarket() ? "kr" : "us"}:${meta.ticker}`;
+  if (!byTicker.has(key)) byTicker.set(key, computeSectorStocks(meta, stocks));
+  return byTicker.get(key).slice(); // 호출부가 정렬해도 캐시 순서가 바뀌지 않게
+}
+
+function computeSectorStocks(meta, stocks) {
+  return stocks.filter((stock) => {
     if (!stock.sector) return false;
     const { s, ind } = sectorNorm(stock);
     

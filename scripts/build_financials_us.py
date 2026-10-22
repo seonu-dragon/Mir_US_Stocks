@@ -41,6 +41,7 @@ import time
 import urllib.request
 from collections import Counter
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -745,7 +746,7 @@ def universe(top: int) -> list[dict]:
 
 
 def run(args) -> int:
-    today = date.today()
+    today = datetime.now(ZoneInfo("America/New_York")).date()  # 러너는 UTC — 뉴욕 기준 날짜
     state = load_json(STATE_JSON, {}) or {}
     tstate: dict = state.get("tickers") or {}
     prev_index = load_json(OUT_JSON, {}) or {}

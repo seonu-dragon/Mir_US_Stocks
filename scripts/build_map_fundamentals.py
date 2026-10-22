@@ -334,6 +334,14 @@ def build_market(market: str) -> None:
         print(f"  이상치 규칙으로 결측 처리: {dropped}")
     add_value_score(table)
 
+    # 0건·반토막 방어(2026-09-15 감사 P1) — 원천이 죽은 날 히트맵·valueScore 가 통째로 회색이 되지 않게
+    # 직전 파일을 지킨다. update_data 는 예외를 받아 '재생성 실패'로 스냅샷 발행을 멈춘다.
+    try:
+        prev_n = len(json.loads(cfg["out_json"].read_text(encoding="utf-8")))
+    except Exception:  # noqa: BLE001
+        prev_n = 0
+    if not table or (prev_n and len(table) < prev_n * 0.5):
+        raise RuntimeError(f"map_fundamentals[{market}]: {len(table)}종목 — 직전 {prev_n}종목의 절반 미만, 기존 파일 유지")
     payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
     atomic_write_text(cfg["out_json"], payload)
     atomic_write_text(cfg["out_js"], f"window.{cfg['global']} = {payload};\n")

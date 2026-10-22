@@ -213,6 +213,11 @@ def main():
     # 키가 없으면 AI 분석이 통째로 비고, 그 상태로 발행하면 플레이스홀더가
     # 사이트에 올라간다. 경고가 아니라 실패로 끝낸다.
     validate_config(require_gemini=True, require_telegram=True)
+    # 주말(뉴욕 기준)에는 장이 없다 — 크론은 매일 21:07 KST 라 여기서 거른다(2026-09-15 감사 P2).
+    ny = datetime.now(ZoneInfo("America/New_York"))
+    if ny.weekday() >= 5 and not args.test:
+        print(f"[건너뜀] {ny:%Y-%m-%d}(뉴욕) 은 주말 — 미국 개장 전 브리핑을 발행하지 않는다.")
+        return
         
     today = datetime.now(KST).strftime("%Y년 %m월 %d일 %H시 %M분")
     

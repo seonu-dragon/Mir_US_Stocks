@@ -4977,8 +4977,11 @@ async function deepAnalyzeEntry(entry, horizon) {
     if (!series || series.length < 60) { entry.mode = "quick"; return; }
     const rows = series.map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
     const res = window.MirProb.analyzeRows(rows, horizon, { ticker: entry.item.ticker, company: entry.item.company });
-    if (res && Number.isFinite(res.headlineUp)) {
-      entry.deep = res.headlineUp;
+    // '기술 점수'는 차트 분석 머리글과 같은 consensus.up — headlineUp 은 기준 상승 비율을 섞어 12~88 로
+    // 자른 값이라 이름과 숫자가 어긋났다(2026-10-23, 분석 화면 '기술 점수 59' vs 스캐너 다른 숫자).
+    const score = res && res.consensus ? Number(res.consensus.up) : NaN;
+    if (Number.isFinite(score)) {
+      entry.deep = score;
       entry.mode = "deep";
     } else {
       entry.mode = "quick";

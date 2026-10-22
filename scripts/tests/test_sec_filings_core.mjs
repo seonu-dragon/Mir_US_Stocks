@@ -131,8 +131,9 @@ test("공시 표 검색: 티커와 정확히 같으면 그 티커만, 아니면 
     { ticker: "AAPLX", issuer: "Not Apple", owner: "x" },
   ];
   const f = ["ticker", "issuer", "owner"];
-  assert.deepEqual(S.filterByQuery(rows, "F", f).map((r) => r.ticker), ["F"]);          // 'f' 가 든 다른 행 제외
-  assert.deepEqual(S.filterByQuery(rows, " aapl ", f).map((r) => r.ticker), ["AAPL"]);
+  assert.deepEqual(S.filterByQuery(rows, "F", f, { exactTicker: true }).map((r) => r.ticker), ["F"]);   // 넘어온 티커: 'f' 가 든 다른 행 제외
+  assert.ok(S.filterByQuery(rows, "F", f).length > 1);                                     // 직접 입력: 부분 일치
+  assert.deepEqual(S.filterByQuery(rows, " aapl ", f, { exactTicker: true }).map((r) => r.ticker), ["AAPL"]);
   assert.deepEqual(S.filterByQuery(rows, "cook", f).map((r) => r.ticker), ["AAPL"]);    // 티커 아니면 부분 일치
   assert.deepEqual(S.filterByQuery(rows, "apple", f).map((r) => r.ticker), ["AAPL", "AAPLX"]);
   assert.equal(S.filterByQuery(rows, "", f).length, 4);

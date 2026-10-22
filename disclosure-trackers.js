@@ -33,6 +33,7 @@ function delegateTickerClicks(container, selector = ".ins-ticker") {
 // ==================== 내부자 거래 (SEC Form 4) ====================
 let insiderKind = "all";
 let insiderQuery = "";
+let insiderExactTicker = false;   // 스마트머니 줄에서 넘어온 티커 검색 — 직접 입력하면 해제
 
 function insiderFmtShares(n) {
   return Number.isFinite(n) ? Math.round(n).toLocaleString() : "—";
@@ -65,7 +66,7 @@ function setupInsiderControls() {
   const search = byId("insiderSearch");
   if (search && !search.dataset.bound) {
     search.dataset.bound = "1";
-    search.addEventListener("input", debounce(() => { insiderQuery = search.value; renderInsiderTrades(); }, 300));
+    search.addEventListener("input", debounce(() => { insiderQuery = search.value; insiderExactTicker = false; renderInsiderTrades(); }, 300));
   }
 }
 
@@ -168,7 +169,7 @@ function renderInsiderTrades() {
   if (insiderKind !== "all") rows = rows.filter((r) => r.kind === insiderKind);
   if (q) {
     const SF = window.MirSecFilings;
-    rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "issuer", "owner"]) : rows.filter((r) =>
+    rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "issuer", "owner"], { exactTicker: insiderExactTicker }) : rows.filter((r) =>
       (r.ticker || "").toLowerCase().includes(q) ||
       (r.issuer || "").toLowerCase().includes(q) ||
       (r.owner || "").toLowerCase().includes(q));
@@ -239,6 +240,7 @@ function renderInsiderCluster() {
 // ===== #5 액티비스트 13D/G =====
 let activistKind = "all";
 let activistQuery = "";
+let activistExactTicker = false;
 function setupActivistControls() {
   const f = byId("activistKindFilter");
   if (f && !f.dataset.bound) {
@@ -250,7 +252,7 @@ function setupActivistControls() {
     }));
   }
   const s = byId("activistSearch");
-  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { activistQuery = s.value; renderActivistStakes(); }, 300)); }
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { activistQuery = s.value; activistExactTicker = false; renderActivistStakes(); }, 300)); }
 }
 function renderActivistStakes() {
   setupActivistControls();
@@ -269,7 +271,7 @@ function renderActivistStakes() {
   if (activistKind !== "all") rows = rows.filter((r) => r.kind === activistKind);
   if (q) {
     const SF = window.MirSecFilings;
-    rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "company", "filer"])
+    rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "company", "filer"], { exactTicker: activistExactTicker })
       : rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.filer || "").toLowerCase().includes(q));
   }
   const shown = rows.slice(0, 300);
@@ -875,10 +877,10 @@ function openDisclosureForTicker(sub, ticker) {
   const t = String(ticker || "").trim().toUpperCase();
   const resetKind = (id) => byId(id)?.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b.dataset.kind === "all"));
   if (sub === "insider") {
-    insiderKind = "all"; insiderQuery = t; resetKind("insiderKindFilter");
+    insiderKind = "all"; insiderQuery = t; insiderExactTicker = true; resetKind("insiderKindFilter");
     const s = byId("insiderSearch"); if (s) s.value = t;
   } else if (sub === "activist") {
-    activistKind = "all"; activistQuery = t; resetKind("activistKindFilter");
+    activistKind = "all"; activistQuery = t; activistExactTicker = true; resetKind("activistKindFilter");
     const s = byId("activistSearch"); if (s) s.value = t;
   }
   activateTab("institutional", { sub });

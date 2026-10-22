@@ -370,11 +370,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=70fbd207ca" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=70fbd207ca"></noscript>
+    <link rel="preload" href="styles.css?v=c12be3bcb5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=c12be3bcb5"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d62e28a6d8"></script>
+    <script src="build_id.js?v=71c1ba818d"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3392,13 +3392,13 @@ html[data-market="kr"][data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="per-basis-core.js?v=b7c4da7066"></script>
     <script src="chart-ind-core.js"></script>
-    <script src="chart-indicators.js?v=3c74ea6cdf"></script>
+    <script src="chart-indicators.js?v=d101bf4db9"></script>
     <script src="community.js?v=5af24dfee5"></script>
-    <script src="ai-mode.js?v=4b1bc75a54"></script>
+    <script src="ai-mode.js?v=1610d387c2"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
     <script src="short-interest-core.js"></script>
-    <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
+    <script src="disclosure-trackers.js?v=6377dcfc91"></script>
     <script src="movers.js?v=33097bd4db"></script>
     <script src="ext-hours-core.js?v=b88e6773ee"></script>
     <script src="ext-hours.js?v=ad04bde4dd"></script>
@@ -3459,7 +3459,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="analyst-revisions.js"></script>
     <script src="dividend-growth-core.js"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
-    <script src="chart-events-core.js?v=733715a6b0"></script>
+    <script src="chart-events-core.js?v=3d94000f51"></script>
     <script src="chart-tools-core.js?v=63fb5b1156"></script>
     <script src="chart.js?v=e5e861a70b"></script>
     <script src="chart-ind-picker.js"></script>
@@ -3499,7 +3499,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="shareholder.js?v=e459d56645"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=ecc88fc9b8"></script>
-    <script src="daily-table-core.js?v=5e4945f830"></script>
+    <script src="daily-table-core.js?v=447902b51f"></script>
     <script src="daily-table.js?v=0f27127020"></script>
     <script src="seasonality-core.js?v=aba17c25f3"></script>
     <script src="seasonality.js?v=fee2629b20"></script>
@@ -3523,7 +3523,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=aa21ba9e7e"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=2f7176a05c"></script>
+    <script src="app.js?v=016a166dd0"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="ats-core.js"></script>

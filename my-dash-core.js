@@ -13,6 +13,8 @@
     issues: { label: "오늘의 이슈", markets: ["us", "kr"] },
     movers: { label: "오늘의 특징주", markets: ["us", "kr"] },
     uoa: { label: "이상 옵션 거래", markets: ["us"] },
+    upcoming: { label: "내 종목 다가오는 실적", markets: ["us", "kr"] },
+    industry: { label: "내 종목 관련 산업 지표", markets: ["us", "kr"] },
   };
   const DEFAULT = ["regime", "watch", "issues", "movers"];
 
@@ -51,7 +53,34 @@
     return available(market).filter((id) => !layout.includes(id)).map((id) => ({ id, label: WIDGETS[id].label }));
   }
 
-  const api = { WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable };
+  /** 실적 일정 행 [{ticker, nextDate}] → today(YYYY-MM-DD)부터 days 일 안, 날짜순. 지난 날짜·형식 오류는 뺀다. */
+  function upcomingEarnings(rows, today, days = 30) {
+    const t0 = Date.parse(`${today}T00:00:00Z`);
+    if (!Number.isFinite(t0)) return [];
+    const out = [];
+    for (const r of rows || []) {
+      const t = Date.parse(`${String(r && r.nextDate || "").slice(0, 10)}T00:00:00Z`);
+      if (!Number.isFinite(t)) continue;
+      const d = Math.round((t - t0) / 86400000);
+      if (d >= 0 && d <= days) out.push({ ...r, daysAhead: d });
+    }
+    return out.sort((a, b) => a.daysAhead - b.daysAhead || String(a.ticker).localeCompare(String(b.ticker)));
+  }
+
+  /** 종목별 관련 지표 id 목록 {T: [id…]} → 겹침 많은 순 [{id, tickers}] (내 종목 여럿이 같이 따르는 지표가 위). */
+  function relatedIndicators(byTicker, tickers, limit = 8) {
+    const hit = new Map();
+    for (const t of tickers || []) {
+      for (const id of (byTicker && byTicker[t]) || []) {
+        if (!hit.has(id)) hit.set(id, []);
+        if (!hit.get(id).includes(t)) hit.get(id).push(t);
+      }
+    }
+    return [...hit.entries()].map(([id, ts]) => ({ id, tickers: ts }))
+      .sort((a, b) => b.tickers.length - a.tickers.length || a.id.localeCompare(b.id)).slice(0, limit);
+  }
+
+  const api = { WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

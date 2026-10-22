@@ -150,10 +150,16 @@
       const n = within(e.date);
       if (n != null) out.push({ date: e.date, time: e.time || "", title: e.title, kind: e.kind, daysAhead: n });
     }
+    // 같은 날·시각 지표 발표(연준 주간 H.4.1·H.8 자료 5건 등)는 한 줄로 — 줄을 다 차지해 FOMC 가 밀려나던 것.
+    const rel = new Map();
     for (const e of (industryCal && industryCal.events) || []) {
       const n = within(e.date);
-      if (n != null) out.push({ date: e.date, time: e.time_kst || "", title: e.name_kr, kind: "release", daysAhead: n });
+      if (n == null) continue;
+      const k = `${e.date}|${e.time_kst || ""}`;
+      if (rel.has(k)) rel.get(k).more += 1;
+      else rel.set(k, { date: e.date, time: e.time_kst || "", title: e.name_kr, kind: "release", daysAhead: n, more: 0 });
     }
+    for (const r of rel.values()) out.push({ ...r, title: r.more ? `${r.title} 외 ${r.more}건` : r.title });
     return out.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.title.localeCompare(b.title));
   }
 

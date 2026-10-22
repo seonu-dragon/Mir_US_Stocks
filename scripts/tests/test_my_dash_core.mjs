@@ -90,5 +90,11 @@ test("groupTrades: 같은 사람·날짜·매수/매도는 한 줄로 합친다"
   assert.deepEqual(g.map((r) => [r.owner, r.value, r.shares, r.n]), [["A", 5.8e6, 22, 2], ["B", 1e6, 4, 1]]);
 });
 
+test("upcomingSchedule: 같은 날·시각 지표 발표는 한 줄로", () => {
+  const ic = { events: ["A", "B", "C"].map((x) => ({ name_kr: x, date: "2026-10-28", time_kst: "05:30" })) };
+  const out = core.upcomingSchedule(null, ic, "us", "2026-10-22", 14);
+  assert.deepEqual(out.map((r) => r.title), ["A 외 2건"]);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

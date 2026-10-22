@@ -3852,6 +3852,7 @@ function stockSummaryHtml(item) {
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
     ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
+    ${typeof moveReasonsHtml === "function" ? moveReasonsHtml(item) : ""}
     <dl class="sd-facts">
       ${sdFact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
       ${sdFact("RSI(14)", fmtRsi(item))}

@@ -57,6 +57,10 @@ import {
   normalizeOptionsChain,
   crumbHeaders,
   routeSymbol,
+  parseStocktwitsStream,
+  parseNaverDiscussion,
+  parseRedditListing,
+  validateMoveReasons,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -539,8 +543,9 @@ await test("LLM 게이트가 데이터 프록시(fx·indices·calendar)까지 �
   const src = readFileSync(WORKER_SRC, "utf8");
   const gated = src.split("\n")
     .filter((l) => l.includes("llmOriginAllowed(request)") && !l.includes("function llmOriginAllowed"));
-  // /chat, move_analysis, cachedTickerSummary, /sync/prefs PUT, event_news(뉴스 수집 비용) 다섯 곳에서만 게이트한다.
-  eq(gated.length, 5, "게이트 호출 지점 수");
+  // /chat, move_analysis, cachedTickerSummary, /sync/prefs PUT, event_news(뉴스 수집 비용),
+  // move_reasons(주가 움직임 이유, 2026-10-22) 여섯 곳에서만 게이트한다.
+  eq(gated.length, 6, "게이트 호출 지점 수");
   for (const marker of ['url.searchParams.get("fx")', 'url.searchParams.get("indices")', 'url.searchParams.get("calendar")']) {
     ok(src.includes(marker), `${marker} 경로가 사라졌다`);
   }
@@ -1789,6 +1794,55 @@ await test("옛 워커 호환 감지 전제: 모르는 경로는 여전히 404 n
   const r = await handleFetch(req("https://w/?unknownroute=1"), {});
   eq(r.status, 404, "404");
   eq((await r.json()).error, "not_found", "not_found");
+});
+
+// ── 주가 움직임 이유(?move_reasons=) ─────────────────────────────────────────
+
+console.log("\n[move_reasons] 소셜 파싱·주장 검증");
+
+await test("Stocktwits·네이버·레딧 파싱 — 오래된 글·짧은 글·캐시태그 도배는 뺀다", () => {
+  const now = Date.parse("2026-10-22T12:00:00Z");
+  const st = parseStocktwitsStream({ messages: [
+    { id: 1, body: "NVDA up on reports of a new hyperscaler order", created_at: "2026-10-22T10:00:00Z", likes: { total: 5 }, user: { username: "a" } },
+    { id: 2, body: "$A $B $C $D $E to the moon", created_at: "2026-10-22T10:00:00Z", user: { username: "b" } },
+    { id: 3, body: "an old post about something that happened", created_at: "2026-10-18T10:00:00Z", user: { username: "c" } },
+    { id: 4, body: "short", created_at: "2026-10-22T10:00:00Z" },
+  ] }, now);
+  eq(st.length, 1, "Stocktwits 1건");
+  eq(st[0].url, "https://stocktwits.com/a/message/1", "Stocktwits 링크");
+  const nv = parseNaverDiscussion({ result: { posts: [
+    { id: "9", title: "수주 공시 나왔네요", contentSwReplacedButImg: "대형 계약", writtenAt: "2026-10-22T16:00:00", recommendCount: 3 },
+    { id: "10", title: "ㅋㅋ", contentSwReplacedButImg: "" },
+  ] } }, "005930");
+  eq(nv.length, 1, "네이버 1건");
+  eq(nv[0].url, "https://m.stock.naver.com/domestic/stock/005930/discussion/9", "네이버 링크");
+  const rd = parseRedditListing({ data: { children: [{ data: { title: "Why is NVDA up?", selftext: "earnings beat", created_utc: now / 1000 - 3600, score: 12, permalink: "/r/stocks/x", subreddit: "stocks" } }] } }, now);
+  eq(rd.length, 1, "레딧 1건");
+  eq(rd[0].source, "Reddit r/stocks", "레딧 출처");
+});
+
+await test("주장 검증 — 인용 번호·숫자 확인, 뉴스 확인/소셜 의견/뉴스만 분류", () => {
+  const posts = [{ text: "hyperscaler order 5 billion rumor", source: "Stocktwits", url: "u1" }, { text: "big order news", source: "Stocktwits", url: "u2" }];
+  const news = [{ title: "NVDA wins $5 billion order from cloud giant", link: "n1", publisher: "Reuters" }, { title: "Chip stocks rally", link: "n2" }];
+  const out = validateMoveReasons({ claims: [
+    { claim: "클라우드 업체로부터 50억 달러 규모 수주 소식", social: ["S1", "S2"], news: ["N1"] },   // 50 은 원문에 없음 → 버림
+    { claim: "클라우드 업체로부터 5 billion 수주 소식", social: ["S1", "s2"], news: ["N1", "N9"] },   // N9 없음 → 무시
+    { claim: "공매도 세력이 숏커버링 중이라는 소문", social: ["S2"], news: [] },
+    { claim: "반도체 업종 전반이 동반 강세", social: [], news: ["N2"] },
+    { claim: "근거 없는 주장입니다", social: ["S7"], news: [] },                                      // S7 없음 → 인용 없음
+    "junk",
+  ] }, posts, news);
+  eq(out.confirmed.length, 1, "뉴스 확인 1");
+  eq(out.confirmed[0].news.length, 1, "실제 기사만");
+  eq(out.confirmed[0].socialCount, 2, "소셜 글 수");
+  eq(out.socialOnly.length, 1, "소셜 의견 1");
+  eq(out.newsOnly.length, 1, "뉴스만 1");
+  eq(validateMoveReasons(null, posts, news).confirmed.length, 0, "깨진 출력");
+});
+
+await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {
+  const r = await handleFetch(req("https://w/?move_reasons=NVDA"), {});
+  eq(r.status, 403, "Origin 없으면 403");
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

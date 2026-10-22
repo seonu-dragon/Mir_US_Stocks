@@ -229,3 +229,24 @@ def test_groups_have_no_duplicate_entries():
     for group, entries in F.CHECKS.items():
         paths = [rel for rel, _, _ in entries]
         assert len(paths) == len(set(paths)), f"{group} 그룹에 중복 항목"
+
+
+def test_weekly_job_map_covers_weekly_group_exactly():
+    """weekly 파일마다 만드는 잡이 정해져 있어야 --skip-jobs 가 빠짐없이 동작한다."""
+    assert {rel for rel, _a, _r in F.CHECKS["weekly"]} == set(F.WEEKLY_JOB_OF)
+
+
+def test_weekly_skip_jobs_ignores_files_of_skipped_jobs(monkeypatch, tmp_path):
+    """kr-dart 만 돈 run(재시도 슬롯)에서 us-and-public 파일이 늙어도 weekly 관문은 통과한다."""
+    old = (datetime.now(F.KST) - timedelta(days=30)).strftime("%Y-%m-%d %H:%M KST")
+    fresh = datetime.now(F.KST).strftime("%Y-%m-%d %H:%M KST")
+    for rel, _age, _rows in F.CHECKS["weekly"]:
+        p = tmp_path / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        stamp = fresh if F.WEEKLY_JOB_OF[rel] == "kr-dart" else old
+        p.write_text(json.dumps({"updatedAtKst": stamp, "count": 5, "rows": 5, "stocks": 5}), encoding="utf-8")
+    monkeypatch.setattr(F, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["x", "--group", "weekly", "--skip-jobs", ",us-and-public,segments,risk-factors"])
+    assert F.main() == 0
+    monkeypatch.setattr(sys, "argv", ["x", "--group", "weekly"])
+    assert F.main() == 1

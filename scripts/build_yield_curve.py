@@ -87,24 +87,40 @@ def fetch_treasury(year: int) -> list[list[str]]:
 
 
 def build() -> dict | None:
-    rows = fetch_csv(FRED_CSV)
-    if len(rows) < 2:
-        return None
-    header = rows[0]
-    idx = {name: header.index(name) for name in (s[0] for s in SERIES) if name in header}
-    if not idx:
-        return None
-    data_rows = rows[1:]
-    fred_last = max((r[0] for r in data_rows if r), default="")
-    extra = []
+    year = datetime.now(timezone(timedelta(hours=-5))).year
     try:
-        year = datetime.now(timezone(timedelta(hours=-5))).year
-        extra = treasury_rows_as_fred(header, fetch_treasury(year), fred_last)
-    except Exception as e:  # noqa: BLE001 — 재무부 실패는 FRED 만으로 계속(하루 늦을 뿐)
-        print(f"[yield] 재무부 당일 고시 실패({type(e).__name__}: {e}) — FRED 만 사용")
-    if extra:
-        print(f"[yield] FRED 마지막 {fred_last} 이후 재무부 고시 {len(extra)}일 덧붙임: {extra[-1][0]}")
-        data_rows = data_rows + extra
+        rows = fetch_csv(FRED_CSV)
+    except Exception as e:  # noqa: BLE001
+        print(f"[yield] FRED 실패({type(e).__name__}: {e})")
+        rows = []
+    header = rows[0] if rows else []
+    if len(rows) < 2 or not any(s[0] in header for s in SERIES):
+        # GitHub 러너에서 FRED 가 CSV 대신 다른 응답(200)을 주는 날이 있다(2026-10-21 두 번 연속 '유효 데이터 없음').
+        # 같은 값(CMT = Daily Treasury Par Yield Curve)을 재무부가 직접 고시하므로 올해·작년 재무부 CSV 만으로 만든다.
+        print(f"[yield] FRED 응답에 CSV 가 없다({(header[:1] or ['빈 응답'])[0][:60]!r}) — 재무부 고시만으로 만든다")
+        header = ["DATE"] + [s[0] for s in SERIES]
+        data_rows = []
+        for y in (year - 1, year):
+            try:
+                data_rows += treasury_rows_as_fred(header, fetch_treasury(y), "")
+            except Exception as e:  # noqa: BLE001
+                print(f"[yield] 재무부 {y} 실패({type(e).__name__}: {e})")
+        data_rows.sort(key=lambda r: r[0])
+        if not data_rows:
+            return None
+        fred_last, extra = "", data_rows
+    else:
+        data_rows = rows[1:]
+        fred_last = max((r[0] for r in data_rows if r), default="")
+        extra = []
+        try:
+            extra = treasury_rows_as_fred(header, fetch_treasury(year), fred_last)
+        except Exception as e:  # noqa: BLE001 — 재무부 실패는 FRED 만으로 계속(하루 늦을 뿐)
+            print(f"[yield] 재무부 당일 고시 실패({type(e).__name__}: {e}) — FRED 만 사용")
+        if extra:
+            print(f"[yield] FRED 마지막 {fred_last} 이후 재무부 고시 {len(extra)}일 덧붙임: {extra[-1][0]}")
+            data_rows = data_rows + extra
+    idx = {name: header.index(name) for name in (s[0] for s in SERIES) if name in header}
 
     def last_value(col: int):
         for r in reversed(data_rows):
@@ -156,7 +172,8 @@ def build() -> dict | None:
     return {
         "updatedAtKst": kst_now_str(),
         "asOf": as_of,
-        "source": "FRED · US Treasury constant maturity (DGS)" + (" + Treasury.gov 당일 고시" if extra else ""),
+        "source": ("Treasury.gov Daily Treasury Par Yield Curve" if not fred_last else
+                   "FRED · US Treasury constant maturity (DGS)" + (" + Treasury.gov 당일 고시" if extra else "")),
         "curve": curve,
         "spreads": spreads,
         "spreadHistory": hist,

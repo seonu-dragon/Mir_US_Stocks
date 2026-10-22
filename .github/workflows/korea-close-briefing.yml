@@ -21,13 +21,13 @@ jobs:
     # 스냅샷 + 수급 + 브리핑이 한 번에 느린 날 잘렸다. 백업 워크플로우와 같은 240 으로.
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
           # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip

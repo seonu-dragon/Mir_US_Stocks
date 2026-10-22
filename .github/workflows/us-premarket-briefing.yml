@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
           # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip

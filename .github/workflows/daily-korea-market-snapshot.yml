@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 240  # 실측 45분~2시간45분(2026-08-31 이력 확장 시)이라 120 은 위험
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
           # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
@@ -64,7 +64,7 @@ jobs:
             echo "snapshot stale or missing - backup run proceeds"
           fi
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: steps.guard.outputs.fresh != 'true'
         with:
           python-version: "3.12"

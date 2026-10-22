@@ -21,13 +21,13 @@ jobs:
     # 45분 한도로 취소됐다(로그 0줄, 신선도 관문도 못 돎). 잡 한도를 넉넉히 두고 KSD 는 스텝 한도로 끊는다.
     timeout-minutes: 70
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
           # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
           fetch-depth: 1
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip

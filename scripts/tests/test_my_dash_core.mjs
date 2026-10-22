@@ -68,5 +68,19 @@ test("targetChanges: 미국 표·국내 목록을 같은 모양으로", () => {
   assert.deepEqual(core.targetChanges(null, "us"), []);
 });
 
+test("upcomingSchedule: 지금 시장 일정 + FOMC + 지표 발표, 2주 안·날짜순", () => {
+  const mc = { events: [
+    { date: "2026-10-29", time: "03:00", market: "us", kind: "fomc", title: "FOMC 기준금리 결정" },
+    { date: "2026-11-12", market: "kr", kind: "expiry", title: "코스피200 옵션 월물 만기" },
+    { date: "2026-11-20", market: "us", kind: "expiry", title: "미국 월간 옵션 만기" },
+    { date: "2026-10-30", market: "us", kind: "holiday", title: "미국 휴장" }] };
+  const ic = { events: [{ name_kr: "미국 신규주택 판매", date: "2026-10-25", time_kst: "23:00" }, { name_kr: "먼 지표", date: "2026-12-30" }] };
+  const kr = core.upcomingSchedule(mc, ic, "kr", "2026-10-22", 21).map((r) => r.title);
+  assert.deepEqual(kr, ["미국 신규주택 판매", "FOMC 기준금리 결정", "코스피200 옵션 월물 만기"]);
+  const us = core.upcomingSchedule(mc, ic, "us", "2026-10-22", 14).map((r) => [r.title, r.daysAhead]);
+  assert.deepEqual(us, [["미국 신규주택 판매", 3], ["FOMC 기준금리 결정", 7], ["미국 휴장", 8]]);
+  assert.deepEqual(core.upcomingSchedule(null, null, "us", "2026-10-22"), []);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

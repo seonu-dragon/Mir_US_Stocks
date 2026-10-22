@@ -18,6 +18,7 @@
     filings: { label: "내 종목 최근 공시", markets: ["us", "kr"] },
     insider: { label: "내 종목 내부자 매매", markets: ["us"] },
     targets: { label: "내 종목 목표가·의견 변경", markets: ["us", "kr"] },
+    calendar: { label: "다가오는 시장 일정", markets: ["us", "kr"] },
   };
   const DEFAULT = ["regime", "watch", "issues", "movers"];
 
@@ -121,7 +122,30 @@
     });
   }
 
-  const api = { targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
+  /** 휴장·만기·FOMC(MARKET_CALENDAR) + 경제지표 발표(INDUSTRY_CALENDAR, 미국 지표 위주) → today 부터 days 일 안, 날짜·시각순.
+   *  시장 일정은 지금 시장 것만(국내 화면에 미국 옵션 만기를 섞지 않는다). FOMC 는 두 시장 모두에 보인다. */
+  function upcomingSchedule(marketCal, industryCal, market, today, days = 14) {
+    const t0 = Date.parse(`${today}T00:00:00Z`);
+    if (!Number.isFinite(t0)) return [];
+    const within = (d) => {
+      const t = Date.parse(`${String(d || "").slice(0, 10)}T00:00:00Z`);
+      const n = Math.round((t - t0) / 86400000);
+      return Number.isFinite(t) && n >= 0 && n <= days ? n : null;
+    };
+    const out = [];
+    for (const e of (marketCal && marketCal.events) || []) {
+      if (e.market !== market && e.kind !== "fomc") continue;
+      const n = within(e.date);
+      if (n != null) out.push({ date: e.date, time: e.time || "", title: e.title, kind: e.kind, daysAhead: n });
+    }
+    for (const e of (industryCal && industryCal.events) || []) {
+      const n = within(e.date);
+      if (n != null) out.push({ date: e.date, time: e.time_kst || "", title: e.name_kr, kind: "release", daysAhead: n });
+    }
+    return out.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.title.localeCompare(b.title));
+  }
+
+  const api = { upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
     recentMine, openMarketTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;

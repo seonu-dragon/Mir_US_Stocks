@@ -5332,6 +5332,7 @@ function renderSearch(options = {}) {
   if (typeof renderInstHolders === "function") renderInstHolders(item);
   if (typeof renderAtsCard === "function") renderAtsCard(item);
   if (typeof renderBankHealth === "function") renderBankHealth(item);
+  if (typeof renderCompanyKpis === "function") renderCompanyKpis(item);
   if (typeof renderOptionsFlowCard === "function") renderOptionsFlowCard(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
@@ -6997,6 +6998,7 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
   },
+  "회사 KPI": { us: { workflow: "Material events (SEC 8-K)", script: "scripts/build_earnings_releases.py" }, tabs: "종목 탭 · 분석 · 재무 · 회사 KPI" },
   "오늘의 이슈": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_market_issues.py --market us" },
     kr: { workflow: "Korea close briefing", script: "scripts/build_market_issues.py --market kr" },
@@ -7128,6 +7130,8 @@ function dataTrustSources() {
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
   // 다크풀(ATS) 주간 비중(2026-10-22) — FINRA 주 1회 공개(화·금 수집). 주말·공개 지연을 넘겨도 8일이면 넉넉하다. lazy.
   // 은행 건전성(2026-10-22) — FDIC 분기 자료를 매주 다시 받는다(파일 시각은 매주 갱신). lazy·은행주만.
+  // 회사 KPI(2026-10-22) — 실적 보도자료와 같은 실행(매일). KPI 를 밝히지 않는 회사가 많아 0건도 정상. lazy.
+  if (cfg.id === "us" && cfg.features?.companyKpis !== false) rows.push(source("회사 KPI", "SEC 8-K 보도자료 · AI 추출(원문 숫자 검증)", window.COMPANY_KPIS, ["tickers"], 72, "매일", "companyKpis", "", true));
   // 오늘의 이슈(2026-10-22) — 특징주 뒤 매일. 이슈가 없는 날도 파일 시각은 갱신된다. lazy.
   if (cfg.features?.marketIssues !== false) rows.push(source("오늘의 이슈", "특징주 보드 + Gemini 묶음(검증)", window.MARKET_ISSUES, ["issues"], 24 * 4, "매일", "marketIssues", "", true));   // 공통 원인 이슈가 없는 날은 0건이 정상
   // 옵션 포지션(2026-10-22) — 미국 장 마감 뒤 매일. 주말·연휴를 넘겨도 4일. lazy.
@@ -8086,7 +8090,7 @@ function exportBacktestCsv() {
 
 // ----- 내 투자 서브탭(보유·관심 / 도구) -----
 // 2026-10-03: 요약 · 보유 · 관심 · 분석(tools). 옛 '보유·관심' 딥링크(sub=holdings)는 보유로 간다.
-const BULK_SUBS = ["summary", "holdings", "watch", "tools"];
+const BULK_SUBS = ["summary", "holdings", "watch", "tools", "dash"];
 let bulkSubTab = "summary";
 function activateBulkSub(name, { push = false } = {}) {
   bulkSubTab = BULK_SUBS.includes(name) ? name : "summary";
@@ -8095,6 +8099,7 @@ function activateBulkSub(name, { push = false } = {}) {
   byId(`sub-bulk-${bulkSubTab}`)?.classList.add("is-active");
   // 도구(적립식·포트폴리오 시뮬레이터 등)는 내 종목이 없어도 쓸 수 있다 — 빈 상태가 도구까지 가리지 않게.
   renderMyInvestSummary();
+  if (bulkSubTab === "dash" && typeof renderMyDash === "function") renderMyDash();
   if (push) recordNav();
 }
 
@@ -8242,7 +8247,7 @@ function renderMyInvestSummary() {
   const hasThesis = Boolean(window.MirThesis && window.MirThesis.items.length);
   const isEmpty = !hasPortfolio && !hasWatch && !hasThesis;
   // 도구 서브탭을 연 경우(딥링크 ?tab=tools, 종목 화면의 '적립식으로 샀다면')에는 빈 상태 대신 본문을 보인다.
-  const toolsOpen = bulkSubTab === "tools";
+  const toolsOpen = bulkSubTab === "tools" || bulkSubTab === "dash";   // 대시보드도 종목 없이 쓴다
   empty.hidden = !isEmpty || toolsOpen;
   body.hidden = isEmpty && !toolsOpen;
   if (!box) return;

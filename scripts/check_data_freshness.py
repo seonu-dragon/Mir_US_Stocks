@@ -259,6 +259,8 @@ CHECKS = {
     ],
     "earnings-releases": [
         ("data/earnings_releases.json", 4, False),
+        # 회사 KPI 누적(같은 빌더, 2026-10-22). KPI 를 밝힌 보도자료가 없는 날도 파일 시각은 갱신된다.
+        ("data/company_kpis.json", 4, False),
     ],
     # kr-valuation-band.yml(매주 토요일). 새 달이 없어도 실행마다 메타 updatedAtKst 를 올린다 —
     # 12일이면 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료 시 전량 실패).

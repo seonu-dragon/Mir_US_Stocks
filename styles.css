@@ -15592,6 +15592,35 @@ button.calp-who:hover strong { text-decoration: underline; }
 .ih-spark svg { display: block; width: 100%; height: 44px; margin-top: 4px; overflow: visible; }
 /* 다크풀(ATS) 주간 비중 카드(ats.js) — 기관 보유 카드(ih-*) 모양을 그대로 쓰고 막대 차트만 더한다 */
 #atsCard { margin-top: 12px; }
+/* 회사 KPI(company-kpis.js) — 은행 건전성 표(bk-table) 모양 + 변화 작은 글씨 */
+.kp-card { margin-top: 12px; }
+.kp-table td { white-space: nowrap; }
+.kp-chg { display: block; color: var(--muted); font-size: 11px; }
+.kp-table thead a { color: var(--muted); }
+/* 내 대시보드(my-dash.js) — 위젯 카드 격자, ↑↓✕ 로 순서·빼기 */
+.my-dash { margin-top: var(--space-2); }
+.dash-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.dash-add { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cap); color: var(--muted); }
+.dash-add select { min-height: 32px; }
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.dash-card { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); min-width: 0; }
+.dash-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.dash-card-head h4 { margin: 0; font-size: var(--fs-body); }
+.dash-tools { display: inline-flex; gap: 4px; }
+.dash-btn { min-width: 32px; min-height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--text-2); }
+.dash-btn:disabled { opacity: .35; }
+.dash-table { width: 100%; border-collapse: collapse; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.dash-table td { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.dash-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--fs-cap); }
+.dash-list li { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; min-width: 0; }
+.dash-issues li { display: block; }
+.dash-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dash-two h5 { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
+.dash-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 0; }
+.dash-kv dt { font-size: 12px; color: var(--muted); }
+.dash-kv dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dash-asof { margin: 6px 0 0; font-size: 11px; }
+.dash-regime { margin: 0; }
 /* 주가 움직임 이유(move-reasons.js) — 뉴스로 확인된 이유는 강조, 소셜 의견은 흐리게(신뢰도 차이를 모양으로) */
 .mr-wrap { margin: 10px 0 4px; }
 .mr-btn { min-height: 36px; padding: 6px 14px; border: 1px solid var(--primary); border-radius: 999px; background: transparent; color: var(--primary); font-weight: 600; font-size: var(--fs-body); }

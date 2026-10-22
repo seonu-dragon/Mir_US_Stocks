@@ -355,8 +355,8 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5464cdf7a4" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5464cdf7a4"></noscript>
+    <link rel="preload" href="styles.css?v=97ca0219fe" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=97ca0219fe"></noscript>
     <style>
       .ca-main { max-width: 960px; margin: 0 auto; padding: 16px 16px 80px; }
       .ca-intro { color: var(--muted); font-size: var(--fs-body); line-height: 1.65; margin: 4px 0 18px; }
@@ -508,17 +508,17 @@ html[data-market="kr"][data-theme="dark"] {
     </footer>
 
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=9388ca6c87"></script>
+    <script src="build_id.js?v=404fcd1bef"></script>
     <!-- 종목 상세 경로(Pages / R2 기능 플래그) — 상세를 읽는 스크립트보다 먼저 -->
     <script src="details-source.js?v=381fa2dddd"></script>
-    <script src="market_config.js?v=d8c52c6284"></script>
+    <script src="market_config.js?v=9a8a7c22e6"></script>
     <!-- 한글명 검색("엔비디아")용. analysis.js 의 resolveKoAliasToTicker 가 읽으므로
          반드시 analysis.js 보다 먼저 와야 한다. -->
     <script src="data/ticker_aliases_ko.js?v=0920b74e86"></script>
     <script src="indicators.js?v=688674f569"></script>
     <script src="pattern_detectors_extended.js?v=da47646599"></script>
     <script src="live-quote-core.js?v=70f23c0739"></script>
-    <script src="analysis.js?v=e6c15743dd"></script>
+    <script src="analysis.js?v=6f35a65ae0"></script>
     <script src="changelog-core.js?v=9182db96c9"></script>
     <script src="changelog.js?v=05c1bce239"></script>
   </body>

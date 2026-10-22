@@ -69,6 +69,8 @@ import {
   hasForeignScript,
   claimTokens,
   claimGrounded,
+  claimDirection,
+  contradictsMove,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1891,6 +1893,23 @@ await test("한자 섞인 주장·글에 없는 이유는 버린다", () => {
     { claim: "외국인 매도가 쏟아졌다", social: ["S2"], news: [] },
   ] }, [{ text: "하이닉스 따라 빠짐", source: "n" }, { text: "외국인 매도 미쳤다", source: "n" }], [], names);
   eq(out.socialOnly.length, 1, "근거 있는 것만");
+});
+
+await test("오늘 움직임과 반대 방향 이유는 버린다", () => {
+  eq(claimDirection("나스닥이 하락했다"), -1, "하락");
+  eq(claimDirection("NVIDIA가 투자를 진행하여 주가가 상승했다"), 1, "상승");
+  eq(claimDirection("솔리다임 상장이 하이닉스 주가에 영향을 미쳤다"), 0, "방향 없음");
+  eq(claimDirection("하락 베팅이 청산되며 반등"), 0, "양쪽");
+  ok(contradictsMove("미국 반도체 주식 시장 폭락", 5.67), "오른 날 폭락 이유");
+  ok(contradictsMove("주가가 상승했다", -1.33), "내린 날 상승 이유");
+  ok(!contradictsMove("외국인 순매수 유입으로 반등", 5.8), "같은 방향");
+  ok(!contradictsMove("나스닥 하락", 0.4), "움직임 작음");
+  ok(!contradictsMove("나스닥 하락", null), "등락 미상");
+  const out = validateMoveReasons({ claims: [
+    { claim: "나스닥이 하락했다", social: ["S1"], news: [] },
+    { claim: "솔리다임 상장 기대가 커졌다", social: ["S2"], news: [] },
+  ] }, [{ text: "나스닥 하락 무섭다", source: "n" }, { text: "솔리다임 상장 기대", source: "n" }], [], ["SK하이닉스"], 5.81);
+  eq(out.socialOnly.map((x) => x.claim).join("|"), "솔리다임 상장 기대가 커졌다", "반대 방향 제거");
 });
 
 await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {

@@ -1,11 +1,101 @@
 {
-  "updatedAtKst": "2026-10-21 13:34 KST",
-  "lastFileDate": "2026-10-20",
+  "updatedAtKst": "2026-10-22 13:34 KST",
+  "lastFileDate": "2026-10-21",
   "partialFetch": false,
-  "count": 548,
+  "count": 557,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "FuturePeak Acquisition Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-21",
+      "accession": "0001829126-26-011366:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142699/000182912626011366/futurepeakacq_s1a.htm"
+    },
+    {
+      "company": "FuturePeak Acquisition Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-21",
+      "accession": "0001829126-26-011366:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142699/000182912626011366/futurepeakacq_s1a.htm"
+    },
+    {
+      "company": "Helio Corp /FL/",
+      "ticker": "HLEO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-21",
+      "accession": "0001683168-26-008001:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1953988/000168316826008001/helio_s1.htm"
+    },
+    {
+      "company": "Our Bond, Inc.",
+      "ticker": "OBAI",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-21",
+      "accession": "0001493152-26-047889:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1756064/000149315226047889/forms-1.htm"
+    },
+    {
+      "company": "PBT Land & Minerals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-21",
+      "accession": "0001213900-26-111162:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026111162/ea0299258-07.htm"
+    },
+    {
+      "company": "PBT Land & Minerals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-21",
+      "accession": "0001213900-26-111162:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026111162/ea0299258-07.htm"
+    },
+    {
+      "company": "Ealixir, Inc.",
+      "ticker": "EAXR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-21",
+      "accession": "0001213900-26-111109:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/832370/000121390026111109/ea0309097-s1a2_ealixir.htm"
+    },
+    {
+      "company": "Ealixir, Inc.",
+      "ticker": "EAXR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-21",
+      "accession": "0001213900-26-111109:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/832370/000121390026111109/ea0309097-s1a2_ealixir.htm"
+    },
+    {
+      "company": "Rezera Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-21",
+      "accession": "0001104659-26-117853:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141583/000110465926117853/tmq-20261021xdrsa.htm"
+    },
     {
       "company": "Lycia Therapeutics, Inc.",
       "ticker": null,

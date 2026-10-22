@@ -147,6 +147,87 @@ def test_curated_types_and_rows_are_valid():
             assert bad not in why
 
 
+def test_bars_from_chart_keeps_open_close_and_drops_halts():
+    chart = [
+        [10.0, 11, 9, 10.5, 100, "2026-01-02"],
+        [0, 0, 0, 10.5, 0, "2026-01-05"],          # 거래정지(거래량 0)
+        [None, 1, 1, 10.0, 100, "2026-01-06"],     # 시가 없음
+        [10.2, 10.4, 9.9, 10.1, None, "2026-01-07T00:00:00"],  # 거래량 모름은 유지
+    ]
+    assert b.bars_from_chart(chart) == {"2026-01-02": (10.0, 10.5), "2026-01-07": (10.2, 10.1)}
+
+
+def _nd_fixture():
+    """국내·미국 같은 평일 달력. 미국은 짝수 번째 날 +3%, 3의 배수 날 −3%(겹치면 +3%), 그 외 0.5%.
+    국내 다음 날은 미국 +3% 뒤면 시가 +2% 갭·양봉, −3% 뒤면 −1% 갭·음봉, 나머지는 갭 0·음봉."""
+    days = _calendar(200, "2025-01-01")
+    us_closes, c = [(days[0], 100.0)], 100.0
+    us_moves = {}
+    for i, d in enumerate(days[1:], start=1):
+        r = 0.03 if i % 2 == 0 else (-0.03 if i % 3 == 0 else 0.005)
+        us_moves[d] = r
+        c *= 1 + r
+        us_closes.append((d, c))
+    bars, close = {days[0]: (100.0, 100.0)}, 100.0
+    for p, k in zip(days, days[1:]):
+        r = us_moves.get(p)
+        if r == 0.03:
+            o, cl = close * 1.02, close * 1.03
+        elif r == -0.03:
+            o, cl = close * 0.99, close * 0.985
+        else:
+            o, cl = close, close * 0.999
+        bars[k] = (o, cl)
+        close = cl
+    return days, us_closes, bars
+
+
+def test_next_day_stats_conditional_buckets_and_baseline():
+    days, us_closes, bars = _nd_fixture()
+    st = b.next_day_stats(bars, b.log_returns(us_closes), days, [d for d, _ in us_closes], thr=2.0, min_n=20)
+    up, down, base = st["up"], st["down"], st["base"]
+    # 미국 i 번째 날 → 국내 i+1 번째 날. 첫 미국 날(i=0)은 수익률이 없어 짝이 없다.
+    exp_up = sum(1 for i in range(1, 199) if i % 2 == 0)
+    exp_down = sum(1 for i in range(1, 199) if i % 2 and i % 3 == 0)
+    assert up["n"] == exp_up and down["n"] == exp_down
+    assert up["gap"] == pytest.approx(2.0) and up["bull"] == 100.0 and up["ret"] == pytest.approx(3.0)
+    assert down["gap"] == pytest.approx(-1.0) and down["bull"] == 0.0 and down["ret"] == pytest.approx(-1.5)
+    assert base["n"] == 199  # 국내 연속 거래일 쌍 전부(미국 값과 무관)
+    assert base["bull"] == pytest.approx(100 * exp_up / 199, abs=0.06)
+
+
+def test_next_day_stats_min_n_drops_bucket_and_none_when_empty():
+    days, us_closes, bars = _nd_fixture()
+    us_ret, us_cal = b.log_returns(us_closes), [d for d, _ in us_closes]
+    st = b.next_day_stats(bars, us_ret, days, us_cal, thr=2.0, min_n=40)
+    assert "up" in st and "down" not in st  # 하락 표본 33 < 40
+    assert b.next_day_stats(bars, us_ret, days, us_cal, thr=10.0, min_n=20) is None  # 어느 구간도 없음
+    assert b.next_day_stats({}, us_ret, days, us_cal) is None
+
+
+def test_next_day_stats_merges_kr_holiday_and_skips_gaps_and_bad_bars():
+    kr = ["2026-09-21", "2026-09-22", "2026-09-29", "2026-09-30"]
+    us = ["2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-25", "2026-09-28", "2026-09-29"]
+    # 미국 22~28 매 세션 +0.6% → 연휴 구간 합 ≈ +3.0%(한 세션은 문턱 미만이라도 합산으로 +2% 이상)
+    closes, c = [("2026-09-18", 100.0)], 100.0
+    for d in us:
+        c *= 1.006 if d >= "2026-09-22" else 1.0
+        closes.append((d, c))
+    bars = {
+        "2026-09-21": (100.0, 100.0),
+        "2026-09-22": (100.0, 100.0),
+        "2026-09-29": (102.0, 104.0),
+        "2026-09-30": (300.0, 300.0),  # +188% → 자료 오류로 버린다
+    }
+    st = b.next_day_stats(bars, b.log_returns(closes), kr, us, thr=2.0, min_n=1)
+    assert st["up"] == {"n": 1, "gap": 2.0, "bull": 100.0, "ret": 4.0}
+    assert st["base"]["n"] == 2
+    # 이 종목 봉이 빈 날(22일)은 건너뛰어 잇지 않는다
+    del bars["2026-09-22"]
+    st2 = b.next_day_stats(bars, b.log_returns(closes), kr, us, thr=2.0, min_n=1)
+    assert st2 is None
+
+
 def _write(path, obj):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, ensure_ascii=False), encoding="utf-8")
@@ -161,7 +242,7 @@ def tiny_repo(tmp_path, monkeypatch):
     k200 = [rng.gauss(0, 0.01) for _ in days[1:]]
 
     def chart(rets):
-        return [[0, 0, 0, c, 0, d] for d, c in _closes(days, rets)]
+        return [[c, c, c, c, 1, d] for d, c in _closes(days, rets)]
 
     us_det = tmp_path / "data" / "details"
     kr_det = tmp_path / "data" / "korea" / "details"
@@ -206,6 +287,14 @@ def test_build_payload_shape(tiny_repo):
         assert l["n"] >= b.MIN_N
     assert payload["usAsOf"] and payload["window"]["to"]
     assert "예측" in payload["note"]
+    # 간밤 ±2% 다음 날 통계: 기간·문턱 메타가 있고, 붙은 쌍은 표본 문턱을 지킨다
+    assert payload["nextDay"]["thrPct"] == b.COND_THRESHOLD and payload["nextDay"]["minN"] == b.COND_MIN_N
+    assert payload["nextDay"]["count"] >= 1
+    assert payload["nextDay"]["count"] == sum(1 for l in payload["links"] if l.get("nextDay"))
+    for l in payload["links"]:
+        for key in ("up", "down"):
+            if l.get("nextDay", {}).get(key):
+                assert l["nextDay"][key]["n"] >= b.COND_MIN_N
 
 
 def test_build_refuses_collapsed_snapshot(tiny_repo, monkeypatch):

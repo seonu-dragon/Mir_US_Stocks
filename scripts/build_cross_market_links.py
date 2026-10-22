@@ -23,7 +23,11 @@
    - strength: 편상관 기준 strong(≥0.25) · moderate(≥ max(0.10, 2/√n)) · weak(그 미만) ·
      insufficient(표본 < MIN_N). weak 는 화면에 "관계 약함"으로 나간다 — 사람이 정한 관계라도
      데이터가 받쳐 주지 않으면 그렇게 적는다.
-3. 자동 후보(source=auto): 국내 시총 상위 AUTO_KR_TOP × 미국 시총 상위 AUTO_US_TOP(+섹터 ETF)의
+3. 간밤 미국 ±2% 다음 날(nextDay): 최근 5년(일봉이 있는 만큼) 같은 정렬(lagCorr 와 같은 구간)로
+   미국 쪽 구간 수익률이 +COND_THRESHOLD% 이상/−COND_THRESHOLD% 이하였던 국내 다음 거래일의
+   시초 갭 평균(시가 ÷ 직전 국내 종가), 양봉(종가 > 시가) 비율, 종가 등락 평균, 표본 수 n 과 같은 국내
+   종목의 전체 거래일 기준선(base). 표본이 COND_MIN_N 미만인 구간은 내지 않는다. 과거 빈도일 뿐이다.
+4. 자동 후보(source=auto): 국내 시총 상위 AUTO_KR_TOP × 미국 시총 상위 AUTO_US_TOP(+섹터 ETF)의
    SPY 통제 lagCorr 행렬에서 AUTO_MIN_CORR 이상인 쌍(국내 종목당 최대 AUTO_PER_KR, 전체 AUTO_MAX).
    후보가 약 5만 쌍이라 노이즈만으로도 최댓값이 0.2 근처까지 나온다(√(2ln M)/√n) — 문턱을
    그보다 높게 잡았고, 화면에는 '데이터로 찾은 후보 · 사람이 확인한 관계 아님'으로 구분해 표시한다.
@@ -71,6 +75,12 @@ MIN_UNIVERSE = 1000  # 스냅샷 종목 수가 이보다 적으면 붕괴로 보
 MIN_N = 120
 STRONG = 0.25
 MODERATE_FLOOR = 0.10
+
+COND_WINDOW_DAYS = 5 * 365
+COND_THRESHOLD = 2.0  # %, 미국 쪽 구간(간밤) 수익률 문턱
+COND_MIN_N = 20
+# 국내 가격제한폭(±30%)을 넘는 갭·등락은 수정주가가 덜 반영된 자료 오류로 보고 버린다.
+COND_MAX_ABS = 0.35
 
 AUTO_KR_TOP = 150
 AUTO_US_TOP = 400
@@ -335,6 +345,83 @@ def pair_stats(kr_closes, us_closes, us_bench_closes, *, kr_cal: list[str]) -> d
     }
 
 
+def bars_from_chart(chart) -> dict[str, tuple[float, float]]:
+    """chartSeries → {날짜: (시가, 종가)}. 시가·종가가 양수가 아니거나 거래량 0(거래정지)인 봉은 버린다."""
+    out: dict[str, tuple[float, float]] = {}
+    for row in chart or []:
+        if not isinstance(row, (list, tuple)) or len(row) < 6:
+            continue
+        d = row[5]
+        if not isinstance(d, str) or len(d) < 10:
+            continue
+        try:
+            o, c = float(row[0]), float(row[3])
+        except (TypeError, ValueError):
+            continue
+        if not (math.isfinite(o) and math.isfinite(c)) or o <= 0 or c <= 0:
+            continue
+        vol = row[4]
+        if isinstance(vol, (int, float)) and not isinstance(vol, bool) and vol == 0:
+            continue
+        out[d[:10]] = (o, c)
+    return out
+
+
+def _bucket(obs: list[tuple[float, bool, float]]) -> dict:
+    n = len(obs)
+    return {
+        "n": n,
+        "gap": round(100 * sum(o[0] for o in obs) / n, 2),
+        "bull": round(100 * sum(1 for o in obs if o[1]) / n, 1),
+        "ret": round(100 * sum(o[2] for o in obs) / n, 2),
+    }
+
+
+def next_day_stats(kr_bars: dict, us_ret: dict, kr_cal: list[str], us_cal: list[str], *,
+                   thr: float = COND_THRESHOLD, min_n: int = COND_MIN_N) -> dict | None:
+    """간밤 미국 쪽이 +thr% 이상 / −thr% 이하였던 국내 다음 거래일의 시초 갭·양봉 비율·등락(과거 빈도).
+
+    국내 달력의 연속한 두 거래일 p→k 마다 (시가_k/종가_p − 1, 종가_k > 시가_k, 종가_k/종가_p − 1).
+    이 종목의 p·k 봉이 둘 다 있어야 한다(상장 전·거래정지로 빈 날을 건너뛰어 잇지 않는다).
+    미국 쪽 구간은 lag_spans 와 같다(국내 p 종가 뒤 열려 k 개장 전에 닫힌 미국 세션 전부, 연휴면 합산).
+    base 는 미국 값과 무관하게 같은 기간 이 종목의 모든 거래일. 표본이 min_n 미만인 구간은 뺀다.
+    up·down 이 둘 다 없거나 base 가 min_n 미만이면 None.
+    """
+    span_of = dict(lag_spans(kr_cal, us_cal))
+    base, up, down = [], [], []
+    for p, k in zip(kr_cal, kr_cal[1:]):
+        bp, bk = kr_bars.get(p), kr_bars.get(k)
+        if not bp or not bk:
+            continue
+        prev_close = bp[1]
+        o, c = bk
+        gap = o / prev_close - 1
+        ret = c / prev_close - 1
+        if abs(gap) > COND_MAX_ABS or abs(ret) > COND_MAX_ABS:
+            continue
+        obs = (gap, c > o, ret)
+        base.append(obs)
+        ds = span_of.get(k)
+        if not ds:
+            continue
+        s = span_sum(us_ret, ds)
+        if s is None:
+            continue
+        us_pct = (math.exp(s) - 1) * 100
+        if us_pct >= thr:
+            up.append(obs)
+        elif us_pct <= -thr:
+            down.append(obs)
+    if len(base) < min_n:
+        return None
+    out = {"base": _bucket(base)}
+    if len(up) >= min_n:
+        out["up"] = _bucket(up)
+    if len(down) >= min_n:
+        out["down"] = _bucket(down)
+    return out if ("up" in out or "down" in out) else None
+
+
 # ---------------------------------------------------------------------------
 # 입출력
 # ---------------------------------------------------------------------------
@@ -355,6 +442,15 @@ def load_closes(market: str, ticker: str, cache: dict) -> list[tuple[str, float]
     closes = closes_from_chart((d or {}).get("chartSeries"))
     cache[key] = closes
     return closes
+
+
+def load_bars(ticker: str, cache: dict) -> dict[str, tuple[float, float]]:
+    """국내 종목 상세 chartSeries → {날짜: (시가, 종가)}."""
+    key = ("kr-bars", ticker)
+    if key not in cache:
+        d = load_json(KR_DETAILS / f"{ticker}.json")
+        cache[key] = bars_from_chart((d or {}).get("chartSeries"))
+    return cache[key]
 
 
 def ticker_meta(row: dict | None, market: str) -> dict:
@@ -484,6 +580,15 @@ def build() -> tuple[dict | None, int]:
         links.append({"kr": a["kr"], "us": a["us"], "type": "auto", "why": f"{kr_ind} ↔ {us_ind}".strip(" ↔"),
                       "source": "auto", **st})
 
+    # 간밤 미국 ±COND_THRESHOLD% 다음 날 국내(과거 빈도). 기간은 상관(1년)보다 길게 잡는다(표본 확보).
+    cond_cal = window_days_for(kr_bench, end, COND_WINDOW_DAYS)
+    us_cal = [d for d, _ in us_bench]
+    for l in links:
+        nd = next_day_stats(load_bars(l["kr"], cache), log_returns(load_closes("us", l["us"], cache)), cond_cal, us_cal)
+        if nd:
+            l["nextDay"] = nd
+    next_day_count = sum(1 for l in links if l.get("nextDay"))
+
     tickers = {"us": {}, "kr": {}}
     for l in links:
         tickers["kr"].setdefault(l["kr"], ticker_meta(kr_rows.get(l["kr"]), "kr"))
@@ -500,6 +605,8 @@ def build() -> tuple[dict | None, int]:
         "window": {"from": (date.fromisoformat(end) - timedelta(days=WINDOW_DAYS)).isoformat(), "to": end, "days": WINDOW_DAYS},
         "usAsOf": us_snap.get("priceDate"),
         "krAsOf": max((r.get("priceDate") or "" for r in kr_rows.values()), default="") or None,
+        "nextDay": {"from": cond_cal[1] if len(cond_cal) > 1 else None, "to": end, "thrPct": COND_THRESHOLD,
+                    "minN": COND_MIN_N, "count": next_day_count},
         "thresholds": {"strong": STRONG, "moderateFloor": MODERATE_FLOOR, "minN": MIN_N, "autoMin": AUTO_MIN_CORR},
         "benchmarks": {"us": US_BENCH, "kr": KR_BENCH},
         "typeLabels": TYPE_LABELS,
@@ -511,7 +618,7 @@ def build() -> tuple[dict | None, int]:
         "links": links,
     }
     print(f"[연관 종목] 사람이 정한 관계 {payload['curatedCount']}쌍 ({strengths}) · 자동 후보 {payload['autoCount']}쌍"
-          f" · 기간 {payload['window']['from']}~{end}")
+          f" · 기간 {payload['window']['from']}~{end} · 간밤 ±{COND_THRESHOLD:g}% 다음 날 통계 {next_day_count}쌍")
     if skipped:
         print(f"  건너뜀 {len(skipped)}: {', '.join(skipped[:10])}")
     return payload, 0

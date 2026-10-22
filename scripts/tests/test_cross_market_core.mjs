@@ -122,6 +122,49 @@ test("표기: 상관·강도·날짜", () => {
   assert.equal(core.typeLabel(P, "theme"), "연관 산업");
 });
 
+test("간밤 ±2% 다음 날: 상세 행에 정규화돼 붙고, 깨진 구간은 버린다", () => {
+  const nd = { base: { n: 1222, gap: 0.23, bull: 47.9, ret: 0.27 }, up: { n: 306, gap: 1.78, bull: 36.6, ret: 1.26 }, down: { n: 3, gap: "x", bull: 50 } };
+  const p2 = { ...P, nextDay: { thrPct: 2 }, links: [link("000660", "NVDA", { nextDay: nd }), link("005930", "NVDA", { nextDay: { base: nd.base } })] };
+  const r = core.linksFor(p2, "us", "NVDA").curated;
+  const sk = r.find((x) => x.ticker === "000660");
+  assert.equal(sk.usTicker, "NVDA");
+  assert.deepEqual(sk.nextDay, { thr: 2, base: nd.base, up: nd.up, down: null });
+  // up·down 둘 다 없으면 null, 옛 데이터(필드 없음)도 null
+  assert.equal(r.find((x) => x.ticker === "005930").nextDay, null);
+  assert.equal(core.linksFor(P, "kr", "000660").curated[0].nextDay, null);
+});
+
+test("간밤 ±2% 다음 날: 보드는 오늘 움직임 방향의 구간만, 문턱 미만·US 모드는 없음", () => {
+  const nd = { base: { n: 1222, gap: 0.2, bull: 48, ret: 0.3 }, up: { n: 306, gap: 1.8, bull: 37, ret: 1.3 }, down: { n: 260, gap: -1.7, bull: 54, ret: -1.3 } };
+  const p2 = { ...P, nextDay: { thrPct: 2 }, links: P.links.map((l) => ({ ...l, nextDay: nd })) };
+  const b = core.moveBoard(p2, "us", { minAbs: 2 });
+  const nvda = b.rows.find((r) => r.ticker === "NVDA"); // +4.2%
+  assert.equal(nvda.links[0].nextDayNow.dir, "up");
+  assert.equal(nvda.links[0].nextDayNow.n, 306);
+  const mu = b.rows.find((r) => r.ticker === "MU"); // −2.5%
+  assert.equal(mu.links[0].nextDayNow.dir, "down");
+  assert.equal(mu.links[0].nextDayNow.gap, -1.7);
+  // 문턱 미만이면 구간 없음
+  const small = core.moveBoard(p2, "us", { minAbs: 0 }).rows.find((r) => r.ticker === "SOXX"); // +1.0%
+  assert.equal(small.links[0].nextDayNow, null);
+  // US 모드(국내 → 미국)는 이 통계를 쓰지 않는다
+  assert.equal(core.moveBoard(p2, "kr", { minAbs: 0 }).rows[0].links[0].nextDayNow, null);
+  // 옛 데이터: nextDay 없음 → null
+  assert.equal(core.moveBoard(P, "us", { minAbs: 2 }).rows[0].links[0].nextDayNow, null);
+});
+
+test("간밤 ±2% 다음 날: 구간 고르기·부호 퍼센트", () => {
+  const nd = { thr: 2, base: { n: 9 }, up: { n: 30, gap: 1 }, down: null };
+  assert.equal(core.nextDayBucket(nd, 2).dir, "up");
+  assert.equal(core.nextDayBucket(nd, 1.99), null);
+  assert.equal(core.nextDayBucket(nd, -5), null); // down 구간이 없다(표본 부족)
+  assert.equal(core.nextDayBucket(null, 5), null);
+  assert.equal(core.signedPct(1.149), "+1.1%");
+  assert.equal(core.signedPct(-0.4), "−0.4%");
+  assert.equal(core.signedPct(0.04), "0.0%");
+  assert.equal(core.signedPct(null), "—");
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error("  - " + f));

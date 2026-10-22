@@ -74,6 +74,29 @@ function xmBindGo(host) {
   });
 }
 
+// 국내 쪽 수치는 보는 모드와 상관없이 국내 관례색(상승 빨강·하락 파랑).
+function xmKrPctHtml(v, digits = 1) {
+  const C = xmCore();
+  const n = Number(v);
+  const dir = !Number.isFinite(n) || Number(Math.abs(n).toFixed(digits)) === 0 ? "flat" : n > 0 ? "up" : "dn";
+  return `<span class="xm-kr-${dir}">${escapeHtml(C.signedPct(v, digits))}</span>`;
+}
+
+// 간밤 미국 ±문턱 다음 날 국내 과거 빈도 한 줄. 예: "+2% 이상인 다음 날(표본 34): 시초 갭 평균 +1.1% · 양봉 58% (평소 49%)"
+function xmNextDayText(b, nd, { subject = "", withRet = true } = {}) {
+  const thr = `${b.dir === "up" ? "+" : "−"}${+nd.thr}% ${b.dir === "up" ? "이상" : "이하"}`;
+  const ret = withRet && b.ret != null ? ` · 등락 평균 ${xmKrPctHtml(b.ret)}` : "";
+  return `${subject ? `${escapeHtml(subject)} ` : ""}${thr}인 다음 날(표본 ${b.n}): 시초 갭 평균 ${xmKrPctHtml(b.gap)}${ret} · 양봉 ${Math.round(b.bull)}% (평소 ${Math.round(nd.base.bull)}%)`;
+}
+
+function xmNextDayHtml(row) {
+  const nd = row.nextDay;
+  if (!nd) return "";
+  const lines = [nd.up && { dir: "up", ...nd.up }, nd.down && { dir: "down", ...nd.down }].filter(Boolean);
+  if (!lines.length) return "";
+  return `<span class="xm-next">${lines.map((b) => `<span>${xmNextDayText(b, nd, { subject: row.usTicker })}</span>`).join("")}</span>`;
+}
+
 function xmDetailRow(row) {
   const C = xmCore();
   const dateNote = row.date ? `<small class="muted">${escapeHtml(C.shortDate(row.date))}</small>` : "";
@@ -83,6 +106,7 @@ function xmDetailRow(row) {
       <span class="xm-rel"><span class="xm-type xm-type-${escapeHtml(row.type)}">${escapeHtml(row.typeLabel)}</span><span class="xm-why">${escapeHtml(row.why)}</span></span>
       <span class="xm-chg">${xmPctHtml(row.chg)}${dateNote}</span>
       <span class="xm-corr" title="미국 D일 → 국내 다음 거래일 일간 수익률 상관(미국 시장 통제), 표본 ${row.n}일"><b>${C.corrText(row.lagCorrEx)}</b>${xmStrengthHtml(row.strength)}</span>
+      ${xmNextDayHtml(row)}
     </button>`;
 }
 
@@ -148,7 +172,7 @@ function renderCrossMarketHome() {
           <div class="xm-chips">${m.links.map((r) => `
             <button type="button" class="xm-chip${r.source === "auto" ? " xm-chip-auto" : ""}" data-xm-ticker="${escapeHtml(r.ticker)}" data-xm-market="${escapeHtml(r.market)}" title="${escapeHtml(r.why)}${r.source === "auto" ? " · 데이터로 찾은 후보(사람이 확인한 관계 아님)" : ""}">
               <span class="xm-chip-name">${escapeHtml(r.market === "kr" ? r.name : r.ticker)}</span>
-              <small>${escapeHtml(r.typeLabel)} · ${corrWord} ${C.corrText(r.corrEx)}</small>${xmStrengthHtml(r.strengthNow)}
+              <small>${escapeHtml(r.typeLabel)} · ${corrWord} ${C.corrText(r.corrEx)}</small>${xmStrengthHtml(r.strengthNow)}${r.nextDayNow && r.nextDay ? `<small class="xm-next">${xmNextDayText(r.nextDayNow, r.nextDay, { withRet: false })}</small>` : ""}
             </button>`).join("")}${m.more ? `<span class="muted xm-more">외 ${m.more}</span>` : ""}</div>
         </li>`).join("")}</ol>`
     : `<p class="muted">간밤 ±${minAbs}% 넘게 움직인 연관 미국 종목이 없습니다.</p>`;

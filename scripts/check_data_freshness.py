@@ -61,6 +61,8 @@ TIMESTAMP_KEYS = ("updatedAtKst", "generatedAtKst", "generated", "updatedAt", "a
 CHECKS = {
     "us": [
         ("data/market_snapshot.json", 2, False),
+        # 시장 폭 추이(build_market_breadth.py, 스냅샷 직후 continue-on-error 스텝). 0일(count 0)도 잡는다.
+        ("data/market_breadth.json", 4, True),
         ("data/earnings_calendar.json", 5, False),
         ("data/options_stats.json", 4, False),
         ("data/us_calendar.json", 4, False),
@@ -91,6 +93,7 @@ CHECKS = {
     ],
     "kr": [
         ("data/korea/market_snapshot.json", 2, False),
+        ("data/korea/market_breadth.json", 4, True),
         ("data/kr_disclosures.json", 4, False),
         ("data/korea/pattern_stats.json", 10, False),
         ("data/korea/investor_flow.json", 5, False),

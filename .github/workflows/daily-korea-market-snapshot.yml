@@ -101,6 +101,13 @@ jobs:
         continue-on-error: true
         run: python scripts/build_kr_investor_flow.py --push
 
+      # 시장 폭 추이 — 방금 발행된 국내 종목 일봉만 다시 읽는다(외부 호출 없음, ~1분). 실패해도 스냅샷은 이미 커밋됐다.
+      - name: Build market breadth (KR)
+        if: steps.guard.outputs.fresh != 'true'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python scripts/build_market_breadth.py --market kr --push
+
       # 증시자금·시장 투자자별·순매수 상위(korea-close-briefing 과 같은 스텝, 백업 경로).
       - name: Build KR market funds
         if: steps.guard.outputs.fresh != 'true'

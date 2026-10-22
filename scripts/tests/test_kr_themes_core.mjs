@@ -191,6 +191,15 @@ test("prevDayValues · ranksOf · related · quadrant", () => {
   assert.equal(core.quadrant(null, 1), "");
 });
 
+test("asOfRangeText: 편입 기준일 범위", () => {
+  assert.equal(core.asOfRangeText(["2026-05-31", "2026-07-31"]), "2026-05-31~07-31");
+  assert.equal(core.asOfRangeText(["2026-07-31", "2026-07-31"]), "2026-07-31");
+  assert.equal(core.asOfRangeText(["2025-12-31", "2026-03-31"]), "2025-12-31~2026-03-31");
+  assert.equal(core.asOfRangeText("2026-07-31"), "2026-07-31");
+  assert.equal(core.asOfRangeText(null), "");
+  assert.equal(core.asOfRangeText(["bad"]), "");
+});
+
 if (failures.length) {
   console.error(`kr-themes-core: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error("  ✕ " + f));

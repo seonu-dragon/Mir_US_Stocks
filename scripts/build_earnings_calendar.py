@@ -150,13 +150,29 @@ def fetch_next_earnings(ticker: str, market: str) -> dict | None:
     }
 
 
-def build(market: str, limit: int) -> dict:
+def drop_past(rows: list[dict], today: date) -> list[dict]:
+    """'다음 실적'인데 이미 지난 날짜(yfinance calendar 가 지난 분기 날짜를 그대로 줄 때: UL 07-28 등)와
+    날짜 형식이 아닌 행을 뺀다. 추정치로 바꿔 채우지 않는다."""
+    out = []
+    for r in rows:
+        try:
+            d = date.fromisoformat(str(r.get("nextDate") or "")[:10])
+        except ValueError:
+            continue
+        if d >= today:
+            out.append(r)
+    return out
+
+
+def build(market: str, limit: int, today: date | None = None) -> dict:
     tickers = load_tickers(market, limit)
     earnings = []
     for ticker in tickers:
         row = fetch_next_earnings(ticker, market)
         if row:
             earnings.append(row)
+    tz = "Asia/Seoul" if market == "kr" else "America/New_York"
+    earnings = drop_past(earnings, today or datetime.now(ZoneInfo(tz)).date())
     earnings.sort(key=lambda r: r.get("nextDate") or "")
     return {
         "market": market,

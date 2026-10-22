@@ -237,7 +237,22 @@
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.slice(2).replace(/-/g, ".") : (s || "—");
   }
 
-  const api = { buildDailyRows, marketClock, provisionalLabel, krSessionClosed, alignSessionBar, mergeLiveBars, krTick, snapshotPrevClose, fmtPrice, fmtChange, fmtVolume, fmtDate, fmtDateShort };
+  // 상세 일봉 마지막 봉이 스냅샷 기준일(priceDate)보다 maxDays 일(달력) 넘게 오래됐는지. 봉은 [o,h,l,c,v,날짜] 또는 {d}.
+  // 오래됐으면 { date, label: 'MM-DD', days }, 아니면(또는 날짜를 모르면) null. 봉을 메우지 않는다 — 상태 표시용.
+  function staleLastBar(series, priceDate, maxDays = 7) {
+    if (!Array.isArray(series) || !series.length) return null;
+    const last = series[series.length - 1];
+    const raw = Array.isArray(last) ? last[5] : (last && (last.d || last.date));
+    const d = String(raw || "").slice(0, 10);
+    const p = String(priceDate || "").slice(0, 10);
+    const re = /^\d{4}-\d{2}-\d{2}$/;
+    if (!re.test(d) || !re.test(p)) return null;
+    const days = Math.round((Date.parse(`${p}T00:00:00Z`) - Date.parse(`${d}T00:00:00Z`)) / 86400000);
+    if (!Number.isFinite(days) || days <= maxDays) return null;
+    return { date: d, label: d.slice(5), days };
+  }
+
+  const api = { buildDailyRows, marketClock, provisionalLabel, krSessionClosed, alignSessionBar, mergeLiveBars, krTick, snapshotPrevClose, fmtPrice, fmtChange, fmtVolume, fmtDate, fmtDateShort, staleLastBar };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDailyTable = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

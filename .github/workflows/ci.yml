@@ -157,6 +157,9 @@ jobs:
       # 옵션 포지션(options-flow-core.js): 행사가 묶기·막대 비율·금액 표기·이상 거래 행.
       - name: Options flow core tests
         run: node scripts/tests/test_options_flow_core.mjs
+      # 미국 공매도 잔고 보드(short-interest-core.js): 저유동 종목 뒤로·DTC 1.0 바닥·결측은 빈칸.
+      - name: Short interest core tests
+        run: node scripts/tests/test_short_interest_core.mjs
       # 주가 움직임 이유(move-reasons-core.js): 워커 응답 정리·모양 검사·링크 거르기.
       - name: Move reasons core tests
         run: node scripts/tests/test_move_reasons_core.mjs

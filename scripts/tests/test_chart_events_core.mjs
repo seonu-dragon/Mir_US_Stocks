@@ -153,6 +153,26 @@ test("filingWindow·normalizeEnabled", () => {
   assert.deepEqual(E.normalizeEnabled(null), { E: true, D: true, S: true, F: true });
 });
 
+test("surpriseBars: 최근 4분기, 실제·예상 둘 다 있는 분기만", () => {
+  const h = [
+    { date: "2025-05-01", epsActual: 1.65, epsEstimate: 1.62 },
+    { date: "2026-04-30", epsActual: 2.01, epsEstimate: 1.94 },
+    { date: "2025-07-31", epsActual: 1.57, epsEstimate: 1.43 },
+    { date: "2026-01-29", epsActual: 2.84, epsEstimate: 2.67 },
+    { date: "2025-10-30", epsActual: 1.85, epsEstimate: null },   // 예상 없음 → 뺀다
+    { date: "2024-10-30", epsActual: 1.0, epsEstimate: 1.2 },
+  ];
+  const b = E.surpriseBars(h);
+  assert.deepEqual(b.map((r) => r.date), ["2025-05-01", "2025-07-31", "2026-01-29", "2026-04-30"]);
+  assert.equal(b[2].aw, 1);
+  assert.ok(Math.abs(b[3].surprisePct - ((2.01 - 1.94) / 1.94) * 100) < 1e-9);
+  assert.deepEqual(E.surpriseBars([]), []);
+  assert.equal(E.surpriseBars([{ date: "2026-01-01", epsActual: 0.1, epsEstimate: 0 }])[0].surprisePct, null);
+  const neg = E.surpriseBars([{ date: "2026-01-01", epsActual: -0.5, epsEstimate: -0.4 }])[0];
+  assert.equal(neg.aw, 1);
+  assert.ok(neg.surprisePct < 0);                                   // 적자 확대 = 미달
+});
+
 if (failures.length) {
   console.error(`chart-events-core: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error(" - " + f));

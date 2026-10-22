@@ -308,7 +308,17 @@
     return seen;
   }
 
-  const api = { PERIOD_KEYS, LIMIT_PCT, suspect, median, weightKey, themeIndex, normSeries, leaders, contributions, prevDayValues, ranksOf, related, quadrant, activeMembers, perf, themeStats, rankThemes, statValue, themesForTicker, dartUrl, evidenceParts, fmtPct, tone, groups };
+  // 미국 테마 편입 기준일(N-PORT 보유 기준일 범위 [최소, 최대]) → '2026-05-31~07-31'. 같으면 하나, 형식 오류면 ''.
+  function asOfRangeText(range) {
+    const ok = (d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d || ""));
+    const r = Array.isArray(range) ? range.filter(ok).map(String).sort() : (ok(range) ? [String(range)] : []);
+    if (!r.length) return "";
+    const lo = r[0], hi = r[r.length - 1];
+    if (lo === hi) return lo;
+    return `${lo}~${lo.slice(0, 4) === hi.slice(0, 4) ? hi.slice(5) : hi}`;
+  }
+
+  const api = { asOfRangeText, PERIOD_KEYS, LIMIT_PCT, suspect, median, weightKey, themeIndex, normSeries, leaders, contributions, prevDayValues, ranksOf, related, quadrant, activeMembers, perf, themeStats, rankThemes, statValue, themesForTicker, dartUrl, evidenceParts, fmtPct, tone, groups };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrThemesCore = api;
 })(typeof window !== "undefined" ? window : null);

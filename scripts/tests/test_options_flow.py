@@ -81,3 +81,30 @@ def test_build_with_single_expiry_and_premarket_skip(monkeypatch):
     assert p["uoa"] and p["uoa"][0][0] == "AAA"
     monkeypatch.setattr(F, "universe", lambda top: ["BBB"])
     assert F.build(1, client=_FakeYahoo({"BBB": pre}), sleep_s=0, now=now) is None
+
+
+def test_max_pain_minimizes_holder_payout():
+    # 콜 OI 는 110 에, 풋 OI 는 90 에 몰림 → 100 에서 지급액 0
+    cs = [_c(90, "P", oi=1000), _c(100, "C", oi=10), _c(100, "P", oi=10), _c(110, "C", oi=1000)]
+    assert F.max_pain(cs) == 100
+    # 지급액(S): S=90 → 콜 0 + 풋(100-90)*500=5000 / S=100 → 콜(100-90)*300=3000 / S=110 → 콜 20*300=6000
+    cs2 = [_c(90, "C", oi=300), _c(100, "P", oi=500), _c(110, "C", oi=10)]
+    assert F.max_pain(cs2) == 100
+    assert F.max_pain([_c(90, "C", oi=0), _c(100, "P", oi=0), _c(110, "C", oi=0)]) is None   # OI 없으면 만들지 않는다
+    assert F.max_pain([_c(90, "C"), _c(100, "P")]) is None                                     # 행사가 3개 미만
+
+
+def test_build_emits_max_pain_for_nearest_expiry_only_for_covered(monkeypatch):
+    now = datetime(2026, 10, 22, 21, 0, tzinfo=timezone.utc)
+    exp = int(now.timestamp()) + 8 * 86400
+    calls = [{"strike": k, "openInterest": oi, "volume": 3000, "impliedVolatility": 0.3, "bid": 1.0, "ask": 1.2}
+             for k, oi in ((95.0, 10), (100.0, 10), (105.0, 5000))]
+    puts = [{"strike": k, "openInterest": oi, "volume": 3000, "impliedVolatility": 0.3, "bid": 1.0, "ask": 1.2}
+            for k, oi in ((95.0, 5000), (100.0, 10), (105.0, 10))]
+    chain = {"quote": {"regularMarketPrice": 100.0}, "expirationDates": [exp],
+             "options": [{"expirationDate": exp, "calls": calls, "puts": puts}]}
+    monkeypatch.setattr(F, "universe", lambda top: ["AAA", "ZZZ"])
+    p = F.build(1, client=_FakeYahoo({"AAA": chain}), sleep_s=0, now=now)
+    a = p["tickers"]["AAA"]
+    assert a["maxPain"] == 100.0 and a["maxPainExpiry"] == "2026-10-30"
+    assert "ZZZ" not in p["tickers"]

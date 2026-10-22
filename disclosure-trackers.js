@@ -822,10 +822,14 @@ function renderShortInterest() {
   let rows = payload.rows.slice();
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   const primaryKey = isBal ? "balanceRatio" : "daysToCover";
-  rows.sort((a, b) => {
+  // 미국 DTC 순: 일평균 거래량이 아주 작은 종목(평균 45주 SPAC 등)이 수백 일로 1위를 차지하지 않게 뒤로 보낸다.
+  const SI = window.MirShortInterest;
+  const siPrice = (t) => { const s = typeof stockByTicker === "function" ? stockByTicker(t) : null; return s && Number.isFinite(Number(s.price)) ? Number(s.price) : null; };
+  if (!isBal && SI && shortSort !== "change" && shortSort !== "trade") rows = SI.sortByDtc(rows, siPrice);
+  else rows.sort((a, b) => {
     if (shortSort === "change") return (b.changePct ?? -999) - (a.changePct ?? -999);
     if (shortSort === "trade") return (b.tradingRatio ?? -1) - (a.tradingRatio ?? -1);
-    return (b[primaryKey] || 0) - (a[primaryKey] || 0);
+    return (b[primaryKey] ?? -1) - (a[primaryKey] ?? -1);
   });
   const shown = rows.slice(0, 200);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
@@ -834,17 +838,20 @@ function renderShortInterest() {
   const body = shown.map((r, i) => {
     const chg = Number.isFinite(r.changePct) ? `${r.changePct > 0 ? "+" : ""}${r.changePct.toFixed(1)}%` : "—";
     const chgCls = r.changePct > 0 ? "ins-buy" : r.changePct < 0 ? "ins-sell" : ""; // 증감 방향만 등락색(--pos/--neg), 해석은 색으로 하지 않음
-    const primary = isBal ? `${Number(r.balanceRatio || 0).toFixed(2)}%` : Number(r.daysToCover || 0).toFixed(2);
+    const primary = isBal
+      ? (Number.isFinite(Number(r.balanceRatio)) && r.balanceRatio !== null ? `${Number(r.balanceRatio).toFixed(2)}%` : "—")
+      : (SI ? SI.fmtDtc(r) : (r.daysToCover != null && Number.isFinite(Number(r.daysToCover)) ? Number(r.daysToCover).toFixed(2) : "—"));
+    const illiquid = !isBal && SI && SI.isIlliquid(r, siPrice(r.ticker));
     const mainLabel = isBal ? (r.company || r.ticker) : r.ticker;
     const subLabel = isBal ? tickerHint(r.ticker) : (r.company || "");
     const extra = isBal
       ? `<td class="ins-num short-spark-cell">${shortSparkline(r.history)}</td>`
         + `<td class="ins-num">${tradeKnown && Number.isFinite(r.tradingRatio) ? `${r.tradingRatio.toFixed(2)}%` : "—"}</td>`
       : "";
-    return `<tr>
+    return `<tr${illiquid ? ` class="short-illiquid"` : ""}>
       <td class="ins-date">${i + 1}</td>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(mainLabel)}</button><div class="ins-sub">${escapeHtml(subLabel)}</div></td>
-      <td class="ins-num"><strong>${primary}</strong></td>
+      <td class="ins-num"><strong>${primary}</strong>${illiquid ? `<div class="ins-sub">저유동</div>` : ""}</td>
       ${extra}
       <td class="ins-num">${insiderFmtShares(r.shortShares)}</td>
       <td class="ins-num ${chgCls}">${chg}</td>

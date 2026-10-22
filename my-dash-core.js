@@ -71,6 +71,16 @@
     return out.sort((a, b) => a.daysAhead - b.daysAhead || String(a.ticker).localeCompare(String(b.ticker)));
   }
 
+  /** '다음 실적' 행 중 nextDate 가 today(YYYY-MM-DD)보다 이른 행을 뺀다(지난 분기 날짜가 남은 경우). 형식 오류도 뺀다.
+   *  today 가 형식 오류면 그대로 돌려준다. 추정치로 바꿔 채우지 않는다. */
+  function dropPastEarnings(rows, today) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(today || ""))) return (rows || []).slice();
+    return (rows || []).filter((r) => {
+      const d = String((r && r.nextDate) || "").slice(0, 10);
+      return /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= today;
+    });
+  }
+
   /** 종목별 관련 지표 id 목록 {T: [id…]} → 겹침 많은 순 [{id, tickers}] (내 종목 여럿이 같이 따르는 지표가 위). */
   function relatedIndicators(byTicker, tickers, limit = 8) {
     const hit = new Map();
@@ -163,7 +173,7 @@
     return out.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.title.localeCompare(b.title));
   }
 
-  const api = { upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
+  const api = { upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, dropPastEarnings, relatedIndicators,
     recentMine, openMarketTrades, groupTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;

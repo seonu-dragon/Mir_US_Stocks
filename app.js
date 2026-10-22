@@ -764,7 +764,40 @@ async function switchMarketMode(mode) {
   selectedSectorBenchmark = cfg.etfBenchmarks[0] || selectedSectorBenchmark;
   rewriteUrlForMarketSwitch(cfg);
   resetMarketCaches();
+  resetMarketSwitchUiState(cfg);
   await loadData({ preserveRoute: true });
+}
+
+// 시장 전환 때 반대 시장 값이 남아 뜻이 바뀌거나 404 를 내던 화면 상태를 새 시장 기본값으로 되돌린다.
+// (boot 는 오프라인 복구로도 재진입하므로 여기서만 — 사용자가 고른 값을 boot 마다 지우지 않는다.)
+function resetMarketSwitchUiState(cfg) {
+  // 차트 비교 종목: 남기면 새 시장 상세 폴더에서 반대 시장 티커를 찾아 404 가 난다.
+  compareTickers = [];
+  const cmpInput = byId("chartCompareInput");
+  if (cmpInput) cmpInput.value = "";
+  if (typeof renderCompareChips === "function") renderCompareChips();
+  // 차트 확대·이동은 이전 종목 봉 기준이다. 분봉 간격은 새 시장이 분봉을 끈 경우에만 일봉으로.
+  chartState.zoom = 1;
+  chartState.offset = 0;
+  if (typeof isIntradayTf === "function" && isIntradayTf(chartState.barTf) && featureOff("intradayChart", cfg)) {
+    chartState.barTf = "D";
+    if (typeof stopChartIntradayRefresh === "function") stopChartIntradayRefresh();
+  }
+  // 히트맵 확대 섹터·포커스 종목·검색어(범위 드롭다운은 boot 의 setupFilters 가 새 시장 기본값으로 채운다).
+  if (typeof zoomView !== "undefined") zoomView = null;
+  if (typeof treemapFocusTicker !== "undefined") treemapFocusTicker = null;
+  const mapSearch = byId("heatmapSearch");
+  if (mapSearch) mapSearch.value = "";
+  // 시총 하한은 단위가 시장마다 다르다(미국 $B, 국내 조 원) — 숫자만 남기면 뜻이 바뀐다.
+  // 프리셋이 골라져 있으면 그 프리셋의 새 시장 하한, 아니면 빈칸.
+  const capFor = (presetId) => {
+    const key = byId(presetId)?.value;
+    return key && key !== "custom" ? (presetMinMarketCap(key) || "") : "";
+  };
+  const topCap = byId("topMinMarketCap");
+  if (topCap) topCap.value = capFor("topPreset");
+  const scrCap = byId("scrMinCap");
+  if (scrCap) scrCap.value = capFor("scrPreset");
 }
 
 // 시장 전환 시 주소창의 반대 시장 종목(?ticker=005930)이 남으면 boot 가 그 종목을 다시 열어
@@ -776,7 +809,8 @@ function rewriteUrlForMarketSwitch(cfg) {
     if (p.has("market")) p.set("market", cfg.id);
     if (p.has("ticker")) p.set("ticker", cfg.defaultTicker);
     // 다른 시장 종목에 묶인 딥링크 값(DCF 시나리오·커뮤니티 종목 필터·이벤트 스터디 종목)은 버린다.
-    ["dcf", "cticker", "communityTicker", "est"].forEach((k) => p.delete(k));
+    // 히트맵 범위·섹터·검색어(map_bucket=idx_sp500 등)도 시장마다 값이 달라 boot 가 다시 심으면 빈 지도가 된다.
+    ["dcf", "cticker", "communityTicker", "est", "map_bucket", "map_sector", "map_q"].forEach((k) => p.delete(k));
     history.replaceState(history.state, "", url.toString());
   } catch (_) { /* history 차단 환경 */ }
 }

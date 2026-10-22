@@ -106,6 +106,9 @@ jobs:
       # 종목 상세 경로(details-source.js): detailsBase 빈 값 = 예전 상대 경로 1회, R2 설정 시 실패하면 Pages 폴백 1회.
       - name: Details source (R2 flag) tests
         run: node scripts/tests/test_details_source.mjs
+      # 티커 → 시장 판정(market_config.js tickerMarket) + ?ticker= 가 저장 시장보다 우선하는 부팅 규칙.
+      - name: Market ticker detection tests
+        run: node scripts/tests/test_market_ticker.mjs
 
       # 적립식 시뮬레이터 순수 계산(dca-core.js): XIRR 알려진 값·휴장일 이월·정수 매수 이월·배당.
       - name: DCA simulator tests

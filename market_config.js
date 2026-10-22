@@ -384,9 +384,22 @@
     return null;
   }
 
+  // 티커 표기만으로 시장을 가린다. 국내 = 숫자로 시작하는 6자리 코드(005930, 신형 0193T0, .KS/.KQ 허용),
+  // 미국 = 영문자로 시작하는 티커(NVDA, BRK.B). 회사명·그 밖의 값은 null(판단하지 않음).
+  function tickerMarket(ticker) {
+    const raw = String(ticker == null ? "" : ticker).trim();
+    if (/^\d[0-9A-Z]{5}(\.(KS|KQ))?$/i.test(raw)) return "kr";
+    if (/\.(KS|KQ)$/i.test(raw)) return null;
+    if (/^[A-Z][A-Z0-9]{0,6}([.\-][A-Z0-9]{1,3})?$/i.test(raw)) return "us";
+    return null;
+  }
+
   function getInitialMode() {
     try {
       const params = new URLSearchParams(window.location.search);
+      // ?ticker=005930 은 저장된 시장·market= 보다 우선한다 — 미국 모드에서 열면 "종목 없음"이 됐다.
+      const byTicker = tickerMarket(params.get("ticker"));
+      if (byTicker) return byTicker;
       const q = params.get("market");
       if (q === "kr" || q === "us") return q;
       const only = deeplinkMarket(params);
@@ -492,9 +505,19 @@
     detailUrl,
     fetchDetail,
     isKrEtfLike,
+    tickerMarket,
     STORAGE_KEY,
   };
   window.MIR_MARKET_MODE = getInitialMode();
+  // 티커가 시장을 정했는데 주소창 market= 이 반대 시장이면 맞춰 둔다(공유·새로고침 때 어긋남 방지).
+  try {
+    const url = new URL(window.location.href);
+    const m = url.searchParams.get("market");
+    if ((m === "kr" || m === "us") && m !== window.MIR_MARKET_MODE && window.history && window.history.replaceState) {
+      url.searchParams.set("market", window.MIR_MARKET_MODE);
+      window.history.replaceState(window.history.state, "", url.toString());
+    }
+  } catch (_) { /* history 차단·비브라우저 환경 */ }
   document.documentElement.setAttribute("data-market", window.MIR_MARKET_MODE);
   if (window.MIR_MARKET_MODE === DEFAULT_MARKET_MODE) {
     storage.set(STORAGE_KEY, DEFAULT_MARKET_MODE);

@@ -57,5 +57,16 @@ test("recentMine·openMarketTrades: 내 종목·기간·최신순, 장내 매수
   assert.deepEqual(core.recentMine(rows, [], "2026-10-22"), []);
 });
 
+test("targetChanges: 미국 표·국내 목록을 같은 모양으로", () => {
+  const us = { cols: ["t", "d", "firm", "act", "from", "to", "pt", "ptPrev", "ptAct"], rows: [
+    ["ACN", "2026-10-21", "Baird", "down", "Outperform", "Neutral", 252, 245, "Raises"],
+    ["ABBV", "2026-10-21", "Barclays", "main", "Overweight", "Overweight", 300, 325, "Lowers"]] };
+  const u = core.targetChanges(us, "us");
+  assert.deepEqual(u.map((r) => [r.ticker, r.dir, r.note]), [["ACN", -1, "Outperform → Neutral"], ["ABBV", -1, "Overweight"]]);
+  const kr = { changes: [{ date: "2026-10-22", code: "293490", broker: "미래에셋증권", prev: 9000, target: 15000, opinion: "매수" }] };
+  assert.deepEqual(core.targetChanges(kr, "kr")[0], { ticker: "293490", fileDate: "2026-10-22", firm: "미래에셋증권", pt: 15000, ptPrev: 9000, dir: 1, note: "매수" });
+  assert.deepEqual(core.targetChanges(null, "us"), []);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

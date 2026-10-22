@@ -17,6 +17,7 @@
     industry: { label: "내 종목 관련 산업 지표", markets: ["us", "kr"] },
     filings: { label: "내 종목 최근 공시", markets: ["us", "kr"] },
     insider: { label: "내 종목 내부자 매매", markets: ["us"] },
+    targets: { label: "내 종목 목표가·의견 변경", markets: ["us", "kr"] },
   };
   const DEFAULT = ["regime", "watch", "issues", "movers"];
 
@@ -100,7 +101,27 @@
     return (rows || []).filter((r) => r && (r.code === "P" || r.code === "S"));
   }
 
-  const api = { WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
+  /** 미국 의견 변경(cols/rows 표) · 국내 목표가 변경(changes 목록) → [{ticker, fileDate, firm, pt, ptPrev, dir, note}].
+   *  dir: 1 목표가↑·상향, -1 목표가↓·하향, 0 유지. */
+  function targetChanges(payload, market) {
+    if (!payload) return [];
+    if (market === "kr") {
+      return (payload.changes || []).map((c) => ({ ticker: String(c.code), fileDate: c.date, firm: c.broker, pt: c.target, ptPrev: c.prev,
+        dir: c.target > c.prev ? 1 : c.target < c.prev ? -1 : 0, note: c.opinion || "" }));
+    }
+    const cols = payload.cols || [];
+    const at = (r, k) => r[cols.indexOf(k)];
+    return (payload.rows || []).map((r) => {
+      const act = at(r, "act");
+      const pt = at(r, "pt");
+      const prev = at(r, "ptPrev");
+      const dir = act === "up" ? 1 : act === "down" ? -1 : pt != null && prev != null ? Math.sign(pt - prev) : 0;
+      const rating = at(r, "from") && at(r, "to") && at(r, "from") !== at(r, "to") ? `${at(r, "from")} → ${at(r, "to")}` : (at(r, "to") || "");
+      return { ticker: String(at(r, "t")), fileDate: at(r, "d"), firm: at(r, "firm"), pt, ptPrev: prev, dir, note: rating };
+    });
+  }
+
+  const api = { targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
     recentMine, openMarketTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;

@@ -2029,6 +2029,37 @@ export function newsMentions(newsItems, names = []) {
   return newsItems.some((n) => keys.some((k) => String(n.title || "").toLowerCase().includes(k)));
 }
 
+// 한국어 답에 한자·가나가 섞이면(2026-10-22 TSLA '머지어谈論', '削減') 모델이 언어를 놓친 것 — 버린다.
+const FOREIGN_SCRIPT_RE = /[぀-ヿ㐀-䶿一-鿿]/;
+export function hasForeignScript(claim) {
+  return FOREIGN_SCRIPT_RE.test(String(claim || ""));
+}
+
+// 근거 대조 — 주장의 핵심 낱말이 인용한 소셜 글·기사에 실제로 있어야 한다(삼성전자 '유럽 부채 위기',
+// '글로벌 사이버 보안 사건'처럼 글에 없는 거시 이유를 지어내던 것). 주가·이유·하락 같은 틀 낱말과 종목명은 빼고 본다.
+const CLAIM_STOP = new Set(["주가", "이유", "때문", "때문이다", "때문입니다", "하락", "상승", "하락한", "상승한", "떨어진", "올랐다", "내렸다",
+  "떨어졌다", "움직였다", "주식", "종목", "시장", "영향", "관련", "소식", "투자자", "투자자들", "최근", "오늘", "크게", "있다", "있었다", "했다",
+  "the", "and", "for", "with", "stock", "shares", "because", "due", "after"]);
+const JOSA_RE = /(으로|에서|에게|까지|부터|이다|입니다|이라|라는|의|가|이|은|는|을|를|와|과|로|에|도|만)$/;
+export function claimTokens(claim, names = []) {
+  const skip = new Set(names.filter(Boolean).map((n) => String(n).toLowerCase()));
+  return [...new Set((String(claim || "").toLowerCase().match(/[가-힣]{2,}|[a-z][a-z0-9]{2,}/g) || [])
+    .map((w) => (/^[가-힣]+$/.test(w) && w.length > 2 ? w.replace(JOSA_RE, "") : w))
+    .filter((w) => w.length >= 2 && !CLAIM_STOP.has(w) && !skip.has(w) && ![...skip].some((n) => n.length >= 2 && w.startsWith(n))))];
+}
+// 미국 종목은 근거(Stocktwits·영문 기사)가 영어라 한국어 주장의 한글 낱말은 대조할 수 없다 — 근거가 주로 한글일 때만
+// 한글 낱말을 보고, 아니면 영문·숫자 낱말만 본다(그것도 없으면 대조 불가로 통과).
+export function claimGrounded(claim, texts, names = []) {
+  const tokens = claimTokens(claim, names);
+  const hay = texts.map((x) => String(x || "").toLowerCase()).join("\n");
+  const hangul = (hay.match(/[가-힣]/g) || []).length;
+  const latin = (hay.match(/[a-z]/g) || []).length;
+  const koreanSources = hangul >= latin;
+  const checkable = tokens.filter((w) => (koreanSources ? true : /^[a-z0-9]+$/.test(w)));
+  if (!checkable.length) return !koreanSources;
+  return checkable.some((w) => hay.includes(w));
+}
+
 export function validateMoveReasons(raw, posts, news, names = []) {
   const items = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.claims) ? raw.claims : []);
   const pick = (ids, list, prefix) => [...new Set((Array.isArray(ids) ? ids : []).map((x) => String(x).trim().toUpperCase()))]
@@ -2039,10 +2070,11 @@ export function validateMoveReasons(raw, posts, news, names = []) {
   for (const it of items) {
     if (!it || typeof it !== "object") continue;
     const claim = clipText(it.claim, 140);
-    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names) || isSpeculativeClaim(claim) || isNonReasonClaim(claim)) continue;
+    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names) || isSpeculativeClaim(claim) || isNonReasonClaim(claim) || hasForeignScript(claim)) continue;
     const social = pick(it.social, posts, "S");
     const cited = pick(it.news, news, "N");
     if (!social.length && !cited.length) continue;
+    if (!claimGrounded(claim, [...social.map((p) => p.text), ...cited.map((n) => `${n.title} ${n.summary || ""}`)], names)) continue;
     const pool = new Set([...social.map((p) => p.text), ...cited.map((n) => `${n.title} ${n.summary || ""}`)].flatMap((t) => [...reasonNumbers(t)]));
     if ([...reasonNumbers(claim)].some((n) => !pool.has(n))) continue;
     seen.add(claim);
@@ -2080,6 +2112,7 @@ async function extractMoveReasons(env, ticker, company, isKr, changeText, posts,
     `- '주가가 올랐다/내렸다', '지수가 바닥이다' 같은 움직임 자체·시장 전망은 이유가 아닙니다. 버리세요.\n` +
     `- '~할 수 있다', '~할 것', '전망' 같은 예측은 이유가 아닙니다. 이미 일어난 일만.\n` +
     `- 이 종목과 직접 관련 없는 거시·다른 회사 기사는 이유로 쓰지 마세요.\n` +
+    `- 반드시 한국어(한글)로만 쓰고, 글·기사에 없는 내용을 덧붙이지 마세요.\n` +
     `- 사내 행사·기부·시상·채용처럼 주가와 상관없는 회사 소식, '이유를 모르겠다'는 글은 버리세요.\n` +
     `- 같은 내용의 글은 한 주장으로 합치고 social 에 그 글 번호를 모두 넣으세요.\n` +
     `- news 에는 그 주장과 같은 사실을 보도한 기사 번호만. 비슷한 주제일 뿐이면 넣지 마세요.\n` +
@@ -2109,14 +2142,15 @@ async function extractMoveReasons(env, ticker, company, isKr, changeText, posts,
 }
 
 async function handleMoveReasons(request, env, url, rawTicker) {
-  const ticker = String(rawTicker || "").toUpperCase().replace(/[^A-Z0-9.\-]/g, "").slice(0, 16);
+  let ticker = String(rawTicker || "").toUpperCase().replace(/[^A-Z0-9.\-]/g, "").slice(0, 16);
   if (!ticker) return cors(noStoreJson({ error: "invalid ticker" }, 400));
   if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+  if (/^\d{6}$/.test(ticker)) ticker += ".KS";   // 접미사 없는 국내 코드(이름·차트·뉴스가 다 비던 것)
   const kr = isKoreanTicker(ticker);
   const symbol = kr ? ticker : ticker.replace(/\./g, "-");
   const modelOverride = await resolveModelOverride(env, request, url);
   const bucket = Math.floor(Date.now() / (MOVE_REASONS_TTL * 1000));
-  const cacheKey = `reasons:v4:${ticker}:${bucket}`;
+  const cacheKey = `reasons:v5:${ticker}:${bucket}`;
   const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
   if (kv && !modelOverride) {
     try {

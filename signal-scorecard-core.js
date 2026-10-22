@@ -527,6 +527,15 @@
   }
   const VERDICT_LABEL = { hold: "판단 보류", positive: "벤치마크 상회", negative: "벤치마크 하회", unclear: "차이 불분명" };
 
+  // 성적표 배지 문구. 그 기간의 과거 5년 검증이 미통과면 원장 판정 앞에 함께 적는다 —
+  // 몇 달치 원장이 '벤치마크 상회' 여도 5년 검증을 못 넘은 신호가 검증된 것처럼 읽히지 않게.
+  // validation = { "5": bool, "20": bool, "60": bool } (없으면 판정만).
+  function verdictBadgeText(verdict, validation, horizon) {
+    const label = VERDICT_LABEL[verdict] || VERDICT_LABEL.hold;
+    const failed = !!validation && typeof validation === "object" && validation[String(horizon)] === false;
+    return failed ? `5년 검증 미통과 · ${label}` : label;
+  }
+
   // entries: [{ d, out: outcomeFor 결과 }] → 기간별 요약.
   function summarize(entries, horizons, opts) {
     const hs = horizons || HORIZONS;
@@ -569,7 +578,7 @@
     isKrEtfLike, scanQuickProb, stdev20, isBuybackBuyTitle,
     extractSignals, selectNewRows,
     seriesFromChart, firstIndexAfter, outcomeFor,
-    mulberry32, median, clusterBootstrapMean, verdictFor, summarize,
+    mulberry32, median, clusterBootstrapMean, verdictFor, verdictBadgeText, summarize,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirSignalCore = api;

@@ -220,6 +220,16 @@ test("clusterBootstrapMean: 같은 시드면 같은 구간, 발행일 1개면 �
   const one = core.clusterBootstrapMean([{ d: "a", v: 1 }, { d: "a", v: 2 }]);
   assert.equal(one.lo, null);
 });
+test("verdictBadgeText: 5년 검증 미통과 기간이면 판정 앞에 함께 적는다", () => {
+  const val = { 5: false, 20: false, 60: true };
+  assert.equal(core.verdictBadgeText("positive", val, 20), "5년 검증 미통과 · 벤치마크 상회");
+  assert.equal(core.verdictBadgeText("positive", { "5": false }, 5), "5년 검증 미통과 · 벤치마크 상회");
+  assert.equal(core.verdictBadgeText("hold", val, 60), "판단 보류");
+  assert.equal(core.verdictBadgeText("positive", null, 20), "벤치마크 상회");
+  assert.equal(core.verdictBadgeText("negative", { 20: true }, 20), "벤치마크 하회");
+  assert.equal(core.verdictBadgeText("bogus", undefined, 20), "판단 보류");
+});
+
 test("verdictFor: 구간이 0 을 걸치면 차이 불분명", () => {
   assert.equal(core.verdictFor(50, -0.01, 0.02), "unclear");
   assert.equal(core.verdictFor(29, 0.01, 0.02), "hold");

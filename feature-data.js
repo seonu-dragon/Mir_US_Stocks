@@ -192,6 +192,9 @@ const FEATURE_DATA = {
   // 국내 신규 상장주 보호예수 해제 일정 + 공모 수요예측·청약 결과(build_kr_lockups.py, ~150KB).
   // 통합 캘린더·종목 상세 이벤트 카드·증자·CB 트래커가 처음 그릴 때만 받는다(lazy).
   krLockups: { global: "KR_LOCKUPS", path: "data/korea/lockups.js", feature: "krLockups", krOnly: true, lazy: true },
+  // 미상환 전환사채·신주인수권부사채(정기보고서 원문 표, build_kr_cb_overhang.py). 종목 헤더 경고(10% 이상)와
+  // 이벤트 탭 카드가 종목을 열 때만 받는다(lazy, cb-overhang.js).
+  krCbOverhang: { global: "KR_CB_OVERHANG", path: "data/korea/cb_overhang.js", feature: "krDart", krOnly: true, lazy: true },
   // 미국 액면분할·병합 일정(Nasdaq 분할 캘린더, build_us_splits.py, ~3KB). 통합 캘린더를 열 때만.
   usSplits: { global: "US_SPLITS", path: "data/us_splits.js", feature: "usSplits", usOnly: true, lazy: true },
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
@@ -477,6 +480,7 @@ function refreshFeatureViews() {
           // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).
           () => { if (typeof renderStockTimeline === "function") renderStockTimeline(item); },
           () => { if (typeof renderLockupCard === "function") renderLockupCard(item); },
+          () => { if (typeof renderCbOverhangCard === "function") renderCbOverhangCard(item); },
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },

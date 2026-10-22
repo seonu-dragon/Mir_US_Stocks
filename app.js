@@ -3756,6 +3756,7 @@ function stockFacts(item, title) {
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
+    ${typeof cbOverhangNotice === "function" ? cbOverhangNotice(item) : ""}
     ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
     ${krFlowCard(item)}
     ${krGroupCard(item)}
@@ -3867,6 +3868,7 @@ function stockSummaryHtml(item) {
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
+    ${typeof cbOverhangNotice === "function" ? cbOverhangNotice(item) : ""}
     ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
     ${typeof moveReasonsHtml === "function" ? moveReasonsHtml(item) : ""}
     <dl class="sd-facts">
@@ -5331,6 +5333,14 @@ function renderSearch(options = {}) {
       }
     });
   }
+  // 미상환 CB·BW 오버행(10% 이상)도 헤더 경고라 같은 식으로 챙긴다(cb-overhang.js).
+  if (isKrMarket() && !window.KR_CB_OVERHANG && FEATURE_DATA.krCbOverhang) {
+    ensureFeatureData("krCbOverhang").then((ok) => {
+      if (ok && selectedTicker === base.ticker) {
+        renderSearchFacts(applyLive(withDetail(base)));
+      }
+    });
+  }
   byId("chartTitle").textContent = [stockLabel(item), stockSubLabel(item)].filter(Boolean).join(" · ");
   renderSearchFacts(item);
   drawChart(item);
@@ -5354,6 +5364,7 @@ function renderSearch(options = {}) {
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderStockTimeline === "function") renderStockTimeline(item);
   if (typeof renderLockupCard === "function") renderLockupCard(item);
+  if (typeof renderCbOverhangCard === "function") renderCbOverhangCard(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
@@ -7192,6 +7203,7 @@ function dataTrustSources() {
     // 주간 DART 정기보고서 산출물(2026-10-21) — 등록돼 있지 않아 10-04 부터 17일간 멈춘 동안(#327 이 git
     // config 스텝을 지워 커밋 실패) 신뢰도 센터는 '정상 40'만 보였다. 주 1회 + 재시도 슬롯이라 10일(240시간).
     rows.push(source("감사의견", "DART 정기보고서", window.KR_AUDIT_OPINION, ["opinions"], 240, "매주 일요일", "krAudit"));
+    rows.push(source("미상환 CB·BW", "DART 정기보고서", window.KR_CB_OVERHANG, ["companies"], 120, "평일 15:30", "krCbOverhang"));
   }
   if (cfg.features?.krOwnership === true) {
     rows.push(source("소유구조 프로필", "DART 정기보고서", window.KR_OWNERSHIP_PROFILE, ["profiles"], 240, "매주 일요일", "krOwnProfile"));

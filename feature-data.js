@@ -204,6 +204,8 @@ const FEATURE_DATA = {
   // 시장 폭 추이(build_market_breadth.py, 종목별 실측 일봉 집계 ~33KB). 시장 탭 › 시장 폭을 그릴 때만(breadth-history.js).
   // 오늘의 이슈(build_market_issues.py, 특징주 이슈 묶음 ~5KB). 오늘 탭 특징주 위(market-issues.js).
   marketIssues: { global: "MARKET_ISSUES", path: "data/market_issues.js", feature: "marketIssues", marketSpecific: true, lazy: true },
+  // 회사 KPI(build_earnings_releases.py 가 보도자료에서 뽑아 누적, 종목당 최대 12개 보도자료). 재무 탭에서만(company-kpis.js).
+  companyKpis: { global: "COMPANY_KPIS", path: "data/company_kpis.js", feature: "companyKpis", usOnly: true, lazy: true },
   // 옵션 포지션(build_options_flow.py, 감마 노출·이상 거래 ~80종목). 수급·보유 탭·시그널 위젯에서만(options-flow.js).
   optionsFlow: { global: "OPTIONS_FLOW", path: "data/options_flow.js", feature: "optionsFlow", usOnly: true, lazy: true },
   // 은행 건전성(FDIC 콜 리포트, build_fdic_banks.py, 은행 28곳 × 12분기 ~25KB). 은행주를 열 때만(fdic-banks.js).
@@ -398,6 +400,8 @@ function refreshFeatureViews() {
   if (typeof renderIndustryHomeCard === "function") calls.push(renderIndustryHomeCard);
   // 오늘의 특징주 카드 — movers 데이터가 오늘 탭 렌더보다 늦게 도착하면 여기서 다시 그린다.
   if (typeof renderMoversBoard === "function") calls.push(renderMoversBoard);
+  // 내 대시보드 — 위젯 데이터(특징주 등)가 늦게 오면 다시 그린다(대시보드 탭이 열려 있을 때만 실제로 그린다).
+  if (typeof renderMyDash === "function") calls.push(renderMyDash);
   // 간밤 미국 연관주 / 국내 장 연관주 — CROSS_MARKET_LINKS 가 오늘 탭 렌더보다 늦게 오면 다시 그린다.
   if (typeof renderCrossMarketHome === "function") calls.push(renderCrossMarketHome);
   // 오늘 탭 시장 현황·AI 브리핑 요약(home-dash.js) — 국내 수급(KR_MARKET_FUNDS)이 늦게 오면 다시 그린다.
@@ -466,6 +470,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderInstHolders === "function") renderInstHolders(item); },
           () => { if (typeof renderAtsCard === "function") renderAtsCard(item); },
           () => { if (typeof renderBankHealth === "function") renderBankHealth(item); },
+          () => { if (typeof renderCompanyKpis === "function") renderCompanyKpis(item); },
           () => { if (typeof renderOptionsFlowCard === "function") renderOptionsFlowCard(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },

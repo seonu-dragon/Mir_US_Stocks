@@ -41,6 +41,14 @@ import sec_client as sec  # noqa: E402
 
 OUT_JSON = ROOT / "data" / "earnings_releases.json"
 OUT_JS = ROOT / "data" / "earnings_releases.js"
+# 회사별 운영 KPI(가입자·인도량·매장 수 등) 누적 — 보도자료 요약과 같은 LLM 호출에서 뽑고 분기마다 쌓는다(2026-10-22).
+# SEC companyfacts 엔 회사 고유 KPI 가 없다(표준 회계 항목만) — 보도자료 본문이 유일한 무료 원천이다.
+KPI_JSON = ROOT / "data" / "company_kpis.json"
+KPI_JS = ROOT / "data" / "company_kpis.js"
+KPI_KEEP = 12          # 종목당 보도자료(분기) 몇 개까지
+# 재무 수치는 metrics 몫 — KPI 라벨에 이런 낱말이 들어가면 KPI 가 아니다
+FINANCIAL_WORDS = ("매출", "수익", "이익", "손실", "EPS", "주당", "현금흐름", "마진", "이익률", "배당", "자사주", "가이던스",
+                   "부채", "자산", "비용", "세전", "EBITDA", "revenue", "income", "margin", "cash")
 EVENTS = ROOT / "data" / "material_events.json"
 
 RETENTION_DAYS = 120
@@ -179,6 +187,25 @@ def sanitize(summary: dict, source_text: str) -> tuple[dict, int]:
             change = ""
         metrics.append({"label": label, "value": value, "change": change})
 
+    kpis = []
+    for k in (summary.get("kpis") or [])[:8]:
+        if not isinstance(k, dict):
+            continue
+        label = str(k.get("label") or "").strip()[:30]
+        value = str(k.get("value") or "").strip()[:60]
+        change = str(k.get("change") or "").strip()[:60]
+        if not label or not value or not _NUM_RE.search(value):
+            continue
+        if any(w.lower() in label.lower() for w in FINANCIAL_WORDS):
+            continue                       # 재무 수치는 KPI 가 아니다(metrics 와 겹친다)
+        if unverified(value, nums) or unverified(label, nums) or unit_problems(value, source_text):
+            dropped += 1
+            continue
+        if change and (unverified(change, nums) or unit_problems(change, source_text)):
+            dropped += 1
+            change = ""
+        kpis.append({"label": label, "value": value, "change": change})
+
     one_line = clean_sentence(summary.get("oneLine"))[:160]
     if one_line and any(w in one_line for w in JUDGMENT_WORDS):
         dropped += 1
@@ -195,6 +222,7 @@ def sanitize(summary: dict, source_text: str) -> tuple[dict, int]:
         "period": period,
         "oneLine": one_line,
         "metrics": metrics[:6],
+        "kpis": kpis[:6],
         "guidance": guidance,
         "guidanceNote": note,
     }, dropped
@@ -219,6 +247,11 @@ SEC 8-K Item 2.02 로 제출한 실적 보도자료(EX-99.1) 원문이다.
       "value": "원문 숫자 표기 그대로, 단위 포함(예: $94.9 billion, $1.57). 본문 문장에 나온 수치를 우선하고, 단위가 표 머리에만 있는 표 숫자는 쓰지 마라",
       "change": "전년 동기 대비 변화가 원문에 있으면 원문 표기 그대로(예: up 6%), 없으면 빈 문자열"}}
   ],
+  "kpis": [
+    {{"label": "한국어 운영 지표명(유료 가입자, 차량 인도량, 일간 활성 사용자, 매장 수, 예약 건수, 총거래액, 고객 수 등)",
+      "value": "원문 숫자 표기 그대로, 단위 포함(예: 497,099 vehicles, 3.35 billion)",
+      "change": "전년 동기 대비 변화가 원문에 있으면 원문 표기 그대로, 없으면 빈 문자열"}}
+  ],
   "guidance": "raised | lowered | maintained | issued | none 중 하나",
   "guidanceNote": "가이던스 관련 한국어 한 문장(원문 숫자만). 가이던스 언급이 없으면 빈 문자열"
 }}
@@ -229,7 +262,8 @@ SEC 8-K Item 2.02 로 제출한 실적 보도자료(EX-99.1) 원문이다.
 3. guidance: 회사가 향후 실적 전망을 직전 전망보다 올렸다고 밝혔으면 raised, 내렸으면 lowered,
    그대로 재확인했으면 maintained, 새로 제시했지만 직전과 비교할 수 없으면 issued, 원문에 전망이 없으면 none.
    원문이 명시하지 않은 방향을 추측하지 마라.
-4. 평가·전망·투자 판단 표현(호실적, 서프라이즈, 쇼크, 기대 이상, 매수, 긍정적 등)을 쓰지 마라. 사실만.
+4. kpis 는 회사가 밝힌 비재무 운영 지표만 최대 6개(매출·이익·EPS·현금흐름·마진 같은 재무 수치는 넣지 마라). 없으면 빈 배열.
+5. 평가·전망·투자 판단 표현(호실적, 서프라이즈, 쇼크, 기대 이상, 매수, 긍정적 등)을 쓰지 마라. 사실만.
 
 [원문]
 {text}
@@ -392,7 +426,7 @@ def build(days: int, top: int, max_calls: int, api_key: str, force: bool = False
             "droppedItems": dropped,
             "model": model,
         }
-        print(f"    {t} {e.get('fileDate')}: 수치 {len(clean['metrics'])}개 · 가이던스 {clean['guidance']}"
+        print(f"    {t} {e.get('fileDate')}: 수치 {len(clean['metrics'])}개 · KPI {len(clean['kpis'])}개 · 가이던스 {clean['guidance']}"
               f" · 버림 {dropped}")
 
     cutoff = (sec.et_today() - timedelta(days=RETENTION_DAYS)).isoformat()
@@ -409,6 +443,24 @@ def build(days: int, top: int, max_calls: int, api_key: str, force: bool = False
         "skipped": skipped,
     }
     return payload, attempted, failed
+
+
+def merge_kpis(releases: list[dict], existing: dict | None) -> dict:
+    """보도자료 행(kpis 있는 것) → 종목별 누적 {T: [{period, fileDate, accession, kpis}, …최신순 KPI_KEEP]}.
+    보도자료 파일은 120일만 두지만 KPI 는 분기 이력이라 기존 누적을 지우지 않고 접수번호로 합친다."""
+    by: dict[str, dict[str, dict]] = {}
+    for t, rows in ((existing or {}).get("tickers") or {}).items():
+        for r in rows or []:
+            if r.get("accession"):
+                by.setdefault(t, {})[r["accession"]] = r
+    for r in releases:
+        if r.get("kpis") and r.get("ticker") and r.get("accession"):
+            by.setdefault(r["ticker"], {})[r["accession"]] = {
+                "period": r.get("period") or "", "fileDate": r.get("fileDate") or "", "accession": r["accession"],
+                "exhibitUrl": r.get("exhibitUrl") or "", "kpis": r["kpis"]}
+    tickers = {t: sorted(rows.values(), key=lambda x: x.get("fileDate") or "", reverse=True)[:KPI_KEEP]
+               for t, rows in sorted(by.items())}
+    return {"updatedAtKst": sec.kst_now_str(), "count": len(tickers), "tickers": tickers}
 
 
 def main() -> int:
@@ -440,9 +492,17 @@ def main() -> int:
     from briefing_store import repository_publish_lock
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "EARNINGS_RELEASES", payload, indent=None)
+        try:
+            prev_kpis = json.loads(KPI_JSON.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            prev_kpis = {}
+        kpi_payload = merge_kpis(payload["releases"], prev_kpis)
+        sec.write_data(KPI_JSON, KPI_JS, "COMPANY_KPIS", kpi_payload, indent=None, allow_empty=True)
+        print(f"Wrote {KPI_JSON.name} — KPI 있는 종목 {kpi_payload['count']}개")
         print(f"Wrote {OUT_JSON.name} — {payload['count']}건 (이번 시도 {attempted} · 실패 {failed})")
         if args.push and not sec.git_publish(
-                ["data/earnings_releases.json", "data/earnings_releases.js"], "earnings releases"):
+                ["data/earnings_releases.json", "data/earnings_releases.js", "data/company_kpis.json", "data/company_kpis.js"],
+                "earnings releases"):
             print("[중단] push 실패 — 발행되지 않았다")
             return 1
     if attempted and failed > attempted * 0.5:

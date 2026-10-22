@@ -8795,6 +8795,15 @@ button.agg-label { cursor: pointer; color: var(--accent); }
   border-top: 1px solid var(--line);
 }
 .breadth-sectors-title { margin-bottom: var(--space-2); font-size: var(--fs-cap); font-weight: 600; }
+/* 은행 건전성(fdic-banks.js) — 기관 보유 카드(ih-stat) 타일 + 분기 표 */
+.bk-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bk-money { margin: var(--space-2) 0 0; font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; }
+.bk-table-wrap { margin-top: var(--space-2); overflow-x: auto; }
+.bk-table { width: 100%; border-collapse: collapse; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bk-table th, .bk-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.bk-table th:first-child { text-align: left; }
+.bk-table thead th { color: var(--muted); font-weight: 600; }
+@media (max-width: 640px) { .bk-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* 시장 폭 추이(breadth-history.js) — 패널 4개, 등락색 없이 선 하나 */
 .bh-card { margin-top: 12px; }
 .bh-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: var(--space-2); }

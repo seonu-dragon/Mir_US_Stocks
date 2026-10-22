@@ -151,6 +151,9 @@ jobs:
       # 시장 폭 추이(breadth-history-core.js): 패널 값·1개월 변화·축 범위·선 경로·표기.
       - name: Breadth history core tests
         run: node scripts/tests/test_breadth_history_core.mjs
+      # 은행 건전성(fdic-banks-core.js): 은행 판정·전년 같은 분기 대비·금액 표기.
+      - name: FDIC banks core tests
+        run: node scripts/tests/test_fdic_banks_core.mjs
       # 오늘 탭 지수 하루 차트 시간축(home-chart-core.js): 5분 봉 시각 배정·장 상태(장중/마감/휴장/단축)·눈금.
       - name: Home chart core tests
         run: node scripts/tests/test_home_chart_core.mjs

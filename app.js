@@ -7160,7 +7160,10 @@ function dataTrustSources() {
     const timestamp = payload?.updatedAtKst || payload?.updated_at_kst || payload?.updated || fallbackTime;
     // 이 시장에서 쓰는 데이터셋인데 전역이 아직 비어 있으면 = 로딩 전(장애 아님).
     const meta = FEATURE_DATA[featureKey];
-    const pending = Boolean(meta && featureDataEnabled(meta, cfg) && !window[meta.global]);
+    // 받기에 실패한 키(404 등)는 '불러오는 중'이 아니라 '데이터 없음'이다 — 아니면 카드가 영영 로딩에 머문다
+    // (2026-10-23 company_kpis·options_flow 첫 발행 전 404 로 신뢰도 센터 카드 2장이 '불러오는 중' 고정).
+    const failed = typeof trustLoadFailed !== "undefined" && trustLoadFailed.has(featureKey);
+    const pending = Boolean(meta && featureDataEnabled(meta, cfg) && !window[meta.global] && !failed);
     return { name, provider, count, timestamp, maxHours, cadence, featureKey, recovery: recoveryFor(name), status: trustStatus(timestamp, count, maxHours, pending, allowEmpty) };
   };
   const rows = [
@@ -7550,6 +7553,7 @@ function trust13fStats(payload) {
 
 // 신뢰도 센터가 로드를 시도해 본 feature 키(성공/실패 무관). 재요청 폭주 방지용.
 const trustLoadAttempted = new Set();
+const trustLoadFailed = new Set();   // 받기에 실패한 지연 데이터 키 — pending 대신 실제 상태로
 
 // 데이터 건강(일일 감시 data/health_report.js, scripts/data_health_watch.py). 상태·점검 시각·범주별 건수·문제 항목만 —
 // 설명 문구를 붙이지 않는다. 파일이 없거나 로드에 실패하면 섹션을 숨긴다(없는 데이터는 기능을 끈다).
@@ -7612,8 +7616,9 @@ function renderDataTrustCenter() {
     .forEach((row) => {
       trustLoadAttempted.add(row.featureKey);
       ensureFeatureData(row.featureKey).then((ok) => {
-        // 실패했으면 다시 그려도 pending 그대로다. 성공했을 때만 갱신한다.
-        if (ok && byId("dataTrustGrid")) renderDataTrustCenter();
+        // 실패한 키는 trustLoadFailed 에 넣어 '데이터 없음'으로 다시 그린다(재요청은 trustLoadAttempted 가 막는다).
+        if (!ok) trustLoadFailed.add(row.featureKey);
+        if (byId("dataTrustGrid")) renderDataTrustCenter();
       });
     });
 

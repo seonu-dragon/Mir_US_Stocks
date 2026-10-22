@@ -17,7 +17,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 뉴욕 정규장 마감(16:05 ET) 전 실행은 본체(update_data.py)의 마감 가드가 어차피 막는다 — 그런데 그 전에
+  # 보조 빌더 스텝을 1시간 가까이 돌린 뒤 실패로 끝나 '실패' 텔레그램이 갔다(2026-10-21 20:09 KST 손 실행).
+  # 마감 전이면 여기서 update 잡을 건너뛴다(run 은 초록·알림 없음). mir-cron 정시(21:05 UTC)는 서머타임과
+  # 무관하게 늘 마감 뒤라 영향 없고, 크론이 어긋나 매일 건너뛰면 us 신선도(48시간)·데이터 건강 감시가 잡는다.
+  close-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      ok: ${{ steps.check.outputs.ok }}
+    steps:
+      - id: check
+        shell: bash
+        run: |
+          DOW=$(TZ=America/New_York date +%u)
+          HM=$(TZ=America/New_York date +%H%M)
+          if [ "$DOW" -le 5 ] && [ "$((10#$HM))" -lt 1605 ]; then
+            echo "::notice::뉴욕 $(TZ=America/New_York date '+%Y-%m-%d %H:%M %Z') — 정규장 마감(16:05 ET) 전이라 스냅샷을 건너뛴다"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
   update:
+    needs: close-guard
+    if: ${{ needs.close-guard.outputs.ok == 'true' }}
     runs-on: ubuntu-latest
     # 실측 ~1시간(2026-09). 보조 빌더는 스텝마다 timeout-minutes 를 건다 — 2026-09-16
     # build_federal_contracts.py 가 USASpending 응답 지연으로 1시간 30분을 잡아먹어 본체

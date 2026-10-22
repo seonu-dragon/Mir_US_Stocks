@@ -5,7 +5,11 @@
 requests==2.34.2
 beautifulsoup4==4.15.0
 urllib3==2.7.0
-yfinance==1.5.1
+# 1.5.2 가 curl_cffi>=0.16 파손을 고쳤다(러너는 0.16.x 를 받는다). 1.7.0 은 2026-10-22 로컬 실측 통과.
+yfinance==1.7.0
+# yfinance earnings_dates 가 HTML 표를 lxml 로 읽는다. 없으면 ImportError 를 빌더가 삼켜 주간 실적 이력이
+# 10-05~18 세 번 연속 updated=0(5,865종목 전부 skipped)이었다.
+lxml==6.1.3
 feedparser==6.0.12
 python-dotenv==1.2.2
 # KRX 공매도 잔고(build_kr_short_interest.py). 1.2.x 에서 KRX 회원 로그인

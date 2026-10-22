@@ -2041,6 +2041,9 @@ def fetch_earnings_history(symbol, limit=12):
         return []
     try:
         frame = yf.Ticker(yahoo_symbol(symbol)).earnings_dates
+    except ImportError as exc:
+        # lxml 이 빠지면 모든 종목이 조용히 빈 결과였다(2026-10 주간 실적 이력 updated=0). 그대로 올려 실패로 보이게 한다.
+        raise RuntimeError(f"yfinance earnings_dates 의존성 없음: {exc}") from exc
     except Exception:
         return []
     if frame is None or getattr(frame, "empty", True):

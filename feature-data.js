@@ -202,6 +202,8 @@ const FEATURE_DATA = {
   // 다크풀(ATS) 주간 거래 비중(FINRA, build_finra_ats.py, 종목당 8주). 수급·보유 탭을 열 때만(ats.js).
   finraAts: { global: "FINRA_ATS", path: "data/finra_ats.js", feature: "finraAts", usOnly: true, lazy: true },
   // 시장 폭 추이(build_market_breadth.py, 종목별 실측 일봉 집계 ~33KB). 시장 탭 › 시장 폭을 그릴 때만(breadth-history.js).
+  // 오늘의 이슈(build_market_issues.py, 특징주 이슈 묶음 ~5KB). 오늘 탭 특징주 위(market-issues.js).
+  marketIssues: { global: "MARKET_ISSUES", path: "data/market_issues.js", feature: "marketIssues", marketSpecific: true, lazy: true },
   // 옵션 포지션(build_options_flow.py, 감마 노출·이상 거래 ~80종목). 수급·보유 탭·시그널 위젯에서만(options-flow.js).
   optionsFlow: { global: "OPTIONS_FLOW", path: "data/options_flow.js", feature: "optionsFlow", usOnly: true, lazy: true },
   // 은행 건전성(FDIC 콜 리포트, build_fdic_banks.py, 은행 28곳 × 12분기 ~25KB). 은행주를 열 때만(fdic-banks.js).

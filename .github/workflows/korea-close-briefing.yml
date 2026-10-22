@@ -134,6 +134,15 @@ jobs:
 
       # 증권사 목표주가 상향·하향(같은 증권사 직전 리포트 대비, build_kr_target_changes.py). 네이버 리포트
       # 목록·원문만 읽는다(LLM 없음). 처음 실행은 1년치(약 1만 건, ~3분), 그 뒤엔 최근 2주만 다시 본다.
+      # 오늘의 이슈 — 방금 만든 국내 특징주 보드를 같은 원인끼리 묶는다(Gemini 하루 1회, 검증 통과분만).
+      - name: Build market issues (KR)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/build_market_issues.py --market kr --push
+
       - name: Build KR target price changes
         if: ${{ !cancelled() }}
         continue-on-error: true

@@ -370,11 +370,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=9aa853b2de" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=9aa853b2de"></noscript>
+    <link rel="preload" href="styles.css?v=61e6255e3c" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=61e6255e3c"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=30e7768f03"></script>
+    <script src="build_id.js?v=9afc4c8678"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -575,6 +575,8 @@ html[data-market="kr"][data-theme="dark"] {
           <!-- 1단 화면(1100px 이하)에서는 시장 현황을 뉴스 아래로 옮긴다(home-dash.js hdPlaceStatus) -->
           <section class="home-status-slot" id="homeStatusSlot" hidden></section>
           <section class="home-briefing" id="homeBriefing" hidden aria-label="AI 브리핑 요약"></section>
+          <!-- 오늘의 이슈(market-issues.js renderMarketIssues) — 특징주를 같은 원인끼리 묶은 것, 이슈가 없는 날은 숨김 -->
+          <section class="movers-board mi-board" id="marketIssues" hidden aria-label="오늘의 이슈"></section>
           <section class="movers-board" id="moversBoard" hidden aria-label="오늘의 특징주"></section>
           <!-- 프리·애프터 급등락(ext-hours.js) — TradingView 스크리너 라이브, US 전용 -->
           <section class="movers-board ext-board" id="extHoursBoard" hidden aria-label="프리·애프터 급등락"></section>
@@ -3409,7 +3411,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=d96e3d792b"></script>
+    <script src="feature-data.js?v=f54b1b40ce"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3512,7 +3514,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=aa21ba9e7e"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=f1d49ed2e3"></script>
+    <script src="app.js?v=9e112213a8"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="ats-core.js"></script>
@@ -3523,6 +3525,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fdic-banks.js"></script>
     <script src="options-flow-core.js"></script>
     <script src="options-flow.js"></script>
+    <script src="market-issues.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=bf49f004ba"></script>

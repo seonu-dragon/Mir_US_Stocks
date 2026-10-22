@@ -194,6 +194,15 @@ jobs:
       # 국내↔미국 연관 종목(관계 사전 + 최근 1년 수익률 상관). 방금 발행된 US 스냅샷·종목 일봉과
       # 커밋된 KR 스냅샷만 읽는다(외부 호출 없음, ~10초). KR 모드 '간밤 미국 연관주' 가 이 US 마감 등락을 쓴다.
       # 실패해도 스냅샷 발행·신선도 게이트를 막지 않는다(continue-on-error). 신선도는 us/kr 그룹이 감시.
+      # 오늘의 이슈 — 방금 만든 특징주 보드를 같은 원인끼리 묶는다(Gemini 하루 1회, 검증 통과분만). 실패해도 계속.
+      - name: Build market issues (US)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/build_market_issues.py --market us --push
+
       - name: Build cross-market links (KR-US)
         if: ${{ !cancelled() }}
         continue-on-error: true

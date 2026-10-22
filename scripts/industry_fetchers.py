@@ -553,3 +553,254 @@ def parse_census_c30(rows: list[list[str]], column: str = "Data center") -> list
 def fetch_census_c30(column: str = "Data center") -> list[tuple[str, float]]:
     raw = _get("https://www.census.gov/construction/c30/xlsx/privsatime.xlsx", UA_IDENT, timeout=60, label="Census C30")
     return parse_census_c30(xlsx_first_sheet_rows(raw), column)
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-22 추가 — 해운 운임(KOBC)·정유(오피넷)·마카오 카지노·섹터 SPDR 자금흐름·개발자 채택·검색 점유율
+# 파서는 네트워크와 분리(scripts/tests/test_industry_fetchers.py 가 고정 표본으로 확인한다).
+# ---------------------------------------------------------------------------
+def _html_rows(html_text: str) -> list[list[str]]:
+    """첫 <table> 의 행을 셀 텍스트 목록으로(태그·공백 정리)."""
+    import html as _html
+    i = html_text.find("<table")
+    j = html_text.find("</table>", i)
+    if i < 0 or j < 0:
+        return []
+    rows = []
+    for tr in re.findall(r"<tr.*?</tr>", html_text[i:j], re.S):
+        cells = [re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", c))).strip()
+                 for c in re.findall(r"<t[hd][^>]*>.*?</t[hd]>", tr, re.S)]
+        if cells:
+            rows.append(cells)
+    return rows
+
+
+KOBC_KCCI = "https://www.kobc.or.kr/ebz/shippinginfo/kcci/gridList.do?mId=0304000000"
+KOBC_KDCI = "https://www.kobc.or.kr/ebz/shippinginfo/kdci/gridList.do?mId=0304000000"
+
+
+def parse_kobc_kcci(html_text: str, code: str = "KCCI") -> list[tuple[str, float]]:
+    """KCCI 표 — 머리 행의 'Current Index <날짜>'·'Previous Index <날짜>' 두 주 값. 페이지가 2주만 보여 적립은 호출부."""
+    rows = _html_rows(html_text)
+    if not rows:
+        return []
+    head = rows[0]
+    cur_d = prev_d = None
+    for c in head:
+        m = re.search(r"(\d{4}-\d{2}-\d{2})", c)
+        if m and c.startswith("Current"):
+            cur_d = m.group(1)
+        elif m and c.startswith("Previous"):
+            prev_d = m.group(1)
+    for r in rows[1:]:
+        if code in r:
+            k = r.index(code)
+            # [그룹] 코드 · 항로 · 비중 · 이번 주 · 지난주 · 증감
+            cur = _num(r[k + 3]) if len(r) > k + 3 else None
+            prev = _num(r[k + 4]) if len(r) > k + 4 else None
+            return sorted((d, v) for d, v in ((prev_d, prev), (cur_d, cur)) if d and v is not None)
+    return []
+
+
+def parse_kobc_kdci(html_text: str, column: str = "KDCI") -> list[tuple[str, float]]:
+    """KDCI 표(최근 6영업일) — Date · KDCI · CAPE · PANAMAX · SUPRAMAX · HANDY."""
+    rows = _html_rows(html_text)
+    if not rows or column not in rows[0]:
+        return []
+    j = rows[0].index(column)
+    out = []
+    for r in rows[1:]:
+        if len(r) > j and re.fullmatch(r"\d{4}-\d{2}-\d{2}", r[0]):
+            v = _num(r[j])
+            if v is not None:
+                out.append((r[0], v))
+    return sorted(out)
+
+
+def fetch_kobc(kind: str, column: str) -> list[tuple[str, float]]:
+    url = KOBC_KCCI if kind == "kcci" else KOBC_KDCI
+    text = _get(url, UA_BROWSER, timeout=40, label=f"KOBC {kind}").decode("utf-8", "replace")
+    return parse_kobc_kcci(text, column) if kind == "kcci" else parse_kobc_kdci(text, column)
+
+
+OPINET_CRUDE = "https://www.opinet.co.kr/glopcoilSelect.do"
+OPINET_PRODUCTS = "https://www.opinet.co.kr/glopopdSelect.do"
+# 석유제품 표의 열 순서(머리 행이 두 줄로 쪼개져 이름 대신 위치로 읽는다)
+OPINET_PRODUCT_COLS = ["gasoline95", "gasoline92", "kerosene", "diesel001", "diesel005", "hsfo", "naphtha"]
+
+
+def _opinet_date(text: str) -> str | None:
+    m = re.fullmatch(r"(\d{2})년(\d{2})월(\d{2})일", re.sub(r"\s", "", text or ""))
+    return f"20{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else None
+
+
+def parse_opinet_usd(html_text: str) -> list[tuple[str, list]]:
+    """오피넷 국제유가 표 — 같은 날짜 묶음이 원화(원/L)·달러($/bbl) 순으로 두 번 온다. 날짜가 되돌아가면 다음 묶음.
+    마지막 묶음(달러)만 [(날짜, [열 값…])]. 묶음이 하나뿐이면 단위를 확신할 수 없어 빈 목록."""
+    blocks: list[list] = []
+    prev = None
+    for r in _html_rows(html_text):
+        d = _opinet_date(r[0]) if r else None
+        if not d:
+            continue
+        if prev is None or d <= prev:
+            blocks.append([])
+        blocks[-1].append((d, [_num(c) for c in r[1:]]))
+        prev = d
+    return blocks[-1] if len(blocks) >= 2 else []
+
+
+def fetch_opinet_crude(column: int = 0, start: str | None = None) -> list[tuple[str, float]]:
+    """Dubai(0)·Brent(1)·WTI(2) $/bbl. 기간 조회(POST)로 약 2년."""
+    start = start or (date.today() - timedelta(days=760)).strftime("%Y%m%d")
+    body = urllib.parse.urlencode([("TERM", "D"), ("STDDATE", start), ("ENDDATE", date.today().strftime("%Y%m%d")),
+                                   ("SEL_DIV", "div_dar"), ("OILSRTCD1", "001"), ("OILSRTCD2", "002"), ("OILSRTCD3", "003"),
+                                   ("OILSRTCD", "001"), ("OILSRTCD", "002"), ("OILSRTCD", "003")]).encode()
+    req = urllib.request.Request(OPINET_CRUDE, data=body, headers={**UA_BROWSER, "Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        text = r.read().decode("utf-8", "replace")
+    # 미고시일은 0 으로 온다(2024-09 WTI) — 결측
+    return [(d, vals[column]) for d, vals in parse_opinet_usd(text) if len(vals) > column and vals[column]]
+
+
+def fetch_opinet_products_recent() -> list[tuple[str, dict]]:
+    """싱가포르 석유제품가 $/bbl — 기본 화면(최근 2일)만 받힌다(기간 조회 POST 는 빈 표, 2026-10-22). 적립은 호출부."""
+    text = _get(OPINET_PRODUCTS, UA_BROWSER, timeout=40, label="Opinet products").decode("utf-8", "replace")
+    return [(d, {k: v for k, v in zip(OPINET_PRODUCT_COLS, vals) if v is not None}) for d, vals in parse_opinet_usd(text)]
+
+
+def crack_spreads(products: list, crude: list[tuple[str, float]], product: str) -> list[tuple[str, float]]:
+    """같은 날짜의 제품가 − Dubai($/bbl). 한쪽이라도 없는 날은 만들지 않는다."""
+    dubai = dict(crude)
+    return [(d, round(p[product] - dubai[d], 2)) for d, p in products if product in p and d in dubai]
+
+
+MACAU_XML = "https://www.dicj.gov.mo/web/en/information/DadosEstat_mensal/{year}/report_en.xml"
+_MONTHS = {m: i + 1 for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])}
+
+
+def parse_macau_ggr(xml_text: str, year: int) -> list[tuple[str, float]]:
+    """DICJ 월간 카지노 총수입(MOP 백만) — RECORD 마다 [월, 그해, 전년, 증감, 누계…]. '-' 는 미발표 월."""
+    out = []
+    for rec in re.findall(r"<RECORD>(.*?)</RECORD>", xml_text, re.S):
+        cells = [re.sub(r"<[^>]+>", "", c).strip() for c in re.findall(r"<DATA[^>]*>.*?</DATA>", rec, re.S)]
+        if len(cells) < 2 or cells[0][:3] not in _MONTHS:
+            continue
+        v = _num(cells[1])
+        if v is not None:
+            out.append((f"{year}-{_MONTHS[cells[0][:3]]:02d}", v))
+    return out
+
+
+def fetch_macau_ggr(first_year: int = 2015) -> list[tuple[str, float]]:
+    out = []
+    for y in range(first_year, date.today().year + 1):
+        try:
+            out += parse_macau_ggr(_get(MACAU_XML.format(year=y), UA_IDENT, timeout=30, label=f"DICJ {y}").decode("utf-8", "replace"), y)
+        except Exception:
+            continue
+    return sorted(dict(out).items())
+
+
+SPDR_NAVHIST = "https://www.ssga.com/library-content/products/fund-data/etfs/us/navhist-us-en-{t}.xlsx"
+
+
+def parse_spdr_flows(rows: list[list[str]]) -> list[tuple[str, float]]:
+    """SPDR NAV 이력 xlsx(Date · NAV · Shares Outstanding · …, 최신순) → 일별 순유입(십억 USD) = Δ발행주식수 × 그날 NAV."""
+    pts = []
+    for r in rows:
+        if len(r) < 3:
+            continue
+        try:
+            d = datetime.strptime(r[0].strip(), "%d-%b-%Y").date().isoformat()
+        except ValueError:
+            continue
+        nav, sh = _num(r[1]), _num(r[2])
+        if nav and sh:
+            pts.append((d, nav, sh))
+    pts.sort()
+    return [(d, round((sh - psh) * nav / 1e9, 4)) for (_, _, psh), (d, nav, sh) in zip(pts, pts[1:])]
+
+
+def fetch_spdr_flows(ticker: str) -> list[tuple[str, float]]:
+    raw = _get(SPDR_NAVHIST.format(t=ticker.lower()), UA_BROWSER, timeout=60, label=f"SPDR {ticker}")
+    return parse_spdr_flows(xlsx_sheet_rows(raw))
+
+
+def weekly_sums(daily: list[tuple[str, float]]) -> list[tuple[str, float]]:
+    """일별 → 주(월요일 시작) 합계, 7일이 다 찬 주만. 키는 그 주 월요일."""
+    by: dict = {}
+    for d, v in daily:
+        dd = date.fromisoformat(d)
+        by.setdefault((dd - timedelta(days=dd.weekday())).isoformat(), []).append(v)
+    return sorted((k, float(sum(vs))) for k, vs in by.items() if len(vs) == 7)
+
+
+def parse_npm_range(payload: dict) -> list[tuple[str, float]]:
+    """npm downloads range 응답 → [(날짜, 건)]. npm 은 집계가 안 된 날을 0 으로 주므로 0 은 결측."""
+    out = []
+    for r in payload.get("downloads") or []:
+        n = r.get("downloads")
+        if r.get("day") and isinstance(n, (int, float)) and n > 0:
+            out.append((r["day"], float(n)))
+    return out
+
+
+def fetch_npm_weekly(package: str, years: int = 3) -> list[tuple[str, float]]:
+    """npm 패키지 주간 다운로드. range 요청은 최대 18개월이라 나눠 받는다."""
+    daily: list[tuple[str, float]] = []
+    end = date.today() - timedelta(days=1)
+    start = end - timedelta(days=365 * years)
+    pkg = urllib.parse.quote(package, safe="@")
+    while start <= end:
+        stop = min(start + timedelta(days=500), end)
+        url = f"https://api.npmjs.org/downloads/range/{start.isoformat()}:{stop.isoformat()}/{pkg}"
+        daily += parse_npm_range(json.loads(_get(url, UA_IDENT, timeout=40, label=f"npm {package}").decode("utf-8")))
+        start = stop + timedelta(days=1)
+    return weekly_sums(daily)
+
+
+def fetch_docker_pulls(repo: str) -> float | None:
+    """Docker Hub 누적 pull 수(점값). 적립·차분은 호출부."""
+    payload = json.loads(_get(f"https://hub.docker.com/v2/repositories/{repo}/", UA_IDENT, timeout=30, label=f"Docker {repo}").decode("utf-8"))
+    return _num(payload.get("pull_count"))
+
+
+def daily_increments(cumulative: list[tuple[str, float]]) -> list[tuple[str, float]]:
+    """누적값 적립 → 하루 평균 증가분(적립 간격이 이틀 이상이면 나눠 평균). 감소(집계 정정)는 버린다."""
+    out = []
+    for (d0, v0), (d1, v1) in zip(cumulative, cumulative[1:]):
+        days = (date.fromisoformat(d1) - date.fromisoformat(d0)).days
+        if days > 0 and v1 >= v0:
+            out.append((d1, (v1 - v0) / days))
+    return out
+
+
+STATCOUNTER = ("https://gs.statcounter.com/chart.php?device=Desktop%20%26%20Mobile%20%26%20Tablet%20%26%20Console"
+               "&device_hidden=desktop%2Bmobile%2Btablet%2Bconsole&statType_hidden={stat}&region_hidden={region}&granularity=monthly"
+               "&statType={stat_name}&region={region_name}&fromInt={start}&toInt={end}&fromMonthYear={start_d}&toMonthYear={end_d}&csv=1")
+STATCOUNTER_STATS = {"search_engine": "Search Engine", "ai_chatbot": "AI Chatbot"}
+STATCOUNTER_REGIONS = {"ww": "Worldwide", "KR": "South Korea", "US": "United States of America"}
+
+
+def parse_statcounter_csv(text: str, column: str) -> list[tuple[str, float]]:
+    rows = list(csv.reader(io.StringIO(text)))
+    if not rows or column not in rows[0]:
+        return []
+    j = rows[0].index(column)
+    out = []
+    for r in rows[1:]:
+        if len(r) > j and re.fullmatch(r"\d{4}-\d{2}", r[0]):
+            v = _num(r[j])
+            if v is not None:
+                out.append((r[0], v))
+    return out
+
+
+def fetch_statcounter(stat: str, region: str, column: str, first: str = "2019-01") -> list[tuple[str, float]]:
+    end = (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    url = STATCOUNTER.format(stat=stat, region=region, stat_name=urllib.parse.quote(STATCOUNTER_STATS[stat]),
+                             region_name=urllib.parse.quote(STATCOUNTER_REGIONS[region]), start=first.replace("-", ""),
+                             end=end.replace("-", ""), start_d=first, end_d=end)
+    text = _get(url, UA_BROWSER, timeout=40, label=f"StatCounter {stat}/{region}").decode("utf-8-sig", "replace")
+    return sorted(parse_statcounter_csv(text, column))

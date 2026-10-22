@@ -150,3 +150,69 @@ def test_wb_pink_sheet_finds_column_by_prefix():
     assert IF.parse_wb_pink(rows, "Urea") == [("2026-07", 385.0), ("2026-08", 390.0)]
     assert IF.parse_wb_pink(rows, "Potassium chloride")[-1] == ("2026-08", 386.9)
     assert IF.parse_wb_pink(rows, "없음") == []
+
+
+# ---- 2026-10-22: 해운 운임·오피넷·마카오·SPDR·npm·Docker·StatCounter 파서 ----
+KCCI_HTML = """<table><tr><th>Group</th><th>Code</th><th>Route</th><th>Weight</th>
+<th>Current Index <br/> 2026-10-19</th><th>Previous Index <br/> 2026-10-12</th><th>Weekly Change</th></tr>
+<tr><td>Index</td><td>KCCI</td><td>Comprehensive Index</td><td>100%</td><td>4,646</td><td>4,654</td><td>-8(-0.17%)</td></tr>
+<tr><td>Mainlane</td><td>KUWI</td><td>USWC</td><td>15%</td><td>8,229</td><td>8,258</td><td>-29</td></tr>
+<tr><td>KUEI</td><td>USEC</td><td>10%</td><td>11,590</td><td>11,609</td><td>-19</td></tr></table>"""
+
+
+def test_kcci_reads_current_and_previous_week():
+    assert IF.parse_kobc_kcci(KCCI_HTML) == [("2026-10-12", 4654.0), ("2026-10-19", 4646.0)]
+    assert IF.parse_kobc_kcci(KCCI_HTML, "KUEI") == [("2026-10-12", 11609.0), ("2026-10-19", 11590.0)]  # 그룹 칸 없는 행
+    assert IF.parse_kobc_kcci("<p>점검</p>") == []
+
+
+def test_kdci_column_by_header():
+    html = ("<table><tr><th>Date</th><th>KDCI</th><th>CAPE</th></tr><tr><td>2026-10-21</td><td>26,570</td><td>36,689</td></tr>"
+            "<tr><td>2026-10-20</td><td>26,172</td><td>35,175</td></tr></table>")
+    assert IF.parse_kobc_kdci(html) == [("2026-10-20", 26172.0), ("2026-10-21", 26570.0)]
+    assert IF.parse_kobc_kdci(html, "CAPE")[-1] == ("2026-10-21", 36689.0)
+    assert IF.parse_kobc_kdci(html, "HANDY") == []
+
+
+OPINET_HTML = """<table><tr><th>기간</th><th>Dubai</th><th>Brent</th><th>WTI</th></tr>
+<tr><td>26년10월20일</td><td>927.53</td><td>911.53</td><td>852.88</td></tr><tr><td>26년10월21일</td><td>927.02</td><td>908.97</td><td>811.49</td></tr>
+<tr><td>26년10월20일</td><td>110.70</td><td>108.79</td><td>101.79</td></tr><tr><td>26년10월21일</td><td>110.98</td><td>108.82</td><td>0</td></tr></table>"""
+
+
+def test_opinet_takes_usd_block_and_crack():
+    rows = IF.parse_opinet_usd(OPINET_HTML)
+    assert rows[0] == ("2026-10-20", [110.70, 108.79, 101.79]) and rows[1][1][:2] == [110.98, 108.82]
+    one_block = OPINET_HTML.split("<tr><td>26년10월20일</td><td>110.70")[0] + "</table>"
+    assert IF.parse_opinet_usd(one_block) == []  # 원화·달러 구분이 안 되면 쓰지 않는다
+    products = [("2026-10-20", {"diesel001": 178.33}), ("2026-10-21", {"diesel001": 179.79}), ("2026-10-22", {"diesel001": 181.0})]
+    assert IF.crack_spreads(products, [("2026-10-20", 110.70), ("2026-10-21", 110.98)], "diesel001") == [("2026-10-20", 67.63), ("2026-10-21", 68.81)]
+
+
+def test_macau_ggr_skips_unpublished_months():
+    xml = ("<DATA><RECORD><DATA css='formheading'>Jan</DATA><DATA>22,633</DATA><DATA>18,254</DATA></RECORD>"
+           "<RECORD><DATA css='formheading'>Feb</DATA><DATA>-</DATA><DATA>19,744</DATA></RECORD>"
+           "<RECORD><DATA css='formheading'>Total</DATA><DATA>22,633</DATA></RECORD></DATA>")
+    assert IF.parse_macau_ggr(xml, 2026) == [("2026-01", 22633.0)]
+
+
+def test_spdr_flows_from_share_changes():
+    rows = [["Ticker Symbol:", "XLK"], ["Date", "NAV", "Shares Outstanding"],
+            ["20-Oct-2026", "185.0", "6.6E8"], ["19-Oct-2026", "186.0", "6.5E8"], ["16-Oct-2026", "183.0", "6.5E8"]]
+    assert IF.parse_spdr_flows(rows) == [("2026-10-19", 0.0), ("2026-10-20", 1.85)]
+
+
+def test_npm_zero_days_are_missing_and_weeks_need_seven_days():
+    assert IF.parse_npm_range({"downloads": [{"day": "2026-10-05", "downloads": 0}, {"day": "2026-10-06", "downloads": 5}]}) == [("2026-10-06", 5.0)]
+    daily = [(f"2026-10-{d:02d}", 1.0) for d in range(5, 13)]  # 10-05(월)~10-11(일) 7일 + 10-12 하루
+    assert IF.weekly_sums(daily) == [("2026-10-05", 7.0)]
+
+
+def test_docker_daily_increments_average_gaps_and_drop_decreases():
+    cum = [("2026-10-20", 100.0), ("2026-10-21", 130.0), ("2026-10-23", 170.0), ("2026-10-24", 160.0)]
+    assert IF.daily_increments(cum) == [("2026-10-21", 30.0), ("2026-10-23", 20.0)]
+
+
+def test_statcounter_csv_column():
+    text = '"Date","Google","bing"\n2026-08,91.02,4.1\n2026-09,89.94,4.4\n'
+    assert IF.parse_statcounter_csv(text, "bing") == [("2026-08", 4.1), ("2026-09", 4.4)]
+    assert IF.parse_statcounter_csv(text, "Naver") == []

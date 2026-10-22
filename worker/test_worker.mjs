@@ -66,6 +66,9 @@ import {
   newsMentions,
   isNonReasonClaim,
   isTrivialCorporateNews,
+  hasForeignScript,
+  claimTokens,
+  claimGrounded,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1871,6 +1874,23 @@ await test("'이유를 모르겠다'·사내 행사 소식은 이유가 아니�
   ok(!isNonReasonClaim("노조가 성과급 재조정을 추진했다"), "사실 주장은 남긴다");
   ok(isTrivialCorporateNews("삼성전자, 감사 페스티벌 대상으로 상품권 지급"), "사내 행사");
   ok(!isTrivialCorporateNews("삼성전자, 3분기 잠정 실적 발표"), "실적은 남긴다");
+});
+
+await test("한자 섞인 주장·글에 없는 이유는 버린다", () => {
+  ok(hasForeignScript("머지어谈論으로 주가가 움직였다"), "한자");
+  ok(hasForeignScript("탄소 크레딧이削減되어"), "일본식 한자");
+  ok(!hasForeignScript("외국인 매도로 하락했다"), "한글");
+  const names = ["삼성전자", "005930"];
+  ok(claimTokens("삼성전자 주가가 떨어진 이유는 유럽의 부채 위기 때문이다", names).includes("유럽"), "핵심 낱말");
+  ok(!claimTokens("삼성전자 주가가 떨어진 이유는 유럽의 부채 위기 때문이다", names).some((w) => w.startsWith("삼성전자")), "종목명 제외");
+  ok(!claimGrounded("주가가 하락한 이유는 유럽의 부채 위기가 심화되었기 때문입니다", ["외인 매도 폭탄", "하이닉스도 빠짐"], names), "글에 없는 이유");
+  ok(claimGrounded("외인 투자자들의 매도 때문이다", ["오늘도 외인 매도 폭탄"], names), "글에 있는 이유");
+  ok(!claimGrounded("삼성전자 주가가 하락했다", ["삼성전자 하락"], names), "틀 낱말뿐이면 근거 아님");
+  const out = validateMoveReasons({ claims: [
+    { claim: "유럽의 부채 위기가 심화되었다", social: ["S1"], news: [] },
+    { claim: "외국인 매도가 쏟아졌다", social: ["S2"], news: [] },
+  ] }, [{ text: "하이닉스 따라 빠짐", source: "n" }, { text: "외국인 매도 미쳤다", source: "n" }], [], names);
+  eq(out.socialOnly.length, 1, "근거 있는 것만");
 });
 
 await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {

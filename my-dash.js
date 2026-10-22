@@ -155,6 +155,24 @@ Object.assign(DASH_RENDER, {
   },
 });
 
+DASH_RENDER.targets = function targets() {
+  const mine = dashMyTickers();
+  if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+  const key = isKrMarket() ? "krTargetChanges" : "usRatingChanges";
+  const p = isKrMarket() ? window.KR_TARGET_CHANGES : window.US_RATING_CHANGES;
+  if (!p) { ensureFeatureData(key).then((ok) => { if (ok) renderMyDash(); }); return ""; }
+  const core = window.MirDashCore;
+  const rows = core.recentMine(core.targetChanges(p, dashMarket()), mine, dashToday(), 30).slice(0, 8);
+  if (!rows.length) return '<p class="muted">최근 30일 안에 내 종목 목표가·의견 변경이 없습니다.</p>';
+  const fmt = (v) => (Number.isFinite(Number(v)) ? Number(v).toLocaleString("en-US") : "");
+  return `<ul class="dash-list">${rows.map((r) => {
+    const s = stockByTicker(r.ticker);
+    const pt = r.pt != null ? `${r.ptPrev != null && r.ptPrev !== r.pt ? `${fmt(r.ptPrev)}→` : ""}${fmt(r.pt)}` : "";
+    return `<li><span>${dashTickerBtn(r.ticker, s ? stockLabel(s) : r.ticker)} <span class="muted">${escapeHtml(String(r.firm || "").slice(0, 16))}</span></span>
+      <span><span class="${cls(r.dir)}">${escapeHtml(pt || r.note)}</span> <span class="muted">${escapeHtml(String(r.fileDate).slice(5, 10))}</span></span></li>`;
+  }).join("")}</ul>`;
+};
+
 function renderMyDash() {
   const host = byId("myDash");
   if (!host) return;

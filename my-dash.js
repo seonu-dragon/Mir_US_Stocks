@@ -93,8 +93,7 @@ Object.assign(DASH_RENDER, {
   upcoming() {
     const mine = dashMyTickers();
     if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: isKrMarket() ? "Asia/Seoul" : "America/New_York" });
-    const rows = window.MirDashCore.upcomingEarnings(staticEarningsRowsForTickers(mine), today, 30).slice(0, 8);
+    const rows = window.MirDashCore.upcomingEarnings(staticEarningsRowsForTickers(mine), dashToday(), 30).slice(0, 8);
     if (!rows.length) return '<p class="muted">30일 안에 실적 발표가 잡힌 내 종목이 없습니다.</p>';
     return `<ul class="dash-list">${rows.map((r) => {
       const s = stockByTicker(r.ticker);
@@ -115,6 +114,44 @@ Object.assign(DASH_RENDER, {
       const chg = ind.latest_yoy != null ? `<span class="${indCls(ind.latest_yoy)}">${indFmtSigned(ind.latest_yoy, "%", 1)}</span>` : "";
       return `<li><span>${escapeHtml(ind.name_kr)} <span class="muted">${escapeHtml(tickers.slice(0, 3).join(", "))}</span></span><span>${indFmtNum(ind.latest_value)} ${chg}</span></li>`;
     }).join("")}</ul>`;
+  },
+});
+
+function dashToday() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: isKrMarket() ? "Asia/Seoul" : "America/New_York" });
+}
+
+function dashMoney(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "";
+  return n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${Math.round(n)}`;
+}
+
+Object.assign(DASH_RENDER, {
+  filings() {
+    const mine = dashMyTickers();
+    if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+    const key = isKrMarket() ? "krDart" : "events";
+    const p = isKrMarket() ? window.KR_DISCLOSURES : window.MATERIAL_EVENTS;
+    if (!p) { ensureFeatureData(key).then((ok) => { if (ok) renderMyDash(); }); return ""; }
+    const rows = window.MirDashCore.recentMine(isKrMarket() ? p.disclosures : p.events, mine, dashToday(), 14).slice(0, 8);
+    if (!rows.length) return '<p class="muted">최근 2주 안에 내 종목 공시가 없습니다.</p>';
+    return `<ul class="dash-list dash-issues">${rows.map((r) => {
+      const what = isKrMarket() ? r.title : (r.summary && r.summary.what) || (r.items || []).map((i) => i.label).join(" · ");
+      const link = /^https:\/\//.test(String(r.link || "")) ? ` <a href="${escapeHtml(r.link)}" target="_blank" rel="noopener" class="muted">원문</a>` : "";
+      return `<li>${dashTickerBtn(r.ticker, r.company && isKrMarket() ? r.company : r.ticker)} <span class="muted">${escapeHtml(String(r.fileDate).slice(5, 10))}</span> ${escapeHtml(String(what || ""))}${link}</li>`;
+    }).join("")}</ul>`;
+  },
+  insider() {
+    const mine = dashMyTickers();
+    if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+    const p = window.INSIDER_TRADES;
+    if (!p) { ensureFeatureData("insider").then((ok) => { if (ok) renderMyDash(); }); return ""; }
+    const core = window.MirDashCore;
+    const rows = core.recentMine(core.openMarketTrades(p.trades), mine, dashToday(), 30).slice(0, 8);
+    if (!rows.length) return '<p class="muted">최근 30일 안에 내 종목 내부자 장내 매매가 없습니다.</p>';
+    return `<ul class="dash-list">${rows.map((r) => `<li><span>${dashTickerBtn(r.ticker)} <span class="muted">${escapeHtml(String(r.relation || r.owner || "").slice(0, 24))}</span></span>
+      <span><span class="${cls(r.code === "P" ? 1 : -1)}">${r.code === "P" ? "매수" : "매도"}</span> ${escapeHtml(dashMoney(r.value))} <span class="muted">${escapeHtml(String(r.fileDate).slice(5, 10))}</span></span></li>`).join("")}</ul>`;
   },
 });
 

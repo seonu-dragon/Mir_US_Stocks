@@ -15,6 +15,8 @@
     uoa: { label: "이상 옵션 거래", markets: ["us"] },
     upcoming: { label: "내 종목 다가오는 실적", markets: ["us", "kr"] },
     industry: { label: "내 종목 관련 산업 지표", markets: ["us", "kr"] },
+    filings: { label: "내 종목 최근 공시", markets: ["us", "kr"] },
+    insider: { label: "내 종목 내부자 매매", markets: ["us"] },
   };
   const DEFAULT = ["regime", "watch", "issues", "movers"];
 
@@ -80,7 +82,26 @@
       .sort((a, b) => b.tickers.length - a.tickers.length || a.id.localeCompare(b.id)).slice(0, limit);
   }
 
-  const api = { WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators };
+  /** 행 [{ticker, fileDate}] → 내 종목이고 today 로부터 days 일 안(미래 날짜 포함 안 함), 최신순. */
+  function recentMine(rows, tickers, today, days = 14) {
+    const mine = new Set((tickers || []).map(String));
+    const t0 = Date.parse(`${today}T00:00:00Z`);
+    if (!Number.isFinite(t0) || !mine.size) return [];
+    return (rows || []).filter((r) => {
+      if (!r || !mine.has(String(r.ticker))) return false;
+      const t = Date.parse(`${String(r.fileDate || "").slice(0, 10)}T00:00:00Z`);
+      const d = (t0 - t) / 86400000;
+      return Number.isFinite(t) && d >= 0 && d <= days;
+    }).sort((a, b) => String(b.fileDate).localeCompare(String(a.fileDate)));
+  }
+
+  /** 내부자 거래 중 장내 매수(P)·매도(S)만 — 부여·옵션행사·세금정산은 판단 신호가 아니다. */
+  function openMarketTrades(rows) {
+    return (rows || []).filter((r) => r && (r.code === "P" || r.code === "S"));
+  }
+
+  const api = { WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
+    recentMine, openMarketTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

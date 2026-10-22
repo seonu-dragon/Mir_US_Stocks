@@ -214,6 +214,8 @@ KOBC_ATTR = {"redistribution": "attribution", "note": "한국해양진흥공사(
 OPINET_ATTR = {"redistribution": "attribution", "note": "한국석유공사 오피넷 — 출처 표기", "commercial_ok": True}
 DICJ_ATTR = {"redistribution": "attribution", "note": "마카오 博彩監察協調局(DICJ) 공개 통계 — 출처 표기", "commercial_ok": True}
 SSGA_RESTRICTED = {"redistribution": "restricted", "note": "State Street SPDR 공개 펀드 데이터 — 파생 지표(자금흐름)만 표시, 원표 재배포 없음", "commercial_ok": False}
+PYPI_ATTR = {"redistribution": "attribution", "note": "pypistats.org(PyPI 공개 다운로드 로그) — 출처 표기", "commercial_ok": True}
+TSA_PUBLIC = {"redistribution": "public", "note": "미국 교통안전청(TSA) 공개 자료", "commercial_ok": True}
 NPM_ATTR = {"redistribution": "attribution", "note": "npm registry 공개 다운로드 통계 — 출처 표기", "commercial_ok": True}
 DOCKER_RESTRICTED = {"redistribution": "restricted", "note": "Docker Hub 공개 저장소 pull 수 — 파생 지표(증가분)만 표시", "commercial_ok": False}
 STATCOUNTER_ATTR = {"redistribution": "attribution", "note": "StatCounter Global Stats (CC BY-SA 3.0) — 링크 표기", "commercial_ok": True}
@@ -729,6 +731,30 @@ INDICATORS: list[dict] = [
          "십억 USD", "D", "XLC META GOOGL NFLX DIS", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlc",
          series_id="XLC Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
          note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    # ---- 개발자 채택 (PyPI 주간 다운로드 — 파이썬 쪽, npm 과 짝) ----
+    _src("pypi_openai", ("pypi", "openai"), "OpenAI SDK PyPI 주간 다운로드", "PyPI weekly downloads: openai", ["tech_semi"], "건", "W",
+         "MSFT NVDA", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/openai/", series_id="openai",
+         license=PYPI_ATTR, digits=0, stale_days=21, note="파이썬 개발자의 AI API 채택 속도"),
+    _src("pypi_anthropic", ("pypi", "anthropic"), "Anthropic SDK PyPI 주간 다운로드", "PyPI weekly downloads: anthropic", ["tech_semi"], "건", "W",
+         "AMZN GOOGL", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/anthropic/", series_id="anthropic",
+         license=PYPI_ATTR, digits=0, stale_days=21, note="파이썬 개발자의 AI API 채택 속도"),
+    _src("pypi_snowflake", ("pypi", "snowflake-connector-python"), "Snowflake 커넥터 PyPI 주간 다운로드", "PyPI weekly downloads: snowflake-connector-python", ["tech_semi"], "건", "W",
+         "SNOW", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/snowflake-connector-python/", series_id="snowflake-connector-python",
+         license=PYPI_ATTR, digits=0, stale_days=21, note="데이터 웨어하우스 사용 저변"),
+    _src("pypi_pymongo", ("pypi", "pymongo"), "MongoDB 드라이버(pymongo) PyPI 주간 다운로드", "PyPI weekly downloads: pymongo", ["tech_semi"], "건", "W",
+         "MDB", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/pymongo/", series_id="pymongo",
+         license=PYPI_ATTR, digits=0, stale_days=21, note="npm mongodb 와 함께 보는 DB 채택"),
+    _src("pypi_ddtrace", ("pypi", "ddtrace"), "Datadog APM(ddtrace) PyPI 주간 다운로드", "PyPI weekly downloads: ddtrace", ["tech_semi"], "건", "W",
+         "DDOG", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/ddtrace/", series_id="ddtrace",
+         license=PYPI_ATTR, digits=0, stale_days=21, note="서버 쪽 모니터링 설치 저변"),
+    _src("pypi_elasticsearch", ("pypi", "elasticsearch"), "Elasticsearch 클라이언트 PyPI 주간 다운로드", "PyPI weekly downloads: elasticsearch", ["tech_semi"], "건", "W",
+         "ESTC", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/elasticsearch/", series_id="elasticsearch",
+         license=PYPI_ATTR, digits=0, stale_days=21, note="검색·로그 엔진 사용 저변"),
+    # ---- 여행 수요 ----
+    _src("tsa_checkpoint", ("tsa",), "미국 공항 보안검색 통과 인원 (7일 평균)", "TSA Checkpoint Travel Numbers (7-day avg)",
+         ["shipping_logistics", "consumer_labor"], "명/일", "D", "DAL UAL AAL LUV ALK BKNG", source="U.S. TSA",
+         source_url="https://www.tsa.gov/travel/passenger-volumes", series_id="TSA checkpoint throughput", license=TSA_PUBLIC,
+         digits=0, stale_days=7, note="항공 여객 수요의 가장 빠른 공개 자료(매일, 전일분)"),
     # ---- 개발자 채택 (npm 주간 다운로드 · Docker Hub pull 증가분) ----
     _src("npm_openai", ("npm", "openai"), "OpenAI SDK npm 주간 다운로드", "npm weekly downloads: openai", ["tech_semi"], "건", "W",
          "MSFT NVDA", source="npm registry downloads API", source_url="https://www.npmjs.com/package/openai", series_id="openai",
@@ -1497,6 +1523,12 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
         return IF.fetch_statcounter(src[1], src[2], src[3], src[4], src[5] if len(src) > 5 else "all")
     if kind == "gscpi":
         return IF.fetch_gscpi()
+    if kind == "tsa":
+        return IF.fetch_tsa()
+    if kind == "pypi":
+        # pypistats 는 최근 180일만 준다 — 일별을 적립해 두고 완전한 주(7일)만 주간 합계로.
+        daily = latest_archive_series(f"{ind['id']}_daily", IF.fetch_pypi_daily(src[1]), keep=1500)
+        return IF.weekly_sums(daily, min_days=7)
     if kind == "fao":
         return _cached(f"fao:{src[1]}", lambda: IF.fetch_fao_food(src[1]))
     if kind == "nrc":

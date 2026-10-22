@@ -378,6 +378,8 @@ small {
   gap: var(--space-3);
   cursor: pointer;
 }
+/* 터치 화면: 홈으로 가는 로고 버튼 높이 32px 이상(2026-09-15 감사 P2 — 실측 24px) */
+@media (pointer: coarse) { .brand-lockup { min-height: 32px; } }
 .brand-text { min-width: 0; }
 .brand-text .eyebrow {
   font-size: var(--fs-cap);
@@ -1721,6 +1723,8 @@ html[data-theme="dark"] .cip-star.is-on { color: #fbbf24; }
 button.ind-chip-label:hover { color: var(--primary); }
 .ind-chip-x { width: 22px; min-width: 22px; height: 100%; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 14px; line-height: 1; }
 .ind-chip-x:hover { color: var(--text); background: var(--surface-2); }
+/* 터치 화면: 지표 칩 닫기(실측 22px 폭)를 32px 폭으로 */
+@media (pointer: coarse) { .ind-chip-x { width: 32px; min-width: 32px; } }
 .ind-chip-add { height: 24px; min-width: 0; padding: 0 9px; border: 1px dashed var(--line); border-radius: 12px; background: transparent; color: var(--muted); font-size: var(--fs-cap); }
 .ind-chip-add:hover { color: var(--primary); border-color: var(--primary); }
 .chart-multi[data-n="2"], .chart-multi[data-n="4"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
@@ -15476,6 +15480,8 @@ button.calp-who:hover strong { text-decoration: underline; }
 .calp-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: var(--fs-cap); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .calp-time { color: var(--text-2); }
 .calp-link { color: var(--link); }
+/* 터치 화면: 일정 행의 작은 링크(실측 22×18px)를 32px 로 — 음수 여백으로 행 높이는 그대로 */
+@media (pointer: coarse) { .calp-link { display: inline-block; min-width: 32px; min-height: 32px; line-height: 32px; margin: -7px 0; text-align: right; } }
 .calp-foot { margin: 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.6; }
 @media (max-width: 900px) {
   .calp-body { grid-template-columns: minmax(0, 1fr); }

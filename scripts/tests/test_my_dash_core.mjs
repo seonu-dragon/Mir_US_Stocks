@@ -82,5 +82,13 @@ test("upcomingSchedule: 지금 시장 일정 + FOMC + 지표 발표, 2주 안·�
   assert.deepEqual(core.upcomingSchedule(null, null, "us", "2026-10-22"), []);
 });
 
+test("groupTrades: 같은 사람·날짜·매수/매도는 한 줄로 합친다", () => {
+  const g = core.groupTrades([
+    { ticker: "NVDA", owner: "A", fileDate: "2026-09-23", code: "S", value: 2.8e6, shares: 10 },
+    { ticker: "NVDA", owner: "A", fileDate: "2026-09-23", code: "S", value: 3.0e6, shares: 12 },
+    { ticker: "NVDA", owner: "B", fileDate: "2026-09-23", code: "S", value: 1e6, shares: 4 }]);
+  assert.deepEqual(g.map((r) => [r.owner, r.value, r.shares, r.n]), [["A", 5.8e6, 22, 2], ["B", 1e6, 4, 1]]);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

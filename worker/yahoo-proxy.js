@@ -2060,7 +2060,25 @@ export function claimGrounded(claim, texts, names = []) {
   return checkable.some((w) => hay.includes(w));
 }
 
-export function validateMoveReasons(raw, posts, news, names = []) {
+// 방향 대조 — 오늘 +5.67%인 삼성전자에 '나스닥 하락', '반도체 폭락'(어제 −4% 날 종목토론 글)이, −1.33%인 NVDA 에
+// '주가가 상승했다'가 이유로 붙던 것(2026-10-22). 오늘 움직임과 반대 방향 낱말만 있는 주장은 버린다.
+// 방향 낱말이 없거나 양쪽이 다 있으면(예: '하락 베팅이 청산돼 상승') 남긴다. 움직임이 작으면(|등락| < 1%) 보지 않는다.
+const UP_RE = /(상승|올랐|오르|오른|급등|반등|강세|뛰었|뛴|치솟|랠리|\bsurge|\bsoar|\bjump|\brall(y|ied)|\bgain|\brise|\brose|\bup\b)/i;
+const DOWN_RE = /(하락|내렸|내린|떨어|급락|폭락|약세|빠졌|빠진|밀렸|추락|\bplunge|\bdrop|\bfell\b|\bfall|\bslump|\bsink|\bdown\b)/i;
+export function claimDirection(claim) {
+  const s = String(claim || "");
+  const up = UP_RE.test(s);
+  const down = DOWN_RE.test(s);
+  return up === down ? 0 : up ? 1 : -1;
+}
+export function contradictsMove(claim, changePct) {
+  const c = Number(changePct);
+  if (changePct == null || !Number.isFinite(c) || Math.abs(c) < 1) return false;
+  const d = claimDirection(claim);
+  return d !== 0 && d !== Math.sign(c);
+}
+
+export function validateMoveReasons(raw, posts, news, names = [], changePct = null) {
   const items = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.claims) ? raw.claims : []);
   const pick = (ids, list, prefix) => [...new Set((Array.isArray(ids) ? ids : []).map((x) => String(x).trim().toUpperCase()))]
     .map((id) => { const m = new RegExp(`^${prefix}(\\d+)$`).exec(id); return m ? list[Number(m[1]) - 1] : null; })
@@ -2070,7 +2088,7 @@ export function validateMoveReasons(raw, posts, news, names = []) {
   for (const it of items) {
     if (!it || typeof it !== "object") continue;
     const claim = clipText(it.claim, 140);
-    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names) || isSpeculativeClaim(claim) || isNonReasonClaim(claim) || hasForeignScript(claim)) continue;
+    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names) || isSpeculativeClaim(claim) || isNonReasonClaim(claim) || hasForeignScript(claim) || contradictsMove(claim, changePct)) continue;
     const social = pick(it.social, posts, "S");
     const cited = pick(it.news, news, "N");
     if (!social.length && !cited.length) continue;
@@ -2110,6 +2128,7 @@ async function extractMoveReasons(env, ticker, company, isKr, changeText, posts,
     `[소셜 글]\n${social}\n\n[뉴스]\n${heads}\n\n` +
     `규칙:\n- 주가 움직임의 이유(사건·실적·공시·루머·수급 등)를 말하는 주장만. 단순 감정·욕설·매매 자랑은 버리세요.\n` +
     `- '주가가 올랐다/내렸다', '지수가 바닥이다' 같은 움직임 자체·시장 전망은 이유가 아닙니다. 버리세요.\n` +
+    `- 오늘 움직임과 반대 방향의 이유(오른 날의 '하락' 이유, 내린 날의 '상승' 이유)는 지난 날 글이니 버리세요.\n` +
     `- '~할 수 있다', '~할 것', '전망' 같은 예측은 이유가 아닙니다. 이미 일어난 일만.\n` +
     `- 이 종목과 직접 관련 없는 거시·다른 회사 기사는 이유로 쓰지 마세요.\n` +
     `- 반드시 한국어(한글)로만 쓰고, 글·기사에 없는 내용을 덧붙이지 마세요.\n` +
@@ -2150,7 +2169,7 @@ async function handleMoveReasons(request, env, url, rawTicker) {
   const symbol = kr ? ticker : ticker.replace(/\./g, "-");
   const modelOverride = await resolveModelOverride(env, request, url);
   const bucket = Math.floor(Date.now() / (MOVE_REASONS_TTL * 1000));
-  const cacheKey = `reasons:v5:${ticker}:${bucket}`;
+  const cacheKey = `reasons:v6:${ticker}:${bucket}`;
   const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
   if (kv && !modelOverride) {
     try {
@@ -2180,7 +2199,7 @@ async function handleMoveReasons(request, env, url, rawTicker) {
     return cors(varyOrigin(json({ ...base, confirmed: [], socialOnly: [], newsOnly: [], error: "no_sources" }, 200, 0)));
   }
   const { raw, error, model } = await extractMoveReasons(env, ticker, company, kr, changeText, social.posts, news, modelOverride);
-  const checked = validateMoveReasons(raw, social.posts, news, [ticker, symbol, ticker.replace(/\.(KS|KQ)$/, ""), company, String(company || "").split(/[\s,(]/)[0]]);
+  const checked = validateMoveReasons(raw, social.posts, news, [ticker, symbol, ticker.replace(/\.(KS|KQ)$/, ""), company, String(company || "").split(/[\s,(]/)[0]], changePct);
   const payload = { ...base, ...checked, model: model || "", error: raw ? "" : error };
   if (raw && kv && !modelOverride) {
     try { await kv.put(cacheKey, JSON.stringify(payload), { expirationTtl: MOVE_REASONS_TTL }); } catch (_) { /* 무시 */ }

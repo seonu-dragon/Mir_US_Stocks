@@ -46,5 +46,16 @@ test("relatedIndicators: 내 종목 여럿이 따르는 지표가 위, 중복 �
   assert.deepEqual(core.relatedIndicators(null, ["AAPL"]), []);
 });
 
+test("recentMine·openMarketTrades: 내 종목·기간·최신순, 장내 매수·매도만", () => {
+  const rows = [
+    { ticker: "AAPL", fileDate: "2026-10-21", code: "S" }, { ticker: "AAPL", fileDate: "2026-09-01", code: "P" },
+    { ticker: "MSFT", fileDate: "2026-10-22", code: "P" }, { ticker: "NVDA", fileDate: "2026-10-20", code: "A" },
+    { ticker: "AAPL", fileDate: "2026-10-23", code: "P" },
+  ];
+  assert.deepEqual(core.recentMine(rows, ["AAPL", "NVDA"], "2026-10-22", 14).map((r) => r.fileDate), ["2026-10-21", "2026-10-20"]);
+  assert.deepEqual(core.openMarketTrades(rows).map((r) => r.code), ["S", "P", "P", "P"]);
+  assert.deepEqual(core.recentMine(rows, [], "2026-10-22"), []);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

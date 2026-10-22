@@ -71,6 +71,27 @@ def test_blocked_streak_stops_run(monkeypatch, tmp_path):
     assert blocked and asked == 0 and len(calls) == 2 and paths == []
 
 
+def test_blocked_streak_cools_down_when_budget_left(monkeypatch, tmp_path):
+    monkeypatch.setattr(b, "OUT_DIR", tmp_path)
+    monkeypatch.setattr(b, "universe", lambda m: [{"ticker": f"T{i}", "company": f"Co{i}", "marketCapB": 100 - i} for i in range(6)])
+    s = _series(80, {50: 0.12})
+    monkeypatch.setattr(b.mv, "load_json", lambda p, d=None: {"chartSeries": s} if "details" in str(p) else d)
+    calls, slept = [], []
+
+    def flaky(stock, market, day):
+        calls.append(stock["ticker"])
+        if len(calls) <= 2:
+            raise b.Blocked("HTTP 503")
+        return []
+
+    monkeypatch.setattr(b, "search_moment", flaky)
+    monkeypatch.setattr(b.time, "sleep", slept.append)
+    monkeypatch.setattr(b, "MAX_FAIL_STREAK", 2)
+    paths, asked, blocked, _summary = b.build_market("us", max_queries=10, dry_run=False, since="2000-01-01",
+                                                      deadline=b.time.monotonic() + 3600)
+    assert not blocked and asked == 4 and b.COOLDOWN_S in slept
+
+
 def test_naver_relink_matches_title_and_marks_tried(monkeypatch):
     b._naver.update(off=False, converted=0, asked=0)
     calls = []

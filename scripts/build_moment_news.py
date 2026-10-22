@@ -65,6 +65,10 @@ WINDOW_DAYS = 2
 LOOKBACK, MIN_HIST, K_SIGMA, MIN_ABS_PCT = 60, 20, 2.5, 3.0
 SLEEP_S = 0.8
 MAX_FAIL_STREAK = 5
+# 연속 거절은 대개 그 러너 IP 에 잠깐 걸린 제한이다(2026-10-22 03:40 실행은 첫 5건 503 → 1분 만에 0건으로 실패,
+# 같은 날 01:12 수동 실행은 정상). 시간 예산이 남았으면 쉬었다가 다시 시도한다 — 예산이 없는 호출(테스트·수동)은 바로 멈춤.
+COOLDOWN_S = 240
+MAX_COOLDOWNS = 3
 
 MARKETS = {
     "us": {"cfg": mv.MARKETS["us"], "top": US_TOP, "tz": ZoneInfo("America/New_York")},
@@ -279,6 +283,7 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
         return [], 0, False, summary
     touched: set[int] = set()
     asked, found, fail_streak, blocked = 0, 0, 0, False
+    cooldowns = 0
     timed_out = False
     for day, _, s, _m in pending:
         if asked >= max_queries:
@@ -293,6 +298,13 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
         except Blocked as exc:
             fail_streak += 1
             print(f"  [경고] 구글 뉴스 거절 {s['ticker']} {day}: {exc} (연속 {fail_streak})")
+            if (fail_streak >= MAX_FAIL_STREAK and deadline is not None and cooldowns < MAX_COOLDOWNS
+                    and deadline - time.monotonic() > COOLDOWN_S + 120):
+                cooldowns += 1
+                print(f"  구글 뉴스 연속 거절 — {COOLDOWN_S // 60}분 쉬고 다시 시도({cooldowns}/{MAX_COOLDOWNS})")
+                time.sleep(COOLDOWN_S)
+                fail_streak = 0
+                continue
             if fail_streak >= MAX_FAIL_STREAK:
                 print("  구글 뉴스가 연속으로 거절해 이번 실행은 여기서 멈춘다(받은 것까지 저장)")
                 blocked = True

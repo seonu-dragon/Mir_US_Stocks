@@ -1575,6 +1575,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
               <!-- 보호예수 해제(lockups.js renderLockupCard) — 국내 신규 상장주만, data/korea/lockups.js(lazy) -->
               <section class="es-card lk-card animate-reveal" id="krLockupCard" hidden></section>
+              <!-- 미상환 CB·BW(cb-overhang.js renderCbOverhangCard) — 국내만, data/korea/cb_overhang.js(lazy) -->
+              <section class="es-card lk-card cbo-card animate-reveal" id="krCbOverhangCard" hidden></section>
               <!-- 연차보고서 위험요인 변화(risk-factors.js renderRiskFactors) — SEC 10-K Item 1A 전년 대비, US·인덱스에 있는 종목만 -->
               <section class="financials-card rf-card animate-reveal" id="riskFactorsSection" hidden></section>
             </div>
@@ -3519,6 +3521,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel.js?v=8129c94c5d"></script>
     <script src="lockup-core.js?v=efe4fefb2c"></script>
     <script src="lockups.js?v=916fe5735b"></script>
+    <script src="cb-overhang-core.js"></script>
+    <script src="cb-overhang.js"></script>
     <script src="stock-summary-core.js?v=e89196e8f9"></script>
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=aa21ba9e7e"></script>

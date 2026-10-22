@@ -20,13 +20,23 @@ function renderOptionsFlowCard(item) {
   if (!ofFlowTabOpen()) return;
   const p = window.OPTIONS_FLOW;
   if (!p) {
-    ensureFeatureData("optionsFlow").then((ok) => { if (ok && selectedTicker === ticker) renderOptionsFlowCard(item); });
+    ensureFeatureData("optionsFlow").then((ok) => {
+      if (selectedTicker !== ticker) return;
+      if (ok) renderOptionsFlowCard(item);
+      else { host.hidden = false; host.innerHTML = optionsFlowPendingHtml(); }   // 파일 없음·실패 — 조용히 사라지지 않는다
+    });
     return;
   }
   const s = core.summarize(p, ticker);
   if (!s) return hide();
   host.hidden = false;
   host.innerHTML = optionsFlowCardHtml(s, core);
+}
+
+const OF_PENDING_TEXT = "옵션 포지션 데이터 준비 중";
+
+function optionsFlowPendingHtml() {
+  return `<div class="fundamental-head"><h3>옵션 포지션</h3></div><p class="muted of-meta of-pending">${OF_PENDING_TEXT}</p>`;
 }
 
 function optionsFlowCardHtml(s, core) {
@@ -57,6 +67,7 @@ function optionsFlowCardHtml(s, core) {
       ${ihStatSafe("콜 월", core.fmtStrike(s.callWall), "콜 감마가 가장 큰 행사가")}
       ${ihStatSafe("풋 월", core.fmtStrike(s.putWall), "풋 감마가 가장 큰 행사가")}
       ${ihStatSafe("감마 전환점", s.flip != null ? core.fmtStrike(s.flip) : "—", `현재가 ${core.fmtStrike(s.spot)}`)}
+      ${s.maxPain != null ? ihStatSafe("맥스페인", core.fmtStrike(s.maxPain), s.maxPainExpiry ? `${core.shortExpiry(s.maxPainExpiry)} 만기` : "") : ""}
     </div>
     <div class="of-chart" role="img" aria-label="행사가별 감마 노출 — 왼쪽 풋, 오른쪽 콜">
       <div class="of-row of-head"><span class="of-k">행사가</span><span class="of-put">풋</span><span class="of-call">콜</span><span class="of-tag"></span></div>
@@ -73,7 +84,10 @@ function renderUoaWidget() {
   const p = window.OPTIONS_FLOW;
   if (!p) {
     host.innerHTML = "";
-    ensureFeatureData("optionsFlow").then((ok) => { if (ok && typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); });
+    ensureFeatureData("optionsFlow").then((ok) => {
+      if (ok) { if (typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); }
+      else if (!window.OPTIONS_FLOW) host.innerHTML = `<p class="muted of-meta of-pending">${OF_PENDING_TEXT}</p>`;
+    });
     return;
   }
   const rows = core.marketUoa(p, 20);

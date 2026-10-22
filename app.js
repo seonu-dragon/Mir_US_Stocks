@@ -475,9 +475,16 @@ function loadEarningsCalendarSnapshot(cfg) {
   });
 }
 
+// '다음 실적' 스냅샷 행. 지난 날짜(빌더가 받은 지난 분기 날짜가 남은 행: UL 07-28 등)는 빼고 준다 — 추정으로 채우지 않는다.
+function earningsTodayIso() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: isKrMarket() ? "Asia/Seoul" : "America/New_York" });
+}
+
 function earningsSnapshotRows() {
   const payload = isKrMarket() ? window.KOREA_EARNINGS_CALENDAR : window.EARNINGS_CALENDAR_SNAPSHOT;
-  return Array.isArray(payload?.earnings) ? payload.earnings : [];
+  const rows = Array.isArray(payload?.earnings) ? payload.earnings : [];
+  const core = window.MirDashCore;
+  return core && typeof core.dropPastEarnings === "function" ? core.dropPastEarnings(rows, earningsTodayIso()) : rows;
 }
 
 function staticEarningsRowsForTickers(tickers) {
@@ -3828,6 +3835,15 @@ function stockChangeHtml(item) {
   return `<span class="${cls(pct)}">${arrow}${abs}${abs ? " " : ""}(${pctText})</span>`;
 }
 
+// 상세 일봉 마지막 봉이 스냅샷 기준일보다 7일 넘게 오래되면 회색 칩(상태만, 봉을 메우지 않는다).
+// 합성 이력 '추정' 배지와는 별개 — 실측 봉은 있는데 멈춘 경우다.
+function staleBarsChipHtml(item) {
+  const core = window.MirDailyTable;
+  if (!item || !core || typeof core.staleLastBar !== "function" || !Array.isArray(item.chartSeries)) return "";
+  const s = core.staleLastBar(item.chartSeries, (data && data.priceDate) || item.priceDate);
+  return s ? `<span class="stale-bars-chip">마지막 실측 ${escapeHtml(s.label)}</span>` : "";
+}
+
 function stockAsOfText(item) {
   const d = String((item && item.priceDate) || "").slice(0, 10);
   const md = /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d.slice(5, 7)}.${d.slice(8, 10)} 종가` : "";
@@ -3846,7 +3862,7 @@ function stockSummaryHtml(item) {
     <div class="sd-price-row">
       <strong class="sd-price">${escapeHtml(priceOrDash(item.price))}</strong>${typeof quoteKrwApproxHtml === "function" ? quoteKrwApproxHtml(item.price) : ""}
     </div>
-    <p class="sd-change">${stockChangeHtml(item)}<span class="sd-asof">${escapeHtml(stockAsOfText(item))}</span></p>
+    <p class="sd-change">${stockChangeHtml(item)}<span class="sd-asof">${escapeHtml(stockAsOfText(item))}</span>${staleBarsChipHtml(item)}</p>
     ${typeof liveQuoteLineHtml === "function" ? liveQuoteLineHtml(item, "below") : ""}
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}

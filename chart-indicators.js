@@ -729,7 +729,7 @@ async function buildStockChatContext(userText) {
     const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((r) => r.ticker === item.ticker);
     if (act.length) smLines.push(`대량보유13D/G ${act.length}건(액티비스트 ${act.filter((a) => a.kind === "activist").length})`);
     const si = ((window.SHORT_INTEREST || {}).rows || []).find((r) => r.ticker === item.ticker);
-    if (si) smLines.push(`${shortIsBalance() ? `공매도 잔고비중 ${Number(si.balanceRatio || 0).toFixed(2)}%` : `공매도 잔고일수 ${Number(si.daysToCover || 0).toFixed(1)}일`}${Number.isFinite(si.changePct) ? `(전기대비 ${si.changePct > 0 ? "+" : ""}${si.changePct.toFixed(1)}%)` : ""}`);
+    if (si) smLines.push(`${shortIsBalance() ? `공매도 잔고비중 ${Number(si.balanceRatio || 0).toFixed(2)}%` : `공매도 잔고일수 ${window.MirShortInterest ? window.MirShortInterest.fmtDtc(si, 1) : (si.daysToCover != null ? Number(si.daysToCover).toFixed(1) : "—")}일`}${Number.isFinite(si.changePct) ? `(전기대비 ${si.changePct > 0 ? "+" : ""}${si.changePct.toFixed(1)}%)` : ""}`);
     const evs = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => String(e.ticker || "").toUpperCase() === item.ticker);
     if (evs.length) {
       const labels = (evs[0].items || []).map((x) => x.label).filter(Boolean).slice(0, 3).join(", ") || "8-K";
@@ -757,6 +757,16 @@ async function buildStockChatContext(userText) {
     : "";
 }
 
+// '다음 실적' 후보 중 오늘(미국=뉴욕, 국내=서울) 이후 첫 날짜. 지난 날짜만 있으면 null — 추정으로 채우지 않는다.
+function upcomingEarningsDate(...cands) {
+  const today = typeof earningsTodayIso === "function" ? earningsTodayIso() : new Date().toLocaleDateString("en-CA");
+  for (const c of cands) {
+    const d = String(c || "").slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d >= today) return c;
+  }
+  return null;
+}
+
 function renderEarningsCalendar(item) {
   const box = byId("stockEarnings");
   if (!box) return;
@@ -768,7 +778,7 @@ function renderEarningsCalendar(item) {
   box.hidden = false;
   const f = normalizedFundamentalsForItem(item);
   const live = item.liveEarnings || staticEarningsForTicker(item.ticker) || {};
-  const nextDate = live.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
+  const nextDate = upcomingEarningsDate(live.nextDate, f.earningsDate, f.nextEarningsDate, item.earningsDate);
   const epsEstimate = live.epsEstimate ?? f.epsNextQ ?? null;
   const history = normalizeEarningsHistory(item).slice(-4).reverse();
   // new Date("YYYY-MM-DD") 는 UTC 자정으로 파싱돼 로컬 자정 기준인 snapshotBaseDate 와
@@ -793,8 +803,31 @@ function renderEarningsCalendar(item) {
         <p>${f.epsNextY != null ? `연간 EPS 예상 ${moneyOrDash(f.epsNextY)}` : "Nasdaq/야후 데이터가 있으면 함께 표시됩니다."}</p>
       </article>
     </div>
+    ${earningsSurpriseBarsHtml(item)}
     ${history.length ? renderEarningsHistoryTable(history) : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
   `;
+}
+
+// 최근 4분기 EPS 실제 vs 예상 막대(미국만 — 국내 DART 엔 예상치가 없다). earningsHistory 그대로, 없는 분기는 그리지 않는다.
+function earningsSurpriseBarsHtml(item) {
+  const core = window.MirChartEvents;
+  if (isKrMarket() || !core || typeof core.surpriseBars !== "function") return "";
+  const bars = core.surpriseBars(normalizeEarningsHistory(item), 4);
+  if (!bars.length) return "";
+  const w = (x) => `${Math.max(2, x * 100).toFixed(1)}%`;
+  const rows = bars.map((b) => {
+    const tone = b.surprisePct == null ? "muted" : cls(b.surprisePct);
+    const pct = b.surprisePct == null ? "—" : fmtPct(b.surprisePct);
+    return `<div class="eps-sb-row" title="${escapeHtml(`${b.date} · 실제 ${moneyOrDash(b.actual)} · 예상 ${moneyOrDash(b.estimate)}`)}">
+        <span class="eps-sb-q">${escapeHtml(b.date.slice(2, 7).replace("-", "."))}</span>
+        <span class="eps-sb-bars"><i class="eps-sb-est" style="width:${w(b.ew)}"></i><i class="eps-sb-act ${tone}" style="width:${w(b.aw)}"></i></span>
+        <span class="eps-sb-pct ${tone}">${escapeHtml(pct)}</span>
+      </div>`;
+  }).join("");
+  return `<div class="eps-sb" role="img" aria-label="최근 분기 EPS 실제(색) 대 예상(회색)">
+      <div class="eps-sb-head"><span>EPS 서프라이즈</span><span class="eps-sb-legend"><i class="eps-sb-est"></i>예상 <i class="eps-sb-act"></i>실제</span></div>
+      ${rows}
+    </div>`;
 }
 
 // 미국(야후)은 EPS 실제/예상/서프라이즈를, 한국(DART)은 실제 손익을 준다. DART 에는
@@ -945,7 +978,7 @@ function stockEventRows(item) {
   const price = Number(displayPrice || item.price || f.prevClose);
   const targetUpside = Number.isFinite(target) && Number.isFinite(price) && price ? pctFrom(target, price) : null;
   const bigMove = recentBigMove(rows);
-  const earningsDate = item.liveEarnings?.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
+  const earningsDate = upcomingEarningsDate(item.liveEarnings?.nextDate, f.earningsDate, f.nextEarningsDate, item.earningsDate);
   const dividend = f.dividendRate || f.dividendYield || item.dividendYield || null;
   // 국내 종목에 미국 옵션 만기·Nasdaq 목표가 문구가 붙어 나오던 것(2026-09-27 모바일 점검에서 발견).
   const kr = typeof isKrMarket === "function" && isKrMarket();

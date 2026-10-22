@@ -884,7 +884,7 @@ function aiSmartMoneyEvidence(item) {
   const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((row) => row.ticker === t);
   if (act.length) bits.push(`대량보유 ${act.length}건`);
   const shortRow = ((window.SHORT_INTEREST || {}).rows || []).find((row) => row.ticker === t);
-  if (shortRow) bits.push(shortIsBalance() ? `공매도 잔고비중 ${Number(shortRow.balanceRatio || 0).toFixed(2)}%` : `공매도 DTC ${Number(shortRow.daysToCover || 0).toFixed(1)}일`);
+  if (shortRow) bits.push(shortIsBalance() ? `공매도 잔고비중 ${Number(shortRow.balanceRatio || 0).toFixed(2)}%` : `공매도 DTC ${window.MirShortInterest ? window.MirShortInterest.fmtDtc(shortRow, 1) : (shortRow.daysToCover != null ? Number(shortRow.daysToCover).toFixed(1) : "—")}일`);
 
   return aiEvidenceCard(
     "스마트머니",
@@ -1115,7 +1115,7 @@ function aiShortInterestPanel(item) {
   return aiModePanel("공매도", "숏 인터레스트", aiMetricGrid([
     isBal
       ? { label: "잔고비중", value: `${Number(shortRow.balanceRatio || 0).toFixed(2)}%` }
-      : { label: "Days To Cover", value: Number(shortRow.daysToCover || 0).toFixed(1) },
+      : { label: "Days To Cover", value: window.MirShortInterest ? window.MirShortInterest.fmtDtc(shortRow, 1) : (shortRow.daysToCover != null ? Number(shortRow.daysToCover).toFixed(1) : "—") },
     { label: "변화율", value: Number.isFinite(Number(shortRow.changePct)) ? fmtPct(shortRow.changePct) : "—", tone: cls(shortRow.changePct) },
     { label: isBal ? "공매도 잔고" : "공매도 수량", value: shares ? Number(shares).toLocaleString() : "—" },
     { label: "기준일", value: shortRow.settlementDate || shortRow.date || "—" },

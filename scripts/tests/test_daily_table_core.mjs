@@ -224,6 +224,18 @@ test("옵션 없이 부르면 예전과 같다", () => {
   assert.equal(out[0].provisional, "");
 });
 
+test("staleLastBar: 기준일보다 7일 넘게 오래된 마지막 봉만", () => {
+  const bars = [[1, 1, 1, 1, 10, "2026-10-01"], [1, 1, 1, 1, 10, "2026-10-10"]];
+  assert.deepEqual(D.staleLastBar(bars, "2026-10-21"), { date: "2026-10-10", label: "10-10", days: 11 });
+  assert.equal(D.staleLastBar(bars, "2026-10-17"), null);          // 7일 = 경계, 표시 안 함
+  assert.equal(D.staleLastBar(bars, "2026-10-18").label, "10-10"); // 8일
+  assert.equal(D.staleLastBar([{ d: "2026-10-20" }], "2026-10-21"), null);
+  assert.equal(D.staleLastBar([{ d: "2026-09-01" }], "2026-10-21").days, 50);
+  assert.equal(D.staleLastBar([], "2026-10-21"), null);
+  assert.equal(D.staleLastBar(bars, ""), null);
+  assert.equal(D.staleLastBar([[1, 1, 1, 1, 1]], "2026-10-21"), null); // 날짜 없는 봉
+});
+
 if (failures.length) {
   console.error(`daily-table-core: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error(" - " + f));

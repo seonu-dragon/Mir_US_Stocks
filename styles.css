@@ -8664,6 +8664,19 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 .event-card-earnings .earnings-upcoming {
   background: rgba(255, 255, 255, 0.86);
 }
+.eps-sb { margin-top: var(--space-2); display: grid; gap: 4px; }
+.eps-sb-head { display: flex; justify-content: space-between; color: var(--muted); font-size: var(--fs-cap); }
+.eps-sb-legend { display: inline-flex; align-items: center; gap: 4px; }
+.eps-sb-legend i { display: inline-block; width: 10px; height: 6px; border-radius: 2px; }
+.eps-sb-row { display: grid; grid-template-columns: 3.2em 1fr 4.6em; align-items: center; gap: 8px; font-size: var(--fs-cap); }
+.eps-sb-q { color: var(--muted); font-variant-numeric: tabular-nums; }
+.eps-sb-bars { display: grid; gap: 2px; min-width: 0; }
+.eps-sb-bars i { display: block; height: 6px; border-radius: 2px; }
+i.eps-sb-est { background: var(--line); }
+i.eps-sb-act { background: var(--muted); }
+i.eps-sb-act.pos { background: var(--pos); }
+i.eps-sb-act.neg { background: var(--neg); }
+.eps-sb-pct { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .earnings-inline-history,
 .earnings-inline-reaction {
   margin-top: var(--space-2);
@@ -14890,6 +14903,8 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; --red: var(--b
 .sd-price { font-size: var(--fs-28); font-weight: var(--fw-title); line-height: 1.2; letter-spacing: 0; font-variant-numeric: tabular-nums; }
 .sd-change { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 2px 0 0; font-size: var(--fs-body); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
 .sd-asof { color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); }
+.insider-table tr.short-illiquid td { color: var(--muted); }
+.stale-bars-chip { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: var(--r-sm); background: var(--chip-bg); color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); vertical-align: middle; }
 .sd-quote .session-quote { margin: 6px 0 0; }
 .sd-quote .audit-notice { margin: 10px 0 0; }
 .sd-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; margin: 12px 0 0; border-top: 1px solid var(--line); }

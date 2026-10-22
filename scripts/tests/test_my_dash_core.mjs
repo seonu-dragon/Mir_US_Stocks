@@ -29,6 +29,14 @@ test("add·remove·move·addable", () => {
   assert.ok(core.addable(l, "us").some((w) => w.id === "uoa"));
 });
 
+test("dropPastEarnings: 지난 '다음 실적' 날짜·깨진 값 제외, 오늘은 남김", () => {
+  const rows = [{ ticker: "UL", nextDate: "2026-07-28" }, { ticker: "JNJ", nextDate: "2026-10-13" },
+    { ticker: "AAPL", nextDate: "2026-10-22" }, { ticker: "NVDA", nextDate: "2026-11-19T00:00:00" }, { ticker: "X", nextDate: null }];
+  assert.deepEqual(core.dropPastEarnings(rows, "2026-10-22").map((r) => r.ticker), ["AAPL", "NVDA"]);
+  assert.equal(core.dropPastEarnings(rows, "bad").length, 5);
+  assert.deepEqual(core.dropPastEarnings(null, "2026-10-22"), []);
+});
+
 test("upcomingEarnings: 30일 안·날짜순, 지난 날짜·깨진 값 제외", () => {
   const rows = [
     { ticker: "B", nextDate: "2026-11-05" }, { ticker: "A", nextDate: "2026-10-22" },

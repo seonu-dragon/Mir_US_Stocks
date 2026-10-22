@@ -575,7 +575,7 @@ html[data-market="kr"][data-theme="dark"] {
           <!-- 1단 화면(1100px 이하)에서는 시장 현황을 뉴스 아래로 옮긴다(home-dash.js hdPlaceStatus) -->
           <section class="home-status-slot" id="homeStatusSlot" hidden></section>
           <section class="home-briefing" id="homeBriefing" hidden aria-label="AI 브리핑 요약"></section>
-          <!-- 오늘의 이슈(market-issues.js renderMarketIssues) — 특징주를 같은 원인끼리 묶은 것, 이슈가 없는 날은 숨김 -->
+          <!-- 오늘의 이슈(market-issues.js renderMarketIssues) — 특징주를 같은 원인끼리 묶은 것, 이슈 0건인 날은 한 줄 상태 -->
           <section class="movers-board mi-board" id="marketIssues" hidden aria-label="오늘의 이슈"></section>
           <section class="movers-board" id="moversBoard" hidden aria-label="오늘의 특징주"></section>
           <!-- 프리·애프터 급등락(ext-hours.js) — TradingView 스크리너 라이브, US 전용 -->
@@ -3397,6 +3397,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="ai-mode.js?v=4b1bc75a54"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
+    <script src="short-interest-core.js"></script>
     <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
     <script src="movers.js?v=33097bd4db"></script>
     <script src="ext-hours-core.js?v=b88e6773ee"></script>

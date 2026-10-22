@@ -2,7 +2,7 @@
 // 브라우저 window.MirOptionsFlowCore, node 테스트 scripts/tests/test_options_flow_core.mjs.
 // 입력 window.OPTIONS_FLOW(scripts/build_options_flow.py, 미국 전용):
 //   { uoaCols, uoa: [[ticker, expiry, C|P, strike, volume, oi, volOi, ivPct, premium], …],
-//     tickers: {T: {spot, expiries, netGex, callWall, putWall, flip, strikes: [[행사가, 콜 GEX, 풋 GEX(음수)], …], uoa: [...]}} }
+//     tickers: {T: {spot, expiries, netGex, callWall, putWall, flip, maxPain, maxPainExpiry(가장 가까운 만기), strikes: [[행사가, 콜 GEX, 풋 GEX(음수)], …], uoa: [...]}} }
 (function (root) {
   "use strict";
 
@@ -22,6 +22,8 @@
     if (!t || !Array.isArray(t.strikes) || !t.strikes.length) return null;
     return {
       spot: t.spot, expiries: t.expiries, netGex: t.netGex, callWall: t.callWall, putWall: t.putWall, flip: t.flip,
+      maxPain: Number.isFinite(t.maxPain) ? t.maxPain : null,
+      maxPainExpiry: Number.isFinite(t.maxPain) ? (t.maxPainExpiry || "") : "",
       strikes: t.strikes.filter((s) => Array.isArray(s) && s.length >= 3),
       uoa: (t.uoa || []).map(uoaRow).filter(Boolean),
     };

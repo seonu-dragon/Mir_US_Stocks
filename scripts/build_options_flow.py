@@ -11,6 +11,9 @@ GEX(감마 노출, 추정): 계약마다 블랙-숄즈 감마 Γ(IV·잔존일·
 (화면에 '추정' 표시). 행사가별 순GEX, 합계, 콜 월(콜 GEX 최대 행사가)·풋 월(풋 GEX 최대)·감마 전환점(누적 순GEX 부호가
 바뀌는 행사가)을 낸다. IV 가 [IV_MIN, IV_MAX] 밖이면 그 만기 IV 중앙값으로 대체하고, 그 만기에 정상 IV 가 없으면 만기째 뺀다.
 
+맥스페인(가장 가까운 쓸 수 있는 만기 하나): 만기 정산가 후보(그 만기 모든 행사가) 중 옵션 매수자에게 지급되는 총액
+Σ_call max(0, S-K)·OI + Σ_put max(0, K-S)·OI 가 최소인 행사가(max_pain). 종목별 maxPain·maxPainExpiry.
+
 이상 거래(UOA): 그날 거래량이 미결제약정의 UOA_RATIO 배 이상이고 거래량 ≥ UOA_MIN_VOL·추정 거래대금(거래량 × 중간가 × 100)
 ≥ UOA_MIN_PREMIUM 인 계약. 거래대금 순 상위.
 
@@ -146,6 +149,25 @@ def gex_profile(spot: float, expiries: list[tuple[float, list[dict]]]) -> dict |
     return {"netGex": round(net_total), "callWall": call_wall, "putWall": put_wall, "flip": flip, "strikes": band}
 
 
+def max_pain(contracts: list[dict]) -> float | None:
+    """한 만기 계약들 → 매수자 총 지급액이 최소인 행사가. OI 있는 계약이 없거나 행사가가 3개 미만이면 None."""
+    live = [c for c in contracts if c["oi"] > 0]
+    strikes = sorted({c["k"] for c in contracts})
+    if not live or len(strikes) < 3:
+        return None
+    best_s, best_val = None, None
+    for s in strikes:
+        val = 0.0
+        for c in live:
+            if c["kind"] == "C" and s > c["k"]:
+                val += (s - c["k"]) * c["oi"]
+            elif c["kind"] == "P" and c["k"] > s:
+                val += (c["k"] - s) * c["oi"]
+        if best_val is None or val < best_val:
+            best_val, best_s = val, s
+    return best_s
+
+
 def unusual(ticker: str, expiry: str, contracts: list[dict]) -> list[list]:
     """이상 거래 계약 → [티커, 만기, C|P, 행사가, 거래량, OI, 거래량/OI, IV%, 추정 거래대금]."""
     out = []
@@ -189,8 +211,9 @@ def build(top: int, client=None, sleep_s: float = 0.25, now: datetime | None = N
         spot = _num((first.get("quote") or {}).get("regularMarketPrice"))
         if not spot:
             continue
-        exps = [e for e in first.get("expirationDates") or [] if 0 < (e - now.timestamp()) / 86400 <= MAX_DAYS][:MAX_EXPIRIES]
+        exps = sorted(e for e in first.get("expirationDates") or [] if 0 < (e - now.timestamp()) / 86400 <= MAX_DAYS)[:MAX_EXPIRIES]
         chains, uoa = [], []
+        mp, mp_exp = None, None
         for e in exps:
             if (first.get("options") or [{}])[0].get("expirationDate") == e:
                 opt = first["options"][0]
@@ -210,12 +233,18 @@ def build(top: int, client=None, sleep_s: float = 0.25, now: datetime | None = N
                 continue
             years = max((e - now.timestamp()) / 86400, 0.5) / 365
             chains.append((years, contracts))
-            uoa += unusual(t, datetime.fromtimestamp(e, timezone.utc).strftime("%Y-%m-%d"), contracts)
+            exp_iso = datetime.fromtimestamp(e, timezone.utc).strftime("%Y-%m-%d")
+            if mp_exp is None:                  # 만기는 가까운 순 — 처음 쓸 수 있는 만기만
+                mp = max_pain(contracts)
+                if mp is not None:
+                    mp_exp = exp_iso
+            uoa += unusual(t, exp_iso, contracts)
         prof = gex_profile(spot, chains)
         if not prof:
             continue
         uoa.sort(key=lambda r: -r[8])
-        tickers[t] = {"spot": round(spot, 2), "expiries": len(chains), **prof, "uoa": uoa[:UOA_PER_TICKER]}
+        tickers[t] = {"spot": round(spot, 2), "expiries": len(chains), **prof,
+                      "maxPain": mp, "maxPainExpiry": mp_exp, "uoa": uoa[:UOA_PER_TICKER]}
         uoa_all += uoa
     if not tickers:
         return None

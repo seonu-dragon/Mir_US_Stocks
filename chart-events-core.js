@@ -227,7 +227,24 @@
     return out;
   }
 
+  // 종목 상세 '최근 4분기 EPS 실제 vs 예상' 막대. history = [{date, epsActual, epsEstimate}] (순서 무관).
+  // 실제·예상이 둘 다 있는 분기만, 날짜 오름차순 마지막 n개. 막대 길이(aw·ew, 0~1)는 |EPS| 최댓값 기준.
+  // surprisePct = (실제-예상)/|예상|×100 (예상 0 이면 null). 없는 분기를 채우지 않는다.
+  function surpriseBars(history, n = 4) {
+    const rows = (history || []).map((r) => ({
+      date: String((r && r.date) || "").slice(0, 10), actual: num(r && r.epsActual), estimate: num(r && r.epsEstimate),
+    })).filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.date) && r.actual != null && r.estimate != null)
+      .sort((a, b) => a.date.localeCompare(b.date)).slice(-n);
+    if (!rows.length) return [];
+    const m = Math.max(...rows.map((r) => Math.max(Math.abs(r.actual), Math.abs(r.estimate)))) || 1;
+    return rows.map((r) => ({
+      ...r, aw: Math.abs(r.actual) / m, ew: Math.abs(r.estimate) / m,
+      surprisePct: r.estimate !== 0 ? ((r.actual - r.estimate) / Math.abs(r.estimate)) * 100 : null,
+    }));
+  }
+
   const api = {
+    surpriseBars,
     KINDS,
     KIND_LABEL,
     KIND_SYMBOL,

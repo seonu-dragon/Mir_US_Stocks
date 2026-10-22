@@ -20,9 +20,10 @@ function test(name, fn) {
 const P = {
   uoa: [["NVDA", "2026-10-30", "C", 230, 50000, 9000, 5.6, 48.2, 12500000], ["bad"]],
   tickers: {
-    NVDA: { spot: 221.97, expiries: 6, netGex: 1.25e9, callWall: 230, putWall: 200, flip: 210,
+    NVDA: { spot: 221.97, expiries: 6, netGex: 1.25e9, callWall: 230, putWall: 200, flip: 210, maxPain: 215, maxPainExpiry: "2026-10-24",
       strikes: [[200, 1e8, -9e8], [210, 3e8, -2e8], [230, 1.5e9, -1e7]], uoa: [["NVDA", "2026-10-30", "C", 230, 50000, 9000, 5.6, 48.2, 12500000]] },
     EMPTY: { spot: 10, strikes: [] },
+    NOMP: { spot: 10, strikes: [[10, 1, -1]], maxPainExpiry: "2026-10-24" },
   },
 };
 
@@ -30,6 +31,11 @@ test("summarize·marketUoa", () => {
   const s = core.summarize(P, "nvda");
   assert.equal(s.callWall, 230);
   assert.equal(s.uoa[0].type, "C");
+  assert.equal(s.maxPain, 215);
+  assert.equal(s.maxPainExpiry, "2026-10-24");
+  const n = core.summarize(P, "NOMP");                  // 맥스페인 없는 종목은 숫자를 채우지 않는다
+  assert.equal(n.maxPain, null);
+  assert.equal(n.maxPainExpiry, "");
   assert.equal(core.summarize(P, "EMPTY"), null);
   assert.equal(core.summarize(null, "NVDA"), null);
   assert.equal(core.marketUoa(P).length, 1);

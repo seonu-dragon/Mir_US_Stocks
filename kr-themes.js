@@ -304,6 +304,12 @@ function ktContext(P) {
   return { P, C, src, map, stats, withMembers, rankPool, ranks, prevRanks, val, themeById };
 }
 
+// 미국 테마 편입(ETF N-PORT 보유) 기준일 — 상태 표시용 날짜만. 국내는 ''.
+function ktAsOfText(src, P) {
+  const C = ktCore();
+  return src && src.market === "us" && C && typeof C.asOfRangeText === "function" ? C.asOfRangeText(P && P.asOfRange) : "";
+}
+
 function ktOverview(ctx) {
   const { P, C, src, rankPool, withMembers } = ctx;
   const cov = P.coverage || {};
@@ -321,7 +327,7 @@ function ktOverview(ctx) {
         ${ktSeg("period", KT_PERIODS, KT_VIEW.period)}
         ${ktSeg("weight", KT_WEIGHTS, KT_VIEW.weight)}
       </header>
-      <p class="kt-sub">기준 ${escapeHtml(String((typeof data !== "undefined" && data && data.updatedAtKst) || "").slice(0, 16))}</p>
+      <p class="kt-sub">기준 ${escapeHtml(String((typeof data !== "undefined" && data && data.updatedAtKst) || "").slice(0, 16))}${ktAsOfText(src, P) ? ` · 편입 기준일 ${escapeHtml(ktAsOfText(src, P))}` : ""}</p>
       <h4 class="kt-cards-title">${periodLabel} 강세 테마</h4>
       <div class="kt-cards">${strong.map(card).join("") || '<p class="muted">순위를 낼 테마가 아직 없습니다.</p>'}</div>
       ${weak.length ? `<h4 class="kt-cards-title">${periodLabel} 약세 테마</h4><div class="kt-cards">${weak.map(card).join("")}</div>` : ""}
@@ -582,7 +588,7 @@ function ktDetailView(ctx) {
       ${th.filter && th.filter.pbMax != null ? `<p class="kt-note">KRX 공식 PBR ${th.filter.pbMax}배 미만만${hidden > 0 ? ` — ${hidden}종목 제외` : ""}</p>` : ""}
     </section>
     <section class="kt-card" aria-label="구성 종목">
-      <header class="kt-head"><h3>구성 종목</h3><span class="kt-count">${members.length}종목</span>
+      <header class="kt-head"><h3>구성 종목</h3><span class="kt-count">${members.length}종목${ktAsOfText(src, P) ? ` · 편입 기준일 ${escapeHtml(ktAsOfText(src, P))}` : ""}</span>
         <div class="segmented kt-seg" role="group" aria-label="정렬">${sortBtn("cap", "시총순")}${sortBtn("ret", "등락순")}${sortBtn("contrib", "기여순")}</div></header>
       <div class="kt-table-wrap">
         <table class="kt-table kt-mtable">

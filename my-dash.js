@@ -84,6 +84,40 @@ const DASH_RENDER = {
   },
 };
 
+// 관심 + 보유 종목(중복 제거, 관심 먼저).
+function dashMyTickers() {
+  return [...new Set([...(watchlist || []), ...(portfolio || []).map((p) => p && p.ticker).filter(Boolean)])];
+}
+
+Object.assign(DASH_RENDER, {
+  upcoming() {
+    const mine = dashMyTickers();
+    if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: isKrMarket() ? "Asia/Seoul" : "America/New_York" });
+    const rows = window.MirDashCore.upcomingEarnings(staticEarningsRowsForTickers(mine), today, 30).slice(0, 8);
+    if (!rows.length) return '<p class="muted">30일 안에 실적 발표가 잡힌 내 종목이 없습니다.</p>';
+    return `<ul class="dash-list">${rows.map((r) => {
+      const s = stockByTicker(r.ticker);
+      return `<li>${dashTickerBtn(r.ticker, s ? stockLabel(s) : r.ticker)}<span>${escapeHtml(String(r.nextDate).slice(5, 10))} <span class="muted">${r.daysAhead === 0 ? "오늘" : `D-${r.daysAhead}`}</span></span></li>`;
+    }).join("")}</ul>`;
+  },
+  industry() {
+    const mine = dashMyTickers();
+    if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+    if (!window.INDUSTRY_BY_TICKER || !window.INDUSTRY_INDICATORS) {
+      Promise.all([ensureFeatureData("industryByTicker"), ensureFeatureData("industry")]).then((r) => { if (r.every(Boolean)) renderMyDash(); });
+      return "";
+    }
+    const rows = window.MirDashCore.relatedIndicators(window.INDUSTRY_BY_TICKER.byTicker, mine, 6)
+      .map((r) => ({ ...r, ind: industryIndicator(r.id) })).filter((r) => r.ind);
+    if (!rows.length) return '<p class="muted">내 종목과 연결된 산업 지표가 없습니다.</p>';
+    return `<ul class="dash-list">${rows.map(({ ind, tickers }) => {
+      const chg = ind.latest_yoy != null ? `<span class="${indCls(ind.latest_yoy)}">${indFmtSigned(ind.latest_yoy, "%", 1)}</span>` : "";
+      return `<li><span>${escapeHtml(ind.name_kr)} <span class="muted">${escapeHtml(tickers.slice(0, 3).join(", "))}</span></span><span>${indFmtNum(ind.latest_value)} ${chg}</span></li>`;
+    }).join("")}</ul>`;
+  },
+});
+
 function renderMyDash() {
   const host = byId("myDash");
   if (!host) return;

@@ -29,5 +29,22 @@ test("add·remove·move·addable", () => {
   assert.ok(core.addable(l, "us").some((w) => w.id === "uoa"));
 });
 
+test("upcomingEarnings: 30일 안·날짜순, 지난 날짜·깨진 값 제외", () => {
+  const rows = [
+    { ticker: "B", nextDate: "2026-11-05" }, { ticker: "A", nextDate: "2026-10-22" },
+    { ticker: "C", nextDate: "2026-10-01" }, { ticker: "D", nextDate: "2027-01-30" }, { ticker: "E", nextDate: "" },
+  ];
+  const out = core.upcomingEarnings(rows, "2026-10-22", 30);
+  assert.deepEqual(out.map((r) => [r.ticker, r.daysAhead]), [["A", 0], ["B", 14]]);
+  assert.deepEqual(core.upcomingEarnings(rows, "bad"), []);
+});
+
+test("relatedIndicators: 내 종목 여럿이 따르는 지표가 위, 중복 종목 한 번", () => {
+  const by = { AAPL: ["sc_mobile_ios", "nyfed_gscpi"], "005930": ["sc_vendor_samsung", "sc_mobile_ios"], X: ["fao_food_price"] };
+  const out = core.relatedIndicators(by, ["AAPL", "005930", "AAPL", "NONE"], 2);
+  assert.deepEqual(out, [{ id: "sc_mobile_ios", tickers: ["AAPL", "005930"] }, { id: "nyfed_gscpi", tickers: ["AAPL"] }]);
+  assert.deepEqual(core.relatedIndicators(null, ["AAPL"]), []);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

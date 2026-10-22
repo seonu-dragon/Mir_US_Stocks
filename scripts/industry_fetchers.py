@@ -777,10 +777,14 @@ def daily_increments(cumulative: list[tuple[str, float]]) -> list[tuple[str, flo
     return out
 
 
-STATCOUNTER = ("https://gs.statcounter.com/chart.php?device=Desktop%20%26%20Mobile%20%26%20Tablet%20%26%20Console"
-               "&device_hidden=desktop%2Bmobile%2Btablet%2Bconsole&statType_hidden={stat}&region_hidden={region}&granularity=monthly"
+STATCOUNTER = ("https://gs.statcounter.com/chart.php?device={device}"
+               "&device_hidden={device_hidden}&statType_hidden={stat}&region_hidden={region}&granularity=monthly"
                "&statType={stat_name}&region={region_name}&fromInt={start}&toInt={end}&fromMonthYear={start_d}&toMonthYear={end_d}&csv=1")
-STATCOUNTER_STATS = {"search_engine": "Search Engine", "ai_chatbot": "AI Chatbot"}
+STATCOUNTER_STATS = {"search_engine": "Search Engine", "ai_chatbot": "AI Chatbot", "browser": "Browser",
+                     "os_combined": "Operating System", "vendor": "Mobile Vendor"}
+# device: all = 데스크톱·모바일·태블릿·콘솔 합산, mobile = 휴대폰만(OS·제조사 점유율은 휴대폰 기준이 뜻이 있다)
+STATCOUNTER_DEVICES = {"all": ("Desktop%20%26%20Mobile%20%26%20Tablet%20%26%20Console", "desktop%2Bmobile%2Btablet%2Bconsole"),
+                       "mobile": ("Mobile", "mobile")}
 STATCOUNTER_REGIONS = {"ww": "Worldwide", "KR": "South Korea", "US": "United States of America"}
 
 
@@ -798,10 +802,72 @@ def parse_statcounter_csv(text: str, column: str) -> list[tuple[str, float]]:
     return out
 
 
-def fetch_statcounter(stat: str, region: str, column: str, first: str = "2019-01") -> list[tuple[str, float]]:
+def fetch_statcounter(stat: str, region: str, column: str, first: str = "2019-01", device: str = "all") -> list[tuple[str, float]]:
     end = (date.today().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
-    url = STATCOUNTER.format(stat=stat, region=region, stat_name=urllib.parse.quote(STATCOUNTER_STATS[stat]),
+    dev, dev_hidden = STATCOUNTER_DEVICES[device]
+    url = STATCOUNTER.format(device=dev, device_hidden=dev_hidden, stat=stat, region=region, stat_name=urllib.parse.quote(STATCOUNTER_STATS[stat]),
                              region_name=urllib.parse.quote(STATCOUNTER_REGIONS[region]), start=first.replace("-", ""),
                              end=end.replace("-", ""), start_d=first, end_d=end)
     text = _get(url, UA_BROWSER, timeout=40, label=f"StatCounter {stat}/{region}").decode("utf-8-sig", "replace")
     return sorted(parse_statcounter_csv(text, column))
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-22 2차 — 뉴욕연준 GSCPI(글로벌 공급망 압력)·FAO 식량가격지수
+# ---------------------------------------------------------------------------
+GSCPI_URL = "https://www.newyorkfed.org/medialibrary/research/interactives/gscpi/downloads/gscpi_data.xlsx"
+
+
+def parse_gscpi_rows(rows) -> list[tuple[str, float]]:
+    """'GSCPI Monthly Data' 시트 행([날짜 문자열 '30-Sep-2026', 값, …]) → [(YYYY-MM, 표준편차 단위)]."""
+    out = []
+    for r in rows:
+        if not r or len(r) < 2:
+            continue
+        try:
+            d = datetime.strptime(str(r[0]).strip(), "%d-%b-%Y")
+        except ValueError:
+            continue
+        v = _num(r[1])
+        if v is not None:
+            out.append((d.strftime("%Y-%m"), round(v, 3)))
+    return sorted(dict(out).items())
+
+
+def fetch_gscpi() -> list[tuple[str, float]]:
+    import xlrd  # requirements-actions.txt — 파일이 확장자와 달리 옛 xls 다
+    raw = _get(GSCPI_URL, UA_BROWSER, timeout=60, label="NY Fed GSCPI")
+    book = xlrd.open_workbook(file_contents=raw)
+    sheet = book.sheet_by_name("GSCPI Monthly Data")
+    return parse_gscpi_rows([sheet.row_values(i) for i in range(sheet.nrows)])
+
+
+FAO_PAGE = "https://www.fao.org/worldfoodsituation/foodpricesindex/en/"
+
+
+def parse_fao_csv(text: str, column: str = "Food Price Index") -> list[tuple[str, float]]:
+    """FAO 식량가격지수 CSV(머리 두 줄 설명 → 'Date,Food Price Index,Meat,…') → [(YYYY-MM, 2014-2016=100)]."""
+    rows = list(csv.reader(io.StringIO(text)))
+    head_i = next((i for i, r in enumerate(rows) if r and r[0].strip() == "Date"), None)
+    if head_i is None or column not in rows[head_i]:
+        return []
+    j = rows[head_i].index(column)
+    out = []
+    for r in rows[head_i + 1:]:
+        if len(r) > j and re.fullmatch(r"\d{4}-\d{2}", r[0].strip()):
+            v = _num(r[j])
+            if v is not None:
+                out.append((r[0].strip(), v))
+    return out
+
+
+def fetch_fao_food(column: str = "Food Price Index") -> list[tuple[str, float]]:
+    """CSV 주소에 버전 꼬리표(sfvrsn)가 붙어 바뀌므로 안내 페이지에서 링크를 찾는다."""
+    page = _get(FAO_PAGE, UA_BROWSER, timeout=40, label="FAO page").decode("utf-8", "replace")
+    m = re.search(r'href="([^"]*food_price_indices_data\.csv[^"]*)"', page)
+    if not m:
+        raise RuntimeError("FAO CSV 링크 없음")
+    url = m.group(1).replace("&amp;", "&")
+    if url.startswith("/"):
+        url = "https://www.fao.org" + url
+    return parse_fao_csv(_get(url, UA_BROWSER, timeout=60, label="FAO CSV").decode("utf-8-sig", "replace"), column)

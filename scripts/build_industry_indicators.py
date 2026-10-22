@@ -779,6 +779,27 @@ INDICATORS: list[dict] = [
     _src("sc_chatbot_gemini", ("statcounter", "ai_chatbot", "ww", "Google Gemini", "2025-04"), "Gemini 점유율 (AI 챗봇, 전 세계)", "Google Gemini Share of AI Chatbot Referrals",
          ["tech_semi"], "%", "M", "GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/ai-chatbot-market-share",
          series_id="ai_chatbot/ww/Google Gemini", basis="level", license=STATCOUNTER_ATTR, note="리퍼럴(유입) 기준 점유율"),
+    _src("sc_browser_chrome", ("statcounter", "browser", "ww", "Chrome", "2019-01"), "크롬 브라우저 점유율 (전 세계, StatCounter)", "Chrome Browser Share (Worldwide)",
+         ["tech_semi"], "%", "M", "GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/browser-market-share",
+         series_id="browser/ww/Chrome", basis="level", license=STATCOUNTER_ATTR, note="반독점 소송 맥락의 크롬 지배력"),
+    _src("sc_mobile_ios", ("statcounter", "os_combined", "ww", "iOS", "2019-01", "mobile"), "iOS 점유율 (휴대폰, 전 세계)", "iOS Share of Mobile OS (Worldwide)",
+         ["tech_semi"], "%", "M", "AAPL GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/os-market-share/mobile/worldwide",
+         series_id="os_combined/mobile/ww/iOS", basis="level", tone=0, license=STATCOUNTER_ATTR, note="나머지 대부분이 안드로이드"),
+    _src("sc_vendor_samsung", ("statcounter", "vendor", "ww", "Samsung", "2019-01", "mobile"), "삼성 휴대폰 점유율 (전 세계, 사용량 기준)", "Samsung Mobile Vendor Share (Worldwide)",
+         ["tech_semi", "kr_industry"], "%", "M", "005930 AAPL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/vendor-market-share/mobile",
+         series_id="vendor/mobile/ww/Samsung", basis="level", license=STATCOUNTER_ATTR, note="웹 페이지뷰 기준 — 판매량이 아니라 쓰이는 기기 비중"),
+    _src("sc_vendor_apple", ("statcounter", "vendor", "ww", "Apple", "2019-01", "mobile"), "애플 휴대폰 점유율 (전 세계, 사용량 기준)", "Apple Mobile Vendor Share (Worldwide)",
+         ["tech_semi"], "%", "M", "AAPL 005930", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/vendor-market-share/mobile",
+         series_id="vendor/mobile/ww/Apple", basis="level", license=STATCOUNTER_ATTR, note="웹 페이지뷰 기준 — 판매량이 아니라 쓰이는 기기 비중"),
+    # ---- 공급망·식량 ----
+    _src("nyfed_gscpi", ("gscpi",), "글로벌 공급망 압력지수 (뉴욕연준 GSCPI)", "NY Fed Global Supply Chain Pressure Index", ["shipping_logistics", "macro_activity"],
+         "표준편차", "M", "FDX UPS ZIM 011200 AAPL", source="Federal Reserve Bank of New York", source_url="https://www.newyorkfed.org/research/policy/gscpi",
+         series_id="GSCPI", basis="level", tone=-1, license={"redistribution": "attribution", "note": "뉴욕연준 공개 데이터 — 출처 표기", "commercial_ok": True},
+         note="0 = 장기 평균, 높을수록 공급망 압력(운임·납기·재고) 큼"),
+    _src("fao_food_price", ("fao", "Food Price Index"), "FAO 세계 식량가격지수", "FAO Food Price Index", ["consumer_labor", "commodities_metals"],
+         "지수 (2014–16=100)", "M", "ADM BG 097950 004370 271560", source="UN FAO Food Price Index", source_url="https://www.fao.org/worldfoodsituation/foodpricesindex/en/",
+         series_id="Food Price Index", tone=-1, license={"redistribution": "attribution", "note": "FAO — 출처 표기(CC BY-NC-SA 3.0 IGO)", "commercial_ok": False},
+         note="곡물·유지·육류·유제품·설탕 국제가격 — 식품 원가"),
 ]
 
 
@@ -1473,7 +1494,11 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
         cum = latest_archive_series(f"{ind['id']}_cum", [(kst_now().date().isoformat(), pulls)] if pulls else [])
         return IF.daily_increments(cum)
     if kind == "statcounter":
-        return IF.fetch_statcounter(src[1], src[2], src[3], src[4])
+        return IF.fetch_statcounter(src[1], src[2], src[3], src[4], src[5] if len(src) > 5 else "all")
+    if kind == "gscpi":
+        return IF.fetch_gscpi()
+    if kind == "fao":
+        return _cached(f"fao:{src[1]}", lambda: IF.fetch_fao_food(src[1]))
     if kind == "nrc":
         return IF.fetch_nrc_power()
     if kind == "census_c30":

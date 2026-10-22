@@ -19,3 +19,5 @@ pykrx==1.2.8
 pillow==12.2.0
 # 거래소 휴장일·단축거래(build_market_calendar.py, XKRX·XNYS). pandas 는 yfinance 가 이미 끌어온다.
 exchange_calendars==4.13.2
+# 옛 엑셀(.xls, BIFF) 읽기 — 뉴욕연준 GSCPI 파일이 확장자는 .xlsx 지만 실제는 xls 다(build_industry_indicators.py).
+xlrd==2.0.1

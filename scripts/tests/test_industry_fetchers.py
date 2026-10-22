@@ -219,3 +219,24 @@ def test_statcounter_csv_column():
     text = '"Date","Google","bing"\n2026-08,91.02,4.1\n2026-09,89.94,4.4\n'
     assert IF.parse_statcounter_csv(text, "bing") == [("2026-08", 4.1), ("2026-09", 4.4)]
     assert IF.parse_statcounter_csv(text, "Naver") == []
+
+
+def test_parse_gscpi_rows():
+    rows = [["GSCPI", ""], ["31-Jan-1998", -0.5432], ["30-Sep-2026", "1.2841"], ["", None], ["note", 3]]
+    assert IF.parse_gscpi_rows(rows) == [("1998-01", -0.543), ("2026-09", 1.284)]
+
+
+def test_parse_fao_csv():
+    text = ("FAO Food Price Index\n2014-2016 = 100\n\nDate,Food Price Index,Meat,Dairy,Cereals,Oils,Sugar\n"
+            "1990-01,64.2,52.8,62.0,61.2,44.6,98.6\n2026-09,136.0,128.1,150.2,110.4,170.9,99.0\n,,,\n")
+    assert IF.parse_fao_csv(text) == [("1990-01", 64.2), ("2026-09", 136.0)]
+    assert IF.parse_fao_csv(text, "Oils")[-1] == ("2026-09", 170.9)
+    assert IF.parse_fao_csv("no header") == []
+
+
+def test_statcounter_device_url():
+    dev, hidden = IF.STATCOUNTER_DEVICES["mobile"]
+    url = IF.STATCOUNTER.format(device=dev, device_hidden=hidden, stat="vendor", region="ww", stat_name="Mobile Vendor",
+                                region_name="Worldwide", start="201901", end="202609", start_d="2019-01", end_d="2026-09")
+    assert "device=Mobile&device_hidden=mobile&statType_hidden=vendor" in url
+    assert "{" not in url

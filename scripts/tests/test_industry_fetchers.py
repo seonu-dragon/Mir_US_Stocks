@@ -242,17 +242,6 @@ def test_statcounter_device_url():
     assert "{" not in url
 
 
-def test_parse_tsa_and_rolling_mean():
-    html = ('<table><tr><td class="x">10/20/2026</td><td class="x">2,154,162</td></tr>'
-            '<tr><td>10/19/2026</td><td>2,724,075</td></tr><tr><td>1/2/2026</td><td>0</td></tr></table>')
-    assert IF.parse_tsa_html(html) == [("2026-10-19", 2724075.0), ("2026-10-20", 2154162.0)]
-    daily = [(f"2026-10-{d:02d}", float(d)) for d in range(1, 10) if d != 5]
-    # 10-05 가 빠져 1~7·2~8 창은 건너뛰고 6~9 만으로는 7일이 안 된다 → 빈 결과
-    assert IF.rolling_mean(daily, 7) == []
-    full = [(f"2026-10-{d:02d}", float(d)) for d in range(1, 9)]
-    assert IF.rolling_mean(full, 7) == [("2026-10-07", 4), ("2026-10-08", 5)]
-
-
 def test_parse_pypistats_overall():
     payload = {"data": [{"category": "with_mirrors", "date": "2026-10-01", "downloads": 9},
                         {"category": "without_mirrors", "date": "2026-10-02", "downloads": 5},

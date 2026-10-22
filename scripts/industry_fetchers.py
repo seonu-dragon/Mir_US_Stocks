@@ -874,61 +874,9 @@ def fetch_fao_food(column: str = "Food Price Index") -> list[tuple[str, float]]:
 
 
 # ---------------------------------------------------------------------------
-# 2026-10-22 3차 — TSA 공항 보안검색 통과 인원 · PyPI 다운로드
+# 2026-10-22 3차 — PyPI 다운로드
 # ---------------------------------------------------------------------------
-TSA_URL = "https://www.tsa.gov/travel/passenger-volumes"
-
-
-def parse_tsa_html(html: str) -> list[tuple[str, float]]:
-    """TSA 표(<td>10/20/2026</td><td>2,154,162</td>) → [(YYYY-MM-DD, 명)] 날짜순."""
-    out = {}
-    for m, d, y, n in re.findall(r"<td[^>]*>\s*(\d{1,2})/(\d{1,2})/(\d{4})\s*</td>\s*<td[^>]*>\s*([\d,]+)\s*</td>", html):
-        v = float(n.replace(",", ""))
-        if v > 0:
-            out[f"{y}-{int(m):02d}-{int(d):02d}"] = v
-    return sorted(out.items())
-
-
-def rolling_mean(daily: list[tuple[str, float]], window: int = 7) -> list[tuple[str, float]]:
-    """연속한 날짜 window 일 평균(요일 효과 제거). 중간에 빠진 날이 있으면 그 창은 건너뛴다."""
-    out = []
-    for i in range(window - 1, len(daily)):
-        chunk = daily[i - window + 1:i + 1]
-        span = (date.fromisoformat(chunk[-1][0]) - date.fromisoformat(chunk[0][0])).days
-        if span == window - 1:
-            out.append((chunk[-1][0], round(sum(v for _, v in chunk) / window)))
-    return out
-
-
-def _curl_text(url: str, timeout: int = 60) -> str:
-    """TSA(Akamai)는 파이썬 urllib 연결을 TLS 지문으로 403 처리한다(브라우저 헤더를 붙여도) — curl 은 통과
-    (2026-10-22 실측). build_13f_snapshot.py 의 curl_fetch 와 같은 방식."""
-    import shutil
-    import subprocess
-    exe = shutil.which("curl") or shutil.which("curl.exe")
-    if not exe:
-        raise RuntimeError("curl 없음")
-    proc = subprocess.run([exe, "-sS", "-L", "--fail", "--max-time", str(timeout), "-A", UA_BROWSER["User-Agent"],
-                           "-H", "Accept: text/html,*/*", url], capture_output=True, check=False)
-    if proc.returncode != 0:
-        raise RuntimeError(f"curl 실패({proc.returncode}): {proc.stderr.decode('utf-8', 'replace').strip()[:200]}")
-    return proc.stdout.decode("utf-8", "replace")
-
-
-def fetch_tsa(years: int = 3) -> list[tuple[str, float]]:
-    """올해 페이지 + 지난 해 페이지(/YYYY) — 7일 평균 일일 통과 인원."""
-    daily: dict = {}
-    this_year = date.today().year
-    for y in range(this_year - years, this_year + 1):
-        url = TSA_URL if y == this_year else f"{TSA_URL}/{y}"
-        try:
-            html = _curl_text(url)
-        except Exception:  # noqa: BLE001
-            if y == this_year:
-                raise
-            continue                       # 지난 해 페이지 하나가 빠져도 최근 값은 낸다
-        daily.update(parse_tsa_html(html))
-    return rolling_mean(sorted(daily.items()), 7)
+# TSA 공항 통과 인원은 넣었다 뺐다(2026-10-22): GitHub Actions IP 를 403 으로 막는다(curl 도). 로컬에서만 된다.
 
 
 def parse_pypistats_overall(payload: dict) -> list[tuple[str, float]]:

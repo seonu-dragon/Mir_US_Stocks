@@ -39,7 +39,7 @@ if str(SCRIPTS) not in sys.path:
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, latest_fiscal_year, write_data  # noqa: E402
-from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from build_kr_disclosures import dart_get, load_corp_map, dart_key_missing  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "korea" / "indicators.json"
@@ -180,13 +180,7 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        write_outputs({
-            "updatedAtKst": now_kst(), "source": "DART Open API · 주요 재무지표",
-            "note": "DART_API_KEY 미설정 — GitHub Secrets에 등록 후 workflow를 실행하세요.",
-            "year": year, "indicators": {},
-        })
-        print("DART_API_KEY missing; wrote empty kr indicators payload.")
-        return 0
+        return dart_key_missing("지표")
 
     indicators, errors = build(api_key, year, args.limit)
     if errors:

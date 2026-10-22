@@ -41,6 +41,7 @@ from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E
 from sec_client import write_data  # noqa: E402
 from build_kr_disclosures import (  # noqa: E402
     dart_get,
+    dart_key_missing,
     fetch_disclosures,
     load_corp_map,
 )
@@ -207,17 +208,7 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        payload = {
-            "updatedAtKst": now_kst(),
-            "windowDays": args.days,
-            "source": "DART Open API",
-            "note": "DART_API_KEY 미설정 — GitHub Secrets에 등록 후 workflow를 실행하세요.",
-            "majorHolders": [],
-            "insiders": [],
-        }
-        write_outputs(payload)
-        print("DART_API_KEY missing; wrote empty kr_ownership payload.")
-        return 0
+        return dart_key_missing("지분")
 
     major_rows, ele_rows, errors = build(api_key, args.days)
     if errors:

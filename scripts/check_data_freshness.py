@@ -118,8 +118,11 @@ CHECKS = {
         # 증권사 목표가 상향·하향(build_kr_target_changes.py) — 실행마다 updatedAtKst 를 새로 쓴다. 연휴 감안 7일.
         ("data/korea/target_changes.json", 7, False),
         ("data/korea/ecos_macro.json", 6, False),
-        ("data/korea/gov_contracts.json", 8, False),
-        ("data/korea/trade_exports.json", 8, False),
+        # 나라장터·관세청(data.go.kr) — 이 그룹(korea-close-briefing 15:42 매일 + 백업 22:00 평일)이 매 실행 다시
+        # 쓰고, 실패하면 exit 1 + 기존 파일 유지라 나이로만 드러난다. 예전 8일은 해외 러너에서 공공데이터포털이
+        # 막혀 매일 죽어도 일주일 넘게 조용했다(2026-10-23 외부 리뷰). 매일 도는 잡이라 3일 = 두 번 연속 실패 + 여유.
+        ("data/korea/gov_contracts.json", 3, False),
+        ("data/korea/trade_exports.json", 3, False),
         # 아래 5개는 update_korea_data.py 가 **서브프로세스로** 부르는 빌더의 산출물이라
         # 워크플로 YAML 에 이름이 없고, 2026-09-15 감사 전까지 어느 그룹에도 없었다.
         # KRX 로그인(KRX_ID/PW)이 만료되면 short_interest/short_volume/krx_metrics 가
@@ -272,8 +275,8 @@ CHECKS = {
     "event-study": [
         ("data/event_study/index.json", 10, True),
     ],
-    # moment-news.yml(매일 12:40 KST) — 큰 등락일 그날 뉴스 미리 모으기. 실행마다 index updatedAtKst 를
-    # 새로 쓴다 — 3일이면 두 번 연속 실패. 건수는 보지 않는다(새 큰 등락일이 없는 날은 검색 0건이 정상).
+    # moment-news.yml(매일 12:40 KST) — 큰 등락일 그날 뉴스 미리 모으기. 3일이면 두 번 연속 실패. 건수는 보지 않는다
+    # (새 큰 등락일이 없는 날은 검색 0건이 정상). 나이는 updatedAtKst 가 아니라 lastSearchAtKst 로 잰다(STAMP_KEY_OF).
     "moment-news": [
         ("data/moment_news/index.json", 3, False),
     ],
@@ -463,8 +466,84 @@ def check_us_price_session(payload: dict, now: datetime | None = None) -> tuple[
     return problems, oks
 
 
-def file_date(payload: dict) -> str | None:
-    for key in TIMESTAMP_KEYS:
+KR_SNAPSHOT = "data/korea/market_snapshot.json"
+# 일봉 원천 중 야후 비율 상한. 2026-10-23 외부 리뷰: 네이버 차트 API 가 죽으면 이력 전체가 조용히 야후로
+# 바뀌는데(detail barsSource=yahoo) 게이트는 커버리지 50%·종목 수 3,000 만 봐서 그대로 초록이었다.
+# 10-22 정상 스냅샷은 444/3,797 ≈ 12%(네이버가 못 준 종목 + 전환 전 이월분). 35% 면 평시의 3배 여유를 두고
+# 네이버 원천의 대규모 손실을 잡는다. 값은 historyCoverage.barsSource(차트 있는 종목만 원천별로 센 것).
+# 스냅샷은 그대로 발행한다(야후 봉도 실측이다) — 관문만 빨갛게 해 텔레그램으로 알린다.
+KR_YAHOO_BARS_MAX = 0.35
+
+
+def check_kr_bars_source(payload: dict) -> tuple[list[str], list[str]]:
+    """KR 스냅샷 일봉 원천 중 야후 비율이 상한을 넘으면 문제. 반환: (문제, OK 메시지)."""
+    counts = (payload.get("historyCoverage") or {}).get("barsSource")
+    if not isinstance(counts, dict):
+        return [f"{KR_SNAPSHOT}: historyCoverage.barsSource 없음 — 일봉 원천(네이버/야후) 비율을 셀 수 없다"], []
+    naver = int(counts.get("naver") or 0)
+    yahoo = int(counts.get("yahoo") or 0)
+    total = naver + yahoo
+    if not total:
+        return [f"{KR_SNAPSHOT}: 일봉 원천 집계 0종목 — 차트 있는 종목이 없다"], []
+    share = yahoo / total
+    detail = f"야후 {yahoo:,} / 네이버 {naver:,} (차트 {total:,}종목)"
+    if share > KR_YAHOO_BARS_MAX:
+        return [
+            f"{KR_SNAPSHOT}: 일봉 야후 폴백 비율 {share:.1%} > 상한 {KR_YAHOO_BARS_MAX:.0%} ({detail}) "
+            "— 네이버 일봉 API(api.stock.naver.com/chart/domestic)가 대거 실패했다. 수정주가·KRX+NXT 거래량 "
+            "기준이 야후로 바뀐 종목이 많다"
+        ], []
+    return [], [f"OK {KR_SNAPSHOT}: 일봉 야후 폴백 비율 {share:.1%} ({detail}, 상한 {KR_YAHOO_BARS_MAX:.0%})"]
+
+
+def check_kr_price_session(payload: dict, now: datetime | None = None,
+                           is_trading=None) -> tuple[list[str], list[str]]:
+    """KR 스냅샷 종목 priceDate 가 XKRX 마지막 완료 거래일인지 — 근거는 kr_price_session.py 머리말."""
+    import kr_price_session as KPS
+
+    expected = KPS.last_completed_kr_session(now, is_trading)
+    if expected is None:
+        return [], [f"WARN {KR_SNAPSHOT}: XKRX 달력을 쓸 수 없다(exchange_calendars) — 가격 기준일 대조 생략"]
+    problem, summary = KPS.evaluate_kr_price_session(payload.get("stocks") or [], expected)
+    if problem:
+        return [f"{KR_SNAPSHOT}: {problem}"], []
+    return [], [f"OK {KR_SNAPSHOT}: {summary} (마지막 완료 거래일 {expected.isoformat()})"]
+
+
+EARNINGS_HISTORY_META = "data/earnings_history_meta.json"
+# earnings_history_store.MAX_FAILED_RATIO 와 같은 값(그 모듈은 update_data·야후 클라이언트까지 끌어와 여기서
+# import 하지 않는다 — test_freshness_gate 가 두 값이 같은지 본다).
+EARNINGS_HISTORY_MAX_FAILED_RATIO = 0.20
+
+
+def check_earnings_history_failures(payload: dict) -> tuple[list[str], list[str]]:
+    """실적 이력 meta 의 이번 실행 실패 비율.
+
+    2026-10-23: 빌더는 실패 20% 초과면 exit 1 이지만 그 전에 meta updatedAtKst 를 새로 쓰고, 스텝이
+    continue-on-error 라 잡은 초록·나이 감시도 통과였다. meta 에 남은 failed 로 관문에서 다시 본다.
+    """
+    failed = int(payload.get("failed") or 0)
+    attempted = int(payload.get("updated") or 0) + failed
+    if attempted and failed > attempted * EARNINGS_HISTORY_MAX_FAILED_RATIO:
+        return [
+            f"{EARNINGS_HISTORY_META}: 실적 이력 수집 실패 {failed}/{attempted}건 "
+            f"({failed / attempted:.0%} > {EARNINGS_HISTORY_MAX_FAILED_RATIO:.0%}) "
+            "— 스탬프는 신선하지만 야후 earningsHistory 가 대거 실패했다"
+        ], []
+    return [], [f"OK {EARNINGS_HISTORY_META}: 이번 실행 실패 {failed}/{attempted}건"]
+
+
+# 나이를 updatedAtKst 가 아닌 다른 키로 재야 하는 파일. 2026-10-23: 큰 등락일 뉴스는 구글이 막아 검색을 하나도
+# 못 한 시장이 있어도 인덱스 updatedAtKst 가 매번 오늘로 올라가 3일 신선도 시계가 계속 0 으로 돌아갔다
+# (10-22 13:06 실행은 us·kr 모두 askedThisRun 0 · blocked). build_moment_news.py 가 실제로 검색한(또는 밀린
+# 게 없는) 시장에만 lastSearchAtKst 를 올리고, 인덱스 최상위 값은 가장 늙은 시장의 값이다.
+STAMP_KEY_OF = {
+    "data/moment_news/index.json": ("lastSearchAtKst",),
+}
+
+
+def file_date(payload: dict, keys: tuple[str, ...] = TIMESTAMP_KEYS) -> str | None:
+    for key in keys:
         value = payload.get(key)
         if isinstance(value, str):
             m = re.search(r"\d{4}-\d{2}-\d{2}", value)
@@ -514,9 +593,10 @@ def main() -> int:
         except Exception as exc:
             problems.append(f"{rel}: JSON 파싱 실패 ({exc})")
             continue
-        stamp = file_date(payload)
+        stamp_keys = STAMP_KEY_OF.get(rel, TIMESTAMP_KEYS)
+        stamp = file_date(payload, stamp_keys)
         if not stamp:
-            problems.append(f"{rel}: 타임스탬프 키 없음 {TIMESTAMP_KEYS}")
+            problems.append(f"{rel}: 타임스탬프 키 없음 {stamp_keys}")
             continue
         age = (today - datetime.strptime(stamp, "%Y-%m-%d").date()).days
         if age > max_age:
@@ -590,6 +670,31 @@ def main() -> int:
         else:
             session_problems, oks = check_us_price_session(payload)
             problems.extend(session_problems)
+            for line in oks:
+                print(line)
+
+    if args.group == "kr":
+        session_checks += 2
+        try:
+            payload = json.loads((ROOT / KR_SNAPSHOT).read_text(encoding="utf-8"))
+        except Exception as exc:
+            problems.append(f"{KR_SNAPSHOT}: 가격 기준일·일봉 원천 감시용 읽기 실패 ({exc})")
+        else:
+            for check in (check_kr_bars_source, check_kr_price_session):
+                found, oks = check(payload)
+                problems.extend(found)
+                for line in oks:
+                    print(line)
+
+    if args.group == "weekly" and WEEKLY_JOB_OF.get(EARNINGS_HISTORY_META) not in skip_jobs:
+        session_checks += 1
+        try:
+            payload = json.loads((ROOT / EARNINGS_HISTORY_META).read_text(encoding="utf-8"))
+        except Exception as exc:
+            problems.append(f"{EARNINGS_HISTORY_META}: 실패 비율 감시용 읽기 실패 ({exc})")
+        else:
+            found, oks = check_earnings_history_failures(payload)
+            problems.extend(found)
             for line in oks:
                 print(line)
 

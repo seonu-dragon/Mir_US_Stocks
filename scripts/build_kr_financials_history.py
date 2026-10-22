@@ -35,7 +35,7 @@ except Exception:
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import latest_fiscal_year  # noqa: E402
-from build_kr_disclosures import load_corp_map  # noqa: E402
+from build_kr_disclosures import load_corp_map, dart_key_missing  # noqa: E402
 from build_kr_earnings import (  # noqa: E402
     BATCH, REVENUE_NAMES, OPERATING_NAMES, NET_NAMES, ASSET_NAMES,
     fetch_batch, pick, now_kst,
@@ -130,9 +130,7 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        atomic_write_text(OUT_JSON, json.dumps({"updatedAtKst": now_kst(), "note": "DART_API_KEY 미설정", "financials": {}}, ensure_ascii=False))
-        print("DART_API_KEY missing; wrote empty financials history.")
-        return 0
+        return dart_key_missing("재무이력")
 
     years = year_range(args.years)
     print(f"=== KR 다년 재무 수집: {years[0]}~{years[-1]} ===")

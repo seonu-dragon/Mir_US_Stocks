@@ -369,6 +369,28 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
     return paths, asked, blocked, summary
 
 
+def search_stamp(summary: dict, prev: dict, now: str) -> str | None:
+    """시장별 lastSearchAtKst — 이번 실행이 실제로 검색을 했거나(askedThisRun > 0) 밀린 날짜가 없어
+    검색할 게 없었으면(막히지도 않음) now, 아니면 직전 값을 그대로 둔다(없으면 None).
+
+    2026-10-23: 구글이 막아 한 건도 못 물은 실행도 인덱스 updatedAtKst 를 오늘로 올려 신선도 3일 시계를
+    되돌렸다(10-22 13:06 us·kr 모두 askedThisRun 0 · blocked). 신선도 관문은 이제 이 값을 본다."""
+    asked = int(summary.get("askedThisRun") or 0)
+    nothing_to_do = int(summary.get("pending") or 0) == 0 and not summary.get("blocked")
+    if asked > 0 or nothing_to_do:
+        return now
+    return prev.get("lastSearchAtKst") or None
+
+
+def index_last_search(summaries: dict, markets=("us", "kr")) -> str | None:
+    """인덱스 최상위 lastSearchAtKst = 가장 늙은 시장의 값. 한 시장이라도 기록이 없으면 None(관문이 운다).
+    "YYYY-MM-DD HH:MM KST" 형식이라 문자열 비교가 곧 시각 비교다."""
+    stamps = [(summaries.get(m) or {}).get("lastSearchAtKst") for m in markets]
+    if not all(stamps):
+        return None
+    return min(stamps)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="큰 등락일 그날 뉴스 미리 모으기")
     ap.add_argument("--market", choices=["us", "kr", "all"], default="all")
@@ -400,14 +422,23 @@ def main() -> int:
             changed += paths
             asked_total += asked
             any_blocked |= blocked
+            if not args.dry_run:
+                stamp = search_stamp(summary, prev.get(m) or {}, datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"))
+                if stamp:
+                    summary["lastSearchAtKst"] = stamp
             summaries[m] = summary
         if args.dry_run:
             return 0
+        # updatedAtKst = 이 실행이 인덱스를 쓴 시각(진행 기록). 신선도는 lastSearchAtKst 로 잰다(check_data_freshness
+        # STAMP_KEY_OF) — 검색을 못 한 시장이 있으면 그 시장의 마지막 검색 시각이 최상위 값이 된다.
         index = {
             "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
             "shards": SHARDS, "years": YEARS, "perMoment": PER_MOMENT, "windowDays": WINDOW_DAYS,
             "universe": {"us": US_TOP, "kr": KR_TOP}, "markets": summaries,
         }
+        last_search = index_last_search(summaries)
+        if last_search:
+            index["lastSearchAtKst"] = last_search
         sec.write_data(OUT_JSON, OUT_JS, "MOMENT_NEWS_INDEX", index, indent=None)
         changed += [OUT_JSON, OUT_JS]
         if args.push and changed:

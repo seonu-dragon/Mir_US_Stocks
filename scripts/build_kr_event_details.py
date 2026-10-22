@@ -45,7 +45,7 @@ if str(SCRIPTS) not in sys.path:
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import write_data  # noqa: E402
-from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from build_kr_disclosures import dart_get, load_corp_map, dart_key_missing  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "kr_event_details.json"
@@ -249,11 +249,7 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        write_outputs({"updatedAtKst": now_kst(), "source": "DART Open API · 주요사항보고서",
-                       "note": "DART_API_KEY 미설정 — GitHub Secrets에 등록 후 workflow를 실행하세요.",
-                       "details": {}})
-        print("DART_API_KEY missing; wrote empty kr event details payload.")
-        return 0
+        return dart_key_missing("이벤트")
 
     details, errors, by_api = build(api_key, args.days, args.limit)
     if errors:

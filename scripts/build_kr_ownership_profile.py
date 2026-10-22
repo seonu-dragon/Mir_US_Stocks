@@ -43,7 +43,7 @@ if str(SCRIPTS) not in sys.path:
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, latest_fiscal_year, write_data  # noqa: E402
-from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from build_kr_disclosures import dart_get, load_corp_map, dart_key_missing  # noqa: E402
 from step_budget import StepBudget, carry_over, missing_first  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
@@ -246,11 +246,7 @@ def main() -> int:
     year = args.year.strip() or str(latest_fiscal_year())
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        write_outputs({"updatedAtKst": now_kst(), "source": "DART Open API · 사업보고서 주요정보",
-                       "note": "DART_API_KEY 미설정 — GitHub Secrets에 등록 후 workflow를 실행하세요.",
-                       "year": year, "profiles": {}})
-        print("DART_API_KEY missing; wrote empty kr ownership profile payload.")
-        return 0
+        return dart_key_missing("프로필")
 
     prev_payload = load_json(OUT_JSON, {}) or {}
     prev = (prev_payload.get("profiles") or {}) if str(prev_payload.get("year") or "") == year else {}

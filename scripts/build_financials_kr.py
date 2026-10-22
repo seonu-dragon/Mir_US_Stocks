@@ -727,8 +727,9 @@ def main() -> int:
         pass
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        log("[KR재무] DART_API_KEY 미설정 — 기존 파일 유지, 아무것도 쓰지 않는다")
-        return 0
+        # 2026-10-23: Actions 에서 시크릿이 빠져도 exit 0 이라 financials 잡이 초록이었다 — 공통 처리(Actions exit 1).
+        from build_kr_disclosures import dart_key_missing
+        return dart_key_missing("KR재무")
     log(f"=== KR 재무 확장 (DART, 상위 {args.top}) — {datetime.now():%Y-%m-%d %H:%M} ===")
     return main_run(args, api_key)
 

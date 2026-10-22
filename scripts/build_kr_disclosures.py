@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Korea DART disclosures for tracked KR universe tickers.
 
-Requires DART_API_KEY (https://opendart.fss.or.kr/). Without a key, writes an empty
-payload so the site can still load the feature shell.
+Requires DART_API_KEY (https://opendart.fss.or.kr/). Without a key, keeps the existing file
+(exit 1 in GitHub Actions, exit 0 locally) — see dart_key_missing.
 """
 
 from __future__ import annotations
@@ -149,6 +149,24 @@ def dart_pace() -> None:
             if wait > 0:
                 time.sleep(wait)
         _dart_last_call[0] = time.monotonic()
+
+
+def dart_key_missing(label: str) -> int:
+    """DART_API_KEY 가 없을 때 공통 처리 — 기존 파일을 건드리지 않고 종료 코드를 돌려준다.
+
+    2026-10-23: 예전엔 키가 없으면 빈 페이로드(updatedAtKst 는 오늘)를 쓰고 exit 0 이었다. 시크릿이 빠진
+    run 에서 실적·지표·감사의견·소유구조·공시가 전부 빈 파일로 덮였는데, 스탬프가 신선해 주간 관문(나이만 본다)도
+    통과했다. 이제 Actions(GITHUB_ACTIONS=true)에서는 exit 1(스텝 실패 표시 + 기존 파일 유지), 로컬에서는
+    키 없이 돌려 본 것이므로 안내만 하고 exit 0.
+    """
+    in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
+    print(
+        f"[{label}] DART_API_KEY 미설정 — 기존 파일을 덮지 않는다"
+        + (" (Actions: 시크릿 DART_API_KEY 를 확인할 것 → exit 1)" if in_actions
+           else " (로컬: DART_API_KEY 환경변수를 넣고 다시 실행)"),
+        file=sys.stderr if in_actions else sys.stdout,
+    )
+    return 1 if in_actions else 0
 
 
 def dart_abort_if_rate_limited(status: str, where: str = "") -> None:
@@ -409,17 +427,7 @@ def main() -> int:
     })
 
     if not api_key:
-        payload = {
-            "updatedAtKst": now_kst(),
-            "lastFileDate": datetime.now(KST).strftime("%Y-%m-%d"),
-            "count": 0,
-            "source": "DART Open API",
-            "note": "DART_API_KEY 미설정 — GitHub Secrets에 등록 후 workflow를 실행하세요.",
-            "disclosures": [],
-        }
-        write_outputs(payload)
-        print("DART_API_KEY missing; wrote empty kr_disclosures payload.")
-        return 0
+        return dart_key_missing("공시")
 
     # 벌크 조회는 응답의 stock_code 로 걸러내므로 corp_code 매핑(corpCode.xml)이 필요 없다.
     # load_corp_map 은 corp_code 가 필수인 상세 API(majorstock/elestock)용으로 남겨둔다.

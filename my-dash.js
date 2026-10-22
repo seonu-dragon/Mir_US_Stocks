@@ -173,6 +173,19 @@ DASH_RENDER.targets = function targets() {
   }).join("")}</ul>`;
 };
 
+DASH_RENDER.calendar = function calendar() {
+  const mc = window.MARKET_CALENDAR;
+  const ic = window.INDUSTRY_CALENDAR;
+  if (!mc || !ic) {
+    Promise.all([ensureFeatureData("marketCalendar"), ensureFeatureData("industryCalendar")]).then((r) => { if (r.some(Boolean)) renderMyDash(); });
+    if (!mc && !ic) return "";
+  }
+  const rows = window.MirDashCore.upcomingSchedule(mc, ic, dashMarket(), dashToday(), 14).slice(0, 8);
+  if (!rows.length) return '<p class="muted">2주 안에 잡힌 일정이 없습니다.</p>';
+  return `<ul class="dash-list">${rows.map((r) => `<li><span>${r.kind === "fomc" ? "<strong>" : ""}${escapeHtml(String(r.title))}${r.kind === "fomc" ? "</strong>" : ""}</span>
+    <span class="muted">${escapeHtml(String(r.date).slice(5, 10))}${r.time ? ` ${escapeHtml(r.time)}` : ""} · ${r.daysAhead === 0 ? "오늘" : `D-${r.daysAhead}`}</span></li>`).join("")}</ul>`;
+};
+
 function renderMyDash() {
   const host = byId("myDash");
   if (!host) return;

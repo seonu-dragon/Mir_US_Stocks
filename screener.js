@@ -296,7 +296,7 @@ const NL_FLAGS = [
   { kw: ["대형주", "large cap", "largecap"], label: "대형주", test: (it) => Number(it.marketCapB) >= 10 },
   { kw: ["소형주", "중소형", "스몰캡", "small cap"], label: "소형주", test: (it) => isKrMarket() ? Number(it.marketCapB) < 0.1 : Number(it.marketCapB) <= 2 },
   { kw: ["주도주", "강세주", "리더", "leader"], label: "주도주 (3개월 +15%↑)", test: (it) => Number(it.threeMonthChangePct) >= 15 },
-  { kw: ["저평가", "value"], label: "저평가 PER≤15", test: (it, f) => Number(f.pe) > 0 && Number(f.pe) <= 15 },
+  { kw: ["저평가", "value"], label: "PER≤15", test: (it, f) => Number(f.pe) > 0 && Number(f.pe) <= 15 },
 ];
 
 const NL_METRICS = [

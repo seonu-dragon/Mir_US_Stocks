@@ -2358,12 +2358,11 @@ function gaugeColor(up) {
   return "var(--amber, #b7791f)";
 }
 
-function verdictText(up) {
-  if (up >= 65) return "상승 우위";
-  if (up >= 55) return "약한 상승 우위";
-  if (up > 45) return "중립 (방향성 불분명)";
-  if (up > 35) return "약한 하락 우위";
-  return "하락 우위";
+// 머리글 판정 = 기술 점수 그대로. 예전엔 점수대로 '상승/하락 우위' 를 붙였는데, 같은 화면의
+// 캘리브레이션표에서 그 점수대가 시장 평균과 다르지 않아(US 20·60일 유의 구간 0개) 방향 판정을 뺐다.
+function verdictText(score) {
+  const n = Number(score);
+  return Number.isFinite(n) ? `기술 점수 ${Math.round(n)}` : "기술 점수 —";
 }
 
 function renderPatternCard(result) {
@@ -2388,8 +2387,8 @@ function renderPatternCard(result) {
     const thinStr = c.indyBelowMin ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 표본이 ${INDIVIDUAL_STAT_MIN_N}건 미만이라 전체 통계로 대체했습니다.</span>` : "";
     const failStr = c.failed ? `<span class="pat-tag" style="background:var(--tint-neg);color:var(--tint-neg-fg);border-color:var(--neg)">패턴 실패</span>` : "";
-    const targetStr = c.measuredMove && Number.isFinite(c.measuredMove.target) ?
-      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">패턴 높이만큼 이동 시: <b>${fmtPrice(c.measuredMove.target)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
+    // '패턴 높이만큼 이동 시 ○○' 목표가 줄은 뺐다 — 목표가 도달률 통계가 없어 가격 목표처럼 읽혔다.
+    // 이 패턴의 과거 성과는 위 pat-stat(표본 수·상승 비율·평균)이 이미 보여 준다.
     // 현재 레짐(벤치마크 200일선 상회/하회) 조건부 성공률 — n>=30 일 때만 한 줄.
     const regimeStr = c.regimeStat ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">현재 레짐(200일선 ${c.regimeKey === "above200" ? "상회" : "하회"}) 기준: 과거 상승 비율 <b style="color:${gaugeColor(c.regimeStat.up_rate)}">${c.regimeStat.up_rate.toFixed(0)}%</b> (n=${c.regimeStat.n.toLocaleString()})</span>` : "";
@@ -2408,7 +2407,6 @@ function renderPatternCard(result) {
         ${regimeStr}
         ${indyStr}
         ${thinStr}
-        ${targetStr}
       </p>
     </div>`;
   }).join("");
@@ -2430,25 +2428,26 @@ function directionBand(value) {
 }
 
 function generateBriefing(result) {
-  const up = result.headlineUp;
   const price = result.price;
   const signals = result.signals || [];
 
-  const sigDir = directionBand(result.consensus ? result.consensus.up : null);
+  // 첫 문장은 점수와 그 점수대의 과거 실측(캘리브레이션)만 말한다. 예전엔 기술 점수와 원시
+  // 상승 비율을 섞어 12~88 로 자른 값(headlineUp)으로 '상승/하락 우위 국면' 을 판정했는데,
+  // 같은 화면의 캘리브레이션표가 그 점수대를 시장 평균과 구분하지 못해 방향 판정을 뺐다.
+  const score = result.consensus ? result.consensus.up : null;
+  const sigDir = directionBand(score);
   const baseUp = result.base ? (result.base.upProbSmoothed != null ? result.base.upProbSmoothed : result.base.upProb) : null;
   const baseDir = directionBand(baseUp);
   const agree = sigDir != null && baseDir != null && sigDir !== 0 && sigDir === baseDir;
   let consistency = "";
-  if (baseDir == null) consistency = "과거 유사 상황 표본이 부족해 기술 신호만으로 판단한 결과이며, 실측 검증은 빠져 있습니다.";
-  else if (agree) consistency = "기술 신호(기술 점수)와 과거 유사 상황 실측이 일관되게 같은 방향을 가리키고 있습니다.";
-  else consistency = `다만 기술 점수(${result.consensus.up.toFixed(0)})와 과거 유사 상황 실측(상승 ${baseUp.toFixed(0)}%)의 방향이 엇갈려, 확신도는 낮게 보아야 합니다.`;
+  if (baseDir == null) consistency = "과거 유사 상황 표본은 부족합니다.";
+  else if (agree) consistency = `과거 유사 상황 실측(상승 ${baseUp.toFixed(0)}%)도 같은 쪽입니다.`;
+  else if (sigDir !== 0 && baseDir !== 0) consistency = `과거 유사 상황 실측(상승 ${baseUp.toFixed(0)}%)과는 엇갈립니다.`;
+  else consistency = `과거 유사 상황 실측은 상승 ${baseUp.toFixed(0)}%입니다.`;
 
-  let opinion = "";
-  if (up >= 65) opinion = `종합 분석 결과 <strong>상승 우위 국면</strong>입니다. ${consistency}`;
-  else if (up >= 55) opinion = `종합 분석 결과 <strong>약한 상승 우위</strong> 상태입니다. 전반적인 추세는 우상향이나 단기 매물 소화 과정이 관찰됩니다. ${consistency}`;
-  else if (up > 45) opinion = `종합 분석 결과 <strong>방향성이 불분명한 혼조 국면</strong>입니다. 주요 신호들이 서로 엇갈립니다.`;
-  else if (up > 35) opinion = `종합 분석 결과 <strong>약한 하락 우위</strong> 상태입니다. 하락 쪽 신호가 조금 더 많습니다. ${consistency}`;
-  else opinion = `종합 분석 결과 <strong>하락 우위 국면</strong>입니다. 추세 이탈 신호가 다수 감지됩니다. ${consistency}`;
+  const opinion = Number.isFinite(score)
+    ? `종합 기술 점수 <strong>${Math.round(score)}</strong>/100입니다. ${calibrationNoteSlotHtml(score, result.horizon)} ${consistency}`
+    : `기술 점수를 계산하지 못했습니다.`;
 
   let supportReasons = [];
   let riskReasons = [];
@@ -2484,10 +2483,11 @@ function generateBriefing(result) {
   if (pats.length > 0) {
     const topPat = pats[0];
     const isBull = topPat.nominalDir > 0;
+    // 패턴 확정은 사실만 적는다 — 과거 성과는 ③ 차트 패턴 카드의 실측(표본·상승 비율)에 있다.
     if (isBull) {
-      supportReasons.push(`최근 차트에서 <strong>${topPat.label}</strong> 패턴이 확정되어 추가 상승 에너지를 모으고 있습니다.`);
-    } else {
-      riskReasons.push(`최근 차트에서 <strong>${topPat.label}</strong> 패턴이 확정되어 기술적 하락 위험이 감지되었습니다.`);
+      supportReasons.push(`최근 차트에서 <strong>${topPat.label}</strong>(상승형) 패턴이 확정되었습니다.`);
+    } else if (topPat.nominalDir < 0) {
+      riskReasons.push(`최근 차트에서 <strong>${topPat.label}</strong>(하락형) 패턴이 확정되었습니다.`);
     }
   }
 
@@ -2624,6 +2624,32 @@ function calibrationInnerHtml(score, horizon) {
     </div>`;
 }
 
+// 브리핑 첫 문장에 붙는 캘리브레이션 한 문장(순수 — hit 는 calibrationBucket 결과).
+// 유의하면 차이를 %p 로, 아니면 '유의한 차이 없음' 이라고 그대로 쓴다. 자료가 없으면 "".
+function calibrationNoteText(hit, horizon) {
+  if (!hit || !hit.row || !hit.block) return "";
+  const { row, block } = hit;
+  const up = Number(row.upRate), base = Number(block.baseRate), n = Number(row.n);
+  if (!Number.isFinite(up) || !Number.isFinite(base) || !Number.isFinite(n)) return "";
+  const diff = up - base;
+  const head = `이 점수대(${row.lo}~${row.hi})의 과거 ${horizon}거래일 뒤 상승 비율은 ${up.toFixed(1)}%로 시장 평균 ${base.toFixed(1)}%와`;
+  const tail = `(표본 ${n.toLocaleString("ko-KR")}건).`;
+  return row.differsFromBase
+    ? `${head} ${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%p 달랐습니다${tail}`
+    : `${head} 유의한 차이가 없었습니다${tail}`;
+}
+
+function calibrationNoteFor(score, horizon) {
+  if (!calibrationData()) return "";
+  return calibrationNoteText(calibrationBucket(score, horizon, isKrAnalysisMode() ? "kr" : "us"), horizon);
+}
+
+// 캘리브레이션 파일이 렌더보다 늦게 오면 fillCalibrationSlots 가 채운다.
+function calibrationNoteSlotHtml(score, horizon) {
+  ensureCalibration();
+  return `<span class="calib-note" data-calib-note="${Number(score).toFixed(2)}" data-calib-horizon="${horizon}">${calibrationNoteFor(score, horizon)}</span>`;
+}
+
 // 렌더된 슬롯(들)을 현재 데이터로 채운다. 데이터가 늦게 와도 여기서 다시 채워지므로
 // 패널이 영영 비어 있는 일이 없다.
 function fillCalibrationSlots() {
@@ -2634,6 +2660,12 @@ function fillCalibrationSlots() {
     const horizon = Number(el.getAttribute("data-calib-horizon"));
     if (!Number.isFinite(score) || !Number.isFinite(horizon)) return;
     el.innerHTML = calibrationInnerHtml(score, horizon);
+  });
+  document.querySelectorAll("[data-calib-note]").forEach((el) => {
+    const score = Number(el.getAttribute("data-calib-note"));
+    const horizon = Number(el.getAttribute("data-calib-horizon"));
+    if (!Number.isFinite(score) || !Number.isFinite(horizon)) return;
+    el.textContent = calibrationNoteFor(score, horizon);
   });
 }
 
@@ -2650,11 +2682,9 @@ function buildResultHTML(result) {
   if (result.error === "insufficient") {
     return `<div class="notice">이 종목은 차트 데이터가 부족합니다(${result.bars}봉). 대형주·주요 종목을 입력해 주세요.</div>`;
   }
-  const up = result.headlineUp;
   // 헤드라인은 '확률'이 아니라 기술 점수(0~100)다. 막대·판정 문구 모두 점수 기준으로 그린다.
   const scoreVal = result.consensus.up;
   const scoreColor = gaugeColor(scoreVal);
-  const color = gaugeColor(up);
 
   const bullSignals = result.signals.filter((s) => s.dir > 0.15).sort((a, b) => b.dir * b.weight - a.dir * a.weight);
   const bearSignals = result.signals.filter((s) => s.dir < -0.15).sort((a, b) => a.dir * a.weight - b.dir * b.weight);
@@ -2764,7 +2794,7 @@ function buildResultHTML(result) {
         ${analysisPriceRowHtml(result)}
         <p class="muted"><span class="nowrap">기준일 ${escapeHtml(result.lastDate)} 종가</span> · <span class="nowrap">분석 봉 ${result.bars}개</span></p>
       </div>
-      ${result.base ? `<div class="verdict" style="color:${color}">${verdictText(up)}</div>` : ""}
+      <div class="verdict">${verdictText(scoreVal)}</div>
     </div>
 
     <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
@@ -3397,6 +3427,7 @@ window.MirProb = {
   calibrationBucket,
   gaugeColor,
   verdictText,
+  calibrationNoteText,
 };
 if (typeof module !== "undefined" && module.exports) module.exports = window.MirProb;
 })();

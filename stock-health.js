@@ -58,7 +58,7 @@ function stockSnowflakeBodyHtml(item) {
       <div class="sh-sf-checks">${checks}</div>
     </div>
   </div>
-  <p class="sh-note"><b>절대 기준</b>이라 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다.${asOf ? ` 기준 ${escapeHtml(asOf)}.` : ""}</p>
+  <p class="sh-note">미국·국내 같은 <b>절대 기준</b>이고 수익률로 검증한 순위가 아니며, 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다.${asOf ? ` 기준 ${escapeHtml(asOf)}.` : ""}</p>
   <details class="sh-method"><summary>계산 방법</summary>
     <p>축마다 고정 기준 최대 6개 중 통과 개수입니다(값이 없는 기준은 분모에서 뺍니다).</p>
     <p>밸류: PER 15·25 미만, PBR 1.5·3 미만, PSR 2 미만, PEG 1.5 미만 · 성장: PEG 1·1.5 미만, 예상 PER &lt; PER, 매출성장 0·10% 초과, 이익성장 플러스</p>

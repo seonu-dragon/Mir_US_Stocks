@@ -43,6 +43,14 @@ function sigScoreVerdictLabel(v) {
   return labels[v] || labels.hold;
 }
 
+// 판정 + 그 기간 5년 검증 미통과 여부(signal-scorecard-core verdictBadgeText).
+function sigScoreBadgeText(v, validation, h) {
+  const core = window.MirSignalCore;
+  if (core && typeof core.verdictBadgeText === "function") return core.verdictBadgeText(v, validation, h);
+  const label = sigScoreVerdictLabel(v);
+  return validation && validation[String(h)] === false ? `5년 검증 미통과 · ${label}` : label;
+}
+
 // 신호 카드 아래 한 줄 링크. 성적표 데이터가 없거나 이 시장에 없는 신호면 빈 문자열.
 function signalScoreLine(kind, opts = {}) {
   const k = sigScoreKind(kind, opts.market);
@@ -51,7 +59,7 @@ function signalScoreLine(kind, opts = {}) {
   let text;
   if (!k.total) text = "아직 기록 없음 — 오늘부터 적립";
   else if (!h || !h.nExcess) text = `기록 ${k.total.toLocaleString()}건 · 20거래일 결과는 아직 없음`;
-  else text = `20거래일 벤치마크 대비 평균 ${sigScorePct(h.meanExcess)} · 표본 ${h.nExcess.toLocaleString()} · ${sigScoreVerdictLabel(h.verdict)}`;
+  else text = `20거래일 벤치마크 대비 평균 ${sigScorePct(h.meanExcess)} · 표본 ${h.nExcess.toLocaleString()} · ${sigScoreBadgeText(h.verdict, k.validation, 20)}`;
   return `<button type="button" class="sig-score-link${opts.inline ? " is-inline" : ""}" data-sc-kind="${escapeHtml(kind)}" title="신호 성적표에서 이 신호가 발행 뒤 실제로 어떻게 됐는지 보기">이 신호의 과거 성적 · ${escapeHtml(text)} →</button>`;
 }
 
@@ -126,6 +134,8 @@ function sigScoreValidationText(val) {
 function sigScoreCard(k, h) {
   const s = (k.h && k.h[String(h)]) || {};
   const verdict = s.verdict || "hold";
+  // 5년 검증 미통과 기간이면 원장 판정색(상회/하회)을 빼 검증된 신호처럼 보이지 않게 한다.
+  const valFailed = !!k.validation && k.validation[String(h)] === false;
   const liveS = k.hLive && k.hLive["20"];
   const counts = [
     `기간 미충족 ${Number(s.pending || 0).toLocaleString()}`,
@@ -152,7 +162,7 @@ function sigScoreCard(k, h) {
   return `<article class="sig-score-card${k.control ? " is-control" : ""}" data-sc-kind="${escapeHtml(k.k)}">
     <header class="sig-score-card-head">
       <h4>${escapeHtml(k.label)}${k.control ? ' <span class="sig-score-tag">대조군 · 검증 실패 점수</span>' : ""}</h4>
-      <span class="sig-score-verdict v-${SIG_SCORE_VERDICT_CLASS[verdict] || "hold"}">${escapeHtml(sigScoreVerdictLabel(verdict))}</span>
+      <span class="sig-score-verdict v-${valFailed ? "flat" : (SIG_SCORE_VERDICT_CLASS[verdict] || "hold")}">${escapeHtml(sigScoreBadgeText(verdict, k.validation, h))}</span>
     </header>
     <p class="sig-score-desc">${escapeHtml(k.desc || "")}</p>
     ${body}

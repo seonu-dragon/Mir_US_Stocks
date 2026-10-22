@@ -1832,8 +1832,10 @@ function aiVerdictPanel(item) {
   }
   const fpe = Number(f.forwardPE);
   if (Number.isFinite(fpe) && fpe > 0) {
-    if (fpe > 40) sig.push({ s: -1, k: "risk", t: `Forward PER ${fpe.toFixed(0)}배 · 고평가 부담` });
-    else if (fpe < 15) sig.push({ s: 1, k: "strength", t: `Forward PER ${fpe.toFixed(0)}배 · 밸류 매력` });
+    // 15·40배는 미국·국내 공통 절대 기준이고 과거 수익률로 검증한 적이 없다(국내 팩터 검증은 통과 0개) —
+    // '매력/부담' 같은 판정어 대신 기준선만 적는다.
+    if (fpe > 40) sig.push({ s: -1, k: "risk", t: `Forward PER ${fpe.toFixed(0)}배 (40배 초과)` });
+    else if (fpe < 15) sig.push({ s: 1, k: "strength", t: `Forward PER ${fpe.toFixed(0)}배 (15배 미만)` });
   }
   const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((r) => r.ticker === item.ticker);
   const insBuy = ins.filter((r) => r.kind === "buy").length;

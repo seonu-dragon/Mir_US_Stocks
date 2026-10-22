@@ -112,3 +112,42 @@ def test_run_caches_respects_call_cap_and_payload_carries_pending():
     before = len(calls)
     kd.run(pairs, cache, 2025, fetch, max_calls=100)
     assert len(calls) == before
+
+
+def _row(knd, th, fr, lw, se="주당 현금배당금(원)"):
+    return {"se": se, "stock_knd": knd, "thstrm": th, "frmtrm": fr, "lwfr": lw}
+
+
+def test_parse_alot_pref_named_unnamed_and_unknown_dash():
+    rows = [_row("보통주", "1,668", "1,446", "1,444"), _row("우선주", "1,669", "1,447", "1,445")]
+    assert kd.parse_alot_pref(rows, 2025) == {2025: 1669.0, 2024: 1447.0, 2023: 1445.0}
+    old = [_row("-", "600", "500", "-"), _row("-", "650", "-", "-")]
+    # 옛 보고서: 이름 없는 둘째 행이 우선주. 보통주가 배당한 해의 '-' 는 모름, 보통주도 무배당이면 0
+    assert kd.parse_alot_pref(old, 2016) == {2016: 650.0, 2015: None, 2014: 0.0}
+    assert kd.parse_alot_pref([_row("보통주", "1", "1", "1")], 2025) == {}
+    two = rows + [_row("우선주", "1,700", "1,500", "1,500")]
+    assert kd.parse_alot_pref(two, 2025) == {}       # 우선주 행이 둘이면 어느 종류인지 몰라 쓰지 않는다
+
+
+def test_pref_tickers_picks_first_preferred_per_company():
+    snap = {"stocks": [{"ticker": "005930", "company": "삼성전자"}, {"ticker": "005380", "company": "현대차"},
+                       {"ticker": "006400", "company": "삼성SDI"}, {"ticker": "000660", "company": "SK하이닉스"}]}
+    corp = {"005930": "C1", "005380": "C2", "006400": "C3", "000660": "C4"}
+    rows = [("005935", "삼성전자우"), ("005385", "현대차우"), ("005387", "현대차2우B"), ("006405", "삼성SDI우"), ("123455", "없는회사우")]
+    out = kd.pref_tickers(snap, corp, rows)
+    assert out == {"005930": ("005935", "삼성전자우"), "005380": ("005385", "현대차우"), "006400": ("006405", "삼성SDI우")}
+
+
+def test_build_pref_needs_all_reports_and_last_year():
+    pairs = [("005930", "C1"), ("005380", "C2")]
+    years = {str(y): [1000.0 + y, 100.0] for y in range(2014, 2026)}
+    cache = {"C1": {"years": years, "fetched": [2025, 2022, 2019, 2016], "prefFetched": [2025, 2022, 2019, 2016],
+                    "pref": {str(y): 1001.0 + y for y in range(2014, 2026)}},
+             "C2": {"years": years, "fetched": [2025, 2022, 2019, 2016], "prefFetched": [2025],
+                    "pref": {"2025": 5.0}}}
+    prefs = {"005930": ("005935", "삼성전자우"), "005380": ("005385", "현대차우")}
+    out = kd.build_pref(pairs, cache, 2025, prefs, {"005380": {"t": "005385", "name": "현대차우", "v": ["prev"]}})
+    assert out["005930"]["t"] == "005935" and out["005930"]["v"][kd.COLS.index("paid")] == 12
+    assert out["005380"]["v"] == ["prev"]          # 우선주 보고서를 다 못 받았으면 직전 값
+    cache["C1"]["pref"]["2025"] = None
+    assert "005930" not in kd.build_pref(pairs, cache, 2025, prefs, {})   # 마지막 해를 모르면 내지 않는다

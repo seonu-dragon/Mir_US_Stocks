@@ -182,6 +182,19 @@ test("스크리너 필드: 30일 창·상향/하향 수·목표가 중앙값·�
   assert.equal(noRat.ratingUp30, null, "의견 파일이 없으면 0 이 아니라 null");
 });
 
+test("국내 우선주 배당 기록은 보통주 티커로", () => {
+  const P = { lastYear: 2025, cols: ["up", "paid", "cagr5", "cagr10", "last", "since", "capped", "paidCapped", "lastCut", "specials"],
+    tickers: {}, pref: { "005930": { t: "005935", name: "삼성전자우", v: [2, 12, -11.04, 14.77, 1669, 2014, false, true, 2021, 0] } } };
+  const r = dg.prefRecord(P, "005930");
+  assert.equal(r.ticker, "005935");
+  assert.equal(r.name, "삼성전자우");
+  assert.equal(r.last, 1669);
+  assert.equal(r.lastYear, 2025);
+  assert.equal(dg.paidText(r), "12년+");
+  assert.equal(dg.prefRecord(P, "000660"), null);
+  assert.equal(dg.prefRecord({ tickers: {} }, "005930"), null);
+});
+
 if (failures.length) {
   console.error(`new-data-cores: ${passed} passed, ${failures.length} failed`);
   failures.forEach((f) => console.error(`  FAIL ${f}`));

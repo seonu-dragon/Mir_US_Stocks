@@ -99,6 +99,14 @@ jobs:
         timeout-minutes: 15
         run: python scripts/build_kr_market_funds.py --push
 
+      # 시장 폭 추이 — 방금 발행된 국내 종목 일봉만 다시 읽는다(외부 호출 없음, ~1분). 실패해도 스냅샷은 이미 커밋됐다.
+      # (#364 는 백업 워크플로우에만 넣어 주 경로에서 돌지 않았다 — 2026-10-22 수정)
+      - name: Build market breadth (KR)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python scripts/build_market_breadth.py --market kr --push
+
       - name: Run Korea close briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

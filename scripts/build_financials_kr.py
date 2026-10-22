@@ -44,7 +44,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -561,7 +561,7 @@ def main_run(args, api_key: str, *, dart_get=None, corp_map=None, clock: Clock |
         dart_get = dart_get or _dg
         corp_map = corp_map if corp_map is not None else load_corp_map(api_key)
 
-    today = date.today()
+    today = datetime.now(timezone(timedelta(hours=9))).date()  # 러너는 UTC — KST 기준 날짜
     stamp = sec.kst_now_str()
     clock = clock or Clock(args.time_budget_min)
     snap = load_json(KR_SNAPSHOT, {"stocks": []}) or {"stocks": []}

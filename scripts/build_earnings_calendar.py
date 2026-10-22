@@ -7,6 +7,7 @@ import argparse
 import json
 import sys
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -115,7 +116,7 @@ def fetch_next_earnings(ticker: str, market: str) -> dict | None:
         except Exception:
             frame = None
         if frame is not None and not getattr(frame, "empty", True):
-            today = date.today()
+            today = datetime.now(ZoneInfo("America/New_York")).date()  # 러너는 UTC — 뉴욕 기준
             # earnings_dates 는 날짜 내림차순이라 앞에서 break 하면 "가장 먼"
             # 미래 분기를 잡는다. 미래 후보를 모아 가장 가까운 날을 쓴다.
             future = []

@@ -196,8 +196,8 @@ def main() -> int:
         out_json, out_js = MARKETS[m]["out"]
         sec.write_data(out_json, out_js, "MARKET_BREADTH", payload, indent=None, min_ratio=0.5)
         written += [str(out_json.relative_to(ROOT)), str(out_js.relative_to(ROOT))]
-    if args.push:
-        sec.git_publish(written, f"Auto-update market breadth ({args.market})")
+    if args.push and not sec.git_publish(written, f"Auto-update market breadth ({args.market})"):
+        return 1
     return 0
 
 

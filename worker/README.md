@@ -26,7 +26,7 @@ GitHub Pages는 정적 호스팅이라 방문자가 페이지를 열어도 서�
 
 - 호출: `GET https://<worker>/?ticker=NVDA`
 - 응답: `{ "ticker": "NVDA", "news": [...], "chart": [[o,h,l,c,v], ...], "summary": "한국어 요약" }`
-- `summary`는 Workers AI(`@cf/meta/llama-3.1-8b-instruct`)가 헤드라인을 한국어로 3~4문장 요약한 것입니다.
+- `summary`는 Workers AI(`@cf/meta/llama-3.3-70b-instruct-fp8-fast`, 실패 시 `@cf/mistralai/mistral-small-3.1-24b-instruct` — `yahoo-proxy.js` 의 `SUMMARY_MODELS`)가 헤드라인을 한국어로 3~4문장 요약한 것입니다.
 - 분석 페이지를 열면 프론트가 이 주소를 호출해 **뉴스를 실시간으로** 채우고,
   합성차트였던 종목(FLNT·STTK 등)도 **실제 차트로 자동 교체**합니다.
 - 호출 실패 시에는 빌드 때 미리 저장해 둔 상세파일 뉴스로 자동 폴백합니다.

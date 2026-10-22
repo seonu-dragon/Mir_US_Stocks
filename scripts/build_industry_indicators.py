@@ -215,7 +215,6 @@ OPINET_ATTR = {"redistribution": "attribution", "note": "한국석유공사 오�
 DICJ_ATTR = {"redistribution": "attribution", "note": "마카오 博彩監察協調局(DICJ) 공개 통계 — 출처 표기", "commercial_ok": True}
 SSGA_RESTRICTED = {"redistribution": "restricted", "note": "State Street SPDR 공개 펀드 데이터 — 파생 지표(자금흐름)만 표시, 원표 재배포 없음", "commercial_ok": False}
 PYPI_ATTR = {"redistribution": "attribution", "note": "pypistats.org(PyPI 공개 다운로드 로그) — 출처 표기", "commercial_ok": True}
-TSA_PUBLIC = {"redistribution": "public", "note": "미국 교통안전청(TSA) 공개 자료", "commercial_ok": True}
 NPM_ATTR = {"redistribution": "attribution", "note": "npm registry 공개 다운로드 통계 — 출처 표기", "commercial_ok": True}
 DOCKER_RESTRICTED = {"redistribution": "restricted", "note": "Docker Hub 공개 저장소 pull 수 — 파생 지표(증가분)만 표시", "commercial_ok": False}
 STATCOUNTER_ATTR = {"redistribution": "attribution", "note": "StatCounter Global Stats (CC BY-SA 3.0) — 링크 표기", "commercial_ok": True}
@@ -750,11 +749,6 @@ INDICATORS: list[dict] = [
     _src("pypi_elasticsearch", ("pypi", "elasticsearch"), "Elasticsearch 클라이언트 PyPI 주간 다운로드", "PyPI weekly downloads: elasticsearch", ["tech_semi"], "건", "W",
          "ESTC", source="pypistats.org (PyPI)", source_url="https://pypi.org/project/elasticsearch/", series_id="elasticsearch",
          license=PYPI_ATTR, digits=0, stale_days=21, note="검색·로그 엔진 사용 저변"),
-    # ---- 여행 수요 ----
-    _src("tsa_checkpoint", ("tsa",), "미국 공항 보안검색 통과 인원 (7일 평균)", "TSA Checkpoint Travel Numbers (7-day avg)",
-         ["shipping_logistics", "consumer_labor"], "명/일", "D", "DAL UAL AAL LUV ALK BKNG", source="U.S. TSA",
-         source_url="https://www.tsa.gov/travel/passenger-volumes", series_id="TSA checkpoint throughput", license=TSA_PUBLIC,
-         digits=0, stale_days=7, note="항공 여객 수요의 가장 빠른 공개 자료(매일, 전일분)"),
     # ---- 개발자 채택 (npm 주간 다운로드 · Docker Hub pull 증가분) ----
     _src("npm_openai", ("npm", "openai"), "OpenAI SDK npm 주간 다운로드", "npm weekly downloads: openai", ["tech_semi"], "건", "W",
          "MSFT NVDA", source="npm registry downloads API", source_url="https://www.npmjs.com/package/openai", series_id="openai",
@@ -1523,8 +1517,6 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
         return IF.fetch_statcounter(src[1], src[2], src[3], src[4], src[5] if len(src) > 5 else "all")
     if kind == "gscpi":
         return IF.fetch_gscpi()
-    if kind == "tsa":
-        return IF.fetch_tsa()
     if kind == "pypi":
         # pypistats 는 최근 180일만 준다 — 일별을 적립해 두고 완전한 주(7일)만 주간 합계로.
         daily = latest_archive_series(f"{ind['id']}_daily", IF.fetch_pypi_daily(src[1]), keep=1500)

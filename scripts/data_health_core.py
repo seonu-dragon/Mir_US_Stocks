@@ -646,6 +646,7 @@ class DetailSweep:
         self.last_bad = self.recent_bad = self.stale = 0
         self.last_bad_examples: list[str] = []
         self.stale_examples: list[str] = []
+        self._last_dates: list[tuple[str, str]] = []   # (ticker, 마지막 봉 날짜) — 멈춤 판정은 result() 에서
 
     def add(self, ticker: str, payload) -> None:
         self.files += 1
@@ -665,11 +666,35 @@ class DetailSweep:
             self.recent_bad += 1
         last = bars[-1]
         last_date = last[5] if isinstance(last, (list, tuple)) and len(last) > 5 and isinstance(last[5], str) else None
-        if self.price_date and last_date:
+        if last_date:
+            self._last_dates.append((ticker, last_date[:10]))
+
+    def reference_date(self) -> str | None:
+        """멈춤 판정 기준일 — 스냅샷 priceDate, 없으면(KR 스냅샷엔 없다) 상세 마지막 봉 날짜 중 가장 흔한 날.
+        2026-10-22 실측: KR 은 priceDate 가 없어 '멈춘 차트 0' 으로 보고됐지만 3,797개 중 895개가 7일 넘게 멈춰 있었다."""
+        if self.price_date:
+            return self.price_date[:10]
+        if not self._last_dates:
+            return None
+        counts: dict[str, int] = {}
+        for _t, d in self._last_dates:
+            counts[d] = counts.get(d, 0) + 1
+        return max(counts.items(), key=lambda kv: (kv[1], kv[0]))[0]
+
+    def _count_stale(self) -> None:
+        ref = self.reference_date()
+        self.stale, self.stale_examples = 0, []
+        if not ref:
+            return
+        try:
+            ref_d = date.fromisoformat(ref)
+        except ValueError:
+            return
+        for ticker, d in self._last_dates:
             try:
-                lag = (date.fromisoformat(self.price_date[:10]) - date.fromisoformat(last_date[:10])).days
+                lag = (ref_d - date.fromisoformat(d)).days
             except ValueError:
-                lag = 0
+                continue
             if lag > STALE_BAR_DAYS:
                 self.stale += 1
                 if len(self.stale_examples) < 8:
@@ -681,7 +706,9 @@ class DetailSweep:
 
     def result(self) -> tuple[dict, list[dict]]:
         name = "US" if self.market == "us" else "KR"
+        self._count_stale()
         metrics = {
+            "referenceDate": self.reference_date(),
             "files": self.files, "withBars": self.with_bars, "noBars": self.no_bars, "unreadable": self.unreadable,
             "lastBarOutsideRange": self.last_bad, "recentBarOutsideRange": self.recent_bad,
             "staleBars": self.stale, "lastBarExamples": self.last_bad_examples, "staleExamples": self.stale_examples,

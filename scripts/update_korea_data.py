@@ -54,8 +54,9 @@ HISTORY_BACKFILL_PER_RUN = int(os.environ.get("KR_HISTORY_BACKFILL", "500") or 0
 # 백필과 별도로 '묵은 캐시'(yahoo-cache 인데 마지막 봉이 STALE_CACHE_DAYS 넘게 지난 종목)를 다시 받는다.
 # 실측이 한 번 생기면 위 백필 대상(= 실측 없음)에서 빠지므로, 상위 600·공시 창에서 내려간 종목은 직전 detail 을
 # 무기한 이월만 했다 — 2026-10-21 실측 yahoo-cache 1,602개, 오염 봉 369개의 마지막 봉이 09-11~09-23 에 멈춰 있었다.
-# 오래된 순으로 실행당 최대 이만큼 — 0 이면 끈다.
-HISTORY_STALE_REFRESH_PER_RUN = int(os.environ.get("KR_HISTORY_STALE_REFRESH", "200") or 0)
+# 오래된 순으로 실행당 최대 이만큼 — 0 이면 끈다. 200 → 400(2026-10-22): 7일 넘게 멈춘 상세가 아직 895/3,797개라
+# 200 이면 따라잡는 데 4~5일. 스냅샷 단계 65분 / 잡 한도 240분이라 여유가 있다.
+HISTORY_STALE_REFRESH_PER_RUN = int(os.environ.get("KR_HISTORY_STALE_REFRESH", "400") or 0)
 STALE_CACHE_DAYS = 5
 # Naver fundamentals are cheap (1 JSON call) and cover all listed stocks, so we
 # fetch them far wider than Yahoo did — every mid/small cap gets financials too.

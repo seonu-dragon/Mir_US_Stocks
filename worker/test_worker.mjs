@@ -61,6 +61,7 @@ import {
   parseNaverDiscussion,
   parseRedditListing,
   validateMoveReasons,
+  isMoveOnlyClaim,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1838,6 +1839,15 @@ await test("주장 검증 — 인용 번호·숫자 확인, 뉴스 확인/소셜
   eq(out.socialOnly.length, 1, "소셜 의견 1");
   eq(out.newsOnly.length, 1, "뉴스만 1");
   eq(validateMoveReasons(null, posts, news).confirmed.length, 0, "깨진 출력");
+});
+
+await test("움직임 자체·시장 잡담은 이유가 아니다(2026-10-22 라이브 첫 결과)", () => {
+  const names = ["NVDA", "NVIDIA", "삼성전자", "005930"];
+  for (const c of ["NVDA 주가 상승", "삼성전자 주가가 내렸다", "코스피 바닥을 찍었다", "NVIDIA stock rally"]) ok(isMoveOnlyClaim(c, names), `거름: ${c}`);
+  for (const c of ["삼성전자 노조, 반도체 성과급 재조정 추진", "NVIDIA와 노키아의 파트너십 확대", "3분기 실적 발표"]) ok(!isMoveOnlyClaim(c, names), `남김: ${c}`);
+  const out = validateMoveReasons({ claims: [{ claim: "NVDA 주가 상승", social: ["S1"], news: ["N1"] }] },
+    [{ text: "up today" }], [{ title: "NVDA shares rise" }], names);
+  eq(out.confirmed.length, 0, "움직임만 말하는 주장은 확인 목록에 없다");
 });
 
 await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {

@@ -1988,7 +1988,22 @@ function reasonNumbers(text) {
 
 // LLM 출력 → {confirmed, socialOnly, newsOnly}. 인용 번호가 없는 글·기사면 그 인용을 버리고, 주장 문장의 숫자가
 // 인용 원문(글·기사 제목)에 없으면 그 주장을 버린다. 소셜 근거가 없는 '뉴스 확인'은 newsOnly 로 보낸다.
-export function validateMoveReasons(raw, posts, news) {
+// 이유가 아니라 움직임 자체("NVDA 주가 상승", "삼성전자 주가가 내렸다")나 시장 잡담("코스피 바닥을 찍었다")인 주장.
+// 낱말마다 끝 조사를 떼고 회사명·티커·움직임 낱말을 빼면 남는 게 없을 때. 2026-10-22 라이브 첫 결과에서 이런 주장이
+// '뉴스 확인'으로 올라오고 NVDA 는 '상승'(확인)과 '하락'(소셜)이 같이 나왔다.
+const MOVE_ONLY_WORDS = new Set(("주가 주식 가격 종목 시세 상승 하락 상승세 하락세 올랐다 올라 오름 오른다 내렸다 내려 내림 내린다 급등 급락 " +
+  "반등 폭락 폭등 강세 약세 보합 마감 기록 했다 하다 한다 중 계속 지속 크게 소폭 대폭 큰 다시 오늘 장중 " +
+  "코스피 코스닥 나스닥 지수 시장 증시 바닥 고점 저점 찍었다 찍음 전망 예상 up down rally drop rise fall stock price shares").split(" "));
+export function isMoveOnlyClaim(claim, names = []) {
+  const skip = new Set(names.filter(Boolean).map((n) => String(n).toLowerCase()));
+  const tokens = String(claim || "").toLowerCase().replace(/[.,!?·"'“”()\[\]]/g, " ").split(/\s+/).filter(Boolean);
+  return tokens.every((tok) => {
+    const base = tok.replace(/(으로|에서|이다|이|가|은|는|을|를|의|로|에|도|와|과)$/, "");
+    return MOVE_ONLY_WORDS.has(tok) || MOVE_ONLY_WORDS.has(base) || skip.has(tok) || skip.has(base);
+  });
+}
+
+export function validateMoveReasons(raw, posts, news, names = []) {
   const items = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.claims) ? raw.claims : []);
   const pick = (ids, list, prefix) => [...new Set((Array.isArray(ids) ? ids : []).map((x) => String(x).trim().toUpperCase()))]
     .map((id) => { const m = new RegExp(`^${prefix}(\\d+)$`).exec(id); return m ? list[Number(m[1]) - 1] : null; })
@@ -1998,7 +2013,7 @@ export function validateMoveReasons(raw, posts, news) {
   for (const it of items) {
     if (!it || typeof it !== "object") continue;
     const claim = clipText(it.claim, 140);
-    if (claim.length < 6 || seen.has(claim)) continue;
+    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names)) continue;
     const social = pick(it.social, posts, "S");
     const cited = pick(it.news, news, "N");
     if (!social.length && !cited.length) continue;
@@ -2036,6 +2051,7 @@ async function extractMoveReasons(env, ticker, company, isKr, changeText, posts,
     `[소셜 글]에서 '왜 올랐다/내렸다'는 주장을 먼저 뽑고, 각 주장이 [뉴스]의 어떤 기사와 같은 사실인지 대조하세요.\n\n` +
     `[소셜 글]\n${social}\n\n[뉴스]\n${heads}\n\n` +
     `규칙:\n- 주가 움직임의 이유(사건·실적·공시·루머·수급 등)를 말하는 주장만. 단순 감정·욕설·매매 자랑은 버리세요.\n` +
+    `- '주가가 올랐다/내렸다', '지수가 바닥이다' 같은 움직임 자체·시장 전망은 이유가 아닙니다. 버리세요.\n` +
     `- 같은 내용의 글은 한 주장으로 합치고 social 에 그 글 번호를 모두 넣으세요.\n` +
     `- news 에는 그 주장과 같은 사실을 보도한 기사 번호만. 비슷한 주제일 뿐이면 넣지 마세요.\n` +
     `- 소셜에 없지만 뉴스에 분명한 이유가 있으면 social 을 빈 배열로 두고 추가하세요.\n` +
@@ -2071,7 +2087,7 @@ async function handleMoveReasons(request, env, url, rawTicker) {
   const symbol = kr ? ticker : ticker.replace(/\./g, "-");
   const modelOverride = await resolveModelOverride(env, request, url);
   const bucket = Math.floor(Date.now() / (MOVE_REASONS_TTL * 1000));
-  const cacheKey = `reasons:v1:${ticker}:${bucket}`;
+  const cacheKey = `reasons:v2:${ticker}:${bucket}`;
   const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
   if (kv && !modelOverride) {
     try {
@@ -2101,7 +2117,7 @@ async function handleMoveReasons(request, env, url, rawTicker) {
     return cors(varyOrigin(json({ ...base, confirmed: [], socialOnly: [], newsOnly: [], error: "no_sources" }, 200, 0)));
   }
   const { raw, error, model } = await extractMoveReasons(env, ticker, company, kr, changeText, social.posts, news, modelOverride);
-  const checked = validateMoveReasons(raw, social.posts, news);
+  const checked = validateMoveReasons(raw, social.posts, news, [ticker, symbol, ticker.replace(/\.(KS|KQ)$/, ""), company, String(company || "").split(/[\s,(]/)[0]]);
   const payload = { ...base, ...checked, model: model || "", error: raw ? "" : error };
   if (raw && kv && !modelOverride) {
     try { await kv.put(cacheKey, JSON.stringify(payload), { expirationTtl: MOVE_REASONS_TTL }); } catch (_) { /* 무시 */ }

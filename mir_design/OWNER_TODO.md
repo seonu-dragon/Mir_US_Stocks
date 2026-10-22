@@ -26,7 +26,9 @@
 - [ ] 2026-10-22 PR(머지됨):
   - #353 `/sync/prefs` 가 관심 사용자 리스트(`watchGroupsUs/Kr`)·종목 메모(`watchNotesUs/Kr`)를 저장. 재배포 전엔 옛 워커가
     이 필드를 버려 리스트·메모가 그 기기에만 남는다(★ 목록·보유·가설 동기화는 그대로 동작).
-- 붙여넣기용 최신 파일은 로컬 `AI/워커_배포용/yahoo-proxy.js` 에도 있다(#353 반영, main 과 동일).
+- [ ] 2026-10-22 PR: 종목 분석 '주가 움직임 이유' 버튼 — 새 경로 `?move_reasons=<심볼>`(소셜 먼저 → 뉴스 대조, Workers AI).
+  재배포 전엔 옛 워커가 404 로 답해 버튼이 숨는다(브라우저가 6시간 기억 — 재배포 뒤 바로 보려면 시크릿 창).
+- 붙여넣기용 최신 파일은 로컬 `AI/워커_배포용/yahoo-proxy.js` 에도 있다(main 과 동일하게 맞춘다).
 
 절차
 1. 로컬에서 최신 main 받기 → 붙여넣기 전 검증:
@@ -53,6 +55,7 @@
 | `NAVER_APIHUB_KEY_ID` | 권장 | 옛 `NAVER_CLIENT_ID/SECRET` → 그것도 없으면 Google News RSS 폴백 | `.env` 의 같은 이름 |
 | `NAVER_APIHUB_KEY` | 권장 | 위와 같음 | `.env` 의 같은 이름 |
 | `TURNSTILE_SECRET` | 선택 | 커뮤니티 쓰기 Turnstile 검증 생략(지금과 같음) | D-1 에서 만든 Turnstile 위젯의 **Secret Key** |
+| `REDDIT_CLIENT_ID` · `REDDIT_CLIENT_SECRET` | 선택 | '주가 움직임 이유'가 Stocktwits(미국)·네이버 종목토론(국내)만 본다 | https://www.reddit.com/prefs/apps → create app(유형 script) → client id(앱 이름 아래)·secret |
 | `IP_HASH_SALT` | 사실상 필수 | 공개 기본 솔트 사용(DEPLOY.md 3번 참고) | 아무 긴 임의 문자열(새로 만들면 됨) |
 | `COMMUNITY_ADMIN_KEY` · `GEMINI_API_KEY` · `FINNHUB_API_KEY` | 기존 | — | 이미 설정돼 있으면 그대로 |
 
@@ -89,6 +92,7 @@
 | `RL_CHAT` · `RL_SUMMARY` | 10 | 챗봇 · 종목 요약 |
 | `RL_MOVE` | 6 | 원인 분석 |
 | `RL_EVNEWS` | 20 | 큰 등락일 뉴스 |
+| `RL_REASONS` | 6 | 주가 움직임 이유(소셜·뉴스 대조) |
 
 ### C-2. 기존 바인딩(확인만)
 

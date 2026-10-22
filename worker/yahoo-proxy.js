@@ -27,7 +27,7 @@
 // (DEPLOY.md "Cloudflare Worker 바인딩"). 바인딩: AI, MOVE_CACHE(KV), COMMUNITY_KV(KV),
 // (선택) COMMUNITY_DO(Durable Object, class CommunityStore — 유료 플랜 + wrangler 필요.
 // 없으면 커뮤니티는 KV 경로로 그대로 동작한다),
-// Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_APIHUB_KEY_ID/KEY(또는 옛 NAVER_CLIENT_ID/SECRET), COMMUNITY_ADMIN_KEY,
+// Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, (선택) REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET(주가 움직임 이유의 레딧), NAVER_APIHUB_KEY_ID/KEY(또는 옛 NAVER_CLIENT_ID/SECRET), COMMUNITY_ADMIN_KEY,
 // (선택) GEMINI_MODEL, IP_HASH_SALT.
 // (선택, 2026-10-21) TURNSTILE_SECRET — 있으면 커뮤니티 글·댓글·투표 쓰기에 Turnstile 검증 필수,
 // 없으면 검증 생략. Rate Limiting 바인딩 RL_<BUCKET>(RL_POST·RL_VOTE 등) — 있으면 그 버킷은
@@ -79,7 +79,7 @@ export function llmOriginAllowed(request) {
 // 하나의 공용 바인딩을 모든 버킷에 쓰지 않는 이유: 바인딩 하나는 한도가 하나라
 // 글쓰기(분당 3)와 공감(분당 30)을 같은 한도로 묶게 된다.
 export const RATE_LIMIT_BUCKETS = {
-  chat: 10, summary: 10, move: 6, evnews: 20,
+  chat: 10, summary: 10, move: 6, evnews: 20, reasons: 6,
   post: 3, comment: 6, like: 30, report: 5, vote: 5, clear: 2, sync_put: 10,
 };
 
@@ -540,6 +540,12 @@ export async function handleFetch(request, env) {
         const earnings = await fetchEarningsCalendar(raw);
         return { resp: json({ earnings }), cacheable: Array.isArray(earnings) && earnings.length > 0 };
       }));
+    }
+
+    // 주가 움직임 이유(소셜 먼저 → 뉴스 대조). ?ticker= 가 아니라 이 값에 종목을 싣는다 — 옛 워커는 이 경로를
+    // 모르는 경로(404 not_found)로 답해 프런트가 버튼을 숨긴다(worker-extras 와 같은 감지).
+    if (url.searchParams.get("move_reasons")) {
+      return handleMoveReasons(request, env, url, url.searchParams.get("move_reasons"));
     }
 
     // 가장 긴 실제 심볼이 005930.KS(9자)라 16자면 넉넉하다. 무제한이면 긴 문자열이
@@ -1866,6 +1872,243 @@ async function eventNewsPayload(env, ticker, symbol, isKr, eventDate) {
 // Cloudflare 에서 구글·GDELT 가 시간 초과로 끝나면 30초 넘게 걸리고 비었다(2026-10-01). 순서:
 // 1) 미리 모은 기사(있으면 구글·GDELT 생략) 2) 없으면 구글·GDELT 를 ±3일 동시 5초.
 // 어느 쪽이든 Finnhub(미국, 키 있을 때)·최근 뉴스(미국 야후 / 국내 네이버)를 더해 관련도로 고른다.
+// ── 주가 움직임 이유(?move_reasons=TICKER, 2026-10-22) ─────────────────────────────────────────────
+// 종목 분석의 '주가 움직임 이유' 버튼. 소셜(미국 Stocktwits·레딧 / 국내 네이버 종목토론)을 먼저 보고 거기서 '왜 움직였나'
+// 주장을 뽑은 뒤, 같은 기간 뉴스(move_analysis 와 같은 수집)와 대조한다. 뉴스와 맞는 주장은 '뉴스 확인',
+// 소셜에만 있는 주장은 '소셜 의견(미확인)'으로 나눈다. X(트위터)는 무료 API 가 없어 쓰지 않는다.
+// LLM 은 주장·인용 번호만 낸다 — 인용 번호가 실제 글·기사인지, 숫자가 인용 원문에 있는지는 서버가 다시 본다
+// (validateMoveReasons). 레딧은 REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET(무료 앱, client_credentials)이 있을 때만.
+const MOVE_REASONS_TTL = 1800;
+const REASON_SOCIAL_MAX = 60;
+const REASON_NEWS_MAX = 12;
+function clipText(s, n) {
+  return String(s || "").replace(/\s+/g, " ").trim().slice(0, n);
+}
+
+// Stocktwits 종목 스트림 → [{text, url, at, likes, source}] — 최근 48시간, 캐시태그만 늘어놓은 글은 뺀다.
+export function parseStocktwitsStream(body, nowMs = Date.now()) {
+  const out = [];
+  for (const m of (body && body.messages) || []) {
+    const text = clipText(m && m.body, 280);
+    const at = Date.parse(m && m.created_at);
+    if (!text || text.length < 20 || !Number.isFinite(at) || nowMs - at > 48 * 3600000) continue;
+    if ((text.match(/\$[A-Z]{1,6}/g) || []).length > 4) continue;
+    const user = m.user && m.user.username;
+    out.push({ text, at: new Date(at).toISOString(), likes: Number((m.likes && m.likes.total) || 0),
+      url: user ? `https://stocktwits.com/${encodeURIComponent(user)}/message/${m.id}` : "", source: "Stocktwits" });
+  }
+  return out;
+}
+
+// 네이버 종목토론(m.stock 프런트 API) → [{text, url, at, likes, source}] — 제목 + 본문 앞부분, 10자 미만 잡담은 뺀다.
+export function parseNaverDiscussion(body, code) {
+  const out = [];
+  for (const p of (body && body.result && body.result.posts) || []) {
+    const text = clipText(`${p.title || ""} ${p.contentSwReplacedButImg || p.contentSwReplaced || ""}`, 200);
+    if (text.replace(/\s/g, "").length < 10) continue;
+    out.push({ text, at: p.writtenAt ? `${p.writtenAt}+09:00` : "", likes: Number(p.recommendCount || 0),
+      url: p.id ? `https://m.stock.naver.com/domestic/stock/${code}/discussion/${p.id}` : "", source: "네이버 종목토론" });
+  }
+  return out;
+}
+
+// 레딧 검색 결과(listing) → [{text, url, at, likes, source}] — 최근 48시간.
+export function parseRedditListing(body, nowMs = Date.now()) {
+  const out = [];
+  for (const c of (body && body.data && body.data.children) || []) {
+    const d = c && c.data;
+    if (!d) continue;
+    const at = Number(d.created_utc) * 1000;
+    const text = clipText(`${d.title || ""} ${d.selftext || ""}`, 280);
+    if (!text || !Number.isFinite(at) || nowMs - at > 48 * 3600000) continue;
+    out.push({ text, at: new Date(at).toISOString(), likes: Number(d.score || 0),
+      url: d.permalink ? `https://www.reddit.com${d.permalink}` : "", source: `Reddit r/${d.subreddit || ""}` });
+  }
+  return out;
+}
+
+async function redditToken(env) {
+  if (!env || !env.REDDIT_CLIENT_ID || !env.REDDIT_CLIENT_SECRET) return "";
+  const kv = env.MOVE_CACHE || env.COMMUNITY_KV;
+  try {
+    const cached = kv && await kv.get("reddit:token");
+    if (cached) return cached;
+  } catch (_) { /* 캐시 미스로 */ }
+  const r = await fetchT("https://www.reddit.com/api/v1/access_token", {
+    method: "POST",
+    headers: { Authorization: `Basic ${btoa(`${env.REDDIT_CLIENT_ID}:${env.REDDIT_CLIENT_SECRET}`)}`,
+      "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "MirUSStocks/1.0 (by mir)" },
+    body: "grant_type=client_credentials",
+  });
+  if (!r.ok) return "";
+  const j = await r.json().catch(() => null);
+  const token = j && j.access_token;
+  if (token && kv) {
+    try { await kv.put("reddit:token", token, { expirationTtl: Math.max(300, Number(j.expires_in || 3600) - 300) }); } catch (_) { /* 무시 */ }
+  }
+  return token || "";
+}
+
+async function fetchSocialPosts(env, ticker, symbol, company, isKr) {
+  const errors = [];
+  const sources = [];
+  let posts = [];
+  if (isKr) {
+    const code = ticker.slice(0, 6);
+    try {
+      const r = await fetchT(`https://m.stock.naver.com/front-api/discussion/list?discussionType=domesticStock&itemCode=${code}&pageSize=50`, { headers: { "User-Agent": BROWSER_UA } });
+      if (r.ok) { posts = parseNaverDiscussion(await r.json(), code); sources.push("네이버 종목토론"); } else errors.push(`naver:${r.status}`);
+    } catch (e) { errors.push("naver:fetch"); }
+  } else {
+    const tasks = [(async () => {
+      const r = await fetchT(`https://api.stocktwits.com/api/2/streams/symbol/${encodeURIComponent(symbol)}.json`, { headers: { "User-Agent": BROWSER_UA, Accept: "application/json" } });
+      if (!r.ok) { errors.push(`stocktwits:${r.status}`); return []; }
+      sources.push("Stocktwits");
+      return parseStocktwitsStream(await r.json());
+    })(), (async () => {
+      const token = await redditToken(env);
+      if (!token) return [];
+      const q = encodeURIComponent(`${symbol} OR "${company}"`);
+      const r = await fetchT(`https://oauth.reddit.com/r/wallstreetbets+stocks+investing+StockMarket/search?q=${q}&restrict_sr=1&sort=new&t=day&limit=40`,
+        { headers: { Authorization: `Bearer ${token}`, "User-Agent": "MirUSStocks/1.0 (by mir)" } });
+      if (!r.ok) { errors.push(`reddit:${r.status}`); return []; }
+      sources.push("Reddit");
+      return parseRedditListing(await r.json());
+    })()];
+    posts = (await Promise.all(tasks.map((t) => t.catch(() => [])))).flat();
+  }
+  // 공감 많은 글 우선, 최신 순 — 상한까지
+  posts.sort((a, b) => (b.likes - a.likes) || String(b.at).localeCompare(String(a.at)));
+  return { posts: posts.slice(0, REASON_SOCIAL_MAX), sources, errors };
+}
+
+function reasonNumbers(text) {
+  return new Set((String(text || "").match(/\d[\d,]*(?:\.\d+)?/g) || []).map((n) => n.replace(/,/g, "").replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")));
+}
+
+// LLM 출력 → {confirmed, socialOnly, newsOnly}. 인용 번호가 없는 글·기사면 그 인용을 버리고, 주장 문장의 숫자가
+// 인용 원문(글·기사 제목)에 없으면 그 주장을 버린다. 소셜 근거가 없는 '뉴스 확인'은 newsOnly 로 보낸다.
+export function validateMoveReasons(raw, posts, news) {
+  const items = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.claims) ? raw.claims : []);
+  const pick = (ids, list, prefix) => [...new Set((Array.isArray(ids) ? ids : []).map((x) => String(x).trim().toUpperCase()))]
+    .map((id) => { const m = new RegExp(`^${prefix}(\\d+)$`).exec(id); return m ? list[Number(m[1]) - 1] : null; })
+    .filter(Boolean);
+  const out = { confirmed: [], socialOnly: [], newsOnly: [] };
+  const seen = new Set();
+  for (const it of items) {
+    if (!it || typeof it !== "object") continue;
+    const claim = clipText(it.claim, 140);
+    if (claim.length < 6 || seen.has(claim)) continue;
+    const social = pick(it.social, posts, "S");
+    const cited = pick(it.news, news, "N");
+    if (!social.length && !cited.length) continue;
+    const pool = new Set([...social.map((p) => p.text), ...cited.map((n) => `${n.title} ${n.summary || ""}`)].flatMap((t) => [...reasonNumbers(t)]));
+    if ([...reasonNumbers(claim)].some((n) => !pool.has(n))) continue;
+    seen.add(claim);
+    const newsRefs = cited.slice(0, 3).map((n) => ({ title: clipText(n.title, 160), link: n.link || n.url || "", publisher: n.publisher || n.provider || "", date: n.publishedAt || "" }));
+    const samples = social.slice(0, 2).map((p) => ({ text: clipText(p.text, 160), url: p.url, source: p.source }));
+    if (cited.length && social.length) out.confirmed.push({ claim, news: newsRefs, socialCount: social.length, samples });
+    else if (cited.length) out.newsOnly.push({ claim, news: newsRefs });
+    else out.socialOnly.push({ claim, socialCount: social.length, samples });
+  }
+  out.confirmed.sort((a, b) => b.socialCount - a.socialCount);
+  out.socialOnly.sort((a, b) => b.socialCount - a.socialCount);
+  out.confirmed = out.confirmed.slice(0, 4);
+  out.socialOnly = out.socialOnly.slice(0, 4);
+  out.newsOnly = out.newsOnly.slice(0, 3);
+  return out;
+}
+
+function parseJsonLoose(text) {
+  const t = String(text || "");
+  for (const cand of [t, (t.match(/\{[\s\S]*\}/) || [""])[0], (t.match(/\[[\s\S]*\]/) || [""])[0]]) {
+    try { return JSON.parse(cand); } catch (_) { /* 다음 후보 */ }
+  }
+  return null;
+}
+
+async function extractMoveReasons(env, ticker, company, isKr, changeText, posts, news, modelOverride) {
+  if (!env || !env.AI) return { raw: null, error: "no_ai_binding" };
+  const social = posts.map((p, i) => `S${i + 1}. [${p.source}·공감 ${p.likes}] ${p.text}`).join("\n") || "(소셜 글 없음)";
+  const heads = news.map((n, i) => `N${i + 1}. ${n.publishedAt || ""} | ${n.publisher || n.provider || ""} | ${n.title}`).join("\n") || "(뉴스 없음)";
+  const prompt =
+    `${isKr ? "국내" : "미국"} 종목 ${isKr ? company : `${ticker}(${company})`}의 최근 주가 움직임(${changeText})에 대해,\n` +
+    `[소셜 글]에서 '왜 올랐다/내렸다'는 주장을 먼저 뽑고, 각 주장이 [뉴스]의 어떤 기사와 같은 사실인지 대조하세요.\n\n` +
+    `[소셜 글]\n${social}\n\n[뉴스]\n${heads}\n\n` +
+    `규칙:\n- 주가 움직임의 이유(사건·실적·공시·루머·수급 등)를 말하는 주장만. 단순 감정·욕설·매매 자랑은 버리세요.\n` +
+    `- 같은 내용의 글은 한 주장으로 합치고 social 에 그 글 번호를 모두 넣으세요.\n` +
+    `- news 에는 그 주장과 같은 사실을 보도한 기사 번호만. 비슷한 주제일 뿐이면 넣지 마세요.\n` +
+    `- 소셜에 없지만 뉴스에 분명한 이유가 있으면 social 을 빈 배열로 두고 추가하세요.\n` +
+    `- claim 은 한국어 한 문장(70자 이내). 글·기사에 없는 숫자나 사실을 만들지 마세요.\n` +
+    `- JSON 만 출력: {"claims":[{"claim":"...","social":["S1"],"news":["N2"]}]}`;
+  const models = modelOverride ? [modelOverride] : SUMMARY_MODELS;
+  let lastError = "no_model";
+  for (const model of models) {
+    try {
+      const result = await env.AI.run(model, {
+        messages: [
+          { role: "system", content: "You extract stock-move claims from social posts and fact-check them against supplied news headlines. Output only JSON. Never invent facts, numbers or ids." },
+          { role: "user", content: prompt },
+        ],
+        max_tokens: 900,
+        temperature: 0.1,
+      });
+      const raw = parseJsonLoose((result && result.response) || "");
+      if (raw) return { raw, error: "", model };
+      lastError = `unparsable:${model}`;
+    } catch (e) {
+      lastError = `${model}: ${(e && e.message) || e}`;
+    }
+  }
+  return { raw: null, error: lastError };
+}
+
+async function handleMoveReasons(request, env, url, rawTicker) {
+  const ticker = String(rawTicker || "").toUpperCase().replace(/[^A-Z0-9.\-]/g, "").slice(0, 16);
+  if (!ticker) return cors(noStoreJson({ error: "invalid ticker" }, 400));
+  if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+  const kr = isKoreanTicker(ticker);
+  const symbol = kr ? ticker : ticker.replace(/\./g, "-");
+  const modelOverride = await resolveModelOverride(env, request, url);
+  const bucket = Math.floor(Date.now() / (MOVE_REASONS_TTL * 1000));
+  const cacheKey = `reasons:v1:${ticker}:${bucket}`;
+  const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
+  if (kv && !modelOverride) {
+    try {
+      const cached = await kv.get(cacheKey, "json");
+      if (cached && Array.isArray(cached.confirmed)) return cors(varyOrigin(json({ ...cached, cached: true }, 200, 0)));
+    } catch (_) { /* 캐시 미스 */ }
+  }
+  if (await ipRateLimited(request, env, "reasons", 6, 60)) {
+    return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
+  }
+  const tz = kr ? "Asia/Seoul" : "America/New_York";
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const company = (await resolveCompanyName(ticker, symbol, kr)) || ticker;
+  const [social, newsResult, chart] = await Promise.all([
+    fetchSocialPosts(env, ticker, symbol, company, kr),
+    moveAnalysisNews(env, ticker, symbol, company, today, kr).catch(() => ({ news: [], providers: [] })),
+    fetchChart(symbol).catch(() => []),
+  ]);
+  const last = chart.length ? chart[chart.length - 1] : null;
+  const prev = chart.length > 1 ? chart[chart.length - 2] : null;
+  const changePct = last && prev && prev[3] ? Math.round(((last[3] / prev[3]) - 1) * 10000) / 100 : null;
+  const changeText = changePct == null ? "등락률 미상" : `최근 거래일 ${changePct > 0 ? "+" : ""}${changePct}%`;
+  const news = (newsResult.news || []).slice(0, REASON_NEWS_MAX);
+  const base = { ticker, company, date: today, changePct, socialSources: social.sources, socialErrors: social.errors,
+    socialCount: social.posts.length, newsCount: news.length, newsProviders: newsResult.providers || [] };
+  if (!social.posts.length && !news.length) {
+    return cors(varyOrigin(json({ ...base, confirmed: [], socialOnly: [], newsOnly: [], error: "no_sources" }, 200, 0)));
+  }
+  const { raw, error, model } = await extractMoveReasons(env, ticker, company, kr, changeText, social.posts, news, modelOverride);
+  const checked = validateMoveReasons(raw, social.posts, news);
+  const payload = { ...base, ...checked, model: model || "", error: raw ? "" : error };
+  if (raw && kv && !modelOverride) {
+    try { await kv.put(cacheKey, JSON.stringify(payload), { expirationTtl: MOVE_REASONS_TTL }); } catch (_) { /* 무시 */ }
+  }
+  return cors(varyOrigin(json(payload, 200, 0)));
+}
+
 async function moveAnalysisNews(env, ticker, symbol, company, eventDate, isKr) {
   const pre = await fetchMomentNews(ticker, isKr, eventDate);
   const code = momentNewsCode(ticker, isKr);

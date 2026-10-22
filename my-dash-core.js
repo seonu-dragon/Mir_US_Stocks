@@ -102,6 +102,18 @@
     return (rows || []).filter((r) => r && (r.code === "P" || r.code === "S"));
   }
 
+  /** 한 공시에 여러 줄로 나뉜 거래(같은 날 여러 체결가)를 사람·날짜·매수/매도별 한 줄로 — 금액·주식 수 합계, 줄 수(n). */
+  function groupTrades(rows) {
+    const by = new Map();
+    for (const r of rows || []) {
+      const k = [r.ticker, r.owner || r.relation, r.fileDate, r.code].join("|");
+      const g = by.get(k);
+      if (g) { g.value += Number(r.value) || 0; g.shares += Number(r.shares) || 0; g.n += 1; }
+      else by.set(k, { ...r, value: Number(r.value) || 0, shares: Number(r.shares) || 0, n: 1 });
+    }
+    return [...by.values()];
+  }
+
   /** 미국 의견 변경(cols/rows 표) · 국내 목표가 변경(changes 목록) → [{ticker, fileDate, firm, pt, ptPrev, dir, note}].
    *  dir: 1 목표가↑·상향, -1 목표가↓·하향, 0 유지. */
   function targetChanges(payload, market) {
@@ -146,7 +158,7 @@
   }
 
   const api = { upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, relatedIndicators,
-    recentMine, openMarketTrades };
+    recentMine, openMarketTrades, groupTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

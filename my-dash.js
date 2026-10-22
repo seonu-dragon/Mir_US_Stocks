@@ -148,7 +148,7 @@ Object.assign(DASH_RENDER, {
     const p = window.INSIDER_TRADES;
     if (!p) { ensureFeatureData("insider").then((ok) => { if (ok) renderMyDash(); }); return ""; }
     const core = window.MirDashCore;
-    const rows = core.recentMine(core.openMarketTrades(p.trades), mine, dashToday(), 30).slice(0, 8);
+    const rows = core.recentMine(core.groupTrades(core.openMarketTrades(p.trades)), mine, dashToday(), 30).slice(0, 8);
     if (!rows.length) return '<p class="muted">최근 30일 안에 내 종목 내부자 장내 매매가 없습니다.</p>';
     return `<ul class="dash-list">${rows.map((r) => `<li><span>${dashTickerBtn(r.ticker)} <span class="muted">${escapeHtml(String(r.relation || r.owner || "").slice(0, 24))}</span></span>
       <span><span class="${cls(r.code === "P" ? 1 : -1)}">${r.code === "P" ? "매수" : "매도"}</span> ${escapeHtml(dashMoney(r.value))} <span class="muted">${escapeHtml(String(r.fileDate).slice(5, 10))}</span></span></li>`).join("")}</ul>`;

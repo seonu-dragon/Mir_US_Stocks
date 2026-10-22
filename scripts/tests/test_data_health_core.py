@@ -299,6 +299,17 @@ def test_detail_bars_rounding_and_stale_charts():
     assert "values:stalebars:kr" in ids(found)
 
 
+def test_detail_stale_charts_without_price_date_use_most_common_last_bar():
+    sweep = core.DetailSweep("kr", None)
+    for i in range(30):
+        sweep.add(f"R{i}", {"chartSeries": [[100, 110, 90, 100, 1, "2026-10-22"]]})
+    for i in range(10):
+        sweep.add(f"S{i}", {"chartSeries": [[100, 110, 90, 100, 1, "2026-09-14"]]})
+    metrics, found = sweep.result()
+    assert metrics["referenceDate"] == "2026-10-22" and metrics["staleBars"] == 10
+    assert "values:stalebars:kr" in ids(found)
+
+
 # ── (4) 워크플로우 ──────────────────────────────────────────────────
 
 def run(rid, name, conclusion, created="2026-10-21T03:00:00Z"):

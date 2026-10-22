@@ -108,6 +108,7 @@ jobs:
       # 야후 실적 이력 5,800종목. 실측 50~90분. 예산에 걸리면 멈춘 위치를 meta.nextOffset 에 남기고
       # 다음 주는 거기서부터 돈다.
       - name: Incremental earnings history refresh
+        id: earnings_history
         continue-on-error: true
         timeout-minutes: 130
         shell: bash
@@ -116,6 +117,16 @@ jobs:
           echo "[실적이력] 시간 예산 ${BUDGET}분"
           if [ "$BUDGET" -lt 5 ]; then echo "[실적이력] 남은 시간 부족 — 건너뛴다"; exit 0; fi
           python -u scripts/earnings_history_store.py --resume --time-budget-min "$BUDGET"
+
+      # 2026-10-23: 빌더는 실패 20% 초과면 exit 1 이지만 위 스텝이 continue-on-error 라 잡이 초록으로 끝났다
+      # (meta updatedAtKst 는 새로 써져 weekly 신선도 나이도 통과). continue-on-error 는 앞 스텝들끼리 서로
+      # 막지 않게 두되, 잡 끝에서 이 스텝의 결과를 다시 보고 잡을 빨갛게 만든다(아래 텔레그램도 울린다).
+      # weekly-gate 도 meta 의 failed 비율을 따로 본다(check_data_freshness.check_earnings_history_failures).
+      - name: Fail job if earnings history refresh failed
+        if: steps.earnings_history.outcome == 'failure'
+        run: |
+          echo "::error::Incremental earnings history refresh 실패(실패 비율 20% 초과·push 실패·타임아웃) — 위 스텝 로그 확인"
+          exit 1
 
       - name: Notify failure (Telegram)
         if: failure()

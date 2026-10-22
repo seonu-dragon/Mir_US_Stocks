@@ -2988,6 +2988,32 @@ def persist_snapshot(snapshot, light, details):
     run_subbuilder("consensus/kr", "build_kr_consensus.py")
 
 
+def guard_price_session(snapshot: dict, now: datetime | None = None, is_trading=None) -> None:
+    """발행 전 관문 — 종목 priceDate 가 XKRX 마지막 완료 거래일보다 밀렸으면 기존 스냅샷을 덮지 않고 중단.
+
+    2026-10-23: 네이버 목록이 전 거래일 값으로 멈춘 날에도 updatedAtKst 만 오늘로 바뀐 스냅샷이 발행되면
+    나이·커버리지·종목 수 관문을 모두 통과한다(US 는 check_us_price_session 이 막는다). 거래일 장 마감 뒤
+    실행에서 밀린 스냅샷을 내지 않으면 기존 파일의 스탬프가 늙은 채 남아 22:00 백업이 다시 돈다.
+    근거·기준(20%)은 kr_price_session.py. 휴장 달력이 틀린 날처럼 정말 그대로 내야 하면
+    KR_ALLOW_STALE_SESSION=1 로 건너뛴다.
+    """
+    if str(ROOT / "scripts") not in sys.path:
+        sys.path.insert(0, str(ROOT / "scripts"))
+    import kr_price_session as KPS
+
+    if os.environ.get("KR_ALLOW_STALE_SESSION") == "1":
+        print("[세션] KR_ALLOW_STALE_SESSION=1 — 가격 기준일 관문을 건너뛴다")
+        return
+    expected = KPS.last_completed_kr_session(now, is_trading)
+    if expected is None:
+        print("[세션] XKRX 달력을 쓸 수 없다(exchange_calendars 없음) — 가격 기준일 관문 생략")
+        return
+    problem, summary = KPS.evaluate_kr_price_session(snapshot.get("stocks") or [], expected)
+    if problem:
+        raise SystemExit(f"[중단] {problem}. 마지막 완료 거래일 {expected.isoformat()} — 기존 스냅샷을 덮지 않는다.")
+    print(f"[세션] {summary} (마지막 완료 거래일 {expected.isoformat()})")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build Korean market snapshot.")
     parser.add_argument("--limit", type=int, default=None, help="Limit universe size (testing).")
@@ -3009,6 +3035,8 @@ def main():
 
     print("Building Korean market snapshot...")
     snapshot = build_snapshot(limit=args.limit)
+    if not args.limit:
+        guard_price_session(snapshot)
     attach_kr_earnings(snapshot)
     enrich_kr_valuation(snapshot)
     build_krx_metrics()          # KRX 공식 외국인/밸류에이션 수집(서브프로세스)

@@ -42,7 +42,7 @@ if str(SCRIPTS) not in sys.path:
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, write_data  # noqa: E402
-from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from build_kr_disclosures import dart_get, load_corp_map, dart_key_missing  # noqa: E402
 from step_budget import StepBudget, carry_over, missing_first  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
@@ -394,15 +394,7 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        write_outputs({
-            "updatedAtKst": now_kst(),
-            "source": "DART Open API",
-            "note": "DART_API_KEY 미설정 — GitHub Secrets에 등록 후 workflow를 실행하세요.",
-            "years": years,
-            "earnings": {},
-        })
-        print("DART_API_KEY missing; wrote empty kr earnings payload.")
-        return 0
+        return dart_key_missing("실적")
 
     budget = StepBudget(args.time_budget_min)
     try:

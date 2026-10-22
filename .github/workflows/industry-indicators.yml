@@ -28,6 +28,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      # 표준 라이브러리만 쓰던 빌더 — 뉴욕연준 GSCPI(옛 xls) 읽기용 xlrd 하나만(버전은 requirements-actions.txt 와 같게).
+      - name: Install xlrd
+        run: python -m pip install --disable-pip-version-check xlrd==2.0.1
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"

@@ -204,7 +204,10 @@ def test_spdr_flows_from_share_changes():
 def test_npm_zero_days_are_missing_and_weeks_need_seven_days():
     assert IF.parse_npm_range({"downloads": [{"day": "2026-10-05", "downloads": 0}, {"day": "2026-10-06", "downloads": 5}]}) == [("2026-10-06", 5.0)]
     daily = [(f"2026-10-{d:02d}", 1.0) for d in range(5, 13)]  # 10-05(월)~10-11(일) 7일 + 10-12 하루
-    assert IF.weekly_sums(daily) == [("2026-10-05", 7.0)]
+    assert IF.weekly_sums(daily) == [("2026-10-05", 7)]
+    gappy = [("2026-10-05", 10.0), ("2026-10-07", 20.0), ("2026-10-08", 30.0), ("2026-10-09", 20.0)]  # 4일 관측 → 평균 20 × 7
+    assert IF.weekly_sums(gappy) == [("2026-10-05", 140)]
+    assert IF.weekly_sums(gappy[:3]) == []
 
 
 def test_docker_daily_increments_average_gaps_and_drop_decreases():

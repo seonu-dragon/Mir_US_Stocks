@@ -682,7 +682,7 @@ INDICATORS: list[dict] = [
     _src("macau_ggr", ("macau",), "마카오 카지노 월 총수입 (DICJ)", "Macau Gross Gaming Revenue (DICJ)", ["consumer_labor"], "백만 MOP", "M",
          "LVS WYNN MGM MLCO 034230 114090", source="마카오 DICJ 월간 카지노 총수입",
          source_url="https://www.dicj.gov.mo/web/en/information/DadosEstat_mensal/index.html", series_id="Monthly Gross Revenue from Games of Fortune",
-         release={"kind": "monthly", "day": 1, "time_kst": "17:00", "note": "매월 1일 (마카오 DICJ)"}, license=DICJ_ATTR, digits=0, stale_days=45,
+         release={"kind": "monthly", "day": 1, "time_kst": "17:00", "note": "매월 1일 (마카오 DICJ)"}, license=DICJ_ATTR, digits=0,
          note="LVS·WYNN·MGM 마카오 법인 실적을 한 달 단위로 선행"),
     # ---- 섹터 SPDR 자금흐름 (Δ발행주식수 × NAV, 20거래일 합) ----
     _src("spdr_flow_xlk", ("spdr", "XLK"), "기술 섹터 ETF 자금흐름 (XLK, 20거래일 합)", "XLK Net Flows (20D sum)", ['tech_semi', 'liquidity_credit'],
@@ -766,19 +766,19 @@ INDICATORS: list[dict] = [
     # ---- 검색·AI 챗봇 점유율 (StatCounter, 월간) ----
     _src("sc_search_google", ("statcounter", "search_engine", "ww", "Google", "2019-01"), "구글 검색 점유율 (전 세계, StatCounter)", "Google Search Share (Worldwide)",
          ["tech_semi"], "%", "M", "GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/search-engine-market-share",
-         series_id="search_engine/ww/Google", basis="level", license=STATCOUNTER_ATTR, stale_days=45, note="90% 선이 독점 균열 감시선"),
+         series_id="search_engine/ww/Google", basis="level", license=STATCOUNTER_ATTR, note="90% 선이 독점 균열 감시선"),
     _src("sc_search_bing", ("statcounter", "search_engine", "ww", "bing", "2019-01"), "빙 검색 점유율 (전 세계, StatCounter)", "Bing Search Share (Worldwide)",
          ["tech_semi"], "%", "M", "MSFT", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/search-engine-market-share",
-         series_id="search_engine/ww/bing", basis="level", license=STATCOUNTER_ATTR, stale_days=45),
+         series_id="search_engine/ww/bing", basis="level", license=STATCOUNTER_ATTR),
     _src("sc_search_naver_kr", ("statcounter", "search_engine", "KR", "Naver", "2019-01"), "네이버 검색 점유율 (한국, StatCounter)", "Naver Search Share (South Korea)",
          ["tech_semi", "kr_industry"], "%", "M", "035420 035720", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/search-engine-market-share/all/south-korea",
-         series_id="search_engine/KR/Naver", basis="level", license=STATCOUNTER_ATTR, stale_days=45, note="국내 검색에서 구글과의 줄다리기"),
+         series_id="search_engine/KR/Naver", basis="level", license=STATCOUNTER_ATTR, note="국내 검색에서 구글과의 줄다리기"),
     _src("sc_chatbot_chatgpt", ("statcounter", "ai_chatbot", "ww", "ChatGPT", "2025-04"), "ChatGPT 점유율 (AI 챗봇, 전 세계)", "ChatGPT Share of AI Chatbot Referrals",
          ["tech_semi"], "%", "M", "MSFT", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/ai-chatbot-market-share",
-         series_id="ai_chatbot/ww/ChatGPT", basis="level", tone=0, license=STATCOUNTER_ATTR, stale_days=45, note="리퍼럴(유입) 기준 점유율"),
+         series_id="ai_chatbot/ww/ChatGPT", basis="level", tone=0, license=STATCOUNTER_ATTR, note="리퍼럴(유입) 기준 점유율"),
     _src("sc_chatbot_gemini", ("statcounter", "ai_chatbot", "ww", "Google Gemini", "2025-04"), "Gemini 점유율 (AI 챗봇, 전 세계)", "Google Gemini Share of AI Chatbot Referrals",
          ["tech_semi"], "%", "M", "GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/ai-chatbot-market-share",
-         series_id="ai_chatbot/ww/Google Gemini", basis="level", license=STATCOUNTER_ATTR, stale_days=45, note="리퍼럴(유입) 기준 점유율"),
+         series_id="ai_chatbot/ww/Google Gemini", basis="level", license=STATCOUNTER_ATTR, note="리퍼럴(유입) 기준 점유율"),
 ]
 
 

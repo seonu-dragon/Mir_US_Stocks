@@ -727,13 +727,14 @@ def fetch_spdr_flows(ticker: str) -> list[tuple[str, float]]:
     return parse_spdr_flows(xlsx_sheet_rows(raw))
 
 
-def weekly_sums(daily: list[tuple[str, float]]) -> list[tuple[str, float]]:
-    """일별 → 주(월요일 시작) 합계, 7일이 다 찬 주만. 키는 그 주 월요일."""
+def weekly_sums(daily: list[tuple[str, float]], min_days: int = 4) -> list[tuple[str, float]]:
+    """일별 → 주(월요일 시작) 합계. 키는 그 주 월요일. npm 은 집계가 안 된 날을 0(=결측)으로 자주 준다
+    (2026-10: 주마다 1~3일) — 관측이 min_days 이상인 주만, 하루 평균 × 7 로 보정한다."""
     by: dict = {}
     for d, v in daily:
         dd = date.fromisoformat(d)
         by.setdefault((dd - timedelta(days=dd.weekday())).isoformat(), []).append(v)
-    return sorted((k, float(sum(vs))) for k, vs in by.items() if len(vs) == 7)
+    return sorted((k, round(sum(vs) / len(vs) * 7)) for k, vs in by.items() if len(vs) >= min_days)
 
 
 def parse_npm_range(payload: dict) -> list[tuple[str, float]]:

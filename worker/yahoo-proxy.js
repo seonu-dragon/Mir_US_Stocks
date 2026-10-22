@@ -2003,6 +2003,21 @@ export function isMoveOnlyClaim(claim, names = []) {
   });
 }
 
+// 예측·전망("~수 있다", "~할 것", "전망", "가능성")은 이미 일어난 움직임의 이유가 아니다(2026-10-22 재배포 후 TSLA
+// '주가가 오를 수 있다'가 뉴스 확인으로 나왔다). 소문은 '~라는 소문'처럼 사실 주장 꼴이라 여기 걸리지 않는다.
+const SPECULATIVE_RE = /(수\s?(있다|있음|있어|있을|도)|할\s?것|될\s?것|것이다|것으로\s?(보|예상|전망)|전망|예상된다|예상돼|가능성|\bmay\b|\bcould\b|\bmight\b|\bwill\b)/i;
+export function isSpeculativeClaim(claim) {
+  return SPECULATIVE_RE.test(String(claim || ""));
+}
+
+// 뉴스만 있는 이유(소셜 근거 없음)는 인용 기사 제목에 이 종목 이름·티커가 있을 때만 — 같은 날 다른 회사·거시 기사가
+// '이유'로 붙던 것(SK하이닉스 화면에 '가계부채가 경제에 제약 요인' 등).
+export function newsMentions(newsItems, names = []) {
+  const keys = names.filter((n) => n && String(n).length >= 2).map((n) => String(n).toLowerCase());
+  if (!keys.length) return true;   // 이름을 모르면 거를 수 없다
+  return newsItems.some((n) => keys.some((k) => String(n.title || "").toLowerCase().includes(k)));
+}
+
 export function validateMoveReasons(raw, posts, news, names = []) {
   const items = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.claims) ? raw.claims : []);
   const pick = (ids, list, prefix) => [...new Set((Array.isArray(ids) ? ids : []).map((x) => String(x).trim().toUpperCase()))]
@@ -2013,7 +2028,7 @@ export function validateMoveReasons(raw, posts, news, names = []) {
   for (const it of items) {
     if (!it || typeof it !== "object") continue;
     const claim = clipText(it.claim, 140);
-    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names)) continue;
+    if (claim.length < 6 || seen.has(claim) || isMoveOnlyClaim(claim, names) || isSpeculativeClaim(claim)) continue;
     const social = pick(it.social, posts, "S");
     const cited = pick(it.news, news, "N");
     if (!social.length && !cited.length) continue;
@@ -2023,7 +2038,7 @@ export function validateMoveReasons(raw, posts, news, names = []) {
     const newsRefs = cited.slice(0, 3).map((n) => ({ title: clipText(n.title, 160), link: n.link || n.url || "", publisher: n.publisher || n.provider || "", date: n.publishedAt || "" }));
     const samples = social.slice(0, 2).map((p) => ({ text: clipText(p.text, 160), url: p.url, source: p.source }));
     if (cited.length && social.length) out.confirmed.push({ claim, news: newsRefs, socialCount: social.length, samples });
-    else if (cited.length) out.newsOnly.push({ claim, news: newsRefs });
+    else if (cited.length) { if (newsMentions(cited, names)) out.newsOnly.push({ claim, news: newsRefs }); }
     else out.socialOnly.push({ claim, socialCount: social.length, samples });
   }
   out.confirmed.sort((a, b) => b.socialCount - a.socialCount);
@@ -2052,6 +2067,8 @@ async function extractMoveReasons(env, ticker, company, isKr, changeText, posts,
     `[소셜 글]\n${social}\n\n[뉴스]\n${heads}\n\n` +
     `규칙:\n- 주가 움직임의 이유(사건·실적·공시·루머·수급 등)를 말하는 주장만. 단순 감정·욕설·매매 자랑은 버리세요.\n` +
     `- '주가가 올랐다/내렸다', '지수가 바닥이다' 같은 움직임 자체·시장 전망은 이유가 아닙니다. 버리세요.\n` +
+    `- '~할 수 있다', '~할 것', '전망' 같은 예측은 이유가 아닙니다. 이미 일어난 일만.\n` +
+    `- 이 종목과 직접 관련 없는 거시·다른 회사 기사는 이유로 쓰지 마세요.\n` +
     `- 같은 내용의 글은 한 주장으로 합치고 social 에 그 글 번호를 모두 넣으세요.\n` +
     `- news 에는 그 주장과 같은 사실을 보도한 기사 번호만. 비슷한 주제일 뿐이면 넣지 마세요.\n` +
     `- 소셜에 없지만 뉴스에 분명한 이유가 있으면 social 을 빈 배열로 두고 추가하세요.\n` +
@@ -2087,7 +2104,7 @@ async function handleMoveReasons(request, env, url, rawTicker) {
   const symbol = kr ? ticker : ticker.replace(/\./g, "-");
   const modelOverride = await resolveModelOverride(env, request, url);
   const bucket = Math.floor(Date.now() / (MOVE_REASONS_TTL * 1000));
-  const cacheKey = `reasons:v2:${ticker}:${bucket}`;
+  const cacheKey = `reasons:v3:${ticker}:${bucket}`;
   const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
   if (kv && !modelOverride) {
     try {

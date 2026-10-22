@@ -62,6 +62,8 @@ import {
   parseRedditListing,
   validateMoveReasons,
   isMoveOnlyClaim,
+  isSpeculativeClaim,
+  newsMentions,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1848,6 +1850,18 @@ await test("움직임 자체·시장 잡담은 이유가 아니다(2026-10-22 �
   const out = validateMoveReasons({ claims: [{ claim: "NVDA 주가 상승", social: ["S1"], news: ["N1"] }] },
     [{ text: "up today" }], [{ title: "NVDA shares rise" }], names);
   eq(out.confirmed.length, 0, "움직임만 말하는 주장은 확인 목록에 없다");
+});
+
+await test("예측은 이유가 아니고, 뉴스만 있는 이유는 그 종목 기사여야 한다", () => {
+  for (const c of ["테슬라의 주가가 오를 수 있다", "실적이 좋지 않아 떨어질 수 있다", "영업이익률이 80%를 넘을 수 있다", "내년 성장 전망", "Shares could rise"]) ok(isSpeculativeClaim(c), `예측: ${c}`);
+  for (const c of ["엘론 머스크가 로봇 시연에 성공했다", "대형 펀드가 숏을 정리한다는 소문", "노조 성과급 재조정 추진"]) ok(!isSpeculativeClaim(c), `사실: ${c}`);
+  ok(newsMentions([{ title: "삼성전자 노조, 성과급 재조정" }], ["삼성전자", "005930"]), "종목 기사");
+  ok(!newsMentions([{ title: "가계부채가 경제에 제약" }], ["삼성전자", "005930"]), "거시 기사");
+  const out = validateMoveReasons({ claims: [
+    { claim: "가계부채가 경제에 제약 요인이다", social: [], news: ["N1"] },
+    { claim: "노조가 성과급 재조정을 추진했다", social: [], news: ["N2"] },
+  ] }, [], [{ title: "가계부채, 경제 제약 요인" }, { title: "삼성전자 노조, 성과급 재조정 추진" }], ["삼성전자"]);
+  eq(out.newsOnly.length, 1, "종목 기사만 남는다");
 });
 
 await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {

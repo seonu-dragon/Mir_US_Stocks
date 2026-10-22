@@ -151,6 +151,8 @@ CHECKS = {
         ("data/korea/nps_holdings.json", 15, True),
         ("data/korea/corp_groups.json", 15, False),
         ("data/us_financials_history.json", 6, True),
+        # 은행 건전성(build_fdic_banks.py, us-and-public 잡). 실행마다 updatedAtKst 를 새로 쓴다. 0곳(count)도 잡는다.
+        ("data/fdic_banks.json", 6, True),
         # 사업부문·지역·제품별 매출(build_segments_us.py, segments 잡). 새 공시가 없어도 실행마다 인덱스
         # updatedAtKst 를 새로 쓴다. 0종목(count)도 잡는다.
         ("data/segments_index.json", 6, True),
@@ -472,6 +474,7 @@ WEEKLY_JOB_OF = {
     "data/korea/nps_holdings.json": "us-and-public",
     "data/korea/corp_groups.json": "us-and-public",
     "data/us_financials_history.json": "us-and-public",
+    "data/fdic_banks.json": "us-and-public",
     "data/korea/earnings.json": "kr-dart",
     "data/korea/indicators.json": "kr-dart",
     "data/korea/ownership_profile.json": "kr-dart",

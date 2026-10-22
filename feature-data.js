@@ -202,6 +202,8 @@ const FEATURE_DATA = {
   // 다크풀(ATS) 주간 거래 비중(FINRA, build_finra_ats.py, 종목당 8주). 수급·보유 탭을 열 때만(ats.js).
   finraAts: { global: "FINRA_ATS", path: "data/finra_ats.js", feature: "finraAts", usOnly: true, lazy: true },
   // 시장 폭 추이(build_market_breadth.py, 종목별 실측 일봉 집계 ~33KB). 시장 탭 › 시장 폭을 그릴 때만(breadth-history.js).
+  // 은행 건전성(FDIC 콜 리포트, build_fdic_banks.py, 은행 28곳 × 12분기 ~25KB). 은행주를 열 때만(fdic-banks.js).
+  fdicBanks: { global: "FDIC_BANKS", path: "data/fdic_banks.js", feature: "fdicBanks", usOnly: true, lazy: true },
   marketBreadth: { global: "MARKET_BREADTH", path: "data/market_breadth.js", feature: "marketBreadth", marketSpecific: true, lazy: true },
   usInstHolders: { global: "US_INST_HOLDERS_INDEX", path: "data/institutional_holders/index.js", feature: "instHolders", usOnly: true, lazy: true },
   // 국내↔미국 연관 종목(build_cross_market_links.py) — 관계 사전 + 최근 1년 수익률 상관(~30KB, 두 시장 한 파일).
@@ -459,6 +461,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderEtfHoldings === "function") renderEtfHoldings(item); },
           () => { if (typeof renderInstHolders === "function") renderInstHolders(item); },
           () => { if (typeof renderAtsCard === "function") renderAtsCard(item); },
+          () => { if (typeof renderBankHealth === "function") renderBankHealth(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).

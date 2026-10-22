@@ -1,7 +1,10 @@
 // cross-market-core.js — 국내↔미국 연관 종목의 순수 계산(DOM 없음).
 // 데이터: window.CROSS_MARKET_LINKS (scripts/build_cross_market_links.py → data/cross_market_links.js)
+//   nextDay = { base, up?, down? } — 간밤 미국 +thrPct% 이상(up)/−thrPct% 이하(down)였던 국내 다음 거래일의
+//     과거 빈도 { n, gap(시초 갭 평균 %), bull(양봉 비율 %), ret(종가 등락 평균 %) }, base = 같은 종목 전체 거래일.
+//     옛 데이터엔 없다 → 없으면 아무것도 그리지 않는다.
 //   links[] = { kr, us, type, why, source: "curated"|"auto", n, lagCorr, lagCorrEx, sameCorr, sameCorrEx,
-//               strength, sameStrength },  tickers = { us: {T: {name, chg, date, etf}}, kr: {...} }
+//               strength, sameStrength, nextDay? },  tickers = { us: {T: {name, chg, date, etf}}, kr: {...} }
 // 화면은 cross-market.js(종목 상세 카드 + 오늘 탭 요약 카드).
 // node 테스트: scripts/tests/test_cross_market_core.mjs
 (function (root) {
@@ -34,6 +37,45 @@
     return labels[type] || DEFAULT_TYPE_LABELS[type] || type || "";
   }
 
+  function normBucket(b) {
+    if (!b || typeof b !== "object") return null;
+    const n = num(b.n);
+    const gap = num(b.gap);
+    const bull = num(b.bull);
+    const ret = num(b.ret);
+    if (n == null || n < 1 || gap == null || bull == null) return null;
+    return { n, gap, bull, ret };
+  }
+
+  // 빌더의 nextDay → { thr, base, up, down } (구간이 하나도 없으면 null).
+  function normNextDay(p, nd) {
+    if (!nd || typeof nd !== "object") return null;
+    const base = normBucket(nd.base);
+    const up = normBucket(nd.up);
+    const down = normBucket(nd.down);
+    if (!base || (!up && !down)) return null;
+    const thr = num(p && p.nextDay && p.nextDay.thrPct) ?? 2;
+    return { thr, base, up, down };
+  }
+
+  // 간밤 미국 등락(chg %)에 맞는 구간. 문턱 미만·없는 구간이면 null.
+  function nextDayBucket(nd, chg) {
+    const c = num(chg);
+    if (!nd || c == null) return null;
+    if (c >= nd.thr && nd.up) return { dir: "up", ...nd.up };
+    if (c <= -nd.thr && nd.down) return { dir: "down", ...nd.down };
+    return null;
+  }
+
+  // 부호 붙인 퍼센트("+1.1%", "−0.4%"). digits 자리.
+  function signedPct(v, digits = 1) {
+    const n = num(v);
+    if (n == null) return "—";
+    const r = Number(Math.abs(n).toFixed(digits));
+    if (r === 0) return (0).toFixed(digits) + "%";
+    return (n < 0 ? "−" : "+") + r.toFixed(digits) + "%";
+  }
+
   // 한 관계를 '보는 쪽 시장' 기준 행으로 편다. view = 지금 보고 있는 시장("kr"|"us").
   // 상관은 방향이 둘이다 — lag(미국 D일 → 국내 다음 거래일), same(같은 날 국내 → 그날 밤 미국).
   function toRow(p, link, view) {
@@ -58,6 +100,8 @@
       sameCorrEx: num(link.sameCorrEx),
       strength: link.strength || "insufficient",
       sameStrength: link.sameStrength || "insufficient",
+      usTicker: link.us,
+      nextDay: normNextDay(p, link.nextDay),
     };
   }
 
@@ -112,7 +156,11 @@
       links.sort((a, b) => compareRows(a, b, strengthKey, corrKey));
       movers.push({
         ticker: t, market: fromKey, name: meta.name || t, chg, date: meta.date || null, etf: !!meta.etf,
-        links: links.slice(0, perTicker).map((r) => ({ ...r, corrEx: r[corrKey], strengthNow: r[strengthKey] })),
+        // 간밤 미국 → 국내(from="us")일 때만 오늘 움직임에 맞는 '다음 날' 과거 빈도를 붙인다.
+        links: links.slice(0, perTicker).map((r) => ({
+          ...r, corrEx: r[corrKey], strengthNow: r[strengthKey],
+          nextDayNow: fromKey === "us" ? nextDayBucket(r.nextDay, chg) : null,
+        })),
         more: Math.max(0, links.length - perTicker),
       });
     });
@@ -139,7 +187,7 @@
     return `${+m[2]}/${+m[3]}(${wd})`;
   }
 
-  const api = { linksFor, moveBoard, corrText, strengthLabel, shortDate, typeLabel, STRENGTH_LABEL };
+  const api = { linksFor, moveBoard, corrText, strengthLabel, shortDate, typeLabel, nextDayBucket, signedPct, STRENGTH_LABEL };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirCrossMarketCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

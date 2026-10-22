@@ -16389,6 +16389,15 @@ body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !impo
 .xm-chip-auto { border-style: dashed; }
 .xm-more { align-self: center; font-size: var(--fs-cap); }
 #tab-today-summary > .xm-home { margin-top: 12px; }
+/* 간밤 미국 ±2% 다음 날 국내 과거 빈도. 국내 수치라 보는 모드와 무관하게 상승 빨강·하락 파랑. */
+.xm-next { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 2px; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; font-variant-numeric: tabular-nums; }
+.xm-chip { flex-wrap: wrap; }
+.xm-chip .xm-next { flex-basis: 100%; display: block; text-align: left; }
+.xm-chip:has(.xm-next) { border-radius: var(--r-md); }
+.xm-kr-up { color: #e03a3e; }
+.xm-kr-dn { color: #1e6fe8; }
+html[data-theme="dark"] .xm-kr-up { color: #f25a5d; }
+html[data-theme="dark"] .xm-kr-dn { color: #4d8ffa; }
 @media (max-width: 640px) {
   .xm-card, .xm-home { padding: 12px; }
   .xm-colhead { display: none; }
@@ -16397,6 +16406,8 @@ body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !impo
   .xm-row .xm-rel { grid-area: rel; }
   .xm-row .xm-chg { grid-area: chg; }
   .xm-row .xm-corr { grid-area: corr; }
+  .xm-row { grid-template-areas: "name chg" "rel corr" "next next"; }
+  .xm-row .xm-next { grid-area: next; }
   .xm-board-row { grid-template-columns: minmax(0, 1fr); }
   .xm-mover { min-height: 40px; }
   .xm-chip { min-height: 36px; }

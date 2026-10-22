@@ -201,6 +201,8 @@ const FEATURE_DATA = {
   // inst-holders.js 가 수급·보유 탭을 열 때 하나만 fetch 한다.
   // 다크풀(ATS) 주간 거래 비중(FINRA, build_finra_ats.py, 종목당 8주). 수급·보유 탭을 열 때만(ats.js).
   finraAts: { global: "FINRA_ATS", path: "data/finra_ats.js", feature: "finraAts", usOnly: true, lazy: true },
+  // 시장 폭 추이(build_market_breadth.py, 종목별 실측 일봉 집계 ~33KB). 시장 탭 › 시장 폭을 그릴 때만(breadth-history.js).
+  marketBreadth: { global: "MARKET_BREADTH", path: "data/market_breadth.js", feature: "marketBreadth", marketSpecific: true, lazy: true },
   usInstHolders: { global: "US_INST_HOLDERS_INDEX", path: "data/institutional_holders/index.js", feature: "instHolders", usOnly: true, lazy: true },
   // 국내↔미국 연관 종목(build_cross_market_links.py) — 관계 사전 + 최근 1년 수익률 상관(~30KB, 두 시장 한 파일).
   // 오늘 탭 '간밤 미국 연관주'(KR)·'국내 장 연관주'(US) 카드가 첫 화면이라 첫 단계에서 받는다. 종목 상세 카드도 같은 파일.

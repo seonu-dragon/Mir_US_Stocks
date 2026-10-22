@@ -213,6 +213,13 @@ jobs:
           node scripts/build_signal_ledger.mjs --record us
           python scripts/sec_client.py --publish data/signal_ledger data/signal_scorecard.json data/signal_scorecard.js --label "signal ledger (US)"
 
+      # 시장 폭 추이(50·200일선 위 비율·맥클렐런·신고/신저) — 방금 발행된 종목 일봉만 다시 읽는다(외부 호출 없음, ~1분).
+      - name: Build market breadth (US)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python scripts/build_market_breadth.py --market us --push
+
       # 마지막 관문: 위 스텝들은 소스가 죽어도 "기존 파일 유지" 후
       # continue-on-error 로 넘어가므로 영원히 초록일 수 있다. 산출물의
       # 타임스탬프가 허용 나이를 넘으면 여기서 워크플로우를 빨갛게 만든다.

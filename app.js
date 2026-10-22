@@ -7129,7 +7129,7 @@ function dataTrustSources() {
   // 다크풀(ATS) 주간 비중(2026-10-22) — FINRA 주 1회 공개(화·금 수집). 주말·공개 지연을 넘겨도 8일이면 넉넉하다. lazy.
   // 은행 건전성(2026-10-22) — FDIC 분기 자료를 매주 다시 받는다(파일 시각은 매주 갱신). lazy·은행주만.
   // 오늘의 이슈(2026-10-22) — 특징주 뒤 매일. 이슈가 없는 날도 파일 시각은 갱신된다. lazy.
-  if (cfg.features?.marketIssues !== false) rows.push(source("오늘의 이슈", "특징주 보드 + Gemini 묶음(검증)", window.MARKET_ISSUES, ["issues"], 24 * 4, "매일", "marketIssues"));
+  if (cfg.features?.marketIssues !== false) rows.push(source("오늘의 이슈", "특징주 보드 + Gemini 묶음(검증)", window.MARKET_ISSUES, ["issues"], 24 * 4, "매일", "marketIssues", "", true));   // 공통 원인 이슈가 없는 날은 0건이 정상
   // 옵션 포지션(2026-10-22) — 미국 장 마감 뒤 매일. 주말·연휴를 넘겨도 4일. lazy.
   if (cfg.id === "us" && cfg.features?.optionsFlow !== false) rows.push(source("옵션 포지션(GEX·이상 거래)", "Yahoo Finance 옵션 체인", window.OPTIONS_FLOW, ["tickers"], 24 * 4, "매일", "optionsFlow"));
   if (cfg.id === "us" && cfg.features?.fdicBanks !== false) rows.push(source("은행 건전성(FDIC)", "FDIC BankFind 콜 리포트", window.FDIC_BANKS, ["banks"], 24 * 9, "매주", "fdicBanks"));

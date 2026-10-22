@@ -65,6 +65,8 @@ CHECKS = {
         ("data/market_breadth.json", 4, True),
         ("data/earnings_calendar.json", 5, False),
         ("data/options_stats.json", 4, False),
+        # 옵션 포지션(build_options_flow.py, 스냅샷 뒤 continue-on-error 스텝). 0종목(count)도 잡는다.
+        ("data/options_flow.json", 4, True),
         ("data/us_calendar.json", 4, False),
         ("data/us_finnhub_metrics.json", 4, False),
         ("data/macro_indicators.json", 7, False),

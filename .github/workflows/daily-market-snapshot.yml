@@ -214,6 +214,14 @@ jobs:
           python scripts/sec_client.py --publish data/signal_ledger data/signal_scorecard.json data/signal_scorecard.js --label "signal ledger (US)"
 
       # 시장 폭 추이(50·200일선 위 비율·맥클렐런·신고/신저) — 방금 발행된 종목 일봉만 다시 읽는다(외부 호출 없음, ~1분).
+      # 옵션 포지션(행사가별 감마 노출 추정·이상 옵션 거래) — 야후 옵션 체인 45일 안 만기 최대 8개 × 83종목(~4분).
+      # 장 마감 뒤라야 미결제약정이 실린다(장 전엔 0). 실패해도 스냅샷은 이미 커밋됐다.
+      - name: Build options flow (GEX/UOA)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 25
+        run: python scripts/build_options_flow.py --top 80 --push
+
       - name: Build market breadth (US)
         if: ${{ !cancelled() }}
         continue-on-error: true

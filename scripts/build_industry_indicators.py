@@ -194,8 +194,9 @@ def _oecd(id_, area, name_kr, name_en, related):
 
 def _src(id_, src, name_kr, name_en, cats, unit, freq, related, *, source, source_url, series_id="", tone=1,
          basis="yoy", scale=1.0, digits=2, release=None, license=None, grade="A", related_ind=(), stale_days=None,
-         note="", proxy=False):
-    return {"id": id_, "name_kr": name_kr, "name_en": name_en, "categories": cats, "unit": unit, "frequency": freq,
+         note="", proxy=False, kind=None):
+    extra = {"kind": kind} if kind else {}
+    return {**extra, "id": id_, "name_kr": name_kr, "name_en": name_en, "categories": cats, "unit": unit, "frequency": freq,
             "src": src, "source": source, "source_url": source_url, "source_series_id": series_id, "proxy": proxy,
             "grade": grade, "tone": tone, "regime_basis": basis, "scale": scale, "digits": digits,
             "release": release or {"kind": "none"}, "license": license or PUBLIC, "related_tickers": _rel(related),
@@ -209,6 +210,13 @@ CBOE_RESTRICTED = {"redistribution": "restricted", "note": "© Cboe — 지수�
 DERIBIT_RESTRICTED = {"redistribution": "restricted", "note": "Deribit 공개 시세 API — 표시 허용·재판매 금지, CSV 없음", "commercial_ok": False}
 ALTME_ATTR = {"redistribution": "attribution", "note": "alternative.me Crypto Fear & Greed — 데이터 옆 출처 표기", "commercial_ok": True}
 LLAMA_ATTR = {"redistribution": "attribution", "note": "DefiLlama — 출처 표기(공식 라이선스 문구 없음)", "commercial_ok": True}
+KOBC_ATTR = {"redistribution": "attribution", "note": "한국해양진흥공사(KOBC) 운임지수 — 출처 표기", "commercial_ok": True}
+OPINET_ATTR = {"redistribution": "attribution", "note": "한국석유공사 오피넷 — 출처 표기", "commercial_ok": True}
+DICJ_ATTR = {"redistribution": "attribution", "note": "마카오 博彩監察協調局(DICJ) 공개 통계 — 출처 표기", "commercial_ok": True}
+SSGA_RESTRICTED = {"redistribution": "restricted", "note": "State Street SPDR 공개 펀드 데이터 — 파생 지표(자금흐름)만 표시, 원표 재배포 없음", "commercial_ok": False}
+NPM_ATTR = {"redistribution": "attribution", "note": "npm registry 공개 다운로드 통계 — 출처 표기", "commercial_ok": True}
+DOCKER_RESTRICTED = {"redistribution": "restricted", "note": "Docker Hub 공개 저장소 pull 수 — 파생 지표(증가분)만 표시", "commercial_ok": False}
+STATCOUNTER_ATTR = {"redistribution": "attribution", "note": "StatCounter Global Stats (CC BY-SA 3.0) — 링크 표기", "commercial_ok": True}
 FRB_NOTE = {"redistribution": "public", "note": "연준 FEDS Notes 공개 데이터 — 인용 표기", "commercial_ok": True}
 FRED_3RD = THIRD_PARTY
 
@@ -644,6 +652,133 @@ INDICATORS: list[dict] = [
     _src("crypto_fear_greed", ("altme",), "크립토 공포·탐욕 지수 (alternative.me)", "Crypto Fear & Greed Index", ["crypto_fintech"], "0~100", "D",
          "COIN MSTR IBIT HOOD", source="alternative.me", source_url="https://alternative.me/crypto/fear-and-greed-index/", series_id="fng", tone=1, basis="level",
          license=ALTME_ATTR, digits=0),
+    # ================= 2026-10-22 추가: 해운 운임·정유·마카오·섹터 자금흐름·개발자 채택·검색 점유율 =================
+    # ---- 해운 운임 (한국해양진흥공사 KOBC, 페이지가 최근 2주·6영업일만 보여 data/industry_archive 에 적립) ----
+    _src("kobc_kcci", ("kobc", "kcci", "KCCI"), "KCCI 컨테이너 운임지수 (KOBC, 부산발 종합)", "KOBC Container Composite Index (KCCI)",
+         ["shipping_logistics", "kr_industry"], "지수", "W", "011200 000120 ZIM", source="한국해양진흥공사 KCCI",
+         source_url="https://www.kobc.or.kr/ebz/shippinginfo/kcci/gridList.do?mId=0304000000", series_id="KCCI 종합", basis="level",
+         release={"kind": "weekly", "weekday": 0, "time_kst": "14:00", "note": "매주 월요일 (KOBC)"}, license=KOBC_ATTR, digits=0,
+         stale_days=21, note="SCFI 의 한국판 — 부산발 13개 항로 가중"),
+    _src("kobc_kdci", ("kobc", "kdci", "KDCI"), "KDCI 건화물선 운임지수 (KOBC)", "KOBC Dry Bulk Composite Index (KDCI)",
+         ["shipping_logistics", "kr_industry"], "지수", "D", "028670 005880", source="한국해양진흥공사 KDCI",
+         source_url="https://www.kobc.or.kr/ebz/shippinginfo/kdci/gridList.do?mId=0304000000", series_id="KDCI 종합", basis="level",
+         license=KOBC_ATTR, digits=0, stale_days=10, note="BDI 무료 대체(한국 공공기관 산출)"),
+    # ---- 정유 (한국석유공사 오피넷, $/bbl. 석유제품 표는 최근 2일만 받혀 크랙은 적립형) ----
+    _src("opinet_dubai", ("opinet_crude", 0), "두바이유 현물 (오피넷)", "Dubai Crude Spot (Opinet)", ["energy", "kr_industry"],
+         "$/bbl", "D", "010950 096770 078930", source="한국석유공사 오피넷 국제유가", source_url="https://www.opinet.co.kr/glopcoilSelect.do",
+         series_id="Dubai", basis="level", tone=0, license=OPINET_ATTR, stale_days=10, note="국내 정유사 원유 도입의 기준 유종"),
+    _src("opinet_crack_diesel", ("opinet_crack", "diesel001"), "경유 크랙 스프레드 (싱가포르 경유 − 두바이)", "Singapore Gasoil Crack (10ppm − Dubai)",
+         ["energy", "kr_industry"], "$/bbl", "D", "010950 096770 078930", source="한국석유공사 오피넷 (싱가포르 제품가 − Dubai)",
+         source_url="https://www.opinet.co.kr/glopopdSelect.do", series_id="경유(0.001%) − Dubai", basis="level", proxy=True,
+         license=OPINET_ATTR, stale_days=10, related_ind=["opinet_dubai"], note="정제마진 프록시 — 운임·보험·첨가제는 빼지 않은 단순 차"),
+    _src("opinet_crack_gasoline", ("opinet_crack", "gasoline92"), "휘발유 크랙 스프레드 (싱가포르 92RON − 두바이)", "Singapore Gasoline 92 Crack (− Dubai)",
+         ["energy", "kr_industry"], "$/bbl", "D", "010950 096770 078930", source="한국석유공사 오피넷 (싱가포르 제품가 − Dubai)",
+         source_url="https://www.opinet.co.kr/glopopdSelect.do", series_id="휘발유(92RON) − Dubai", basis="level", proxy=True,
+         license=OPINET_ATTR, stale_days=10, related_ind=["opinet_dubai"]),
+    _src("opinet_naphtha", ("opinet_product", "naphtha"), "나프타 가격 (싱가포르, 오피넷)", "Singapore Naphtha (Opinet)", ["energy", "commodities_metals", "kr_industry"],
+         "$/bbl", "D", "011170 006650 051910 011780", source="한국석유공사 오피넷 국제 석유제품", source_url="https://www.opinet.co.kr/glopopdSelect.do",
+         series_id="나프타", basis="level", tone=-1, license=OPINET_ATTR, stale_days=10, note="NCC(납사분해) 원가 — 오르면 석유화학 마진 압박"),
+    # ---- 마카오 카지노 (DICJ 월간 총수입, 매월 1일) ----
+    _src("macau_ggr", ("macau",), "마카오 카지노 월 총수입 (DICJ)", "Macau Gross Gaming Revenue (DICJ)", ["consumer_labor"], "백만 MOP", "M",
+         "LVS WYNN MGM MLCO 034230 114090", source="마카오 DICJ 월간 카지노 총수입",
+         source_url="https://www.dicj.gov.mo/web/en/information/DadosEstat_mensal/index.html", series_id="Monthly Gross Revenue from Games of Fortune",
+         release={"kind": "monthly", "day": 1, "time_kst": "17:00", "note": "매월 1일 (마카오 DICJ)"}, license=DICJ_ATTR, digits=0, stale_days=45,
+         note="LVS·WYNN·MGM 마카오 법인 실적을 한 달 단위로 선행"),
+    # ---- 섹터 SPDR 자금흐름 (Δ발행주식수 × NAV, 20거래일 합) ----
+    _src("spdr_flow_xlk", ("spdr", "XLK"), "기술 섹터 ETF 자금흐름 (XLK, 20거래일 합)", "XLK Net Flows (20D sum)", ['tech_semi', 'liquidity_credit'],
+         "십억 USD", "D", "XLK AAPL MSFT NVDA AVGO", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlk",
+         series_id="XLK Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlf", ("spdr", "XLF"), "금융 섹터 ETF 자금흐름 (XLF, 20거래일 합)", "XLF Net Flows (20D sum)", ['liquidity_credit'],
+         "십억 USD", "D", "XLF JPM BAC WFC GS", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlf",
+         series_id="XLF Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xle", ("spdr", "XLE"), "에너지 섹터 ETF 자금흐름 (XLE, 20거래일 합)", "XLE Net Flows (20D sum)", ['energy', 'liquidity_credit'],
+         "십억 USD", "D", "XLE XOM CVX COP SLB", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xle",
+         series_id="XLE Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlv", ("spdr", "XLV"), "헬스케어 섹터 ETF 자금흐름 (XLV, 20거래일 합)", "XLV Net Flows (20D sum)", ['consumer_labor', 'liquidity_credit'],
+         "십억 USD", "D", "XLV LLY UNH JNJ ABBV", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlv",
+         series_id="XLV Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xli", ("spdr", "XLI"), "산업재 섹터 ETF 자금흐름 (XLI, 20거래일 합)", "XLI Net Flows (20D sum)", ['macro_activity', 'liquidity_credit'],
+         "십억 USD", "D", "XLI GE CAT RTX HON", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xli",
+         series_id="XLI Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xly", ("spdr", "XLY"), "임의소비재 섹터 ETF 자금흐름 (XLY, 20거래일 합)", "XLY Net Flows (20D sum)", ['consumer_labor', 'liquidity_credit'],
+         "십억 USD", "D", "XLY AMZN TSLA HD MCD", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xly",
+         series_id="XLY Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlp", ("spdr", "XLP"), "필수소비재 섹터 ETF 자금흐름 (XLP, 20거래일 합)", "XLP Net Flows (20D sum)", ['consumer_labor', 'liquidity_credit'],
+         "십억 USD", "D", "XLP WMT COST PG KO", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlp",
+         series_id="XLP Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlu", ("spdr", "XLU"), "유틸리티 섹터 ETF 자금흐름 (XLU, 20거래일 합)", "XLU Net Flows (20D sum)", ['ai_datacenter', 'liquidity_credit'],
+         "십억 USD", "D", "XLU NEE SO DUK CEG", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlu",
+         series_id="XLU Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlb", ("spdr", "XLB"), "소재 섹터 ETF 자금흐름 (XLB, 20거래일 합)", "XLB Net Flows (20D sum)", ['commodities_metals', 'liquidity_credit'],
+         "십억 USD", "D", "XLB LIN SHW APD FCX", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlb",
+         series_id="XLB Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlre", ("spdr", "XLRE"), "부동산 섹터 ETF 자금흐름 (XLRE, 20거래일 합)", "XLRE Net Flows (20D sum)", ['housing', 'liquidity_credit'],
+         "십억 USD", "D", "XLRE PLD AMT EQIX WELL", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlre",
+         series_id="XLRE Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    _src("spdr_flow_xlc", ("spdr", "XLC"), "커뮤니케이션 섹터 ETF 자금흐름 (XLC, 20거래일 합)", "XLC Net Flows (20D sum)", ['tech_semi', 'liquidity_credit'],
+         "십억 USD", "D", "XLC META GOOGL NFLX DIS", source="State Street SPDR NAV 이력", source_url="https://www.ssga.com/us/en/intermediary/etfs/funds/xlc",
+         series_id="XLC Δshares × NAV", basis="level", kind="flow20", license=SSGA_RESTRICTED, digits=2, stale_days=10,
+         note="발행주식수 변화 × 그날 NAV — 설정·환매로 들고 난 돈"),
+    # ---- 개발자 채택 (npm 주간 다운로드 · Docker Hub pull 증가분) ----
+    _src("npm_openai", ("npm", "openai"), "OpenAI SDK npm 주간 다운로드", "npm weekly downloads: openai", ["tech_semi"], "건", "W",
+         "MSFT NVDA", source="npm registry downloads API", source_url="https://www.npmjs.com/package/openai", series_id="openai",
+         license=NPM_ATTR, digits=0, stale_days=21, note="JS 개발자의 AI API 채택 속도"),
+    _src("npm_anthropic", ("npm", "@anthropic-ai/sdk"), "Anthropic SDK npm 주간 다운로드", "npm weekly downloads: @anthropic-ai/sdk", ["tech_semi"], "건", "W",
+         "AMZN GOOGL", source="npm registry downloads API", source_url="https://www.npmjs.com/package/@anthropic-ai/sdk", series_id="@anthropic-ai/sdk",
+         license=NPM_ATTR, digits=0, stale_days=21),
+    _src("npm_mongodb", ("npm", "mongodb"), "MongoDB 드라이버 npm 주간 다운로드", "npm weekly downloads: mongodb", ["tech_semi"], "건", "W",
+         "MDB", source="npm registry downloads API", source_url="https://www.npmjs.com/package/mongodb", series_id="mongodb",
+         license=NPM_ATTR, digits=0, stale_days=21),
+    _src("npm_wrangler", ("npm", "wrangler"), "Cloudflare Wrangler npm 주간 다운로드", "npm weekly downloads: wrangler", ["tech_semi"], "건", "W",
+         "NET", source="npm registry downloads API", source_url="https://www.npmjs.com/package/wrangler", series_id="wrangler",
+         license=NPM_ATTR, digits=0, stale_days=21, note="Cloudflare Workers 개발 도구"),
+    _src("npm_next", ("npm", "next"), "Next.js npm 주간 다운로드", "npm weekly downloads: next", ["tech_semi"], "건", "W",
+         "NET AMZN", source="npm registry downloads API", source_url="https://www.npmjs.com/package/next", series_id="next",
+         license=NPM_ATTR, digits=0, stale_days=21),
+    _src("npm_datadog", ("npm", "@datadog/browser-rum"), "Datadog RUM npm 주간 다운로드", "npm weekly downloads: @datadog/browser-rum", ["tech_semi"], "건", "W",
+         "DDOG", source="npm registry downloads API", source_url="https://www.npmjs.com/package/@datadog/browser-rum", series_id="@datadog/browser-rum",
+         license=NPM_ATTR, digits=0, stale_days=21),
+    _src("docker_mongo", ("docker", "library/mongo"), "MongoDB Docker 이미지 일평균 pull", "Docker Hub daily pulls: library/mongo", ["tech_semi"], "건/일", "D",
+         "MDB", source="Docker Hub 공개 저장소 pull 수", source_url="https://hub.docker.com/r/library/mongo", series_id="library/mongo pull_count 증가분",
+         basis="level", license=DOCKER_RESTRICTED, digits=0, stale_days=10, note="누적 pull 수를 매일 적립해 하루 증가분으로 — 적립 시작(2026-10-22) 이후만"),
+    _src("docker_elasticsearch", ("docker", "library/elasticsearch"), "Elasticsearch Docker 이미지 일평균 pull", "Docker Hub daily pulls: library/elasticsearch", ["tech_semi"], "건/일", "D",
+         "ESTC", source="Docker Hub 공개 저장소 pull 수", source_url="https://hub.docker.com/r/library/elasticsearch", series_id="library/elasticsearch pull_count 증가분",
+         basis="level", license=DOCKER_RESTRICTED, digits=0, stale_days=10, note="누적 pull 수를 매일 적립해 하루 증가분으로 — 적립 시작(2026-10-22) 이후만"),
+    _src("docker_datadog", ("docker", "datadog/agent"), "Datadog Agent Docker 이미지 일평균 pull", "Docker Hub daily pulls: datadog/agent", ["tech_semi"], "건/일", "D",
+         "DDOG", source="Docker Hub 공개 저장소 pull 수", source_url="https://hub.docker.com/r/datadog/agent", series_id="datadog/agent pull_count 증가분",
+         basis="level", license=DOCKER_RESTRICTED, digits=0, stale_days=10, note="누적 pull 수를 매일 적립해 하루 증가분으로 — 적립 시작(2026-10-22) 이후만"),
+    _src("docker_gitlab", ("docker", "gitlab/gitlab-ce"), "GitLab CE Docker 이미지 일평균 pull", "Docker Hub daily pulls: gitlab/gitlab-ce", ["tech_semi"], "건/일", "D",
+         "GTLB", source="Docker Hub 공개 저장소 pull 수", source_url="https://hub.docker.com/r/gitlab/gitlab-ce", series_id="gitlab/gitlab-ce pull_count 증가분",
+         basis="level", license=DOCKER_RESTRICTED, digits=0, stale_days=10, note="누적 pull 수를 매일 적립해 하루 증가분으로 — 적립 시작(2026-10-22) 이후만"),
+    _src("docker_cloudflared", ("docker", "cloudflare/cloudflared"), "cloudflared Docker 이미지 일평균 pull", "Docker Hub daily pulls: cloudflare/cloudflared", ["tech_semi"], "건/일", "D",
+         "NET", source="Docker Hub 공개 저장소 pull 수", source_url="https://hub.docker.com/r/cloudflare/cloudflared", series_id="cloudflare/cloudflared pull_count 증가분",
+         basis="level", license=DOCKER_RESTRICTED, digits=0, stale_days=10, note="누적 pull 수를 매일 적립해 하루 증가분으로 — 적립 시작(2026-10-22) 이후만"),
+    # ---- 검색·AI 챗봇 점유율 (StatCounter, 월간) ----
+    _src("sc_search_google", ("statcounter", "search_engine", "ww", "Google", "2019-01"), "구글 검색 점유율 (전 세계, StatCounter)", "Google Search Share (Worldwide)",
+         ["tech_semi"], "%", "M", "GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/search-engine-market-share",
+         series_id="search_engine/ww/Google", basis="level", license=STATCOUNTER_ATTR, stale_days=45, note="90% 선이 독점 균열 감시선"),
+    _src("sc_search_bing", ("statcounter", "search_engine", "ww", "bing", "2019-01"), "빙 검색 점유율 (전 세계, StatCounter)", "Bing Search Share (Worldwide)",
+         ["tech_semi"], "%", "M", "MSFT", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/search-engine-market-share",
+         series_id="search_engine/ww/bing", basis="level", license=STATCOUNTER_ATTR, stale_days=45),
+    _src("sc_search_naver_kr", ("statcounter", "search_engine", "KR", "Naver", "2019-01"), "네이버 검색 점유율 (한국, StatCounter)", "Naver Search Share (South Korea)",
+         ["tech_semi", "kr_industry"], "%", "M", "035420 035720", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/search-engine-market-share/all/south-korea",
+         series_id="search_engine/KR/Naver", basis="level", license=STATCOUNTER_ATTR, stale_days=45, note="국내 검색에서 구글과의 줄다리기"),
+    _src("sc_chatbot_chatgpt", ("statcounter", "ai_chatbot", "ww", "ChatGPT", "2025-04"), "ChatGPT 점유율 (AI 챗봇, 전 세계)", "ChatGPT Share of AI Chatbot Referrals",
+         ["tech_semi"], "%", "M", "MSFT", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/ai-chatbot-market-share",
+         series_id="ai_chatbot/ww/ChatGPT", basis="level", tone=0, license=STATCOUNTER_ATTR, stale_days=45, note="리퍼럴(유입) 기준 점유율"),
+    _src("sc_chatbot_gemini", ("statcounter", "ai_chatbot", "ww", "Google Gemini", "2025-04"), "Gemini 점유율 (AI 챗봇, 전 세계)", "Google Gemini Share of AI Chatbot Referrals",
+         ["tech_semi"], "%", "M", "GOOGL", source="StatCounter Global Stats", source_url="https://gs.statcounter.com/ai-chatbot-market-share",
+         series_id="ai_chatbot/ww/Google Gemini", basis="level", license=STATCOUNTER_ATTR, stale_days=45, note="리퍼럴(유입) 기준 점유율"),
 ]
 
 
@@ -1254,6 +1389,24 @@ def load_previous() -> dict:
     return {}
 
 
+# 최신값만 주는 원천(data/industry_archive 에 적립) — 적립 초기 관측 부족은 실패로 세지 않는다
+ACCUMULATING_KINDS = {"kobc", "opinet_crack", "opinet_product", "docker"}
+_FETCH_CACHE: dict = {}
+
+
+def _cached(key: str, fn):
+    """한 실행 안에서 같은 원천 응답을 여러 지표가 쓸 때 한 번만 받는다(실패도 한 번만)."""
+    if key not in _FETCH_CACHE:
+        try:
+            _FETCH_CACHE[key] = (True, fn())
+        except Exception as exc:  # noqa: BLE001
+            _FETCH_CACHE[key] = (False, exc)
+    ok, val = _FETCH_CACHE[key]
+    if not ok:
+        raise val
+    return val
+
+
 def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tuple[str, float]]:
     src = ind["src"]
     kind = src[0]
@@ -1300,6 +1453,27 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
         return IF.fetch_deribit_dvol(src[1])
     if kind == "altme":
         return IF.fetch_altme_fng()
+    if kind == "kobc":
+        return latest_archive_series(ind["id"], IF.fetch_kobc(src[1], src[2]))
+    if kind == "opinet_crude":
+        return _cached("opinet_crude", IF.fetch_opinet_crude)
+    if kind in ("opinet_crack", "opinet_product"):
+        products = _cached("opinet_products", IF.fetch_opinet_products_recent)
+        if kind == "opinet_product":
+            return latest_archive_series(ind["id"], [(d, p[src[1]]) for d, p in products if src[1] in p])
+        return latest_archive_series(ind["id"], IF.crack_spreads(products, _cached("opinet_crude", IF.fetch_opinet_crude), src[1]))
+    if kind == "macau":
+        return IF.fetch_macau_ggr()
+    if kind == "spdr":
+        return IF.fetch_spdr_flows(src[1])
+    if kind == "npm":
+        return IF.fetch_npm_weekly(src[1])
+    if kind == "docker":
+        pulls = IF.fetch_docker_pulls(src[1])
+        cum = latest_archive_series(f"{ind['id']}_cum", [(kst_now().date().isoformat(), pulls)] if pulls else [])
+        return IF.daily_increments(cum)
+    if kind == "statcounter":
+        return IF.fetch_statcounter(src[1], src[2], src[3], src[4])
     if kind == "nrc":
         return IF.fetch_nrc_power()
     if kind == "census_c30":
@@ -1459,6 +1633,10 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
                   f" · YoY {built[iid]['latest_yoy']} · {built[iid]['regime']['direction']}")
         except Exception as exc:  # noqa: BLE001
             msg = f"{iid}: {type(exc).__name__}: {exc}"
+            if ind["src"][0] in ACCUMULATING_KINDS and "너무 적다" in str(exc):
+                # 최신값만 주는 원천을 적립하기 시작한 지표 — 관측 3개가 쌓일 때까지는 실패가 아니라 대기
+                print(f"  [warmup] {msg} — 적립 중")
+                continue
             old = prev_ind.get(iid)
             if isinstance(old, dict) and old.get("latest_date"):
                 since = old.get("carriedSince") or today.isoformat()

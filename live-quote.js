@@ -2,7 +2,8 @@
 // 계산은 live-quote-core.js(window.MirLiveQuote). 여기는 받기·캐시·그리기.
 // 모든 종목을 실시간으로 받으면 사이트가 느려지므로, 종목 분석을 연 그 종목만 워커 분봉 경로
 // (?intraday=1&interval=1m, 엣지 캐시 60초)에서 받는다. 열려 있는 동안 60초마다 다시 받고, 다른 종목으로
-// 가거나 탭이 숨겨지면 멈춘다. 장 마감 기준 가격·등락률(스냅샷) 줄은 그대로 두고 그 아래에 더한다.
+// 가거나 탭이 숨겨지면 멈춘다. 현재가를 받으면 이 줄을 가격 맨 위에 크게 놓고 장 마감(스냅샷) 가격은 아래로 작게
+// 내린다(2026-10-22 — 종목 분석에선 지금 가격이 먼저). 받기 전·장 전·휴장엔 종가 아래 작은 줄.
 // 전역 이름은 lq 접두사(classic script 전역 공유).
 
 const LQ_REFRESH_MS = 60000;
@@ -84,9 +85,23 @@ function lqBodyHtml(item) {
     + `<span class="sd-asof">${escapeHtml([lqTimeText(r), stateText, src].filter(Boolean).join(" · "))}</span>`;
 }
 
+// 현재가를 보여 줄 수 있는가(받았고, 오늘 거래가 있다) — 그러면 가격 맨 위 자리.
+function lqHasPrice(item) {
+  const { r } = lqResult(item);
+  return !!r && r.state !== "none" && r.state !== "nosession";
+}
+
 function lqUpdateDom(item) {
   const el = byId("sdLiveQuote");
-  if (el && el.dataset.lq === String(item.ticker)) el.innerHTML = lqBodyHtml(item);
+  if (!el || el.dataset.lq !== String(item.ticker)) return;
+  el.innerHTML = lqBodyHtml(item);
+  const top = lqHasPrice(item);
+  el.classList.toggle("is-top", top);
+  const wrap = el.parentElement;
+  const anchor = wrap && wrap.querySelector(top ? ".sd-price-row" : ".sd-change");
+  if (!anchor) return;
+  if (top && el.nextElementSibling !== anchor) wrap.insertBefore(el, anchor);
+  if (!top && anchor.nextElementSibling !== el) anchor.after(el);
 }
 
 // 종목이 열려 있는 동안 60초마다 다시 받는다. 다른 종목을 열면 그 종목으로 바뀐다.
@@ -102,10 +117,13 @@ function lqSchedule(item) {
   }, LQ_REFRESH_MS);
 }
 
-// stockSummaryHtml 이 가격·등락(장 마감) 줄 바로 아래에 넣는다.
-function liveQuoteLineHtml(item) {
+// stockSummaryHtml 이 두 자리에서 부른다 — slot "top"(가격 위)·"below"(장 마감 줄 아래). 지금 상태에 맞는 한 곳에만
+// 그리고, 받은 뒤 상태가 바뀌면 lqUpdateDom 이 자리를 옮긴다.
+function liveQuoteLineHtml(item, slot = "below") {
   if (!LIVE_DATA_PROXY || !item || !item.ticker || !window.MirLiveQuote) return "";
   lqFetch(item);
   lqSchedule(item);
-  return `<p class="sd-live" id="sdLiveQuote" data-lq="${escapeHtml(String(item.ticker))}" title="종목 분석을 연 동안 1분마다 갱신 · 등락은 전 거래일 종가 대비">${lqBodyHtml(item)}</p>`;
+  const top = lqHasPrice(item);
+  if ((slot === "top") !== top) return "";
+  return `<p class="sd-live${top ? " is-top" : ""}" id="sdLiveQuote" data-lq="${escapeHtml(String(item.ticker))}" title="종목 분석을 연 동안 1분마다 갱신 · 등락은 전 거래일 종가 대비">${lqBodyHtml(item)}</p>`;
 }

@@ -379,7 +379,54 @@
     return out;
   }
 
+  // ---------------------------------------------------------------- 배당락 후 회복(填息天數)
+  // 일봉 [o,h,l,c,v,date] 또는 {date|d, c|close, o|open} → [{day, date, o, c}] 오름차순(종가 없는 봉 제외).
+  function cleanBars(series) {
+    const out = [];
+    (series || []).forEach((r) => {
+      let d, o, c;
+      if (Array.isArray(r)) { o = Number(r[0]); c = Number(r[3]); d = r[5]; }
+      else if (r && typeof r === "object") { o = Number(r.o != null ? r.o : r.open); c = Number(r.c != null ? r.c : r.close); d = r.date || r.d; }
+      const day = dayNum(d);
+      if (day !== null && Number.isFinite(c) && c > 0) out.push({ day, date: String(d).slice(0, 10), o: Number.isFinite(o) && o > 0 ? o : null, c });
+    });
+    return out.sort((a, b) => a.day - b.day);
+  }
+
+  // 최근 limit 회 배당락마다: 기준가 = 배당락일 직전 거래일 종가, 회복 = 배당락일부터 처음으로 종가 ≥ 기준가인 날.
+  // 거래일 = 배당락일부터 회복일까지 봉 수(배당락 당일 회복 = 1), 달력일 = 회복일 − 배당락일.
+  // 회복 못 했으면 recovered=false 와 지금까지 경과(마지막 봉 기준)를 낸다. 일봉 범위 밖·직전 봉 없는 회차는 뺀다.
+  // opts.adjusted === true(원천이 배당 소급 수정주가라고 알려진 경우 — 국내 ETF 네이버 봉)면 계산하지 않는다.
+  // 시세 자동 판별은 하지 않는다: 국내는 현금배당락에 기준가 조정이 없어 갭이 배당보다 작은 종목이 많아
+  // '갭 ≈ 0 이면 조정 시세' 판정이 실제 비조정 시세(2026-10-23 실측 국내 911종목 중 424)를 잘못 거른다.
+  function dividendRecovery(series, rawDivs, opts) {
+    const o = opts || {};
+    const limit = o.limit || 8;
+    if (o.adjusted === true) return { rows: [], skipped: "adjusted" };
+    const bars = cleanBars(series);
+    const divs = cleanDividends(rawDivs);
+    if (bars.length < 2 || !divs.length) return { rows: [], skipped: bars.length < 2 ? "noBars" : "noDividends" };
+    const last = bars[bars.length - 1];
+    const rows = [];
+    divs.forEach((dv) => {
+      const ex = bars.findIndex((b) => b.day >= dv.day);
+      if (ex <= 0) return;                       // 배당락일이 일봉 밖(아직 안 옴 / 이력 시작 전)
+      const base = bars[ex - 1];
+      if (dv.day - base.day > 10) return;         // 직전 봉이 너무 멀면(이력 공백) 기준가를 못 믿는다
+      let rec = -1;
+      for (let i = ex; i < bars.length; i += 1) { if (bars[i].c >= base.c) { rec = i; break; } }
+      const row = { date: dv.date, amt: dv.amt, baseDate: base.date, baseClose: base.c };
+      if (rec >= 0) Object.assign(row, { recovered: true, recDate: bars[rec].date, tradingDays: rec - ex + 1, calendarDays: bars[rec].day - dv.day });
+      else Object.assign(row, { recovered: false, tradingDays: bars.length - ex, calendarDays: last.day - dv.day, asOf: last.date });
+      rows.push(row);
+    });
+    const recent = rows.slice(-limit).reverse();   // 최신 먼저
+    return { rows: recent, recoveredCount: recent.filter((r) => r.recovered).length, lastDate: last.date };
+  }
+
   const api = {
+    cleanBars,
+    dividendRecovery,
     cashReturnRow,
     cashReturns,
     cashReturnYields,

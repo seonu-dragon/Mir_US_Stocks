@@ -93,6 +93,8 @@ DAILY_DIR = ROOT / "data" / "korea" / "investor_flow_daily"
 DAILY_SHARDS = 16
 DAILY_MAX = 480              # 일별 표 대상 종목 수(시총 상위, 상세 파일 보유) — 하루 300KB 예산에 맞춘 값
 DETAILS_DIR = ROOT / "data" / "korea" / "details"
+THEMES_JSON = ROOT / "data" / "korea" / "themes.json"
+GROUP_WINDOWS = (("d1", 1), ("d5", 5), ("d20", 20))
 TOP_N = 10
 STREAK_N = 60   # 연속 순매수·순매도 목록 길이(화면이 시장 필터 뒤 앞쪽만 보여 준다)
 HEADERS = {
@@ -326,6 +328,92 @@ def compute_top(daily: dict[str, list], names: dict[str, str], n: int = TOP_N) -
     return out
 
 
+def load_theme_groups(path: Path | None = None) -> dict[str, dict]:
+    """테마 편입(build_kr_themes.py, DART 사업보고서 근거) → {테마 id: {"n": 이름, "members": [티커…]}}. 없으면 빈 dict."""
+    try:
+        doc = json.loads((path or THEMES_JSON).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    out = {}
+    for th in doc.get("themes") or []:
+        members = [str(m.get("t")).zfill(6) for m in th.get("members") or [] if m.get("t")]
+        if th.get("id") and members:
+            out[th["id"]] = {"n": th.get("name") or th["id"], "members": members}
+    return out
+
+
+def common_dates(daily: dict[str, list], share: float = 0.2) -> list[str]:
+    """전 종목 일별 행의 거래일(최신순). 종목의 share 이상이 가진 날짜만 — 거래정지 종목의 묵은 날짜가 창을 밀지 않게."""
+    cnt: dict[str, int] = {}
+    for rows in daily.values():
+        for r in rows:
+            if r and r[0]:
+                cnt[r[0]] = cnt.get(r[0], 0) + 1
+    floor = max(1, int(len(daily) * share))
+    return sorted((d for d, c in cnt.items() if c >= floor), reverse=True)
+
+
+def compute_group_flow(daily: dict[str, list], groups: dict[str, dict]) -> list[dict]:
+    """테마·업종별 외국인·기관·개인 순매수 추정 금액 합(1일·5일·20일, 억 원).
+
+    금액 = Σ 종목 Σ 일 (순매수 수량 × 그날 종가) — compute_top 과 같은 추정. 창은 전 종목 일별 행의 최신 거래일부터
+    1·5·20개 날짜(종목별 '최근 n행' 이 아니라 공통 날짜라 거래정지 종목의 묵은 행이 섞이지 않는다).
+    한 종목이 여러 테마에 편입되면 테마마다 더한다(화면에 '중복 편입 포함'). 수급 행이 있는 편입 종목만 c 로 센다.
+    반환 행: {"id", "n", "c", "f": [d1, d5, d20], "o": [...], "i": [...]} — 수급 행이 하나도 없는 그룹은 뺀다.
+    """
+    dates = common_dates(daily)
+    if not dates:
+        return []
+    wins = [set(dates[:n]) for _, n in GROUP_WINDOWS]
+    per: dict[str, dict[str, list[float]]] = {}
+    for t, rows in daily.items():
+        acc = {"f": [0.0] * len(wins), "o": [0.0] * len(wins), "i": [0.0] * len(wins)}
+        hit = False
+        for r in rows:
+            if not r or len(r) < 6 or r[1] is None:
+                continue
+            close = float(r[1])
+            for w, ds in enumerate(wins):
+                if r[0] not in ds:
+                    continue
+                hit = True
+                for col, idx in (("i", 3), ("f", 4), ("o", 5)):
+                    if r[idx] is not None:
+                        acc[col][w] += float(r[idx]) * close
+        if hit:
+            per[t] = acc
+    out = []
+    for gid, g in groups.items():
+        members = [t for t in dict.fromkeys(g.get("members") or []) if t in per]
+        if not members:
+            continue
+        row = {"id": gid, "n": g.get("n") or gid, "c": len(members)}
+        for col in ("f", "o", "i"):
+            row[col] = [round(sum(per[t][col][w] for t in members) / 1e8, 1) for w in range(len(wins))]
+        out.append(row)
+    out.sort(key=lambda x: -abs(x["f"][-1]))
+    return out
+
+
+def group_flow_payload(daily: dict[str, list], themes: dict[str, dict], sectors: dict[str, str]) -> dict | None:
+    """investor_flow.json 의 groups — 테마(theme)·업종(sector, 스냅샷 sector) 두 분류."""
+    dates = common_dates(daily)
+    if not dates:
+        return None
+    by_sector: dict[str, dict] = {}
+    for t, sec in sectors.items():
+        if sec and sec != "ETF":
+            by_sector.setdefault(sec, {"n": sec, "members": []})["members"].append(t)
+    iso = lambda d: f"{d[:4]}-{d[4:6]}-{d[6:8]}"  # noqa: E731
+    return {
+        "asOf": iso(dates[0]),
+        "from": {k: iso(dates[min(n, len(dates)) - 1]) for k, n in GROUP_WINDOWS},
+        "windows": [k for k, _ in GROUP_WINDOWS],
+        "theme": compute_group_flow(daily, themes),
+        "sector": compute_group_flow(daily, by_sector),
+    }
+
+
 def _streak(rows: list, sign_of) -> tuple[int, int]:
     """최신 행부터 같은 부호가 이어진 행 수와 그 부호(+1 매수 / -1 매도). 0·결측에서 끊는다."""
     first = sign_of(rows[0]) if rows else 0
@@ -474,6 +562,8 @@ def main() -> int:
     names = {str(s["ticker"]).zfill(6): s.get("company") or "" for s in stocks}
     top = compute_top(daily, names)
     streaks = compute_streaks(daily, names, {str(s["ticker"]).zfill(6): s.get("market") or "" for s in stocks})
+    groups = group_flow_payload(daily, load_theme_groups(),
+                                {str(s["ticker"]).zfill(6): s.get("sector") or "" for s in stocks})
     print(f"[수급] 일별 샤드 대상 {len(target_daily)}종목 · 바뀐 샤드 {len(daily_paths)}개 · "
           f"{daily_bytes / 1024:.0f}KB")
     payload = {
@@ -490,6 +580,8 @@ def main() -> int:
         "top": top,
         # 외국인·기관·쌍끌이 연속 순매수/순매도(전 종목, 20거래일 창). build_kr_market_funds.py 가 옮겨 싣는다.
         "streaks": streaks,
+        # 테마·업종별 외국인·기관·개인 순매수 추정 금액 합(1·5·20일, 중복 편입 포함). build_kr_market_funds.py 가 옮겨 싣는다.
+        "groups": groups,
         "stocks": out,
     }
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

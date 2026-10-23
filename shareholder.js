@@ -109,6 +109,19 @@ function shrDpsTable(years, cur, withPayout) {
   return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
+// 배당락 후 회복(填息天數) — 최근 회차 표. 회복 못 한 회차는 '-' 와 지금까지 경과.
+function shrRecoveryTable(rec, cur) {
+  const body = rec.rows.map((r) => `<tr><th scope="row" title="${escapeHtml(r.date)}">${escapeHtml(r.date.slice(2))}</th>
+    <td class="ins-num">${escapeHtml(shrPerShare(r.amt, cur))}</td>
+    <td class="ins-num">${escapeHtml(shrPerShare(r.baseClose, cur))}</td>
+    <td class="ins-num">${r.recovered
+      ? `${escapeHtml(r.recDate.slice(2))}<span class="shr-rec-sub">${r.tradingDays}거래일 · ${r.calendarDays}일</span>`
+      : `-<span class="shr-rec-sub">미회복 · ${r.tradingDays}거래일째</span>`}</td></tr>`).join("");
+  return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table shr-rec-table">
+    <thead><tr><th>배당락일</th><th class="ins-num">주당배당</th><th class="ins-num" title="배당락일 직전 거래일 종가">기준가</th><th class="ins-num" title="종가가 기준가 이상이 된 첫날 · 걸린 기간">회복일</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+
 function shrKpis(s, cur, growth, pref) {
   const tiles = [];
   tiles.push(["배당 주기", s.frequency.label, s.lastDividend ? `최근 배당락 ${s.lastDividend.date}` : ""]);
@@ -306,8 +319,13 @@ function renderShareholder(item) {
   if (!Array.isArray(item.dividends) && !Array.isArray(item.chartSeries) && !hasBuyback) { shrHide(host); return; }
   if (!s.hasDividends && !hasBuyback) { shrHide(host); return; }
 
+  // 배당락 후 회복 — 미국 야후 일봉 close·국내 네이버 수정주가는 분할만 조정(현금배당 미반영)이라 그대로 쓴다.
+  // 국내 ETF 네이버 봉은 분배금 소급이라 계산하지 않는다(ETF 는 위에서 카드 자체를 숨기지만 원천 규칙으로 한 번 더).
+  const rec = sh.dividendRecovery(item.chartSeries, item.dividends, {
+    limit: 8, adjusted: kr && item.barsSource !== "yahoo" && (typeof isStockEtf === "function" && isStockEtf(item)),
+  });
   const width = shrWidth(host);
-  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth, pref, cash, cashYields]);
+  const sig = JSON.stringify([ticker, market, width, rec.lastDate, rec.rows.length, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth, pref, cash, cashYields]);
   shrBind(host);
   if (sig === shrSig && !host.hidden && host.firstElementChild) return;
   shrSig = sig;
@@ -332,6 +350,16 @@ function renderShareholder(item) {
       legend: [{ label: "주당배당금", color: "var(--mf-c1)", shape: "bar" }].concat(withPayout ? [{ label: "배당성향(우)", color: "var(--mfo-line)", shape: "line" }] : []),
       source: s.coverageStart ? `${s.coverageStart}부터` : "",
       help: "주당배당금은 배당락일 기준으로 더한 값입니다(지급일 아님). 분할·무상증자 뒤 기준으로 조정돼 당시 공시 금액과 다를 수 있습니다.",
+    }));
+  }
+  if (rec.rows.length) {
+    cards.push(mirChartCard({
+      id: "shr.recovery",
+      title: "배당락 후 회복",
+      sub: `최근 ${rec.rows.length}회 중 ${rec.recoveredCount}회 회복`,
+      chart: shrRecoveryTable(rec, cur),
+      source: `일봉 ${rec.lastDate} 기준`,
+      help: "기준가 = 배당락일 직전 거래일 종가. 회복 = 배당락일부터 종가가 기준가 이상이 된 첫날(배당락 당일 회복 = 1거래일). 과거 기록이며 앞으로의 회복을 뜻하지 않습니다.",
     }));
   }
   const discWindow = kr && window.KR_DISCLOSURES ? (() => {

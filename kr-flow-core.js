@@ -189,6 +189,17 @@
     return finite(limit) && limit > 0 ? out.slice(0, limit) : out;
   }
 
+  // 테마·업종별 순매수 합(build_kr_investor_flow.py compute_group_flow) → 창(w: 0=1일·1=5일·2=20일)·투자자(key: f|o|i)
+  // 기준 순매수(side "Buy", 큰 순) 또는 순매도("Sell", 작은 순) 앞 limit 개. 행 {id, n, c(종목 수), f/o/i: [1일, 5일, 20일](억)}.
+  function groupRows(list, w, key, side, limit) {
+    const src = Array.isArray(list) ? list : [];
+    const val = (x) => (x && Array.isArray(x[key]) ? x[key][w] : null);
+    const sell = side === "Sell";
+    const out = src.filter((x) => finite(val(x)) && (sell ? val(x) < 0 : val(x) > 0))
+      .sort((a, b) => (sell ? val(a) - val(b) : val(b) - val(a)));
+    return finite(limit) && limit > 0 ? out.slice(0, limit) : out;
+  }
+
   // 연속일 표기: 수집 창을 다 채운 종목은 그보다 길 수 있어 '20일+'.
   function streakLabel(x, windowDays) {
     if (!x || !finite(x.d)) return "—";
@@ -258,7 +269,7 @@
     return finite(n) && n > 0 ? out.slice(0, n) : out;
   }
 
-  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, streakLabel, foreignRetention, etfOwners, ownershipRows };
+  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, groupRows, streakLabel, foreignRetention, etfOwners, ownershipRows };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrFlowCore = api;
 })(typeof window !== "undefined" ? window : null);

@@ -9835,7 +9835,7 @@ html[data-theme="dark"] .fng-t-4 { color: #4ade80; fill: #4ade80; }
 .cprob .sig-group h4.bull { color: var(--pos); }
 .cprob .sig-group h4.bear { color: var(--neg); }
 .cprob .sig-group h4.neu { color: var(--muted); }
-.cprob .sig-row { display: grid; grid-template-columns: 18px 92px 1fr 40px; align-items: center; gap: 8px;
+.cprob .sig-row { display: grid; grid-template-columns: 18px 92px 1fr 56px; align-items: center; gap: 8px;
   padding: 5px 0; font-size: var(--fs-sub); border-bottom: 1px solid var(--surface-2); }
 .cprob .sig-row:last-child { border-bottom: none; }
 .cprob .sig-arrow { text-align: center; }
@@ -9844,7 +9844,7 @@ html[data-theme="dark"] .fng-t-4 { color: #4ade80; fill: #4ade80; }
 .cprob .sig-row.is-neutral .sig-arrow { color: var(--muted); }
 .cprob .sig-label { font-weight: 600; }
 .cprob .sig-detail { color: var(--muted); font-size: var(--fs-sub); }
-.cprob .sig-strength { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cprob .sig-strength { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .cprob .base-line { font-size: var(--fs-body); line-height: 1.65; margin: 0 0 12px; }
 .cprob .base-stats { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -9989,7 +9989,7 @@ html[data-theme="dark"] .fng-t-4 { color: #4ade80; fill: #4ade80; }
   .cprob .prob-up, .cprob .prob-down { padding-left: 10px; padding-right: 10px; }
 
   /* 신호 행: 라벨 칼럼·폰트 축소로 가로 넘침 방지 */
-  .cprob .sig-row { grid-template-columns: 16px 72px 1fr 32px; gap: 6px; font-size: var(--fs-cap); }
+  .cprob .sig-row { grid-template-columns: 16px 72px 1fr 48px; gap: 6px; font-size: var(--fs-cap); }
   .cprob .sig-detail { font-size: var(--fs-cap); }
 
   /* 툴바: 제목 위, 기간/통계 버튼 그룹을 아래로 펼침 */

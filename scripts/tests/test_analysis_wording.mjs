@@ -92,6 +92,62 @@ test("buildResultHTML: '우위 국면'·목표가 줄 없음, 보정표가 있�
   assert.ok(!bare.includes("이 점수대("), "보정표가 없는데 캘리브레이션 문장을 씀");
 });
 
+// 화면 문구에 방향 판정·확률처럼 읽히는 말이 없어야 한다(2026-10-23 외부 검토).
+const BANNED = ["상승 우위", "하락 우위", "반등 기대", "매수 모멘텀", "적중률", "같은 쪽", "엇갈"];
+function trendRows(n, drift, wave) {
+  const rows = [];
+  let c = 100;
+  const start = Date.UTC(2021, 0, 4);
+  for (let i = 0; i < n; i++) {
+    c *= 1 + Math.sin(i / 7) * wave + drift;
+    const d = new Date(start + i * 86400000).toISOString().slice(0, 10);
+    rows.push({ o: c * 0.995, h: c * 1.012, l: c * 0.988, c, v: 1e6 + (i % 5) * 2e5, d });
+  }
+  return rows;
+}
+test("buildResultHTML: 금지 문구 없음(상승·하락·횡보 합성 일봉, 보정표 유무)", () => {
+  const cases = [[0.004, 0.006], [-0.004, 0.006], [0, 0.015], [0.0007, 0.012], [-0.012, 0.002], [0.012, 0.002]];
+  for (const withCalib of [true, false]) {
+    if (withCalib) {
+      globalThis.PROB_CALIBRATION = { markets: { us: { 20: { baseRate: 50.5, baseN: 40000, significantBuckets: 0, buckets: [
+        { lo: 0, hi: 101, upRate: 50.3, n: 7852, nEff: 3000, ciLow: 49, ciHigh: 52, avgReturn: 0.4, differsFromBase: false },
+      ] } } } };
+    } else {
+      delete globalThis.PROB_CALIBRATION;
+    }
+    for (const [drift, wave] of cases) {
+      const res = P.analyzeRows(trendRows(420, drift, wave), 20, { ticker: "TEST", company: "Test" });
+      assert.ok(res && res.consensus, "분석 결과 없음");
+      const html = P.buildResultHTML(res);
+      for (const w of BANNED) assert.ok(!html.includes(w), `'${w}' 가 렌더 결과에 있음 (drift ${drift})`);
+      assert.ok(!/class="sig-strength"[^>]*>\d+%</.test(html), "신호 강도에 % 표기");
+      for (const s of res.signals) {
+        assert.ok(!/(반등|과열|강세|약세|우위)/.test(String(s.detail || "")), `신호 상세에 판정어: ${s.label} = ${s.detail}`);
+      }
+      const rsi = res.signals.find((s) => s.label === "RSI(14)");
+      if (rsi && Number.isFinite(rsi.value)) assert.ok(/^RSI \d+ \(/.test(rsi.detail), `RSI 상세 형식: ${rsi.detail}`);
+      if (res.base) assert.ok(html.includes(`과거 유사 상황 실측 상승 `) && html.includes(`(표본 ${Number(res.base.samples).toLocaleString("ko-KR")}건).`), "실측 문장은 비율·표본만");
+    }
+  }
+  delete globalThis.PROB_CALIBRATION;
+});
+test("보정 상자 제목은 '이 점수대의 과거 상승 비율'", () => {
+  const res = P.analyzeRows(synthRows(400), 20, { ticker: "TEST", company: "Test" });
+  const html = P.buildResultHTML(res);
+  assert.ok(html.includes("이 점수대의 과거 상승 비율"), "보정 상자 제목");
+});
+test("gaugeColor: 점수·비율과 무관한 중립색(등락색 없음)", () => {
+  const c = P.gaugeColor(80);
+  for (const v of [0, 20, 40, 50, 60, 95]) assert.equal(P.gaugeColor(v), c);
+  assert.ok(!/--pos|--neg/.test(c), c);
+});
+test("analysis.js 화면 문자열(주석 제외)에 금지 문구·돌파 고정 문장 없음", () => {
+  const src = fs.readFileSync(path.join(ROOT, "analysis.js"), "utf-8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n").map((l) => l.replace(/(^|[^:"'`])\/\/.*$/, "$1")).join("\n");
+  for (const w of BANNED.concat(["반등 경향", "지속 우위"])) assert.ok(!src.includes(w), `'${w}' 가 코드 문자열에 있음`);
+});
+
 if (failures.length) {
   console.error(`analysis wording: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error(`  - ${f}`));

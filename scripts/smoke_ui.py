@@ -747,6 +747,57 @@ def test_mobile(browser, base: str) -> None:
     page.close()
 
 
+def test_market_switch_chart_analysis(browser, base: str) -> None:
+    """차트 분석을 연 채로 헤더에서 시장을 바꾸면 이전 종목 결과가 남지 않는지(2026-10-23 외부 검토).
+
+    예전엔 NVDA 차트 분석을 열고 한국으로 바꾸면 종목은 삼성전자인데 패널은 12초 뒤에도
+    NVDA 의 '기술 점수 41'·RSI 문장을 보여 줬고, 버튼을 다시 누르면 재계산 대신 패널이 닫혔다.
+    """
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+    boot(page, f"{base}?tab=search&sub=analysis&market=us&ticker=NVDA")
+    nvda_words = ("NVDA", "NVIDIA", "엔비디아")
+    page.locator("#chartProbBtn").click()
+    try:
+        page.wait_for_function(
+            "() => /기술 점수 \\d+/.test(document.querySelector('#chartProbPanel')?.textContent || '')",
+            timeout=60000)
+    except Exception:
+        pass
+    us_text = page.locator("#chartProbPanel").inner_text()
+    check("[전환] NVDA 차트 분석 결과 표시", "기술 점수" in us_text and any(w in us_text for w in nvda_words),
+          us_text.replace("\n", " ")[:80])
+
+    page.locator('#marketModeSwitch [data-market-mode="kr"]').click()
+    page.wait_for_function(
+        "() => window.MirMarket && window.MirMarket.getMode() === 'kr' && selectedTicker === '005930'"
+        " && typeof data !== 'undefined' && data && Array.isArray(data.stocks) && data.stocks.length > 100"
+        " && data.stocks.some((s) => s.ticker === '005930')", timeout=90000)
+    page.wait_for_timeout(2500)
+    panel = page.evaluate("""() => { const p = document.querySelector('#chartProbPanel');
+      return p ? { hidden: p.hidden, text: p.textContent || '' } : null; }""")
+    left = [w for w in nvda_words if panel and w in panel["text"]]
+    check("[전환] 한국 전환 뒤 패널이 닫히고 NVDA 문장이 없음",
+          bool(panel) and (panel["hidden"] or not panel["text"].strip()) and not left,
+          f"hidden={panel and panel['hidden']} 남은 단어={left}")
+    check("[전환] 차트 분석 버튼 비활성 표시",
+          not page.evaluate("() => document.querySelector('#chartProbBtn')?.classList.contains('is-active')"))
+
+    page.locator("#chartProbBtn").click()
+    try:
+        page.wait_for_function(
+            "() => /기술 점수 \\d+/.test(document.querySelector('#chartProbPanel')?.textContent || '')",
+            timeout=60000)
+    except Exception:
+        pass
+    kr_text = page.locator("#chartProbPanel").inner_text()
+    check("[전환] 다시 누르면 삼성전자로 재계산",
+          "기술 점수" in kr_text and "삼성전자" in kr_text and not any(w in kr_text for w in nvda_words),
+          kr_text.replace("\n", " ")[:80])
+    shoot(page, "market_switch_chart_analysis")
+    page.close()
+
+
 def main() -> int:
     global shots_dir
     ap = argparse.ArgumentParser()
@@ -764,7 +815,8 @@ def main() -> int:
             browser = p.chromium.launch()
             tests = (test_deeplinks, test_stock_views, test_dialogs, test_trust_center,
                      test_worker_no_client_id_leak, test_kr_market, test_stage3_layout,
-                     test_tab_a11y, test_ticker_deeplink_seo, test_mobile)
+                     test_tab_a11y, test_ticker_deeplink_seo, test_market_switch_chart_analysis,
+                     test_mobile)
             if args.only:
                 tests = tuple(fn for fn in tests if fn.__name__ in args.only.split(","))
             for fn in tests:

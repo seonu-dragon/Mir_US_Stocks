@@ -333,15 +333,15 @@ function detectCandlePatterns(rows) {
   }
   // 망치형 (하락 후 긴 아래꼬리)
   if (lowerWick(c) > body(c) * 2 && upperWick(c) < body(c) && c.c < a.c) {
-    out.push({ name: "망치형(반등 신호)", dir: 1, weight: 0.8 });
+    out.push({ name: "망치형", dir: 1, weight: 0.8 });
   }
   // 유성형 (상승 후 긴 위꼬리)
   if (upperWick(c) > body(c) * 2 && lowerWick(c) < body(c) && c.c > a.c) {
-    out.push({ name: "유성형(하락 신호)", dir: -1, weight: 0.8 });
+    out.push({ name: "유성형", dir: -1, weight: 0.8 });
   }
   // 도지 (방향성 약화)
   if (body(c) < range(c) * 0.1) {
-    out.push({ name: "도지(관망)", dir: 0, weight: 0.4 });
+    out.push({ name: "도지", dir: 0, weight: 0.4 });
   }
   return out;
 }
@@ -1590,7 +1590,7 @@ function buildSignals(rows) {
       label: "이동평균선 배열",
       dir,
       weight: 1.4,
-      detail: dir > 0.5 ? "정배열(상승 추세)" : dir < -0.5 ? "역배열(하락 추세)" : "혼조",
+      detail: dir > 0.5 ? "정배열 (가격·20·60·120일선 순)" : dir < -0.5 ? "역배열 (120·60·20일선·가격 순)" : "혼조",
     });
   }
 
@@ -1615,9 +1615,9 @@ function buildSignals(rows) {
     let detail = "중립";
     if (h != null) {
       dir = Math.max(-1, Math.min(1, h / (price * 0.01))); // 가격 1% 규모로 정규화
-      if (h > 0 && hPrev != null && hPrev <= 0) detail = "골든크로스 직후(강세 전환)";
-      else if (h < 0 && hPrev != null && hPrev >= 0) detail = "데드크로스 직후(약세 전환)";
-      else detail = h > 0 ? "0선 위(강세)" : "0선 아래(약세)";
+      if (h > 0 && hPrev != null && hPrev <= 0) detail = "골든크로스 직후 (히스토그램 0선 상향 교차)";
+      else if (h < 0 && hPrev != null && hPrev >= 0) detail = "데드크로스 직후 (히스토그램 0선 하향 교차)";
+      else detail = h > 0 ? "히스토그램 0선 위" : "히스토그램 0선 아래";
     }
     signals.push({ label: "MACD", dir, weight: 1.1, detail });
   }
@@ -1628,14 +1628,15 @@ function buildSignals(rows) {
     let dir = 0;
     let detail = "중립";
     // state 는 브리핑 문구용 명시 상태. 예전엔 dir<-0.4 를 '과매수' 로 읽어 RSI 31~46
-    // (하락 우위)에도 "과매수 구간 진입" 이 찍혔다.
+    // 에도 "과매수 구간 진입" 이 찍혔다. 문구는 수치 + 기준선 사실만(방향 판정·기대 문구 없음).
     let state = "neutral";
     if (rsi != null) {
-      if (rsi >= 70) { dir = -0.5; state = "overbought"; detail = `과매수 ${rsi.toFixed(0)} (단기 부담)`; }
-      else if (rsi <= 30) { dir = 0.6; state = "oversold"; detail = `과매도 ${rsi.toFixed(0)} (반등 기대)`; }
-      else if (rsi >= 55) { dir = 0.5; state = "bullish"; detail = `${rsi.toFixed(0)} (상승 우위)`; }
-      else if (rsi <= 45) { dir = -0.5; state = "bearish"; detail = `${rsi.toFixed(0)} (하락 우위)`; }
-      else { dir = (rsi - 50) / 10; detail = `${rsi.toFixed(0)} (중립권)`; }
+      const r = rsi.toFixed(0);
+      if (rsi >= 70) { dir = -0.5; state = "overbought"; detail = `RSI ${r} (70 이상)`; }
+      else if (rsi <= 30) { dir = 0.6; state = "oversold"; detail = `RSI ${r} (30 이하)`; }
+      else if (rsi >= 55) { dir = 0.5; state = "bullish"; detail = `RSI ${r} (55 이상)`; }
+      else if (rsi <= 45) { dir = -0.5; state = "bearish"; detail = `RSI ${r} (45 이하)`; }
+      else { dir = (rsi - 50) / 10; detail = `RSI ${r} (45~55)`; }
     }
     signals.push({ label: "RSI(14)", dir, weight: 1.0, detail, state, value: rsi });
   }
@@ -1648,8 +1649,8 @@ function buildSignals(rows) {
     let dir = 0;
     let detail = "중립";
     if (kv != null && dv != null) {
-      if (kv < 20) { dir = 0.4; detail = `과매도권 (K ${kv.toFixed(0)})`; }
-      else if (kv > 80) { dir = -0.4; detail = `과매수권 (K ${kv.toFixed(0)})`; }
+      if (kv < 20) { dir = 0.4; detail = `K ${kv.toFixed(0)} (20 미만)`; }
+      else if (kv > 80) { dir = -0.4; detail = `K ${kv.toFixed(0)} (80 초과)`; }
       else { dir = kv > dv ? 0.3 : -0.3; detail = `K ${kv.toFixed(0)} ${kv > dv ? ">" : "<"} D ${dv.toFixed(0)}`; }
     }
     signals.push({ label: "스토캐스틱", dir, weight: 0.7, detail });
@@ -1668,7 +1669,7 @@ function buildSignals(rows) {
       label: "거래량 흐름(OBV)",
       dir,
       weight: 0.8,
-      detail: ratio > 0.05 ? "매집 우위(자금 유입)" : ratio < -0.05 ? "분산 우위(자금 유출)" : "중립",
+      detail: `20일 OBV 변화 ${ratio >= 0 ? "+" : ""}${(ratio * 100).toFixed(0)}% (평균 거래량 대비)`,
     });
   }
 
@@ -1679,8 +1680,8 @@ function buildSignals(rows) {
     let dir = 0;
     let detail = "중립";
     if (pb != null) {
-      if (pb > 1) { dir = -0.3; detail = "상단 돌파(과열 가능)"; }
-      else if (pb < 0) { dir = 0.4; detail = "하단 이탈(반등 가능)"; }
+      if (pb > 1) { dir = -0.3; detail = `상단 밴드 위 (%B ${(pb * 100).toFixed(0)}%)`; }
+      else if (pb < 0) { dir = 0.4; detail = `하단 밴드 아래 (%B ${(pb * 100).toFixed(0)}%)`; }
       else { dir = (pb - 0.5) * 1.0; detail = `밴드 내 ${(pb * 100).toFixed(0)}% 위치`; }
     }
     signals.push({ label: "볼린저 밴드", dir, weight: 0.6, detail });
@@ -1707,7 +1708,7 @@ function buildSignals(rows) {
     const pos = hi === lo ? 0.5 : (price - lo) / (hi - lo);
     const distHigh = ((hi - price) / price) * 100;
     let dir;
-    if (pos > 0.9) dir = 0.5; // 신고가 근처 = 강한 종목
+    if (pos > 0.9) dir = 0.5; // 신고가 근처
     else if (pos < 0.1) dir = -0.3;
     else dir = (pos - 0.5) * 0.8;
     signals.push({
@@ -1751,7 +1752,7 @@ function buildSignals(rows) {
         label: "Supertrend",
         dir: st.bullish ? 0.7 : -0.7,
         weight: 1.0,
-        detail: st.bullish ? `강세 추세 (${fmtPrice(st.line)})` : `약세 추세 (${fmtPrice(st.line)})`,
+        detail: st.bullish ? `가격이 선(${fmtPrice(st.line)}) 위` : `가격이 선(${fmtPrice(st.line)}) 아래`,
       });
     }
   }
@@ -1813,8 +1814,8 @@ function buildSignals(rows) {
     if (w != null) {
       let dir = 0;
       let detail = `${w.toFixed(0)}`;
-      if (w > -20) { dir = -0.4; detail += " (과매수)"; }
-      else if (w < -80) { dir = 0.45; detail += " (과매도)"; }
+      if (w > -20) { dir = -0.4; detail += " (-20 초과)"; }
+      else if (w < -80) { dir = 0.45; detail += " (-80 미만)"; }
       else dir = (w + 50) / 50;
       signals.push({ label: "Williams %R", dir, weight: 0.55, detail });
     }
@@ -1826,8 +1827,8 @@ function buildSignals(rows) {
     if (cci != null) {
       let dir = Math.max(-1, Math.min(1, cci / 150));
       let detail = cci.toFixed(0);
-      if (cci > 100) detail += " (강세)";
-      else if (cci < -100) detail += " (약세)";
+      if (cci > 100) detail += " (100 초과)";
+      else if (cci < -100) detail += " (-100 미만)";
       signals.push({ label: "CCI", dir, weight: 0.55, detail });
     }
   }
@@ -1838,12 +1839,12 @@ function buildSignals(rows) {
     let dir = 0;
     // 기본(수축도 해제도 아님)은 '스퀴즈 없음'. 예전 기본값 "수축 해제" 는 브리핑이
     // '해제' 문자열로 판정해 스퀴즈가 없던 종목 전부에 "변동성 확대 국면" 을 붙였다.
-    let detail = sq.squeezed ? "수축 중 (변동성 폭발 대기)" : "스퀴즈 없음";
+    let detail = sq.squeezed ? "밴드 수축 중" : "스퀴즈 없음";
     if (sq.fired) {
       const mom = last(rocArray(closes, 12));
       dir = mom != null && mom > 0 ? 0.55 : mom != null && mom < 0 ? -0.55 : 0;
       // mom 이 null 이면 "모멘텀 상승"(null >= 0 이 true) 으로 잘못 찍혔다.
-      detail = "스퀴즈 해제" + (mom == null ? " (모멘텀 산출 불가)" : " + 모멘텀 " + (mom > 0 ? "상승" : mom < 0 ? "하락" : "보합"));
+      detail = "스퀴즈 해제" + (mom == null ? " (12일 수익률 산출 불가)" : ` · 12일 수익률 ${mom >= 0 ? "+" : ""}${mom.toFixed(1)}%`);
     } else if (sq.squeezed) dir = 0.1;
     signals.push({ label: "TTM Squeeze", dir, weight: sq.fired ? 1.0 : 0.5, detail, fired: !!sq.fired, squeezed: !!sq.squeezed });
   }
@@ -1857,15 +1858,15 @@ function buildSignals(rows) {
         label: "CMF(수급)",
         dir,
         weight: 0.8,
-        detail: cmf > 0.05 ? "자금 유입" : cmf < -0.05 ? "자금 유출" : `중립 (${cmf.toFixed(2)})`,
+        detail: `CMF ${cmf >= 0 ? "+" : ""}${cmf.toFixed(2)}`,
       });
     }
     const mfi = last(mfiArray(rows, 14));
     if (mfi != null) {
       let dir = 0;
       let detail = mfi.toFixed(0);
-      if (mfi < 20) { dir = 0.4; detail += " (과매도)"; }
-      else if (mfi > 80) { dir = -0.4; detail += " (과매수)"; }
+      if (mfi < 20) { dir = 0.4; detail += " (20 미만)"; }
+      else if (mfi > 80) { dir = -0.4; detail += " (80 초과)"; }
       else dir = (mfi - 50) / 50;
       signals.push({ label: "MFI", dir, weight: 0.7, detail });
     }
@@ -1879,7 +1880,7 @@ function buildSignals(rows) {
         label: "Parabolic SAR",
         dir: ps.bullish ? 0.5 : -0.5,
         weight: 0.65,
-        detail: ps.bullish ? "SAR 아래 (상승 추세)" : "SAR 위 (하락 추세)",
+        detail: ps.bullish ? "가격이 SAR 위" : "가격이 SAR 아래",
       });
     }
   }
@@ -1890,8 +1891,8 @@ function buildSignals(rows) {
     if (lr) {
       let dir = 0;
       let detail = "채널 중간";
-      if (price > lr.upper) { dir = -0.35; detail = "상단 밴드 돌파(과열)"; }
-      else if (price < lr.lower) { dir = 0.4; detail = "하단 밴드 이탈(반등 가능)"; }
+      if (price > lr.upper) { dir = -0.35; detail = "상단 밴드 위"; }
+      else if (price < lr.lower) { dir = 0.4; detail = "하단 밴드 아래"; }
       else dir = (price - lr.mid) / (lr.std || 1) * 0.3;
       signals.push({ label: "선형회귀 채널", dir, weight: 0.6, detail });
     }
@@ -2095,7 +2096,7 @@ function computeConsensusBundle(clean, horizon, meta) {
         label: "공매도(숏)",
         dir,
         weight: Math.min(1.3, 0.5 + dtc / 10),
-        detail: `커버 ${dtc.toFixed(1)}일${bullPat ? " + 강세 패턴 (스퀴즈 셋업)" : ""}`,
+        detail: `커버 ${dtc.toFixed(1)}일${bullPat ? " + 상승형 패턴 확정" : ""}`,
       });
       if (dtc >= 5 && bullPat) {
         shortSqueeze = { daysToCover: dtc, setup: true, changePct: shortData.changePct };
@@ -2354,10 +2355,10 @@ async function loadDetailFromOtherMarket(ticker) {
   }
 }
 
-function gaugeColor(up) {
-  if (up >= 60) return "var(--pos, #138a4d)";
-  if (up <= 40) return "var(--neg, #c03535)";
-  return "var(--amber, #b7791f)";
+// 점수·과거 상승 비율은 가격 등락이 아니라서 등락색(초록/빨강)을 쓰지 않는다 — 값과 무관한 중립색.
+// (예전엔 60↑ 초록·40↓ 빨강이라, 방향 판정을 뺀 기술 점수에 다시 방향 색이 붙었다.)
+function gaugeColor() {
+  return "var(--text, #1d2433)";
 }
 
 // 머리글 판정 = 기술 점수 그대로. 예전엔 점수대로 '상승/하락 우위' 를 붙였는데, 같은 화면의
@@ -2437,15 +2438,14 @@ function generateBriefing(result) {
   // 상승 비율을 섞어 12~88 로 자른 값(headlineUp)으로 '상승/하락 우위 국면' 을 판정했는데,
   // 같은 화면의 캘리브레이션표가 그 점수대를 시장 평균과 구분하지 못해 방향 판정을 뺐다.
   const score = result.consensus ? result.consensus.up : null;
-  const sigDir = directionBand(score);
   const baseUp = result.base ? (result.base.upProbSmoothed != null ? result.base.upProbSmoothed : result.base.upProb) : null;
   const baseDir = directionBand(baseUp);
-  const agree = sigDir != null && baseDir != null && sigDir !== 0 && sigDir === baseDir;
+  // 점수와 실측의 '같은 쪽/엇갈림' 판정은 뺐다 — 점수대가 시장 평균과 다르지 않은데 방향 일치를 말하면
+  // 근거 없는 확신을 준다. 실측 비율과 표본 수만 적는다.
+  const baseN = result.base && Number.isFinite(Number(result.base.samples)) ? Number(result.base.samples) : null;
   let consistency = "";
   if (baseDir == null) consistency = "과거 유사 상황 표본은 부족합니다.";
-  else if (agree) consistency = `과거 유사 상황 실측(상승 ${baseUp.toFixed(0)}%)도 같은 쪽입니다.`;
-  else if (sigDir !== 0 && baseDir !== 0) consistency = `과거 유사 상황 실측(상승 ${baseUp.toFixed(0)}%)과는 엇갈립니다.`;
-  else consistency = `과거 유사 상황 실측은 상승 ${baseUp.toFixed(0)}%입니다.`;
+  else consistency = `과거 유사 상황 실측 상승 ${baseUp.toFixed(0)}%${baseN != null ? ` (표본 ${baseN.toLocaleString("ko-KR")}건)` : ""}.`;
 
   const opinion = Number.isFinite(score)
     ? `종합 기술 점수 <strong>${Math.round(score)}</strong>/100입니다. ${calibrationNoteSlotHtml(score, result.horizon)} ${consistency}`
@@ -2460,25 +2460,26 @@ function generateBriefing(result) {
   const volSig = signals.find(s => s.label.includes("OBV"));
 
   if (maSig) {
-    if (maSig.dir > 0.5) supportReasons.push("이동평균선이 정배열되어 탄탄한 상승 추세를 지지하고 있습니다.");
-    else if (maSig.dir < -0.5) riskReasons.push("이평선이 역배열 상태로 상단에 강한 저항 매물이 쌓여 있습니다.");
+    if (maSig.dir > 0.5) supportReasons.push("가격이 20일선 위에 있고 20·60·120일선이 정배열입니다.");
+    else if (maSig.dir < -0.5) riskReasons.push("가격이 20일선 아래에 있고 20·60·120일선이 역배열입니다.");
   }
 
   if (rsiSig) {
-    // 명시 상태(state)로 판정 — dir 부호로 읽으면 '하락 우위(31~45)' 가 과매수로 오인된다.
-    if (rsiSig.state === "overbought") riskReasons.push("RSI 지표가 과매수 구간에 진입하여 단기 조정 리스크가 존재합니다.");
-    else if (rsiSig.state === "oversold") supportReasons.push("RSI 지표가 과매도(침체)권에 있어 기술적 반등 가능성이 높습니다.");
-    else if (rsiSig.state === "bearish") riskReasons.push(`RSI ${Math.round(rsiSig.value)}로 하락 우위권에 머물러 매수 모멘텀이 약합니다.`);
+    // 명시 상태(state)로 판정 — dir 부호로 읽으면 RSI 31~45 가 과매수로 오인된다. 수치·기준선만 적는다.
+    const rv = Math.round(rsiSig.value);
+    if (rsiSig.state === "overbought") riskReasons.push(`RSI ${rv}로 70 이상입니다.`);
+    else if (rsiSig.state === "oversold") supportReasons.push(`RSI ${rv}로 30 이하입니다.`);
+    else if (rsiSig.state === "bearish") riskReasons.push(`RSI ${rv}로 45 이하입니다.`);
   }
 
   if (macdSig) {
-    if (macdSig.detail.includes("골든크로스")) supportReasons.push("MACD가 골든크로스를 기록하며 강세 전환 모멘텀이 포착되었습니다.");
-    else if (macdSig.detail.includes("데드크로스")) riskReasons.push("MACD 데드크로스가 발생해 단기 하락 압력이 증가하고 있습니다.");
+    if (macdSig.detail.includes("골든크로스")) supportReasons.push("MACD 히스토그램이 최근 봉에서 0선을 위로 넘었습니다(골든크로스).");
+    else if (macdSig.detail.includes("데드크로스")) riskReasons.push("MACD 히스토그램이 최근 봉에서 0선 아래로 내려갔습니다(데드크로스).");
   }
 
   if (volSig) {
-    if (volSig.dir > 0.1) supportReasons.push("OBV상 자금 유입(매집 우위) 흐름이 관찰되어 수급이 양호합니다.");
-    else if (volSig.dir < -0.1) riskReasons.push("OBV상 매도 분산 흐름이 이어져 수급이 약화되고 있습니다.");
+    if (volSig.dir > 0.1) supportReasons.push("최근 20일 OBV가 늘었습니다.");
+    else if (volSig.dir < -0.1) riskReasons.push("최근 20일 OBV가 줄었습니다.");
   }
 
   const pats = result.patterns || [];
@@ -2494,15 +2495,15 @@ function generateBriefing(result) {
   }
 
   const vwapSig = signals.find((s) => s.label === "VWAP");
-  if (vwapSig && vwapSig.dir > 0.3) supportReasons.push("VWAP 위에서 거래되어 기관·단기 매수세가 우위입니다.");
+  if (vwapSig && vwapSig.dir > 0.3) supportReasons.push(`가격이 ${vwapSig.detail}입니다.`);
   const ichiSig = signals.find((s) => s.label === "Ichimoku");
-  if (ichiSig && ichiSig.dir > 0.5) supportReasons.push("일목균형표상 구름 위 강세 구간입니다.");
-  else if (ichiSig && ichiSig.dir < -0.5) riskReasons.push("일목균형표상 구름 아래 약세 구간입니다.");
+  if (ichiSig && ichiSig.dir > 0.5) supportReasons.push("일목균형표 전환선이 기준선 위이고 가격이 구름 위입니다.");
+  else if (ichiSig && ichiSig.dir < -0.5) riskReasons.push("일목균형표 전환선이 기준선 아래이고 가격이 구름 아래입니다.");
   const sqSig = signals.find((s) => s.label === "TTM Squeeze");
-  if (sqSig && sqSig.fired === true) supportReasons.push("볼린저·켈트너 수축 해제로 변동성 확대 국면에 진입했습니다.");
+  if (sqSig && sqSig.fired === true) supportReasons.push("볼린저 밴드가 켈트너 채널 밖으로 다시 넓어졌습니다(스퀴즈 해제).");
   if (result.mtf && result.mtf.bias > 0.5) supportReasons.push(`주봉 추세와 일봉이 일치합니다 (${result.mtf.label}).`);
   else if (result.mtf && result.mtf.bias < -0.5) riskReasons.push(`주봉·일봉 추세가 하락 방향으로 일치합니다.`);
-  if (result.shortSqueeze) supportReasons.push(`공매도 커버 ${result.shortSqueeze.daysToCover.toFixed(1)}일 + 강세 패턴으로 숏 스퀴즈 셋업이 관찰됩니다.`);
+  if (result.shortSqueeze) supportReasons.push(`공매도 커버 ${result.shortSqueeze.daysToCover.toFixed(1)}일이고 상승형 패턴이 확정되었습니다.`);
 
   let coreBrief = "";
   if (supportReasons.length > 0) {
@@ -2592,12 +2593,12 @@ function calibrationInnerHtml(score, horizon) {
   const market = isKrAnalysisMode() ? "kr" : "us";
   if (!calibrationData()) {
     return calibrationMissing
-      ? `<span class="muted">과거 적중률 표가 아직 없습니다.</span>`
-      : `<span class="muted">과거 적중률 표를 불러오는 중…</span>`;
+      ? `<span class="muted">점수대별 과거 상승 비율 표가 아직 없습니다.</span>`
+      : `<span class="muted">점수대별 과거 상승 비율 표를 불러오는 중…</span>`;
   }
   const hit = calibrationBucket(score, horizon, market);
   if (!hit) {
-    return `<span class="muted">이 점수 구간은 표본이 없어 과거 적중률을 말할 수 없습니다.</span>`;
+    return `<span class="muted">이 점수 구간은 표본이 없어 과거 상승 비율을 말할 수 없습니다.</span>`;
   }
   const { row, block, meta } = hit;
   const diff = row.upRate - block.baseRate;
@@ -2675,7 +2676,7 @@ function calibrationSlotHtml(score, horizon) {
   ensureCalibration(); // 결과가 처음 그려질 때 받는다(대시보드는 init 을 타지 않는다)
   return `<div class="calib-box" data-calib-score="${score.toFixed(2)}" data-calib-horizon="${horizon}"
     style="margin:0 0 10px;padding:8px 10px;border:1px solid var(--line,#d9dee7);border-radius:8px;font-size:12px;line-height:1.55;">
-    <div class="muted" style="font-size:var(--fs-cap);margin-bottom:4px;">이 점수의 과거 적중률</div>
+    <div class="muted" style="font-size:var(--fs-cap);margin-bottom:4px;">이 점수대의 과거 상승 비율</div>
     ${calibrationInnerHtml(score, horizon)}
   </div>`;
 }
@@ -2693,14 +2694,15 @@ function buildResultHTML(result) {
   const neutralSignals = result.signals.filter((s) => Math.abs(s.dir) <= 0.15);
 
   const signalRow = (s) => {
-    const pct = Math.round(Math.abs(s.dir) * 100);
+    // 오른쪽 숫자는 투표 강도(|dir|×100)다. '%' 를 붙이면 상승 확률로 읽혀 '강도 N' 으로 적는다.
+    const strength = Math.round(Math.abs(s.dir) * 100);
     const cls = s.dir > 0.15 ? "is-bull" : s.dir < -0.15 ? "is-bear" : "is-neutral";
     const arrow = s.dir > 0.15 ? "▲" : s.dir < -0.15 ? "▼" : "■";
     return `<div class="sig-row ${cls}">
       <span class="sig-arrow">${arrow}</span>
       <span class="sig-label">${escapeHtml(s.label)}</span>
       <span class="sig-detail">${escapeHtml(s.detail)}</span>
-      <span class="sig-strength">${pct}%</span>
+      <span class="sig-strength" title="지표 투표 강도(0~100) · 확률이 아님">강도 ${strength}</span>
     </div>`;
   };
 
@@ -2974,7 +2976,7 @@ function renderTechnicalLevelsCard(result) {
   if (tl.psar && tl.psar.values) {
     const ps = tl.psar.values[tl.psar.values.length - 1];
     if (ps != null) {
-      parts.push(`<p class="pat-stat"><b>Parabolic SAR</b> ${fmtPrice(ps)} · ${tl.psar.bullish ? "상승 추세" : "하락 추세"}</p>`);
+      parts.push(`<p class="pat-stat"><b>Parabolic SAR</b> ${fmtPrice(ps)} · ${tl.psar.bullish ? "가격이 SAR 위" : "가격이 SAR 아래"}</p>`);
     }
   }
   if (!parts.length) return "";
@@ -3311,7 +3313,7 @@ function renderShortSqueezeCard(result) {
   const s = result.shortSqueeze;
   return `<div class="card squeeze-card">
     <h3>숏 스퀴즈 셋업</h3>
-    <p class="base-line">공매도 커버 <b>${s.daysToCover.toFixed(1)}일</b> + <b>강세 패턴 중첩</b> → 기술적 스퀴즈 가능성</p>
+    <p class="base-line">공매도 커버 <b>${s.daysToCover.toFixed(1)}일</b> · 상승형 패턴 확정</p>
     <p class="muted" style="margin:0;font-size:12px;">공매도 변화 ${s.changePct >= 0 ? "+" : ""}${(s.changePct || 0).toFixed(1)}% (최근 결산 기준)</p>
   </div>`;
 }
@@ -3324,14 +3326,13 @@ function renderBreakoutCard(result) {
   const phase = b.isRetest ? "되돌림(retest) 구간" : "돌파 직후";
   const cont = b.stat.cont_rate;
   const edge = b.stat.edge_vs_market;
-  const contColor = edge != null && edge >= 0 ? "var(--pos)" : "var(--neg)";
+  const contColor = gaugeColor();
   const edgeStr = edge == null ? "" :
     `<span class="pat-edge ${edge >= 0 ? "pos" : "neg"}">시장 대비 ${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%p</span>`;
   return `<div class="card">
     <h3>④ 돌파 연속성 <span class="muted">(${b.barsSince}봉 전 ${dirWord} · ${phase})</span></h3>
     <p class="pat-stat">과거 같은 셋업 <b>${b.stat.n.toLocaleString()}건</b> 중
       <b style="color:${contColor}">${cont.toFixed(0)}%</b>가 ${result.horizon}거래일 뒤 ${b.dir > 0 ? "상승" : "하락"} 지속 ${edgeStr}</p>
-    <p class="pat-note muted">※ 검증 결과: 상승 돌파는 약한 지속 우위, 하락 돌파는 오히려 반등 경향이 강합니다. 되돌림은 주로 단기 진입 타이밍에 도움.</p>
   </div>`;
 }
 

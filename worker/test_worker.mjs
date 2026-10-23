@@ -1999,6 +1999,14 @@ await test("chatSystemPrompt — 국내는 '미르의 한국 주식'·DART, 미�
   eq(chatSystemPrompt(undefined), kr, "모르면 국내(예전 기본값)");
 });
 
+await test("chatSystemPrompt — 국내는 용어 사전의 미국 전용 항목을 안내하지 않음, 증권사 평가는 '원문 평가'(공통)", () => {
+  const kr = chatSystemPrompt("kr");
+  const us = chatSystemPrompt("us");
+  ok(kr.includes("용어 사전의 미국 전용 항목(10-K·Fed·XLK 등)은 국내 질문에서 안내하지 않는다"), "국내 노트");
+  ok(!us.includes("국내 질문에서 안내하지 않는다"), "미국 모드엔 없음");
+  for (const p of [kr, us]) ok(p.includes("증권사 투자의견·목표가는 '원문 평가'로 출처와 함께, 첫 문장에 두지 말 것"), "원문 평가 규칙");
+});
+
 await test("resolveChatMarket — market 우선, 없으면 티커 모양(6자리·.KS/.KQ = 국내)", () => {
   eq(resolveChatMarket({ market: "us", searchHints: { tickers: ["005930"] } }), "us", "명시 market 우선");
   eq(resolveChatMarket({ market: "KR" }), "kr", "대소문자");

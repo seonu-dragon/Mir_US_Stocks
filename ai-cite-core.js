@@ -138,6 +138,46 @@
 
   // 후속 질문 칩 — 추가 LLM 호출 없이 이 종목 컨텍스트에 실제로 있는 데이터로만 고른다.
   // 사용자가 방금 물은 주제(키워드 겹침)는 뺀다. 최대 3개.
+  // 증권사 투자의견·목표가 문장(뉴스에서 옮긴 남의 평가)은 '원문 평가 · ' 로 표시하고, 요약 첫 문장에 두지 않는다.
+  // 판정은 '목표가/투자의견' + '제시·상향·하향·유지' 같은 평가 행위 동사가 함께 있을 때만 — 사이트 자체 데이터
+  // ("애널리스트 평균 목표가가 현재가보다 15% 높음")는 건드리지 않는다. 형식이 예상과 다르면 원문 그대로 둔다.
+  const RATING_NOUN_RE = /목표\s*주?가|투자\s*의견|price\s*target|\b(?:Buy|Overweight|Outperform|Neutral|Underweight|Sell)\b\s*(?:rating|등급|의견)?/i;
+  const RATING_ACT_RE = /제시|상향|하향|유지|올려|올렸|내려|내렸|낮췄|높였|재확인|커버리지|개시|raised|lifted|cut|lowered|reiterat|maintain|initiat|upgrade|downgrade/i;
+  const RATING_LABEL = "원문 평가 · ";
+  const SENT_SPLIT_RE = /(?<=[.!?。](?:[ \t]*\[[SN0-9,，·/\s]+\])?)[ \t]+/;
+
+  function isRatingSentence(s) {
+    const t = String(s || "");
+    return RATING_NOUN_RE.test(t) && RATING_ACT_RE.test(t);
+  }
+
+  function labelRating(s) {
+    return s.includes("원문 평가") ? s : RATING_LABEL + s;
+  }
+
+  function labelAnalystRatings(text) {
+    const src = String(text == null ? "" : text);
+    if (!src.trim()) return src;
+    const lines = src.split("\n");
+    let firstPara = true;
+    const out = lines.map((line) => {
+      const m = line.match(/^(\s*(?:[-*•]|\d+\.)\s+)(.*)$/);
+      if (m) { firstPara = false; return isRatingSentence(m[2]) ? m[1] + labelRating(m[2]) : line; }
+      if (!line.trim() || /^\s*(\*\*|#)/.test(line)) { if (line.trim()) firstPara = false; return line; }
+      const sents = line.split(SENT_SPLIT_RE);
+      const labeled = sents.map((s) => (isRatingSentence(s) ? labelRating(s) : s));
+      if (firstPara && sents.length > 1 && isRatingSentence(sents[0])) {
+        // 첫 문장이 남의 평가면 사실 문장 뒤로 보낸다(순서만 바꾸고 문장은 그대로).
+        const facts = labeled.filter((_, i) => !isRatingSentence(sents[i]));
+        const ratings = labeled.filter((_, i) => isRatingSentence(sents[i]));
+        if (facts.length) { firstPara = false; return facts.concat(ratings).join(" "); }
+      }
+      firstPara = false;
+      return labeled.join(" ");
+    });
+    return out.join("\n");
+  }
+
   const FOLLOWUPS = [
     { key: "disclosure", test: /DART 공시|주요공시\(8-K\)/, ask: /공시/, l: "최근 공시 요약", q: (n) => `${n} 최근 공시 내용을 요약해줘` },
     { key: "earnings", test: /다음실적:/, ask: /실적|어닝/, l: "실적 일정", q: (n) => `${n} 다음 실적 발표 일정과 예상치를 정리해줘` },
@@ -163,7 +203,7 @@
     return out;
   }
 
-  const api = { numberContext, newsSources, applyCitations, stripCitations, citationHtml, notesHtml, followupQuestions, CITE_RULE, CTX_MAX };
+  const api = { numberContext, newsSources, applyCitations, stripCitations, citationHtml, notesHtml, followupQuestions, labelAnalystRatings, isRatingSentence, CITE_RULE, CTX_MAX };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirAiCite = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

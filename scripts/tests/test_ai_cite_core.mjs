@@ -88,5 +88,18 @@ test("followupQuestions — 컨텍스트에 있는 데이터만, 물은 주제 �
   assert.deepEqual(c.followupQuestions({ name: "", context: CTX }), []);
 });
 
+test("labelAnalystRatings — 증권사 평가는 '원문 평가 · ' 표시 + 첫 문장에서 내림, 사이트 데이터·멱등", () => {
+  const t = "Needham은 매수 의견을 유지하고 목표가 300달러를 제시했습니다 [N1]. 주가는 2.1% 올랐습니다 [S1].\n**관찰 포인트**\n- 모건스탠리가 목표주가를 250달러로 상향했습니다\n- 애널리스트 평균 목표가가 현재가보다 15% 높음";
+  const out = c.labelAnalystRatings(t);
+  const [first, , b1, b2] = out.split("\n");
+  assert.equal(first.startsWith("주가는 2.1% 올랐습니다 [S1]."), true, first);
+  assert.equal(first.endsWith("원문 평가 · Needham은 매수 의견을 유지하고 목표가 300달러를 제시했습니다 [N1]."), true, first);
+  assert.equal(b1, "- 원문 평가 · 모건스탠리가 목표주가를 250달러로 상향했습니다");
+  assert.equal(b2, "- 애널리스트 평균 목표가가 현재가보다 15% 높음", "사이트 자체 데이터는 그대로");
+  assert.equal(c.labelAnalystRatings(out), out, "두 번 적용해도 같다");
+  assert.equal(c.labelAnalystRatings("원문 평가 · Needham: 목표가 300달러 유지."), "원문 평가 · Needham: 목표가 300달러 유지.");
+  assert.equal(c.labelAnalystRatings(""), "");
+});
+
 console.log(`${failures.length ? "FAILED" : "OK"} — ${passed} passed, ${failures.length} failed`);
 if (failures.length) { failures.forEach((f) => console.error(f)); process.exit(1); }

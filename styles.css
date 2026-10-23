@@ -8872,6 +8872,24 @@ i.eps-sb-act.neg { background: var(--neg); }
 .bh-base { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .bh-foot { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .bh-grid { grid-template-columns: minmax(0, 1fr); } }
+/* 섹터별 시장 폭 표(breadth-history.js renderSectorBreadth) */
+.sb-table-wrap { overflow-x: auto; margin-top: var(--space-2); }
+.sb-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.sb-table th, .sb-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.sb-table thead th { color: var(--muted); font-weight: var(--fw-strong); font-size: var(--fs-cap); }
+.sb-table th:first-child { text-align: left; }
+.sb-bar { display: inline-block; width: 44px; height: 6px; margin-right: 6px; vertical-align: middle; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.sb-bar i { display: block; height: 100%; background: var(--primary); }
+/* 업종 순위표(industry-groups.js) */
+.ig-table-wrap { overflow-x: auto; }
+.ig-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.ig-table th, .ig-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.ig-table thead th { color: var(--muted); font-weight: var(--fw-strong); font-size: var(--fs-cap); }
+.ig-table .ig-name { text-align: left; white-space: normal; min-width: 160px; max-width: 280px; font-weight: normal; }
+.ig-table .ig-name small { display: block; color: var(--muted); font-size: var(--fs-cap); }
+.ig-table .is-sel { font-weight: var(--fw-strong); background: var(--bg-soft); }
+.ig-table .ig-mover { text-align: left; }
+.ig-table .ticker-link { cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 2px; }
 .breadth-sector {
   display: grid;
   grid-template-columns: 92px 1fr 38px;

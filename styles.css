@@ -16868,6 +16868,7 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .shr-rank-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .shr-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
 .shr-kpis.shr-kpis-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.shr-kpis.shr-kpis-cash { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 4px 0 10px; }
 .shr-kpis > div { min-width: 0; padding: 10px 12px; border-radius: var(--surface-radius); background: var(--surface-card); }
 .shr-kpis dt { margin: 0; color: var(--muted); font-size: var(--fs-cap); }
 .shr-kpis dd { margin: 2px 0 0; color: var(--text); font-size: var(--fs-title); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

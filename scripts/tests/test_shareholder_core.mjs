@@ -181,6 +181,46 @@ test("mcap-core 와 이어서: NVDA 분할 전 행의 EPS 가 현재 기준으�
   near(e.eps, 4368000000 / 25070000000, 1e-9);   // ≈ $0.174 (분할 후 기준)
 });
 
+test("주주환원 현금: 연간 최근 5년 + TTM, 결측은 null(0 아님), 합계·SBC 차감", () => {
+  const file = {
+    annual: [
+      { fy: 2019, buyback: 1, divPaid: 1, sbc: 1 },
+      { fy: 2020, buyback: 10, divPaid: 4, sbc: 2 },
+      { fy: 2021, buyback: 12, sbc: 3 },                    // 배당 태그 없음 → 배당·합계 결측
+      { fy: 2022, rev: 5 },                                  // 둘 다 없음 → 행 빠짐
+      { fy: 2023, buyback: 0, divPaid: 5, sbc: 2 },          // 공시된 0 은 0
+      { fy: 2024, buyback: 20, divPaid: 6 },
+      { fy: 2025, buyback: 30, divPaid: 7, sbc: 4 },
+    ],
+    ttm: { basis: "4Q", quarters: ["2025Q4", "2026Q1", "2026Q2", "2026Q3"], buyback: 40, divPaid: 8, sbc: 5 },
+  };
+  const cr = sh.cashReturns(file);
+  assert.deepEqual(cr.years.map((y) => y.fy), [2020, 2021, 2023, 2024, 2025]);
+  const y21 = cr.years[1];
+  assert.equal(y21.div, null); assert.equal(y21.total, null); assert.equal(y21.net, 9);
+  assert.equal(cr.years[2].buyback, 0); assert.equal(cr.years[2].total, 5);
+  assert.equal(cr.years[3].net, null);                     // SBC 없으면 순매입 결측
+  assert.equal(cr.ttm.total, 48); assert.equal(cr.ttm.net, 35); assert.equal(cr.ttm.basis, "4Q");
+  assert.deepEqual(cr.has, { buyback: true, div: true, sbc: true });
+  assert.equal(sh.cashReturns({ annual: [{ fy: 2025, rev: 1, sbc: 3 }], ttm: { sbc: 3 } }), null);   // 태그 없음 → 카드 없음
+  assert.equal(sh.cashReturns(null), null);
+});
+
+test("주주환원 현금: 무배당 기록이면 합계에 배당 0, 수익률은 시총 대비 %", () => {
+  const file = { annual: [{ fy: 2025, buyback: 50, sbc: 10 }], ttm: { basis: "4Q", buyback: 60, sbc: 12 } };
+  assert.equal(sh.cashReturns(file).ttm.total, null);
+  const cr = sh.cashReturns(file, { noDividends: true });
+  assert.equal(cr.ttm.total, 60); assert.equal(cr.ttm.div, null);   // 표의 배당 칸은 여전히 '—'
+  const y = sh.cashReturnYields(cr.ttm, 1200);
+  near(y.buyback, 5, 1e-9); near(y.total, 5, 1e-9); near(y.net, 4, 1e-9); assert.equal(y.div, 0);
+  const y2 = sh.cashReturnYields(sh.cashReturns(file).ttm, 1200);
+  assert.equal(y2.total, null); assert.equal(y2.div, null);
+  const y3 = sh.cashReturnYields(sh.cashReturns(file).ttm, 1200, { divYieldPct: 0 });
+  near(y3.total, 5, 1e-9);
+  const none = sh.cashReturnYields(cr.ttm, 0);
+  assert.deepEqual(none, { buyback: null, div: null, total: null, net: null });
+});
+
 if (failures.length) {
   console.error(`shareholder-core: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error(` - ${f}`));

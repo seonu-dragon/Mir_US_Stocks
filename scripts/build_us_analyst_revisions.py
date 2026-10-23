@@ -10,7 +10,8 @@
    (행동 up/down/init/main/reit 은 야후 원문 코드, 날짜는 미 동부 기준 YYYY-MM-DD)
 2) data/us_estimate_revisions.{json,js} — window.US_ESTIMATE_REVISIONS
    기간별(이번 분기 0q · 다음 분기 +1q · 올해 회계연도 0y · 내년 +1y) 컨센서스 EPS 의 현재·7·30·60·90일 전 값,
-   최근 7·30일 추정치를 올린/내린 애널리스트 수, 추정 애널리스트 수 + 종목별 최근 의견 변경 8건.
+   최근 7·30일 추정치를 올린/내린 애널리스트 수, 추정 애널리스트 수 + 종목별 최근 의견 변경 8건
+   + 기간별 매출 컨센서스(v: 평균·최저·최고·추정 수·전년 동기 매출·성장률, vc: 통화 — 2026-10-23).
    종목 상세 '실적 추정치 변화' 카드와 시그널 탭 'EPS 추정치 변화' 위젯이 읽는다. 예전 카드는 브라우저가
    방문할 때마다 localStorage 에 쌓은 값이라 처음 보는 사람에겐 늘 '비교 기록 쌓는 중'이었다.
 
@@ -45,6 +46,7 @@ FEED_DAYS = 30
 TICKER_HISTORY = 8
 EST_COLS = ["period", "end", "cur", "d7", "d30", "d60", "d90", "up7", "up30", "dn7", "dn30", "n"]
 RATING_COLS = ["t", "d", "firm", "act", "from", "to", "pt", "ptPrev", "ptAct"]
+REV_COLS = ["period", "end", "avg", "low", "high", "n", "yearAgo", "growth"]
 
 
 def kst_now_str() -> str:
@@ -98,6 +100,39 @@ def parse_estimates(result: dict) -> list[list]:
                     _raw(rv.get("downLast30days")), int(n) if isinstance(n, (int, float)) else None])
     out.sort(key=lambda r: PERIODS.index(r[0]))
     return out
+
+
+def parse_revenue(result: dict) -> list[list]:
+    """quoteSummary result → 기간별 매출 컨센서스 [period, end, avg, low, high, n, yearAgo, growth].
+
+    평균이 없거나 0 이하이면 그 기간은 뺀다. 최저·최고·전년 동기는 양수일 때만, growth 는 야후 원문 비율(0.08 = 8%).
+    """
+    out = []
+    for tr in ((result or {}).get("earningsTrend") or {}).get("trend") or []:
+        period = tr.get("period")
+        if period not in PERIODS:
+            continue
+        re_ = tr.get("revenueEstimate") or {}
+        avg = _raw(re_.get("avg"))
+        if avg is None or avg <= 0:
+            continue
+        pos = lambda v: int(round(v)) if isinstance(v, (int, float)) and v > 0 else None  # noqa: E731
+        n = _raw(re_.get("numberOfAnalysts"))
+        g = _raw(re_.get("growth"))
+        out.append([period, tr.get("endDate") or None, pos(avg), pos(_raw(re_.get("low"))), pos(_raw(re_.get("high"))),
+                    int(n) if isinstance(n, (int, float)) and n > 0 else None, pos(_raw(re_.get("yearAgoRevenue"))),
+                    _r(g, 4)])
+    out.sort(key=lambda r: PERIODS.index(r[0]))
+    return out
+
+
+def revenue_currency(result: dict) -> str | None:
+    """매출 컨센서스 통화(revenueEstimate.revenueCurrency — 해외 발행인은 TWD·KRW 등 보고 통화)."""
+    for tr in ((result or {}).get("earningsTrend") or {}).get("trend") or []:
+        c = (tr.get("revenueEstimate") or {}).get("revenueCurrency")
+        if isinstance(c, str) and len(c) == 3:
+            return c.upper()
+    return None
 
 
 def parse_ratings(result: dict, ticker: str) -> list[list]:
@@ -162,8 +197,12 @@ def build(top: int, pause: float = 0.25):
         ok += 1
         periods = parse_estimates(result)
         ratings = parse_ratings(result, t)
-        if periods or ratings:
+        revenue = parse_revenue(result)
+        if periods or ratings or revenue:
             est[t] = {"p": periods, "r": [r[1:8] for r in ratings[:TICKER_HISTORY]]}
+            if revenue:
+                est[t]["v"] = revenue
+                est[t]["vc"] = revenue_currency(result)
         feed.extend(r for r in ratings if r[1] >= cutoff)
         if i % 100 == 0:
             print(f"  {i}/{len(tickers)} · 응답 {ok} · 추정치 {sum(1 for v in est.values() if v['p'])}종목 · 30일 의견 {len(feed)}건")
@@ -175,7 +214,8 @@ def build(top: int, pause: float = 0.25):
     now = kst_now_str()
     est_payload = {"updatedAtKst": now, "source": "Yahoo Finance (earningsTrend · upgradeDowngradeHistory)",
                    "scanned": len(tickers), "count": sum(1 for v in est.values() if v["p"]),
-                   "cols": EST_COLS, "ratingCols": RATING_COLS[1:8], "tickers": dict(sorted(est.items()))}
+                   "cols": EST_COLS, "ratingCols": RATING_COLS[1:8], "revCols": REV_COLS,
+                   "tickers": dict(sorted(est.items()))}
     rating_payload = {"updatedAtKst": now, "source": "Yahoo Finance (upgradeDowngradeHistory)", "asOf": today_et,
                       "windowDays": FEED_DAYS, "scanned": len(tickers), "count": len(feed), "cols": RATING_COLS, "rows": feed}
     return est_payload, rating_payload
@@ -191,12 +231,20 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="미국 애널리스트 의견 변경 · EPS 추정치 변화(Yahoo)")
     ap.add_argument("--top", type=int, default=800)
     ap.add_argument("--push", action="store_true")
+    ap.add_argument("--dry-run", action="store_true", help="파일을 쓰지 않고 종목별 요약만 출력(로컬 표본 확인: --top 15 --dry-run)")
     args = ap.parse_args()
     print(f"=== 애널리스트 의견·추정치 수집 (시총 상위 {args.top}) ===")
     built = build(args.top)
     if not built:
         return 1
     est_payload, rating_payload = built
+    if args.dry_run:
+        for t, rec in est_payload["tickers"].items():
+            eps = {r[0]: r[2] for r in rec.get("p") or []}
+            rev = " · ".join(f"{r[0]} {r[2] / 1e9:.2f}B {rec.get('vc') or '?'}({r[5] or '—'}명, {r[7]})" for r in rec.get("v") or [])
+            print(f"  {t:6} EPS {eps} | 매출 {rev or '—'}")
+        print(f"[dry-run] 추정치 {est_payload['count']}종목 · 매출 컨센서스 {sum(1 for v in est_payload['tickers'].values() if v.get('v'))}종목 — 쓰지 않음")
+        return 0
     if est_payload["count"] < 50:
         print(f"[error] 추정치 종목 {est_payload['count']}개 — 소스 이상으로 보고 기존 파일 유지")
         return 1

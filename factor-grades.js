@@ -1,7 +1,8 @@
 // factor-grades.js — 업종 상대 팩터 등급(A~F) 화면
 // =====================================================
 // 계산은 factor-grade-core.js(window.MirFactorGradeCore, node 테스트 있음). 여기는 입력 조립과 렌더만.
-// 입력: 이미 부팅 때 받은 시장 스냅샷(data.stocks) + map_fundamentals(MAP_FUNDAMENTALS).
+// 입력: 이미 부팅 때 받은 시장 스냅샷(data.stocks) + map_fundamentals(MAP_FUNDAMENTALS)
+//       + US EPS 리비전(US_ESTIMATE_REVISIONS, lazy — 등급을 처음 그릴 때 받는다).
 // 새 데이터 파일이 없다 — 전 종목 백분위는 브라우저에서 종목을 열 때 그 종목의 업종·섹터
 // 집단만 계산한다(집단당 수 ms, 부팅 비용 0). 사전 계산 JSON 을 만들면 ~1MB 가 부팅에 더해진다.
 //
@@ -25,9 +26,37 @@ function factorGradeMetricValue(stock, key) {
     const nxt = Number(stock.epsNextY);
     return now > 0 && Number.isFinite(nxt) ? (nxt / now - 1) * 100 : null;
   }
+  if (key === "epsRev30" || key === "epsRev90" || key === "epsNetUp30") return factorGradeRevisionValue(stock, key);
   const f = (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(stock.ticker) : null) || {};
   const v = Number(f[key]);
   return Number.isFinite(v) ? v : null;
+}
+
+// EPS 리비전 구성 지표(US_ESTIMATE_REVISIONS, 올해 회계연도 0y 행 — analyst-revisions-core.js).
+//   epsRev30·epsRev90 = 컨센서스 EPS N일 변화율(%) · epsNetUp30 = (30일 상향 − 하향) ÷ 추정 수 × 100.
+let _factorRevMemo = { src: null, rows: new Map() };
+function factorGradeRevisionValue(stock, key) {
+  const src = window.US_ESTIMATE_REVISIONS;
+  const core = window.MirAnalystRevCore;
+  if (!src || !core || (typeof isKrMarket === "function" && isKrMarket())) return null;
+  if (_factorRevMemo.src !== src) _factorRevMemo = { src, rows: new Map() };
+  const t = String(stock.ticker || "").toUpperCase();
+  if (!_factorRevMemo.rows.has(t)) _factorRevMemo.rows.set(t, core.estimateRows(src, t).find((r) => r.period === "0y") || null);
+  const r = _factorRevMemo.rows.get(t);
+  if (!r) return null;
+  if (key === "epsRev30") return Number.isFinite(r.chg30) ? r.chg30 : null;
+  if (key === "epsRev90") return Number.isFinite(r.chg90) ? r.chg90 : null;
+  const up = Number(r.up30), dn = Number(r.dn30), n = Number(r.n);
+  return r.up30 != null && r.dn30 != null && Number.isFinite(up) && Number.isFinite(dn) && n > 0 ? ((up - dn) / n) * 100 : null;
+}
+
+// 리비전 데이터(lazy, US 전용)를 받아 두고 오면 등급을 다시 그린다.
+let _factorRevWait = null;
+function factorGradeEnsureRevisions() {
+  if (window.US_ESTIMATE_REVISIONS || _factorRevWait || typeof ensureFeatureData !== "function") return;
+  if (typeof isKrMarket === "function" && isKrMarket()) return;
+  if (typeof xmDataEnabled === "function" && !xmDataEnabled("usEstimateRevisions")) return;
+  _factorRevWait = ensureFeatureData("usEstimateRevisions").then((ok) => { if (ok) refreshFactorGradeViews(); });
 }
 
 function factorGradeIndex() {
@@ -35,7 +64,8 @@ function factorGradeIndex() {
   const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
   if (!core || stocks.length < 30) return null;
   const mfCount = Object.keys(window.MAP_FUNDAMENTALS || {}).length;
-  const key = `${marketCfg().id}|${data.updatedAtKst || data.updated_at_kst || ""}|${stocks.length}|${mfCount}`;
+  const revAt = window.US_ESTIMATE_REVISIONS ? window.US_ESTIMATE_REVISIONS.updatedAtKst || "1" : "";
+  const key = `${marketCfg().id}|${data.updatedAtKst || data.updated_at_kst || ""}|${stocks.length}|${mfCount}|${revAt}`;
   if (_factorGradeMemo && _factorGradeMemo.key === key) return _factorGradeMemo.index;
   const universe = stocks.filter((s) => s && !isStockEtf(s));
   // 이 시장에서 30종목 이상 값이 있는 지표만 쓴다(KR 에만 있는 부채비율, US 에 없는 성장률 등).
@@ -61,7 +91,8 @@ function factorGradeFmtValue(m) {
   const v = Number(m.value);
   const abs = Math.abs(v);
   const digits = abs >= 100 ? 0 : abs >= 10 ? 1 : 2;
-  if (m.unit === "%") return `${v > 0 && m.key.includes("Growth") ? "+" : ""}${v.toFixed(digits)}%`;
+  const signed = m.key.includes("Growth") || m.key.startsWith("epsRev") || m.key === "epsNetUp30";
+  if (m.unit === "%") return `${v > 0 && signed ? "+" : ""}${v.toFixed(digits)}%`;
   return `${v.toFixed(digits)}배`;
 }
 
@@ -109,6 +140,7 @@ function factorGradeRowHtml(f) {
 
 // 등급 본문 HTML. 계산할 수 없으면 "".
 function factorGradeBodyHtml(item) {
+  factorGradeEnsureRevisions();
   const idx = factorGradeIndex();
   if (!idx || !item || !item.ticker) return "";
   const res = idx.gradesFor(item.ticker);

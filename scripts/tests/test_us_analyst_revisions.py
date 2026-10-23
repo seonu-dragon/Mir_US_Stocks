@@ -68,3 +68,23 @@ def test_et_date_dst_boundaries():
     assert A.et_date(1792551600) == "2026-10-20"
     # 2026-01-15 04:30 UTC = 01-14 23:30 EST
     assert A.et_date(1768451400) == "2026-01-14"
+
+
+def test_parse_revenue_consensus_and_currency():
+    res = {"earningsTrend": {"trend": [
+        {"period": "0y", "endDate": "2026-09-30",
+         "revenueEstimate": {"avg": _num(477621412260), "low": _num(471800000000), "high": _num(484000000000),
+                             "numberOfAnalysts": _num(38), "yearAgoRevenue": _num(416161000000),
+                             "growth": _num(0.14770001), "revenueCurrency": "USD"}},
+        {"period": "0q", "endDate": "2026-09-30",
+         "revenueEstimate": {"avg": _num(113.4e9), "low": {}, "high": _num(0), "numberOfAnalysts": _num(25)}},
+        {"period": "+1q", "revenueEstimate": {"avg": {}}},           # 평균 없음 → 뺀다
+        {"period": "-1y", "revenueEstimate": {"avg": _num(1)}},       # 모르는 기간 → 뺀다
+    ]}}
+    rows = A.parse_revenue(res)
+    assert [r[0] for r in rows] == ["0q", "0y"]
+    assert rows[0] == ["0q", "2026-09-30", 113400000000, None, None, 25, None, None]   # 0·빈 값은 결측
+    assert rows[1] == ["0y", "2026-09-30", 477621412260, 471800000000, 484000000000, 38, 416161000000, 0.1477]
+    assert len(rows[1]) == len(A.REV_COLS)
+    assert A.revenue_currency(res) == "USD"
+    assert A.parse_revenue({}) == [] and A.revenue_currency({}) is None

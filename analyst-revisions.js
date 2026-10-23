@@ -3,7 +3,7 @@
 // 1) 시장 › 시그널 '애널리스트 의견 변경 (미국)' 위젯(#ratingChanges) — window.US_RATING_CHANGES(최근 30일).
 // 2) 시장 › 시그널 'EPS 추정치 변화 (미국)' 위젯(#estimateRevisions) — window.US_ESTIMATE_REVISIONS 30일 상향·하향 상위.
 // 3) 종목 상세 재무 탭 '실적 추정치 변화' 카드(#estimateRevisionCard) — 서버 수집값(7·30·60·90일 전 컨센서스 +
-//    상향·하향 애널리스트 수 + 최근 의견 변경). 데이터에 없는 종목은 app.js 의 기존 브라우저 기록 카드로 돌아간다.
+//    상향·하향 애널리스트 수 + 매출 컨센서스(평균·최저·최고·전년 대비·추정 수) + 최근 의견 변경). 데이터에 없는 종목은 app.js 의 기존 브라우저 기록 카드로 돌아간다.
 // 데이터는 둘 다 lazy(FEATURE_DATA usRatingChanges · usEstimateRevisions, US 전용). 계산은 analyst-revisions-core.js.
 // 클래식 스크립트 — 최상위 이름은 ar 접두사.
 
@@ -133,13 +133,20 @@ function renderEstimateRevisionServer(item) {
   const ticker = String(item.ticker || "").toUpperCase();
   const rows = core.estimateRows(src, ticker);
   const ratings = core.tickerRatings(src, ticker);
-  if (!rows.length && !ratings.length) return false;
+  const revRows = core.revenueRows ? core.revenueRows(src, ticker) : [];
+  if (!rows.length && !ratings.length && !revRows.length) return false;
   const label = typeof stockLabel === "function" ? stockLabel(item) : ticker;
   const estTable = rows.length ? `<div class="table-wrap ar-table-wrap"><table class="insider-table ar-table ar-est-table"><thead><tr><th>기간</th><th class="ins-num">현재</th><th class="ins-num">7일 전</th><th class="ins-num">30일 전</th><th class="ins-num">90일 전</th><th class="ins-num">30일 변화</th><th class="ins-num">90일 변화</th><th class="ins-num">상향 / 하향 (30일)</th><th class="ins-num">추정 수</th></tr></thead><tbody>
     ${rows.map((r) => `<tr><th scope="row">${arEsc(r.label)}${r.end ? `<small class="ar-end">${arEsc(String(r.end).slice(0, 7))}</small>` : ""}</th>
       <td class="ins-num"><strong>${arEps(r.cur)}</strong></td><td class="ins-num">${arEps(r.d7)}</td><td class="ins-num">${arEps(r.d30)}</td><td class="ins-num">${arEps(r.d90)}</td>
       <td class="ins-num ${arTone(r.chg30)}">${core.fmtPct(r.chg30)}</td><td class="ins-num ${arTone(r.chg90)}">${core.fmtPct(r.chg90)}</td>
       <td class="ins-num"><span class="ar-up">${r.up30 == null ? "—" : r.up30}</span> / <span class="ar-down">${r.dn30 == null ? "—" : r.dn30}</span></td><td class="ins-num">${r.n == null ? "—" : r.n}</td></tr>`).join("")}
+    </tbody></table></div>` : "";
+  const revMoney = (v, cur) => (v == null ? "—" : typeof mfMoney === "function" ? mfMoney(v, cur || "USD") : String(v));
+  const revTable = revRows.length ? `<h4 class="ar-sub">매출 컨센서스${revRows[0].cur && revRows[0].cur !== "USD" ? ` <small class="ar-end">${arEsc(revRows[0].cur)}</small>` : ""}</h4><div class="table-wrap ar-table-wrap"><table class="insider-table ar-table ar-rev-table"><thead><tr><th>기간</th><th class="ins-num">평균</th><th class="ins-num">최저</th><th class="ins-num">최고</th><th class="ins-num">전년 대비</th><th class="ins-num">추정 수</th></tr></thead><tbody>
+    ${revRows.map((r) => `<tr><th scope="row">${arEsc(r.label)}${r.end ? `<small class="ar-end">${arEsc(String(r.end).slice(0, 7))}</small>` : ""}</th>
+      <td class="ins-num"><strong>${arEsc(revMoney(r.avg, r.cur))}</strong></td><td class="ins-num">${arEsc(revMoney(r.low, r.cur))}</td><td class="ins-num">${arEsc(revMoney(r.high, r.cur))}</td>
+      <td class="ins-num ${arTone(r.yoy)}">${core.fmtPct(r.yoy)}</td><td class="ins-num">${r.n == null ? "—" : r.n}</td></tr>`).join("")}
     </tbody></table></div>` : "";
   const rateTable = ratings.length ? `<h4 class="ar-sub">최근 의견 변경</h4><div class="table-wrap ar-table-wrap"><table class="insider-table ar-table"><thead><tr><th>날짜</th><th>증권사</th><th>행동</th><th>투자의견</th><th class="ins-num">목표가</th></tr></thead><tbody>
     ${ratings.map((r) => {
@@ -154,6 +161,6 @@ function renderEstimateRevisionServer(item) {
       <div><span>컨센서스 EPS</span><h3>실적 추정치 변화</h3></div>
       <strong>${arEsc(label)} · 업데이트 ${arEsc(src.updatedAtKst || "")}</strong>
     </div>
-    ${estTable}${rateTable}`;
+    ${estTable}${revTable}${rateTable}`;
   return true;
 }

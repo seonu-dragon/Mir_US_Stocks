@@ -199,7 +199,20 @@ test("validationSummary: 부분 통과 · 전부 미통과 · 검증 대상 아�
 test("모멘텀만 검증 키를 가진다(나머지는 검증 대상 아님으로 표시)", () => {
   const keys = Object.fromEntries(core.FACTORS.map((f) => [f.key, f.validation]));
   assert.deepEqual(keys.momentum, ["mom_3m", "high52_prox"]);
-  ["value", "growth", "profit", "health"].forEach((k) => assert.deepEqual(keys[k], []));
+  ["value", "growth", "profit", "health", "revision"].forEach((k) => assert.deepEqual(keys[k], []));
+});
+
+test("EPS 리비전: 검증 전이라 '검증 대상 아님', 구성 지표가 없는 시장에선 팩터째 빠진다", () => {
+  const rev = core.FACTORS.find((f) => f.key === "revision");
+  assert.ok(rev && rev.optional);
+  assert.match(core.validationSummary(null, "us", rev.validation).text, /검증 대상이 아닌/);
+  const stocks = mk(12, "Soft", "Tech", (i) => ({ roe: i + 1, epsRev30: i - 5, epsRev90: i * 2, epsNetUp30: i * 3 }));
+  const us = core.createGradeIndex(stocks);
+  const top = byKey(us.gradesFor("Soft11"), "revision");
+  assert.equal(top.status, "ok"); assert.equal(top.grade, "A");
+  const kr = core.createGradeIndex(stocks, { metricAvailable: (k) => !k.startsWith("eps") });
+  assert.equal(byKey(kr.gradesFor("Soft11"), "revision"), undefined);
+  assert.ok(byKey(kr.gradesFor("Soft11"), "profit"));     // 다른 팩터는 그대로(지표 없으면 nodata 로 남는다)
 });
 
 if (failures.length) {

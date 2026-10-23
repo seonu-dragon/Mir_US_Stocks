@@ -81,6 +81,23 @@ FX_FIELDS.push(
   { key: "altmanZ", label: "Altman Z", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("z") },
   { key: "beneishM", label: "Beneish M", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("m") },
 );
+// 주주환원 현금(US, 재무 위험 점검 집계의 bb·dv·sbc = SEC 현금흐름표 TTM 실제 지급액) ÷ 현재 시가총액(%).
+// 배당 현금이 없으면 map_fundamentals 배당수익률이 정확히 0 인 종목만 배당 0 으로 본다(shareholder-core.js).
+function fxCashYields(it, f) {
+  const r = fxRiskRow(it);
+  const core = window.MirShareholderCore;
+  if (!r || !core || (r.bb == null && r.dv == null)) return null;
+  const cap = itemCapForValuation(it);
+  if (!(cap > 0) || isKrMarket()) return null;
+  const n = (v) => (v === null || v === undefined ? null : fxNum(v));
+  return core.cashReturnYields({ buyback: n(r.bb), div: n(r.dv), sbc: n(r.sbc) }, cap * 1e9, { divYieldPct: f && f.divYield != null ? fxNum(f.divYield) : null });
+}
+const fxCash = (k) => (it, f) => { const y = fxCashYields(it, f); return y && Number.isFinite(y[k]) ? y[k] : null; };
+FX_FIELDS.push(
+  { key: "shareholderYield", label: "주주수익률(%, 자사주+배당 TTM ÷ 시총)", group: "주주환원", src: "SEC 재무(TTM)", get: fxCash("total") },
+  { key: "buybackYield", label: "자사주 매입 수익률(%, TTM ÷ 시총)", group: "주주환원", src: "SEC 재무(TTM)", get: fxCash("buyback") },
+  { key: "netBuybackYield", label: "순매입 수익률(%, 자사주−SBC ÷ 시총)", group: "주주환원", src: "SEC 재무(TTM)", get: fxCash("net") },
+);
 // 10-K 위험요인 전년 대비 변화(US, build_risk_factor_changes.py 인덱스 — lazy). 변화 크기는 정보일 뿐 예측이 아니다.
 function fxRiskFactorsRow(it) {
   const core = window.MirRiskFactorsCore;

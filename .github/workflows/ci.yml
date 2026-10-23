@@ -271,6 +271,9 @@ jobs:
       # 재무 위험 점검(risk-check-core.js): Piotroski 9항목·Altman Z/Z''·Beneish M 교과서 값 검산, 데이터 없음 분리.
       - name: Risk check core tests
         run: node scripts/tests/test_risk_check_core.mjs
+      # 미국 펀더멘털 카드(us-fund-core.js): 부채 만기 사다리·Pay vs Performance·주간 베타(SPY)·ROIC − WACC 결측 전파.
+      - name: US fundamentals cards core tests
+        run: node scripts/tests/test_us_fund_core.mjs
       # 사업부문·지역별 매출(segments-core.js): 상위 멤버+기타 묶음, 비중·전년비·3년 연평균, 합계 대조 문장.
       - name: Segments core tests
         run: node scripts/tests/test_segments_core.mjs

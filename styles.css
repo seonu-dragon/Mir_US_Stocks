@@ -14324,6 +14324,31 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
   .rc-list, .rc-sub { grid-template-columns: 1fr; }
   .rc-score { align-items: flex-start; }
 }
+/* 부채 만기 · 경영진 보수와 성과 · ROIC − WACC(us-fund.js) — financials-card 틀. 판정색 없음(공시·계산값만) */
+.uf-score strong { color: var(--text); }
+.uf-bars { list-style: none; margin: 10px 0 4px; padding: 0; display: grid; gap: 6px; max-width: 640px; }
+.uf-bar-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.uf-bar-label { color: var(--text-2); white-space: nowrap; }
+.uf-bar-track { height: 10px; border-radius: 3px; background: var(--panel-soft); overflow: hidden; }
+.uf-bar { display: block; height: 100%; min-width: 1px; border-radius: 3px; background: var(--mf-c1); opacity: 0.55; }
+.uf-bar.is-near { opacity: 1; }
+.uf-bar-val { white-space: nowrap; text-align: right; }
+.uf-pvp-table, .uf-wacc-table { max-width: 720px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.uf-pvp-table th, .uf-pvp-table td, .uf-wacc-table th, .uf-wacc-table td { padding: 4px 6px; }
+.uf-pvp-table .num { text-align: right; white-space: nowrap; }
+.uf-pvp-table th[scope="row"], .uf-wacc-table th[scope="row"] { white-space: nowrap; font-weight: 500; }
+.uf-cell-val { display: block; }
+.uf-cell-val.is-neg { color: var(--neg); }
+.uf-mini { display: block; height: 3px; margin: 2px 0 0 auto; border-radius: 2px; background: var(--mf-c1); opacity: 0.6; }
+.uf-mini.is-neg { background: var(--neg); }
+.uf-wacc-table .num { text-align: right; white-space: nowrap; font-weight: 600; }
+.uf-wacc-table td.muted { font-size: var(--fs-cap); white-space: normal; }
+.uf-wacc-top { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 10px 0 4px; font-variant-numeric: tabular-nums; }
+.uf-wacc-top div { display: flex; flex-direction: column; gap: 2px; }
+.uf-wacc-top span { color: var(--muted); font-size: var(--fs-cap); }
+.uf-wacc-top strong { font-size: var(--fs-body); }
+.uf-erp { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: var(--fs-cap); }
+#roicWaccSection .uf-erp input { flex: 0 0 auto; width: 5em; min-width: 0; max-width: 5em; height: auto; min-height: 0; padding: 2px 4px; font: inherit; color: var(--text); text-align: right; }
 /* 역DCF · 시나리오 DCF(dcf.js) — financials-card 틀을 같이 쓴다 */
 .dcf-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 6px 12px; }
 .dcf-head h3 { margin: 0; font-size: var(--fs-body); }

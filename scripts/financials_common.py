@@ -42,7 +42,12 @@
   "tags": {"rev": "Revenues", ...},         — 최신 연간 값에 쓰인 원천 태그(US us-gaap/ifrs 태그, KR account_id/계정명)
   "annual":    [행, ...]   오름차순(오래된 → 최근), 최대 10개 회계연도
   "quarterly": [행, ...]   오름차순, 최대 12분기. 해외발행인(20-F/40-F)은 보통 비어 있다.
-  "ttm": {행 + "basis": "4Q" | "FY", "quarters": [분기 라벨...]} | null
+  "ttm": {행 + "basis": "4Q" | "FY", "quarters": [분기 라벨...]} | null,
+  — 아래 둘은 US 만, 공시가 없으면 키 자체가 없다(2026-10-23, 화면은 us-fund.js · 계산은 us-fund-core.js)
+  "debtMaturity": {"end", "fy", "filed", "y1".."y5", "after"}  최근 10-K 장기차입금 원금 상환 예정표(통화).
+                  end = 최근 연간 행 end 와 같은 기말만(옛 10-K 의 표는 버림). 없는 버킷은 키 없음.
+  "payVsPerf": [{"end", "filed", "accn", "peoTotal", "peoCap", "neoTotal", "neoCap", "tsr", "peerTsr"}, ...]
+                  위임장(DEF 14A) ecd 공시값, 최근 5개 회계연도 오름차순. tsr = 첫해 초 $100 의 누적 가치.
 }
 
 행 공통 키

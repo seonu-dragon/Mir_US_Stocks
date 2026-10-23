@@ -454,3 +454,98 @@ def test_us_missing_buyback_tag_is_missing_not_zero():
         assert "buyback" not in r and "divPaid" not in r
     assert "buyback" in fc.INDEX_FIELDS.split(",") and "divPaid" in fc.FLOW_FIELDS
     assert us.FIELDS_VERSION >= 3                             # 새 필드 → 한 번 전체 재수집
+
+
+# ─────────────────────────── 부채 만기 · Pay vs Performance(2026-10-23) ───────────────────────────
+def _mat(tag_suffix, end, val, form="10-K", filed="2025-11-01", accn="k25"):
+    return {f"LongTermDebtMaturitiesRepaymentsOfPrincipal{tag_suffix}": {"units": {"USD": [
+        _f(None, end, val, accn, 2025, "FY", form, filed)]}}}
+
+
+def test_us_debt_maturity_latest_10k_only_and_rolling_fallback():
+    facts = _us_facts()
+    g = facts["facts"]["us-gaap"]
+    for suf, v in (("InNextTwelveMonths", 12), ("InYearTwo", 10), ("InYearThree", 9), ("AfterYearFive", 49)):
+        g.update(_mat(suf, "2025-09-30", v))
+    g.update(_mat("InRollingYearFour", "2025-09-30", 5))                 # 연도 태그가 없으면 Rolling 태그
+    g.update(_mat("InYearFive", "2016-12-31", 99, filed="2017-02-01"))     # 옛 10-K 의 표 → 안 씀
+    doc = us.extract_company(facts, ticker="TST", cik=1, updated="t")
+    dm = doc["debtMaturity"]
+    assert dm["end"] == "2025-09-30" and dm["fy"] == 2025
+    assert (dm["y1"], dm["y2"], dm["y3"], dm["y4"], dm["after"]) == (12, 10, 9, 5, 49)
+    assert "y5" not in dm                                                # 결측은 키 없음(0 아님)
+
+
+def test_us_debt_maturity_needs_two_buckets_and_10k():
+    facts = _us_facts()
+    g = facts["facts"]["us-gaap"]
+    g.update(_mat("InNextTwelveMonths", "2025-09-30", 12))
+    assert "debtMaturity" not in us.extract_company(facts, ticker="TST", cik=1, updated="t")
+    g.update(_mat("InYearTwo", "2025-09-30", 10, form="10-Q"))           # 10-Q 값은 연간 표가 아님
+    assert "debtMaturity" not in us.extract_company(facts, ticker="TST", cik=1, updated="t")
+
+
+def test_us_pay_vs_perf_from_ecd_latest_filed_and_five_years():
+    facts = _us_facts()
+    def pv(tag, rows, unit="USD"):
+        facts["facts"].setdefault("ecd", {})[tag] = {"units": {unit: [
+            {"start": f"{y - 1}-10-01", "end": f"{y}-09-30", "val": v, "accn": acc, "form": "DEF 14A", "filed": fd}
+            for y, v, acc, fd in rows]}}
+    yrs = [2020, 2021, 2022, 2023, 2024, 2025]
+    pv("PeoTotalCompAmt", [(y, 10_000_000 + y, "0000000001-25-000001", "2025-12-01") for y in yrs]
+       + [(2025, 77, "0000000001-26-000002", "2026-01-15")])               # 정정 위임장(늦은 제출) 우선
+    pv("PeoActuallyPaidCompAmt", [(2023, -4_000_000, "0000000001-25-000001", "2025-12-01")])
+    pv("TotalShareholderRtnAmt", [(y, 100 + y - 2020, "0000000001-25-000001", "2025-12-01") for y in yrs], unit="pure")
+    pv("PeerGroupTotalShareholderRtnAmt", [(2030, 1, "x", "2025-12-01")])   # 보수 없는 해 → 행 없음
+    doc = us.extract_company(facts, ticker="TST", cik=1, updated="t")
+    rows = doc["payVsPerf"]
+    assert [r["end"][:4] for r in rows] == ["2021", "2022", "2023", "2024", "2025"]
+    assert rows[-1]["peoTotal"] == 77 and rows[-1]["accn"] == "0000000001-26-000002"
+    assert rows[2]["peoCap"] == -4_000_000                                 # 음수 실지급보상 그대로
+    assert rows[0]["tsr"] == 101                                           # pure 단위 TSR
+    assert "peoCap" not in rows[0]
+
+
+def test_us_no_ecd_no_pay_vs_perf():
+    assert "payVsPerf" not in us.extract_company(_us_facts(), ticker="TST", cik=1, updated="t")
+
+
+def test_us_fields_upgrade_is_gradual_not_full(tmp_path, monkeypatch):
+    """FIELDS_VERSION 이 올라가도(상태 3 → 4) 전체 재수집이 아니라 fv 낮은 종목을 --upgrade-max 개씩만 다시 받는다."""
+    import argparse
+    import contextlib
+    import json as _json
+    from datetime import datetime as _dt
+    from zoneinfo import ZoneInfo as _Z
+
+    today = _dt.now(_Z("America/New_York")).date()
+    recent = (today - __import__("datetime").timedelta(days=5)).isoformat()
+    tickers = ["AAA", "BBB", "CCC", "DDD"]
+    state = {"indexScannedThrough": recent, "fieldsVersion": 3,
+             "tickers": {t: {"cik": i + 1, "fetched": recent} for i, t in enumerate(tickers)}}
+    state["tickers"]["DDD"]["fv"] = us.FIELDS_VERSION                    # 이미 새 세대
+    st_path = tmp_path / "state.json"
+    st_path.write_text(_json.dumps(state), encoding="utf-8")
+    monkeypatch.setattr(us, "STATE_JSON", st_path)
+    monkeypatch.setattr(us, "OUT_JSON", tmp_path / "idx.json")
+    monkeypatch.setattr(us, "OUT_JS", tmp_path / "idx.js")
+    monkeypatch.setattr(us, "OUT_DIR", tmp_path / "fin")
+    monkeypatch.setattr(us, "universe", lambda top: [{"ticker": t, "marketCapB": 10 - i} for i, t in enumerate(tickers)])
+    monkeypatch.setattr(us, "ticker_cik_map", lambda: {t: i + 1 for i, t in enumerate(tickers)})
+    monkeypatch.setattr(us, "filers_since", lambda a, b: (set(), b))
+    monkeypatch.setattr(us, "repository_publish_lock", lambda root: contextlib.nullcontext())
+    monkeypatch.setattr(us.time, "sleep", lambda s: None)
+    fetched = []
+    monkeypatch.setattr(us, "get_json", lambda url: fetched.append(url) or _us_facts())
+    args = argparse.Namespace(top=0, only="", full=False, stale_max=0, upgrade_max=2, push=False)
+    assert us.run(args) == 0
+    assert len(fetched) == 2                                              # AAA·BBB(시총 순)만
+    new = _json.loads(st_path.read_text(encoding="utf-8"))
+    assert new["fieldsVersion"] == 3                                       # 단계 업그레이드 중엔 안 올린다
+    assert new["tickers"]["AAA"]["fv"] == us.FIELDS_VERSION and "fv" not in new["tickers"]["CCC"]
+    fetched.clear()
+    assert us.run(args) == 0
+    assert len(fetched) == 1                                              # 다음 실행: CCC 만
+    fetched.clear()
+    assert us.run(args) == 0
+    assert fetched == []

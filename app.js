@@ -5415,6 +5415,8 @@ function renderSearch(options = {}) {
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderShareholder === "function") renderShareholder(item);
   if (typeof renderDcf === "function") renderDcf(item);
+  // 부채 만기 · 경영진 보수와 성과 · ROIC − WACC(us-fund.js — US 재무 확장 파일)
+  if (typeof renderUsFundCards === "function") renderUsFundCards(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
   // 비슷한 종목·지지/저항·옵션 요약(worker-extras.js — 새 워커 라우트, 옛 워커면 숨김)
@@ -5454,6 +5456,8 @@ function renderSearch(options = {}) {
     // 재무 차트의 시가총액 겹쳐 보기(상세 일봉)·주주환원(상세 배당 기록)도 상세가 도착하면 다시 그린다.
     if (typeof renderFinancials === "function") renderFinancials(refreshed);
     if (typeof renderShareholder === "function") renderShareholder(refreshed);
+    // ROIC − WACC 의 베타는 상세 일봉(종목·SPY)으로 계산한다.
+    if (typeof renderRoicWacc === "function") renderRoicWacc(refreshed);
   });
 
   // If not triggered via natural language AI search, instantly reveal dashboard components.

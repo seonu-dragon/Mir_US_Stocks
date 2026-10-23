@@ -1561,12 +1561,16 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="financials-card sg-card animate-reveal" id="segmentsSection" hidden></section>
               <!-- 재무 위험 점검(risk-check.js renderRiskCheck) — F·Z·M 등 체크리스트, 재무 확장 파일이 있는 종목만 -->
               <section class="financials-card rc-card animate-reveal" id="riskCheckSection" hidden></section>
+              <!-- 부채 만기(us-fund.js renderDebtLadder) — US, 10-K 장기차입금 원금 상환 예정표가 있는 종목만 -->
+              <section class="financials-card uf-card animate-reveal" id="debtLadderSection" hidden></section>
               <!-- 은행 건전성(fdic-banks.js renderBankHealth) — US 은행주만, FDIC 콜 리포트 분기 -->
               <section class="financials-card bk-card animate-reveal" id="bankHealthSection" hidden></section>
               <!-- 회사 KPI(company-kpis.js renderCompanyKpis) — US, 실적 보도자료 운영 지표(인도량·가입자 등) 누적 -->
               <section class="financials-card kp-card animate-reveal" id="companyKpisSection" hidden></section>
               <!-- 주주환원(shareholder.js renderShareholder) — 배당 기록·배당성향·자사주 공시·주식수 변화. 자료가 없으면(ETF 등) 숨김 -->
               <section class="financials-card shr-card animate-reveal" id="shareholderSection" hidden></section>
+              <!-- 경영진 보수와 성과(us-fund.js renderPayVsPerf) — US, 위임장 Pay vs Performance(ecd) 공시가 있는 종목만 -->
+              <section class="financials-card uf-card animate-reveal" id="payVsPerfSection" hidden></section>
               <!-- 실적 일정 · EPS 기록 · 발표 반응 · 실적 인사이트(renderStockEvents 가 채운다) -->
               <section class="stock-events-card sd-earnings-card animate-reveal" id="stockEarningsCard" hidden></section>
               <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
@@ -1574,6 +1578,8 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="sd-view" id="sdv-val" data-view="val" role="tabpanel">
               <!-- 역DCF · 시나리오 DCF(dcf.js renderDcf) — 재무 확장 파일이 있는 비금융 종목만 -->
               <section class="financials-card dcf-card animate-reveal" id="dcfSection" hidden></section>
+              <!-- ROIC − WACC(us-fund.js renderRoicWacc) — US 비금융, 재무 파일 + 미 국채 10년 + 주간 베타(SPY) -->
+              <section class="financials-card uf-card animate-reveal" id="roicWaccSection" hidden></section>
               <!-- PER·PBR 밴드(valuation-band.js renderValuationBand) -->
               <section class="valband-card animate-reveal" id="valuationBand" hidden></section>
               <!-- 종목 체력 스노우플레이크(stock-health.js renderStockHealth) — 절대 기준 재무 체크, 업종 상대 등급과 짝 -->
@@ -3547,6 +3553,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="shareholder.js?v=4e3ec69a5d"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=ecc88fc9b8"></script>
+    <script src="us-fund-core.js"></script>
+    <script src="us-fund.js"></script>
     <script src="daily-table-core.js?v=447902b51f"></script>
     <script src="daily-table.js?v=0f27127020"></script>
     <script src="seasonality-core.js?v=aba17c25f3"></script>

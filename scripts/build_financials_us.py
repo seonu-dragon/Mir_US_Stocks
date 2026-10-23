@@ -18,6 +18,8 @@
   - EDGAR 일별 색인(daily-index/master.YYYYMMDD.idx, 하루 1요청 ~300KB)을 마지막 스캔일 이후만 읽어
     10-K·10-Q·20-F·40-F(및 /A)를 낸 CIK 만 companyfacts 를 다시 받는다.
   - 처음 보는 종목, 120일 넘게 안 받은 종목(실행당 --stale-max 개)도 다시 받는다.
+  - 위임장(DEF 14A)을 낸 CIK 도 다시 받는다(Pay vs Performance ecd 팩트가 companyfacts 에 실린다).
+  - 추출 필드가 늘면(FIELDS_VERSION) 종목별 fv 가 낮은 종목을 실행당 --upgrade-max 개(시총 순)씩 다시 받는다.
   - 상태: data/financials_state.json (빌더 전용). 45일 넘게 스캔이 끊겼으면 전체 재수집.
   - frames API 는 '기간 하나 × 태그 하나 × 전 종목' 이라 종목별 10년·분기 이력을 모으려면 오히려
     요청이 수천 배 많다. Financial Statement Data Sets(분기 zip, ~50MB)는 분기 지연이 있고 10-Q
@@ -67,6 +69,8 @@ DAILY_INDEX_URL = "https://www.sec.gov/Archives/edgar/daily-index/{y}/QTR{q}/mas
 SOURCE = "SEC EDGAR XBRL companyfacts"
 
 PERIODIC_FORMS = {"10-K", "10-Q", "20-F", "40-F", "10-KT", "10-QT"}
+# 일별 색인에서 companyfacts 를 다시 받게 하는 서식 — 정기보고서 + 위임장(DEF 14A: Pay vs Performance ecd 팩트).
+REFETCH_FORMS = PERIODIC_FORMS | {"DEF 14A"}
 ANNUAL_FORMS = {"10-K", "20-F", "40-F", "10-KT"}
 QUARTER_FORMS = {"10-Q", "10-QT"}
 REQUEST_SLEEP = 0.12            # 초당 ~8회(SEC 한도 10회)
@@ -75,8 +79,12 @@ RESCAN_OVERLAP_DAYS = 3         # companyfacts 반영 지연 대비 겹쳐 읽�
 MAX_SCAN_GAP_DAYS = 45          # 이보다 오래 끊겼으면 색인 대신 전체 재수집
 # 추출 필드 세대. 필드를 보태면 올린다 — 상태의 fieldsVersion 이 이보다 낮으면 한 번 전체 재수집해
 # 옛 파일에도 새 필드가 채워진다(2 = 2026-09-27 재무 보강: grossProfit·cogs·sga·retainedEarnings·ppe·ltDebt,
-# 3 = 2026-10-23 주주환원 현금: buyback·divPaid).
-FIELDS_VERSION = 3
+# 3 = 2026-10-23 주주환원 현금: buyback·divPaid, 4 = 2026-10-23 부채 만기 사다리(debtMaturity)·Pay vs Performance(payVsPerf)).
+# 4 부터는 전체 재수집을 강제하지 않는다 — 종목별 상태의 fv 가 낮은 종목을 실행당 --upgrade-max 개씩(시총 순)
+# 다시 받는다(전 종목 ~1,100건을 한 번에 다시 받지 않게). 상태가 FULL_REFETCH_BELOW 미만인 옛 상태만 전체 재수집.
+FIELDS_VERSION = 4
+FULL_REFETCH_BELOW = 3
+UPGRADE_MAX_DEFAULT = 300
 
 # 계정별 태그 후보 — 앞이 우선. 기간마다 첫 번째로 값이 있는 태그를 쓴다.
 US_GAAP_TAGS = {
@@ -666,7 +674,106 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
         "quarterly": quarter_out,
         "ttm": build_ttm(quarter_out, annual_out),
     }
+    if taxonomy == "us-gaap" and annual_out:
+        dm = extract_debt_maturity(ns, currency, annual_out[-1])
+        if dm:
+            doc["debtMaturity"] = dm
+    pvp = extract_pay_vs_perf(all_ns.get("ecd") or {}, currency)
+    if pvp:
+        doc["payVsPerf"] = pvp
     return doc
+
+
+# ────────────────────────────── 부채 만기 사다리 ──────────────────────────────
+# 10-K 장기차입금 원금 상환 예정표(instant, 기준일 = 회계연도 말). 회사가 연도 기준(InYearTwo…)이나
+# 기준일부터 12개월 단위(InRollingYearTwo… — JPM 등)로 태깅한다. 버킷마다 앞 태그 우선.
+DEBT_MATURITY_TAGS = {
+    "y1": ["LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths",
+           "LongTermDebtMaturitiesRepaymentsOfPrincipalInNextRollingTwelveMonths"],
+    "y2": ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo",
+           "LongTermDebtMaturitiesRepaymentsOfPrincipalInRollingYearTwo"],
+    "y3": ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearThree",
+           "LongTermDebtMaturitiesRepaymentsOfPrincipalInRollingYearThree"],
+    "y4": ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFour",
+           "LongTermDebtMaturitiesRepaymentsOfPrincipalInRollingYearFour"],
+    "y5": ["LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFive",
+           "LongTermDebtMaturitiesRepaymentsOfPrincipalInRollingYearFive"],
+    "after": ["LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive",
+              "LongTermDebtMaturitiesRepaymentsOfPrincipalInRollingAfterYearFive"],
+}
+
+
+def extract_debt_maturity(ns: dict, currency: str, last_annual: dict) -> dict | None:
+    """최근 연간 행의 기말(end)에 10-K 로 공시된 만기 버킷만. 기말이 다르면(옛 10-K 의 표) 쓰지 않는다 — PFE 처럼
+    2016년 표만 남은 회사가 있다. 버킷이 2개 미만이면 표가 아니라 None. 없는 버킷은 키가 없다(0 과 구분)."""
+    end = last_annual.get("end")
+    if not end:
+        return None
+    out: dict = {}
+    filed = ""
+    for bucket, tags in DEBT_MATURITY_TAGS.items():
+        for tag in tags:
+            units = (ns.get(tag) or {}).get("units") or {}
+            recs = [u for u in units.get(currency) or []
+                    if u.get("end") == end and not u.get("start") and _base_form(u.get("form")) in ANNUAL_FORMS
+                    and isinstance(u.get("val"), (int, float)) and not isinstance(u.get("val"), bool)]
+            if recs:
+                rec = max(recs, key=lambda u: str(u.get("filed") or ""))
+                out[bucket] = rec["val"]
+                filed = max(filed, str(rec.get("filed") or ""))
+                break
+    if len(out) < 2:
+        return None
+    return {"end": end, "fy": last_annual.get("fy"), "filed": filed or None, **out}
+
+
+# ────────────────────────────── Pay vs Performance ──────────────────────────────
+# DEF 14A inline XBRL 의 ecd 택소노미(2023~ 의무, 규정 S-K 402(v)). companyfacts 에 'ecd' 네임스페이스로 실린다
+# (2026-10-23 확인: MSFT·JPM·NVDA·TSLA·GOOGL·META·WMT·CVX 있음, AAPL·XOM·KO 없음). 차원 값(대표이사가 여럿인 해의
+# 개인별 값)은 companyfacts 에 없어 그런 해는 비어 있을 수 있다. 값은 공시 그대로(실지급보상은 음수일 수 있다).
+PVP_TAGS = {
+    "peoTotal": "PeoTotalCompAmt",                  # 대표이사 보수총액(보수총괄표 SCT)
+    "peoCap": "PeoActuallyPaidCompAmt",             # 대표이사 실지급보상(CAP)
+    "neoTotal": "NonPeoNeoAvgTotalCompAmt",         # 그 외 임원 평균 보수총액
+    "neoCap": "NonPeoNeoAvgCompActuallyPaidAmt",    # 그 외 임원 평균 실지급보상
+    "tsr": "TotalShareholderRtnAmt",                # 회사 누적 TSR — 첫해 초 $100 투자의 가치
+    "peerTsr": "PeerGroupTotalShareholderRtnAmt",   # 동종 그룹 누적 TSR
+}
+PVP_MONEY = ("peoTotal", "peoCap", "neoTotal", "neoCap")
+PVP_MAX_YEARS = 5
+
+
+def extract_pay_vs_perf(ecd: dict, currency: str) -> list[dict] | None:
+    """연도(기간 end)별 한 행, 최근 PVP_MAX_YEARS 개 오름차순. 같은 기간이 여러 위임장에 실리면 가장 늦게 제출된 값.
+    보수 값이 하나도 없는 해는 뺀다(TSR 만으로는 카드가 성립하지 않는다)."""
+    if not ecd:
+        return None
+    rows: dict[str, dict] = {}
+    filed_of: dict[tuple[str, str], str] = {}
+    for key, tag in PVP_TAGS.items():
+        units = (ecd.get(tag) or {}).get("units") or {}
+        if key in PVP_MONEY:
+            arr = units.get(currency) or []
+        else:   # TSR 은 지수(100 기준) — 단위가 USD·pure 로 갈린다
+            arr = units.get(currency) or units.get("pure") or next(iter(units.values()), [])
+        for u in arr:
+            val, end, start = u.get("val"), u.get("end"), u.get("start")
+            if not isinstance(val, (int, float)) or isinstance(val, bool) or not end:
+                continue
+            if start and not 300 <= (_days(start, end) or 0) <= 400:
+                continue
+            filed = str(u.get("filed") or "")
+            if filed < filed_of.get((end, key), ""):
+                continue
+            filed_of[(end, key)] = filed
+            row = rows.setdefault(end, {"end": end})
+            row[key] = val
+            if filed >= row.get("filed", ""):
+                row["filed"] = filed
+                if u.get("accn"):
+                    row["accn"] = u["accn"]
+    out = [r for _, r in sorted(rows.items()) if any(k in r for k in PVP_MONEY)]
+    return out[-PVP_MAX_YEARS:] or None
 
 
 # 유출 계정은 크기(양수)로 맞춘다 — 회사마다 부호가 섞여 들어온다(음수로 태깅한 회사가 있다).
@@ -737,7 +844,7 @@ def filers_since(start: date, end: date) -> tuple[set[int], date | None]:
                 text = get_bytes(url, retries=3).decode("latin-1", "replace")
                 for line in text.splitlines():
                     parts = line.split("|")
-                    if len(parts) >= 3 and parts[0].isdigit() and _base_form(parts[2]) in PERIODIC_FORMS:
+                    if len(parts) >= 3 and parts[0].isdigit() and _base_form(parts[2]) in REFETCH_FORMS:
                         ciks.add(int(parts[0]))
                 last_ok = d
             except Exception as exc:
@@ -754,6 +861,14 @@ def filers_since(start: date, end: date) -> tuple[set[int], date | None]:
 
 
 # ────────────────────────────── 빌드 ──────────────────────────────
+def ticker_fields_version(st: dict, state_fv: int) -> int:
+    """종목별 추출 세대. 종목 상태에 fv 가 없으면(단계 업그레이드 도입 전 항목) 상태 전체의 세대를 따른다."""
+    try:
+        return int(st.get("fv") or state_fv or 1)
+    except (TypeError, ValueError):
+        return 1
+
+
 def universe(top: int) -> list[dict]:
     snap = load_json(SNAPSHOT, {"stocks": []}) or {"stocks": []}
     stocks = [s for s in (snap.get("stocks") or []) if s.get("ticker") and s.get("sector") != "EXCHANGE TRADED FUNDS"]
@@ -779,8 +894,10 @@ def run(args) -> int:
 
     # 증분: 일별 색인으로 새 정기보고서를 낸 CIK
     scanned = _d(state.get("indexScannedThrough") or "")
-    fields_old = int(state.get("fieldsVersion") or 1) < FIELDS_VERSION
-    full = args.full or scanned is None or (today - scanned).days > MAX_SCAN_GAP_DAYS or fields_old
+    state_fv = int(state.get("fieldsVersion") or 1)
+    # 아주 옛 상태(FULL_REFETCH_BELOW 미만)만 전체 재수집. 그 위는 종목별 fv 로 조금씩 올린다(upgrade).
+    fields_old = state_fv < FULL_REFETCH_BELOW
+    full =args.full or scanned is None or (today - scanned).days > MAX_SCAN_GAP_DAYS or fields_old
     changed: set[int] = set()
     scanned_through = scanned
     if not full and not args.only:
@@ -795,6 +912,7 @@ def run(args) -> int:
 
     todo = []
     stale = []
+    upgrade = []
     for s in stocks:
         t = str(s["ticker"]).upper()
         cik = cmap.get(sec_symbol(t))
@@ -806,9 +924,13 @@ def run(args) -> int:
             todo.append((s, t, cik))
         elif (today - fetched).days > STALE_DAYS:
             stale.append((fetched, s, t, cik))
+        elif ticker_fields_version(st, state_fv) < FIELDS_VERSION and not st.get("noFacts"):
+            upgrade.append((s, t, cik))
     stale.sort(key=lambda x: x[0])
     todo += [(s, t, cik) for _, s, t, cik in stale[:args.stale_max]]
-    print(f"[US재무] 이번에 받을 종목 {len(todo)} (오래된 재확인 {min(len(stale), args.stale_max)})")
+    todo += upgrade[:max(0, args.upgrade_max)]      # 시총 순 — 큰 종목부터 새 필드가 채워진다
+    print(f"[US재무] 이번에 받을 종목 {len(todo)} (오래된 재확인 {min(len(stale), args.stale_max)}"
+          f" · 필드 추가 {min(len(upgrade), max(0, args.upgrade_max))}/{len(upgrade)})")
 
     ok = failed = empty = 0
     stamp = sec.kst_now_str()
@@ -836,7 +958,7 @@ def run(args) -> int:
             failed += 1
             print(f"  [경고] {t} 파싱 실패: {type(exc).__name__}: {exc}")
             continue
-        tstate[t] = {"cik": cik, "fetched": today.isoformat()}
+        tstate[t] = {"cik": cik, "fetched": today.isoformat(), "fv": FIELDS_VERSION}
         if not doc:
             empty += 1
             continue
@@ -863,7 +985,9 @@ def run(args) -> int:
     }
     new_state = {"indexScannedThrough": (scanned_through or today).isoformat()
                  if not args.only else state.get("indexScannedThrough"),
-                 "fieldsVersion": FIELDS_VERSION if not args.only else state.get("fieldsVersion"),
+                 # 상태 전체의 fieldsVersion = 종목별 fv 가 없는 항목이 따르는 세대. 단계 업그레이드 중에는 올리지
+                 # 않는다(올리면 아직 다시 받지 않은 종목까지 새 필드가 채워진 것으로 보인다). 전체 재수집 때만 올린다.
+                 "fieldsVersion": (FIELDS_VERSION if full else state_fv) if not args.only else state.get("fieldsVersion"),
                  "updatedAtKst": stamp, "tickers": dict(sorted(tstate.items()))}
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "FINANCIALS_INDEX", payload, indent=None, min_ratio=0.8)
@@ -889,6 +1013,8 @@ def main() -> int:
     ap.add_argument("--only", default="", help="쉼표로 구분한 티커만(로컬 확인용, 상태의 색인 날짜는 안 바꾼다)")
     ap.add_argument("--full", action="store_true", help="색인 무시하고 전부 다시 받기")
     ap.add_argument("--stale-max", type=int, default=200, help="120일 넘은 종목 재확인 상한(실행당)")
+    ap.add_argument("--upgrade-max", type=int, default=UPGRADE_MAX_DEFAULT,
+                    help="추출 필드 세대(fv)가 낮은 종목 재수집 상한(실행당, 시총 순)")
     args = ap.parse_args()
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")

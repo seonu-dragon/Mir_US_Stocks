@@ -227,6 +227,7 @@ def new_accumulator():
         "breakout_total": {+1: 0, -1: 0},
         "kr": {"halt_bars": 0, "halt_breaks": 0, "gap_breaks": 0, "limit_locked_skipped": 0,
                "etf_no_dividend": 0, "non_naver_skipped": 0},
+        "us": {"breaks": 0},   # US: pattern_lib.split_at_discontinuities 로 끊은 횟수
         "scanned": 0,
     }
 
@@ -248,7 +249,10 @@ def scan_detail(d, market, acc, etf_codes=frozenset()):
         segments = kr_segments(rows_all, acc["kr"])
         etf = is_kr_etf(d, etf_codes)
     else:
-        segments = [rows_all]
+        # 한 봉 4배 밖 종가 불연속(수정 안 된 역분할·호가 오류, 예 PPCB 0.01 → 625)에서 끊는다 —
+        # 그 봉을 가로지르는 전방 창이 기준선·돌파 평균을 통째로 끌고 간다(pattern_lib 주석).
+        # KR 은 위 kr_segments 의 ±30.5% 끊기가 이미 이 규칙을 포함한다.
+        segments = pl.split_at_discontinuities(rows_all, stats=acc["us"])
     used = False
     for rows in segments:
         if len(rows) < MIN_BARS:
@@ -316,6 +320,8 @@ def build_output(acc, market):
         out["kr_cleaning"] = dict(acc["kr"], halt_break_bars=KR_HALT_BREAK,
                                   gap_break_pct=round(KR_GAP_BREAK * 100, 1),
                                   limit_lock_pct=round(KR_LIMIT_LOCK * 100, 1))
+    else:
+        out["discontinuity_cleaning"] = {"max_bar_ratio": pl.MAX_BAR_RATIO, "breaks": acc["us"]["breaks"]}
     return out
 
 

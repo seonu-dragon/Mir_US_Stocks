@@ -6958,6 +6958,7 @@ const TRUST_RECOVERY = {
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "소유구조 프로필": { kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_kr_ownership_profile.py" }, tabs: "종목 탭 · 수급·보유 · 소유구조" },
   "감사의견": { kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_kr_audit_opinion.py" }, tabs: "종목 탭 · 재무 위험 점검" },
+  "재무 안전(사채·감사·자금)": { kr: { workflow: "Company profile & price targets", script: "scripts/build_kr_fin_safety.py" }, tabs: "종목 탭 · 재무 위험 점검 · 재무 안전" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
   "증시자금·투자자 동향": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_market_funds.py" }, tabs: "시장 탭 · 수급·자금" },
   "PER·PBR 밴드": {
@@ -7270,6 +7271,7 @@ function dataTrustSources() {
     // config 스텝을 지워 커밋 실패) 신뢰도 센터는 '정상 40'만 보였다. 주 1회 + 재시도 슬롯이라 10일(240시간).
     rows.push(source("감사의견", "DART 정기보고서", window.KR_AUDIT_OPINION, ["opinions"], 240, "매주 일요일", "krAudit"));
     rows.push(source("미상환 CB·BW", "DART 정기보고서", window.KR_CB_OVERHANG, ["companies"], 120, "평일 15:30", "krCbOverhang"));
+    rows.push(source("재무 안전(사채·감사·자금)", "DART 정기보고서", window.KR_FIN_SAFETY, ["companies"], 240, "매주 토요일", "krFinSafety"));
   }
   if (cfg.features?.krOwnership === true) {
     rows.push(source("소유구조 프로필", "DART 정기보고서", window.KR_OWNERSHIP_PROFILE, ["profiles"], 240, "매주 일요일", "krOwnProfile"));

@@ -94,7 +94,30 @@
     return { buy: r[0], hold: r[1], sell: r[2], n };
   }
 
-  const api = { shardOf, fiscalMonthLabel, fmtCount, webHref, formerNamesLabel, rangeGeometry, gapPct, gapSentence, opinionShares };
+  // 원 → "1.57억" · "134억" · "1.2조" · "6,100만". 0·음수·없음 → "".
+  function fmtKrw(won) {
+    const v = num(won);
+    if (v === null || v <= 0) return "";
+    if (v >= 1e12) return `${(v / 1e12).toFixed(v >= 1e14 ? 0 : 1).replace(/\.0$/, "")}조`;
+    if (v >= 1e8) {
+      const e = v / 1e8;
+      return `${e >= 100 ? Math.round(e).toLocaleString("en-US") : e.toFixed(e >= 10 ? 1 : 2).replace(/\.?0+$/, "")}억`;
+    }
+    if (v >= 1e4) return `${Math.round(v / 1e4).toLocaleString("en-US")}만`;
+    return `${Math.round(v).toLocaleString("en-US")}`;
+  }
+
+  // 직원 수 추이 [[연도, 인원, 평균급여]] → [{ y, emp, sal, chg }] (chg = 전년 대비 %, 첫 해 null). 2개 미만이면 [].
+  function empTrend(hist) {
+    if (!Array.isArray(hist)) return [];
+    const rows = hist.filter((h) => Array.isArray(h) && num(h[0]) !== null && num(h[1]) > 0)
+      .map((h) => ({ y: num(h[0]), emp: num(h[1]), sal: num(h[2]) }))
+      .sort((a, b) => a.y - b.y);
+    if (rows.length < 2) return [];
+    return rows.map((r, i) => ({ ...r, chg: i ? ((r.emp / rows[i - 1].emp) - 1) * 100 : null }));
+  }
+
+  const api = { shardOf, fmtKrw, empTrend, fiscalMonthLabel, fmtCount, webHref, formerNamesLabel, rangeGeometry, gapPct, gapSentence, opinionShares };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirCompanyInfoCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

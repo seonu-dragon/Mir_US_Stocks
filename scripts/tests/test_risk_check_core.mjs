@@ -246,6 +246,60 @@ test("evaluate: 통과 n/m 은 데이터 없음·해당 없음을 분모에서 �
   assert.equal(core.evaluate(file([]), {}), null);
 });
 
+// ── 재무 안전 묶음(KR_FIN_SAFETY, 금액 백만원) ──
+const SAFE = {
+  companies: {
+    "000660": {
+      debt: { asOf: "2026-06-30", p: "2026 반기", rc: "20260814003509",
+        k: { bond: { l: [1250750, 2841500, 3016400, 4752525], sm: 11861175 }, cp: { l: [300000, 0, 0, 0], sm: 300000 } } },
+      audit: { y: 2025, years: [{ by: "삼정회계법인", t: 78, fee: 3100, h: 28888, na: 6, nr: 0.33 }, { by: "삼정회계법인", t: 77 }] },
+      funds: { p: "2026 반기", rows: [["공모", "회사채", "제226-1회", "2025-01-20", "채무상환자금", 440000, 440000], ["공모", "유상증자", "", "2023-09-19", "시설자금", 418522, 69855, "사업 지연"]] },
+    },
+    "000665": { alias: "000660" },
+    "196170": { debt: { asOf: "2026-06-30", zero: true } },
+  },
+};
+
+test("재무 안전: 레코드·우선주 별칭", () => {
+  assert.ok(core.safetyRecord(SAFE, "000660").debt);
+  assert.equal(core.safetyRecord(SAFE, "000665"), core.safetyRecord(SAFE, "000660"));
+  assert.equal(core.safetyRecord(SAFE, "999999"), null);
+  assert.equal(core.safetyRecord(null, "000660"), null);
+});
+
+test("재무 안전: 만기 사다리", () => {
+  const lad = core.debtLadder(SAFE.companies["000660"]);
+  assert.deepEqual(lad.cols.map((c) => c[1]), ["회사채", "CP"]);
+  assert.equal(lad.rows[0].total, 1250750 + 300000);
+  assert.equal(lad.total.total, 11861175 + 300000);
+  near(lad.near1yPct, (1550750 / 12161175) * 100, 1e-9);
+  assert.equal(core.debtLadder(SAFE.companies["196170"]), null);       // 잔액 0 은 표 대신 '없음' 줄
+});
+
+test("재무 안전: 감사·자금 행", () => {
+  const a = core.auditRows(SAFE.companies["000660"]);
+  assert.equal(a.length, 2);
+  near(a[0].ratioPct, 33, 1e-9);
+  assert.equal(a[1].fee, null);
+  assert.equal(a[1].ratioPct, null);
+  const f = core.fundRows(SAFE.companies["000660"]);
+  assert.equal(f[0].gap, 0);
+  assert.equal(f[1].gap, 69855 - 418522);
+  assert.equal(f[1].why, "사업 지연");
+  assert.equal(f[1].name, "유상증자");
+});
+
+test("재무 안전: 백만원 표기", () => {
+  assert.equal(core.fmtMillion(8100), "81억");
+  assert.equal(core.fmtMillion(11861175), "11.9조");
+  assert.equal(core.fmtMillion(149840026), "150조");
+  assert.equal(core.fmtMillion(54000), "540억");
+  assert.equal(core.fmtMillion(450), "4.5억");
+  assert.equal(core.fmtMillion(8), "800만");
+  assert.equal(core.fmtMillion(0), "0");
+  assert.equal(core.fmtMillion(null), "");
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" -", f));

@@ -51,6 +51,10 @@ function ciProfileRows(rec, item, kr) {
   const web = href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${esc(rec.web)}</a>` : "";
   if (kr) {
     const emp = rec.emp ? `${core.fmtCount(rec.emp)}명${rec.empYear ? ` <small class="muted">${escapeHtml(String(rec.empYear))} 사업보고서</small>` : ""}` : "";
+    const sal = core.fmtKrw(rec.empSal);
+    const ten = Number(rec.empTen) > 0 ? `${Number(rec.empTen).toFixed(1)}년` : "";
+    const trend = core.empTrend(rec.empHist).map((h) => `${h.y} ${core.fmtCount(h.emp)}${h.chg !== null && Math.abs(h.chg) >= 0.05
+      ? ` <span class="${cls(h.chg)}">${h.chg > 0 ? "+" : ""}${h.chg.toFixed(1)}%</span>` : ""}`).join(" → ");
     const ind = [item && item.industry, rec.ksic ? `<small class="muted">표준산업분류 ${esc(rec.ksic)}</small>` : ""]
       .filter(Boolean).map((x, i) => (i === 0 ? esc(x) : x)).join(" ");
     return [
@@ -58,6 +62,9 @@ function ciProfileRows(rec, item, kr) {
       ciRow("설립일", esc(rec.est)),
       ciRow("결산월", esc(core.fiscalMonthLabel(rec.fye))),
       ciRow("직원 수", emp),
+      ciRow("평균 급여", sal ? `${escapeHtml(sal)}원` : ""),
+      ciRow("평균 근속", ten),
+      ciRow("직원 추이", trend),
       ciRow("업종", ind),
       ciRow("주소", esc(rec.addr)),
       ciRow("전화", esc(rec.phone)),
@@ -78,6 +85,18 @@ function ciProfileRows(rec, item, kr) {
     ciRow("홈페이지", web),
     ciRow("이전 사명", former),
   ].join("");
+}
+
+// 보수 5억 이상 상위 5인(DART 개인별 보수지급 금액, 사업보고서). 없으면 "".
+function ciPayHtml(rec) {
+  const pay = rec && rec.pay;
+  const rows = pay && Array.isArray(pay.rows) ? pay.rows.filter((r) => Array.isArray(r) && r[0] && Number(r[2]) > 0) : [];
+  if (!rows.length) return "";
+  const core = ciCore();
+  const body = rows.map((r) => `<tr><td>${escapeHtml(String(r[0]))}</td><td>${escapeHtml(String(r[1] || ""))}</td><td class="num">${escapeHtml(core.fmtKrw(r[2]))}원</td></tr>`).join("");
+  return `<details class="ci-hist ci-pay"><summary>보수 5억 이상 상위 ${rows.length}인 <small class="muted">${escapeHtml(String(pay.y || ""))} 사업보고서</small></summary>
+      <table class="ci-hist-table"><thead><tr><th>이름</th><th>직위</th><th class="num">보수 총액</th></tr></thead><tbody>${body}</tbody></table>
+    </details>`;
 }
 
 function renderCompanyInfo(item) {
@@ -102,6 +121,7 @@ function renderCompanyInfo(item) {
     host.hidden = false;
     host.innerHTML = `<div class="qi-head"><h3>기업개요</h3></div>
       <table class="ci-table"><tbody>${ciProfileRows(rec, item, kr)}</tbody></table>
+      ${kr ? ciPayHtml(rec) : ""}
       <p class="ci-src">기준 ${escapeHtml(rec.asOf || String(meta.updatedAtKst || "").slice(0, 10))}</p>`;
   });
 }

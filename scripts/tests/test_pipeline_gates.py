@@ -150,6 +150,7 @@ def test_kr_group_runs_session_and_bars_checks(monkeypatch, tmp_path):
 
 DART_KEY_BUILDERS = [
     "build_kr_audit_opinion",
+    "build_kr_cb_overhang",
     "build_kr_disclosures",
     "build_kr_earnings",
     "build_kr_event_details",
@@ -157,6 +158,9 @@ DART_KEY_BUILDERS = [
     "build_kr_indicators",
     "build_kr_ownership",
     "build_kr_ownership_profile",
+    "build_kr_fin_safety",
+    "build_kr_major_holders",
+    "build_kr_stake_value",
 ]
 
 

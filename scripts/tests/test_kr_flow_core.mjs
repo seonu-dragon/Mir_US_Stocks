@@ -27,6 +27,17 @@ test("shardOf: 파이썬 shard_of 와 같은 값", () => {
   }
 });
 
+test("fmtSignedMan: 1만 이상은 만 단위, 그 아래는 그대로", () => {
+  assert.equal(core.fmtSignedMan(-2324529), "-232만");
+  assert.equal(core.fmtSignedMan(2055241), "+206만");
+  assert.equal(core.fmtSignedMan(313027), "+31만");
+  assert.equal(core.fmtSignedMan(12345), "+1.2만");
+  assert.equal(core.fmtSignedMan(-99999), "-10만");
+  assert.equal(core.fmtSignedMan(3189), "+3,189");
+  assert.equal(core.fmtSignedMan(0), "0");
+  assert.equal(core.fmtSignedMan(null), "—");
+});
+
 test("fmtSigned: 부호·쉼표·0·결측", () => {
   assert.equal(core.fmtSigned(3189), "+3,189");
   assert.equal(core.fmtSigned(-14649), "-14,649");

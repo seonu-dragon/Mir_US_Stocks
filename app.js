@@ -428,6 +428,16 @@ function updateDataLoadedAt(date = new Date()) {
   const snapshotTime = data && (data.updatedAtKst || data.updated_at_kst);
   const basis = snapshotPriceBasisText();
   el.textContent = `${snapshotTime || formatKstDateTime(date)}${basis ? ` · ${basis}` : ""}`;
+  const chip = yahooBarsChipHtml();
+  if (chip) el.insertAdjacentHTML("beforeend", chip);
+}
+
+// KR 일봉 중 야후 폴백 비율이 상한(35%)을 넘을 때만 "야후 봉 N%" 상태 칩(네이버 일봉 원천 대거 실패 신호).
+function yahooBarsChipHtml() {
+  const core = window.MirDailyTable;
+  if (!isKrMarket() || !core || typeof core.yahooBarsShare !== "function") return "";
+  const s = core.yahooBarsShare(data && data.historyCoverage);
+  return s ? `<span class="stale-bars-chip" title="일봉 ${s.total.toLocaleString()}종목 중 ${s.yahoo.toLocaleString()}종목 야후">야후 봉 ${s.pct}%</span>` : "";
 }
 
 // 스냅샷 주가의 기준 거래일("09.30 종가 기준"). 미국 스냅샷은 Actions 대기 탓에 KST 오전 늦게 올라오고,
@@ -3901,7 +3911,7 @@ function stockSummaryHtml(item) {
     <div class="sd-price-row">
       <strong class="sd-price">${escapeHtml(priceOrDash(item.price))}</strong>${typeof quoteKrwApproxHtml === "function" ? quoteKrwApproxHtml(item.price) : ""}
     </div>
-    <p class="sd-change">${stockChangeHtml(item)}<span class="sd-asof">${escapeHtml(stockAsOfText(item))}</span>${staleBarsChipHtml(item)}</p>
+    <p class="sd-change">${stockChangeHtml(item)}<span class="sd-asof">${escapeHtml(stockAsOfText(item))}</span>${staleBarsChipHtml(item)}${yahooBarsChipHtml()}</p>
     ${typeof liveQuoteLineHtml === "function" ? liveQuoteLineHtml(item, "below") : ""}
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}

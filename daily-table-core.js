@@ -252,7 +252,21 @@
     return { date: d, label: d.slice(5), days };
   }
 
-  const api = { buildDailyRows, marketClock, provisionalLabel, krSessionClosed, alignSessionBar, mergeLiveBars, krTick, snapshotPrevClose, fmtPrice, fmtChange, fmtVolume, fmtDate, fmtDateShort, staleLastBar };
+  // KR 스냅샷 일봉 원천 중 야후 비율(historyCoverage.barsSource = {naver, yahoo}). 상한(check_data_freshness.py
+  // KR_YAHOO_BARS_MAX 와 같은 값)을 넘을 때만 { pct, yahoo, total } — 상태 칩용, 평시엔 null(아무것도 안 그림).
+  const YAHOO_BARS_MAX = 0.35;
+  function yahooBarsShare(coverage, max = YAHOO_BARS_MAX) {
+    const c = coverage && coverage.barsSource;
+    if (!c || typeof c !== "object") return null;
+    const yahoo = Number(c.yahoo) || 0;
+    const total = yahoo + (Number(c.naver) || 0);
+    if (!(total > 0) || yahoo < 0) return null;
+    const share = yahoo / total;
+    if (!(share > max)) return null;
+    return { pct: Math.round(share * 100), yahoo, total };
+  }
+
+  const api = { YAHOO_BARS_MAX, yahooBarsShare, buildDailyRows, marketClock, provisionalLabel, krSessionClosed, alignSessionBar, mergeLiveBars, krTick, snapshotPrevClose, fmtPrice, fmtChange, fmtVolume, fmtDate, fmtDateShort, staleLastBar };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDailyTable = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

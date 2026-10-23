@@ -372,7 +372,12 @@ function krFlowFetchShard(code) {
 
 function krFlowDailyTable(rows) {
   const C = window.MirKrFlowCore;
-  const qty = (v) => C.fmtSigned(v);
+  // 폰(≤560px)에선 '만' 단위 짧은 값만 보인다(CSS) — 7자리 수량 3열이 320px 칸을 넘던 문제.
+  const qty = (v) => {
+    const full = C.fmtSigned(v);
+    const man = C.fmtSignedMan(v);
+    return man === full ? full : `<span class="kfd-full">${full}</span><span class="kfd-man">${man}</span>`;
+  };
   const body = rows.map((r) => `
     <tr>
       <th scope="row">${escapeHtml(krFlowDateShort(r.d))}</th>

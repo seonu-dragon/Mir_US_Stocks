@@ -331,7 +331,7 @@ DASH_RENDER.risk = function risk() {
   if (rc) {
     sources.push({ label: "재무 점검", get: (t) => {
       const r = core.riskCheckRow(rc, t);
-      return r && r.fail > 0 ? { text: `경고 ${r.fail}${r.of ? `/${r.of}` : ""}개`, src: `재무 위험 점검${r.fy ? ` FY${r.fy}` : ""}` } : null;
+      return r && r.fail >= core.RISK_FAIL_MIN ? { text: `경고 ${r.fail}${r.of ? `/${r.of}` : ""}개`, src: `재무 위험 점검${r.fy ? ` FY${r.fy}` : ""}` } : null;
     } });
   }
   if (window.MirDailyTable && typeof window.MirDailyTable.staleLastBar === "function") {

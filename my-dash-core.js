@@ -228,6 +228,9 @@
     return { fy: at("fy"), fail: at("fail"), of: at("of") };
   }
 
+  // 재무 위험 점검 경고가 이 개수 이상일 때만 올린다 — 1개는 대형주 대부분에 있어 신호가 아니다(AAPL 1/6 등, 2026-10-23).
+  const RISK_FAIL_MIN = 2;
+
   // 사채·CP 잔액 중 1년 이내 만기 비중이 이 값(%) 이상이면 위험 신호 목록에 사실로 올린다.
   const NEAR_1Y_PCT = 50;
 
@@ -249,7 +252,7 @@
     return out.sort((a, b) => b.facts.length - a.facts.length || a.order - b.order).map(({ ticker, facts }) => ({ ticker, facts }));
   }
 
-  const api = { consensusChanges, rsRatings, riskCheckRow, riskFacts, NEAR_1Y_PCT, upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, dropPastEarnings, relatedIndicators,
+  const api = { RISK_FAIL_MIN, consensusChanges, rsRatings, riskCheckRow, riskFacts, NEAR_1Y_PCT, upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, dropPastEarnings, relatedIndicators,
     recentMine, openMarketTrades, groupTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;

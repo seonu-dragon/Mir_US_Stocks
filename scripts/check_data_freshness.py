@@ -561,6 +561,14 @@ def check_earnings_history_failures(payload: dict) -> tuple[list[str], list[str]
     """
     failed = int(payload.get("failed") or 0)
     attempted = int(payload.get("updated") or 0) + failed
+    # 빈 응답(이력이 있던 종목인데 야후가 아무것도 안 줌)이 처리 종목의 절반을 넘으면 수집이 죽은 것이다.
+    empty = int(payload.get("emptyFetch") or 0)
+    processed = int(payload.get("processed") or 0)
+    if processed >= 100 and empty > processed * 0.5:
+        return [
+            f"{EARNINGS_HISTORY_META}: 실적 이력 빈 응답 {empty}/{processed}종목 — 야후 earnings_dates 가 "
+            "대거 비었다(오류가 빈 결과로 삼켜졌을 가능성)"
+        ], []
     if attempted and failed > attempted * EARNINGS_HISTORY_MAX_FAILED_RATIO:
         return [
             f"{EARNINGS_HISTORY_META}: 실적 이력 수집 실패 {failed}/{attempted}건 "

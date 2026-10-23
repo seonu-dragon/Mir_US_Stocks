@@ -241,3 +241,23 @@ def test_fetch_market_page_keeps_krx_close_not_nxt(monkeypatch):
     rows = K.fetch_market_page(0, 1)
     assert rows[0]["quotePrice"] == 286500 and rows[0]["listedShares"] == 5846278608
     assert rows[0]["quoteDate"] == "2026-09-23"
+
+
+def test_refresh_counts_empty_fetch_separately(monkeypatch):
+    import earnings_history_store as ehs
+    res = {"A": True, "B": None, "C": None, "D": False}
+    monkeypatch.setattr(ehs, "refresh_ticker", lambda t, fetch_limit=4: res[t])
+    monkeypatch.setattr(ehs, "save_checkpoint", lambda done: None)
+    class P:
+        def exists(self): return True
+    monkeypatch.setattr(ehs, "DETAILS_DIR", type("D", (), {"__truediv__": lambda self, x: P()})())
+    stats = ehs.refresh_all_incremental(tickers=["A", "B", "C", "D"], sleep_s=0)
+    assert stats["updated"] == 1 and stats["emptyFetch"] == 2 and stats["skipped"] == 3
+
+
+def test_gate_fails_on_mass_empty_fetch():
+    import check_data_freshness as c
+    bad, ok = c.check_earnings_history_failures({"updated": 0, "failed": 0, "emptyFetch": 5000, "processed": 5865})
+    assert bad and not ok
+    bad, ok = c.check_earnings_history_failures({"updated": 300, "failed": 0, "emptyFetch": 40, "processed": 5865})
+    assert not bad and ok

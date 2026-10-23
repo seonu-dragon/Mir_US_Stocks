@@ -100,6 +100,10 @@ def refresh_ticker(ticker: str, *, fetch_limit: int = 4) -> bool:
     fresh = fetch_earnings_history(ticker, limit=fetch_limit)
     if not fresh and not existing:
         return False
+    if not fresh:
+        # 이력이 있던 종목인데 이번엔 빈 응답 — 야후 오류를 fetch 가 [] 로 삼킨 경우가 대부분이다(2026-10-18 실행은
+        # lxml 누락으로 5,865종목 전부 '변화 없음'으로 집계돼 updated=0 인데도 초록이었다). 따로 세어 관문이 본다.
+        return None
     merged = merge_earnings_history(existing, fresh)
     if merged == existing:
         return False
@@ -136,7 +140,7 @@ def refresh_all_incremental(
     base = tickers or load_snapshot_tickers()
     targets = rotate(base, start_offset)
     done = load_checkpoint() if resume else set()
-    updated = skipped = failed = 0
+    updated = skipped = failed = empty = 0
     processed = 0
     stopped = ""
 
@@ -159,7 +163,10 @@ def refresh_all_incremental(
             continue
         try:
             changed = refresh_ticker(ticker, fetch_limit=fetch_limit)
-            if changed:
+            if changed is None:
+                empty += 1
+                skipped += 1
+            elif changed:
                 updated += 1
                 print(f"[ok] {ticker}")
             else:
@@ -180,7 +187,7 @@ def refresh_all_incremental(
     save_checkpoint(done)
     n = len(base)
     next_offset = ((start_offset + processed) % n) if (stopped and n) else 0
-    return {"updated": updated, "skipped": skipped, "failed": failed, "total": len(targets),
+    return {"updated": updated, "skipped": skipped, "failed": failed, "emptyFetch": empty, "total": len(targets),
             "processed": processed, "nextOffset": next_offset, "stoppedReason": stopped}
 
 

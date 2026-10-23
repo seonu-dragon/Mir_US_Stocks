@@ -370,11 +370,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5bfc82cdba" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5bfc82cdba"></noscript>
+    <link rel="preload" href="styles.css?v=f9225eaedb" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=f9225eaedb"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=41a1358d87"></script>
+    <script src="build_id.js?v=f49155c4fb"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2455,6 +2455,7 @@ html[data-market="kr"][data-theme="dark"] {
           </details>
           <div class="institutional-meta" id="institutionalMeta"></div>
           <div class="inst-13f-highlights" id="inst13fHighlights"></div>
+          <section class="inst-consensus" id="instConsensus" hidden></section>
           <div class="institutional-picker">
             <label class="grow">
               기관 검색
@@ -2525,6 +2526,9 @@ html[data-market="kr"][data-theme="dark"] {
               <button type="button" data-kind="buy">매수 P</button>
               <button type="button" data-kind="sell">매도 S</button>
               <button type="button" data-kind="f144" title="SEC Form 144 — 계열인이 팔기 전에 내는 매도 예정 신고">Form 144 매도 예정</button>
+            </div>
+            <div class="insider-filter" id="insiderPlanFilter" role="group" aria-label="계획 매매 필터" hidden>
+              <button type="button" aria-pressed="false" title="Rule 10b5-1 사전 계획에 따른 거래를 뺍니다">계획 매매 제외</button>
             </div>
             <label class="grow">
               검색
@@ -3402,7 +3406,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
     <script src="short-interest-core.js"></script>
-    <script src="disclosure-trackers.js?v=2a5e33329d"></script>
+    <script src="disclosure-trackers.js?v=369624ccbd"></script>
     <script src="movers.js?v=33097bd4db"></script>
     <script src="ext-hours-core.js?v=b88e6773ee"></script>
     <script src="ext-hours.js?v=ad04bde4dd"></script>
@@ -3468,7 +3472,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart.js?v=e5e861a70b"></script>
     <script src="chart-ind-picker.js"></script>
     <script src="chart-multi.js"></script>
-    <script src="institutional.js?v=02c52dab3b"></script>
+    <script src="institutional.js?v=1514b52823"></script>
     <script src="markets-etf.js?v=e8d8cf0ec6"></script>
     <script src="kr-panels.js?v=dc73f39cc4"></script>
     <script src="kr-flow-core.js?v=e3ce810c37"></script>
@@ -3529,7 +3533,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=aa21ba9e7e"></script>
     <script src="etf-holdings.js?v=bbe7492722"></script>
-    <script src="app.js?v=9c6196959d"></script>
+    <script src="app.js?v=7a91bc4422"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="ats-core.js"></script>

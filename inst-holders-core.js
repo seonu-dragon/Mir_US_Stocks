@@ -179,9 +179,31 @@
     return `${v > 0 ? "+" : ""}${v.toLocaleString("en-US")}`;
   }
 
+  // 슈퍼투자자 합의(data/institutional_holders/consensus.json): t = {티커: [보유, 신규, 청산, 증가, 감소, 유지]}
+  // — 추적 기관(약 100곳)만, 직전 분기 대비. 점수 없이 개수만 정렬한다.
+  const CONSENSUS_KEYS = ["holders", "new", "soldOut", "added", "reduced"];
+  function consensusRows(obj) {
+    const t = obj && obj.t;
+    if (!t || typeof t !== "object") return [];
+    const out = [];
+    for (const [ticker, a] of Object.entries(t)) {
+      if (!ticker || !Array.isArray(a) || a.length < 5) continue;
+      const v = a.slice(0, 5).map(num);
+      if (v.some((x) => x === null || x < 0)) continue;
+      out.push({ ticker, holders: v[0], new: v[1], soldOut: v[2], added: v[3], reduced: v[4] });
+    }
+    return out;
+  }
+  function sortConsensus(rows, key) {
+    const k = CONSENSUS_KEYS.includes(key) ? key : "holders";
+    return (Array.isArray(rows) ? rows : []).slice().sort((a, b) =>
+      (b[k] - a[k]) || (b.holders - a.holders) || (b.new - a.new) || (a.ticker < b.ticker ? -1 : a.ticker > b.ticker ? 1 : 0));
+  }
+
   const api = {
     shardKey, quarterLabel, pctChange, summarize, changeBars, cleanFilerName, topRows, statusLabel,
     trendSeries, sparkline, fmtShares, fmtUsd, fmtSignedPct, fmtSignedInt,
+    CONSENSUS_KEYS, consensusRows, sortConsensus,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirInstHoldersCore = api;

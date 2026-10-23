@@ -186,9 +186,94 @@ function setupInstitutionalUi() {
   institutionalUiReady = true;
 }
 
+// ===== 슈퍼투자자 합의 (공시 › 13F) =====
+// 추적 기관(약 100곳)만 놓고 종목별 보유·신규·청산·증가·감소 기관 수(build_13f_holders.py 의 consensus.json).
+// 인덱스(US_INST_HOLDERS_INDEX, ~3KB lazy)의 consensus.ver 가 있을 때만 받는다 — 없으면 표를 숨긴다.
+let consensusSortKey = "holders";
+let consensusLimit = 50;
+const _consensusFetch = {};   // url → Promise<json|null>
+let _consensusData = null;    // 받은 consensus.json (있으면 상위 25종목 기반 하이라이트 대신 이 표를 쓴다)
+
+function consensusFetch(ver) {
+  const url = `data/institutional_holders/consensus.json?v=${encodeURIComponent(ver)}`;
+  if (!_consensusFetch[url]) {
+    _consensusFetch[url] = fetch(url)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((j) => { if (!j) delete _consensusFetch[url]; return j; });
+  }
+  return _consensusFetch[url];
+}
+
+function renderSuperinvestorConsensus() {
+  const host = byId("instConsensus");
+  if (!host) return;
+  const hide = () => { host.hidden = true; host.innerHTML = ""; delete host.dataset.consKey; };
+  const IHC = window.MirInstHoldersCore;
+  if (!IHC || isKrMarket() || featureOff("instHolders")) return hide();
+  const meta = window.US_INST_HOLDERS_INDEX;
+  if (!meta) {
+    ensureFeatureData("usInstHolders").then((ok) => { if (ok && window.US_INST_HOLDERS_INDEX) renderSuperinvestorConsensus(); });
+    return;
+  }
+  const info = meta.consensus;
+  if (!info || !info.ver) return hide();
+  consensusFetch(info.ver).then((obj) => {
+    const rows = IHC.consensusRows(obj);
+    if (!rows.length) return hide();
+    _consensusData = obj;
+    const hl = byId("inst13fHighlights");
+    if (hl) { hl.innerHTML = ""; hl.hidden = true; }
+    const key = `${info.ver}|${consensusSortKey}|${consensusLimit}`;
+    if (host.dataset.consKey === key && !host.hidden) return;
+    host.dataset.consKey = key;
+    const sorted = IHC.sortConsensus(rows, consensusSortKey);
+    const shown = sorted.slice(0, consensusLimit);
+    const cols = [["holders", "보유"], ["new", "신규"], ["added", "증가"], ["reduced", "감소"], ["soldOut", "청산"]];
+    const tone = { new: "ins-buy", added: "ins-buy", reduced: "ins-sell", soldOut: "ins-sell" };
+    const head = cols.map(([k, label]) => {
+      const on = consensusSortKey === k;
+      return `<th class="ins-num" aria-sort="${on ? "descending" : "none"}"><button type="button" class="cons-sort${on ? " is-active" : ""}" data-cons-sort="${k}">${label}${on ? " ▼" : ""}</button></th>`;
+    }).join("");
+    const body = shown.map((r, i) => `<tr>
+        <td class="ins-num">${i + 1}</td>
+        <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(stockLabel(r.ticker))}</button></td>
+        ${cols.map(([k]) => `<td class="ins-num${r[k] && tone[k] ? ` ${tone[k]}` : ""}">${r[k] || k === "holders" ? r[k].toLocaleString("en-US") : "—"}</td>`).join("")}
+      </tr>`).join("");
+    const filed = Number(obj.filed), tracked = Number(obj.tracked);
+    const sub = [IHC.quarterLabel(obj.period), Number.isFinite(filed) && Number.isFinite(tracked) ? `추적 기관 ${filed}/${tracked}곳` : ""].filter(Boolean).join(" · ");
+    host.hidden = false;
+    host.innerHTML = `<div class="cons-head"><h3>슈퍼투자자 합의</h3><span>${escapeHtml(sub)}</span></div>
+      <div class="table-wrap"><table class="insider-table cons-table">
+        <thead><tr><th class="ins-num">#</th><th>종목</th>${head}</tr></thead>
+        <tbody>${body}</tbody>
+      </table></div>
+      ${sorted.length > shown.length ? `<button type="button" class="cons-more" data-cons-more="1">더 보기 (${shown.length.toLocaleString()} / ${sorted.length.toLocaleString()})</button>` : ""}`;
+    if (!host.dataset.consBound) {
+      host.dataset.consBound = "1";
+      host.addEventListener("click", (ev) => {
+        const sortBtn = ev.target.closest("[data-cons-sort]");
+        if (sortBtn && host.contains(sortBtn)) {
+          consensusSortKey = sortBtn.dataset.consSort;
+          consensusLimit = 50;
+          renderSuperinvestorConsensus();
+          return;
+        }
+        const more = ev.target.closest("[data-cons-more]");
+        if (more && host.contains(more)) {
+          consensusLimit += 50;
+          renderSuperinvestorConsensus();
+        }
+      });
+    }
+    delegateTickerClicks(host, ".ins-ticker");
+  });
+}
+
 function renderInstitutional13f() {
   setupInstitutionalUi();
   render13fHighlights();
+  renderSuperinvestorConsensus();
   const payload = institutional13fData();
   const institutions = (payload.institutions || []).filter((inst) => {
     if (inst.status !== "ok") return false;

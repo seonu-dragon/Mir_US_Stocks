@@ -120,6 +120,19 @@ test("표시 형식", () => {
   assert.equal(core.fmtSignedInt(-1234), "-1,234");
 });
 
+test("슈퍼투자자 합의: 행 변환·잘못된 행 제외·정렬", () => {
+  const obj = { t: { AAA: [10, 1, 0, 3, 2, 4], BBB: [12, 0, 2, 1, 1, 8], CCC: [0, 0, 5, 0, 0, 0], BAD: [1, null, 0, 0, 0], X: "no", DDD: [10, 3, 0, 0, 0, 7] } };
+  const rows = core.consensusRows(obj);
+  assert.deepEqual(rows.map((r) => r.ticker).sort(), ["AAA", "BBB", "CCC", "DDD"]);
+  assert.deepEqual(rows.find((r) => r.ticker === "AAA"), { ticker: "AAA", holders: 10, new: 1, soldOut: 0, added: 3, reduced: 2 });
+  assert.deepEqual(core.sortConsensus(rows, "holders").map((r) => r.ticker), ["BBB", "DDD", "AAA", "CCC"]);  // 동률은 신규 많은 쪽
+  assert.deepEqual(core.sortConsensus(rows, "new").map((r) => r.ticker), ["DDD", "AAA", "BBB", "CCC"]);
+  assert.deepEqual(core.sortConsensus(rows, "soldOut").map((r) => r.ticker), ["CCC", "BBB", "DDD", "AAA"]);
+  assert.deepEqual(core.sortConsensus(rows, "bogus").map((r) => r.ticker), ["BBB", "DDD", "AAA", "CCC"]);
+  assert.deepEqual(core.consensusRows(null), []);
+  assert.deepEqual(core.sortConsensus(null, "new"), []);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length}건`);
   for (const f of failures) console.error(`  - ${f}`);

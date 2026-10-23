@@ -141,6 +141,19 @@ test("공시 표 검색: 티커와 정확히 같으면 그 티커만, 아니면 
   assert.deepEqual(S.filterByQuery(null, "F", f), []);
 });
 
+test("10b5-1 계획 매매: true 만 계획, false·null·키 없음은 남긴다", () => {
+  const rows = [
+    { ticker: "A", plan10b51: true }, { ticker: "B", plan10b51: false },
+    { ticker: "C", plan10b51: null }, { ticker: "D" }, null,
+  ];
+  assert.equal(S.isPlanTrade(rows[0]), true);
+  assert.equal(S.isPlanTrade(rows[1]), false);
+  assert.equal(S.isPlanTrade(rows[2]), false);
+  assert.equal(S.isPlanTrade({ plan10b51: "true" }), false);
+  assert.deepEqual(S.excludePlanTrades(rows).map((r) => r.ticker), ["B", "C", "D"]);
+  assert.deepEqual(S.excludePlanTrades(null), []);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

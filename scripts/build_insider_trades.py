@@ -11,6 +11,19 @@ SEC Archives 는 Akamai 봇 매니저가 Sec-Fetch-*/sec-ch-ua 브라우저 헤�
 
 증분: 기존 data/insider_trades.json 의 마지막 file_date 이후(겹침 며칠 포함)만
 새로 수집해 accession+거래index 키로 dedup 머지한다. 보관 기간/행수 상한 적용.
+
+Rule 10b5-1 계획 매매(2026-10-23):
+  2023-04-01 부터 Form 4 에 '10b5-1(c) 계획에 따른 거래' 체크박스가 생겼다. XML 원소는 문서 루트의
+  ``<aff10b5One>``(값 1/0 또는 true/false — 실측 schemaVersion X0609, 예: CRWD 0001778564-26-000189 =1,
+  0001519341-26-000004 =0). 체크박스는 **공시 단위**라 행(거래)마다 가르는 근거는 각주다:
+    - 체크박스 원소가 없으면(옛 스키마) plan10b51 = null.
+    - 0/false 면 그 공시의 모든 행 false.
+    - 1/true 면: '10b5-1' 을 말하는 각주를 단 행 → true. 그런 각주를 단 행이 공시 안에 하나라도 있으면
+      나머지 행은 false(각주로 명시 구분됨). 하나도 없으면 공개시장 매수·매도(P/S) 행만 true,
+      그 밖의 코드(M·F·A …)는 판단 근거가 없어 null.
+  planAdoptedDate 는 그 각주가 '…adopted … on <날짜>' 로 채택일을 **명시**할 때만 붙인다(추정 금지).
+  이 키가 아예 없는 행은 기능 도입 전에 수집된 행이다 — 실행마다 --plan-refresh 개 공시까지 원문을
+  다시 받아 채운다(보관 45일이라 몇 번 돌면 전부 채워진다).
 """
 
 from __future__ import annotations
@@ -18,6 +31,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -65,6 +79,7 @@ TX_CODES = {
 }
 
 RETENTION_DAYS = 45    # 보관 기간(파일 날짜 기준)
+PLAN_REFRESH = 400     # 실행당 10b5-1 표시를 다시 읽을 옛 공시(accession) 수
 MAX_ROWS = 20000       # 행수 상한
 REQUEST_PAUSE = 0.13   # SEC 예의상 ~8 req/s
 
@@ -162,6 +177,99 @@ def _num(v):
         return None
 
 
+# ---- Rule 10b5-1 계획 매매 (docstring 참고) ----
+_PLAN_RE = re.compile(r"10b5\s*-\s*1", re.I)
+_PLAN_NEG_RE = re.compile(r"\bnot\b[^.;]{0,40}?10b5\s*-\s*1", re.I)
+_MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+_MON = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
+_DATE = (rf"(?:{_MON}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}"
+         rf"|\d{{1,2}}(?:st|nd|rd|th)?\s+{_MON},?\s+\d{{4}}"
+         r"|\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})")
+_ADOPTED_RE = re.compile(rf"\badopted\b(?:[^.;]{{0,120}}?\bon\s+|\s+)({_DATE})", re.I)
+
+
+def parse_footnote_date(text):
+    """'January 16, 2026' · '15 June 2026' · '5/18/2026' · '2026-05-18' → ISO. 못 읽으면 None."""
+    t = " ".join((text or "").strip().lower().replace(",", " ").replace(".", " ").split())
+    t = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", t)
+    parts = t.split()
+    try:
+        m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", t)
+        if m:
+            y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        elif re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4}", t):
+            mo, d, y = (int(x) for x in t.split("/"))
+        elif len(parts) == 3 and parts[0][:3] in _MONTHS:
+            mo, d, y = _MONTHS[parts[0][:3]], int(parts[1]), int(parts[2])
+        elif len(parts) == 3 and parts[1][:3] in _MONTHS:
+            d, mo, y = int(parts[0]), _MONTHS[parts[1][:3]], int(parts[2])
+        else:
+            return None
+        return date(y, mo, d).isoformat()
+    except (ValueError, KeyError):
+        return None
+
+
+def plan_footnote_info(text):
+    """각주 하나 → (10b5-1 계획을 말하나, 명시된 채택일 ISO | None)."""
+    t = " ".join((text or "").split())
+    if not _PLAN_RE.search(t) or _PLAN_NEG_RE.search(t):
+        return False, None
+    m = _ADOPTED_RE.search(t)
+    return True, (parse_footnote_date(m.group(1)) if m else None)
+
+
+def plan_checkbox(root):
+    """문서 루트 <aff10b5One>: True/False, 원소가 없으면(2023-04 이전 스키마) None."""
+    el = root.find("aff10b5One")
+    if el is None or el.text is None or not el.text.strip():
+        return None
+    v = el.text.strip().lower()
+    if v in ("1", "true"):
+        return True
+    if v in ("0", "false"):
+        return False
+    return None
+
+
+def plan_flags(root, file_date=None):
+    """비파생 거래 txIndex → {"plan10b51": bool|None, ["planAdoptedDate": ISO]}."""
+    ndt = root.find("nonDerivativeTable")
+    txs = ndt.findall("nonDerivativeTransaction") if ndt is not None else []
+    checked = plan_checkbox(root)
+    if checked is None or checked is False:
+        return {i: {"plan10b51": checked} for i in range(len(txs))}
+    notes = {}
+    fns = root.find("footnotes")
+    for fn in (fns.findall("footnote") if fns is not None else []):
+        is_plan, adopted = plan_footnote_info("".join(fn.itertext()))
+        if is_plan:
+            if adopted and file_date and adopted > file_date:
+                adopted = None   # 공시일보다 늦은 '채택일'은 잘못 읽은 것 — 버린다
+            notes[fn.get("id")] = adopted
+    refs = [{f.get("id") for f in tx.iter("footnoteId")} & notes.keys() for tx in txs]
+    explicit = any(refs)
+    filing_dates = {d for d in notes.values() if d}
+    out = {}
+    for i, tx in enumerate(txs):
+        code = _txt(tx, "transactionCoding/transactionCode")
+        if refs[i]:
+            flag = True
+            dates = {notes[k] for k in refs[i] if notes[k]}
+        elif explicit:
+            flag, dates = False, set()
+        elif code in ("P", "S"):
+            flag, dates = True, filing_dates
+        else:
+            flag, dates = None, set()
+        rec = {"plan10b51": flag}
+        if flag and len(dates) == 1:
+            rec["planAdoptedDate"] = next(iter(dates))
+        out[i] = rec
+    return out
+
+
 def fetch_and_parse_form4(hit, issuer_cik, ticker):
     """Form 4 XML 을 받아 nonDerivative 거래들을 레코드로 변환."""
     accession, doc = hit["_id"].split(":")
@@ -206,6 +314,7 @@ def fetch_and_parse_form4(hit, issuer_cik, ticker):
     relation = ", ".join(roles) or "기타"
 
     file_date = hit.get("_source", {}).get("file_date")
+    plans = plan_flags(root, file_date)
     records = []
     ndt = root.find("nonDerivativeTable")
     if ndt is None:
@@ -221,7 +330,7 @@ def fetch_and_parse_form4(hit, issuer_cik, ticker):
         owned_after = _num(_txt(tx, "postTransactionAmounts/sharesOwnedFollowingTransaction/value"))
         label, kind = TX_CODES.get(code, (code, "other"))
         value = round(shares * price, 2) if (shares and price) else 0
-        records.append({
+        rec = {
             "ticker": symbol,
             "issuer": issuer_name,
             "owner": owner_name,
@@ -239,8 +348,38 @@ def fetch_and_parse_form4(hit, issuer_cik, ticker):
             "accession": accession,
             "txIndex": i,
             "link": f"https://www.sec.gov/Archives/edgar/data/{int(candidates[0])}/{acc_nodash}/{doc}",
-        })
+        }
+        rec.update(plans.get(i) or {"plan10b51": None})
+        records.append(rec)
     return records
+
+
+def refresh_plan_flags(merged, budget, fetch=None):
+    """plan10b51 키가 없는(기능 도입 전) 행의 공시를 최신순으로 budget 개까지 다시 받아 채운다.
+    원문을 못 받으면 그 행은 그대로 둔다(다음 실행이 다시 시도). 반환: 채운 공시 수."""
+    if budget <= 0:
+        return 0
+    fetch = fetch or sec_get
+    by_acc = {}
+    for r in merged.values():
+        if "plan10b51" not in r and r.get("link") and r.get("accession"):
+            by_acc.setdefault(r["accession"], []).append(r)
+    order = sorted(by_acc, key=lambda a: max(x.get("fileDate") or "" for x in by_acc[a]), reverse=True)
+    done = 0
+    for acc in order[:budget]:
+        rows = by_acc[acc]
+        try:
+            root = ET.fromstring(fetch(rows[0]["link"]))
+        except Exception as exc:
+            print(f"    [경고] 10b5-1 재확인 {acc} 실패: {exc}")
+            continue
+        plans = plan_flags(root, rows[0].get("fileDate"))
+        for r in rows:
+            r.update(plans.get(r.get("txIndex")) or {"plan10b51": None})
+        done += 1
+    if by_acc:
+        print(f"  10b5-1 재확인: 공시 {done}건 채움 · 남은 {len(order) - done}건")
+    return done
 
 
 def trade_key(rec):
@@ -259,7 +398,7 @@ def load_existing():
         return [], None
 
 
-def build(backfill_days, top, overlap_days=5):
+def build(backfill_days, top, overlap_days=5, plan_refresh=PLAN_REFRESH):
     today_et = datetime.now(ET_TZ).date()
     existing, last_file_date = load_existing()
 
@@ -312,6 +451,8 @@ def build(backfill_days, top, overlap_days=5):
 
     # 보관 기간/행수 상한 적용 + 정렬(파일일·거래일 최신순)
     cutoff = (today_et - timedelta(days=RETENTION_DAYS)).isoformat()
+    # 곧 버릴 행은 다시 받지 않는다 — 보관 기간 안의 행만 10b5-1 재확인
+    refresh_plan_flags({k: r for k, r in merged.items() if (r.get("fileDate") or "") >= cutoff}, plan_refresh)
     trades = [r for r in merged.values() if (r.get("fileDate") or "") >= cutoff]
     trades.sort(key=lambda r: (r.get("fileDate") or "", r.get("txDate") or "", r.get("accession") or ""), reverse=True)
     if len(trades) > MAX_ROWS:
@@ -330,6 +471,7 @@ def build(backfill_days, top, overlap_days=5):
         "newCount": new_records,
         "source": "SEC EDGAR Form 4",
         "note": "비파생(직접 보유) 거래만 집계. P=매수, S=매도. 추적 universe 종목 한정.",
+        "planFlagged": sum(1 for r in trades if "plan10b51" in r),
         "trades": trades,
     }
     print(f"  완료: 신규 {new_records}건, 스캔 {scanned_filings}건 → 총 {len(trades)}건")
@@ -352,6 +494,8 @@ def main():
     parser = argparse.ArgumentParser(description="SEC Form 4 내부자 거래 수집")
     parser.add_argument("--backfill-days", type=int, default=30, help="최초 수집 시 거슬러 올라갈 일수")
     parser.add_argument("--top", type=int, default=0, help="시총 상위 N 종목으로 universe 제한(0=전체)")
+    parser.add_argument("--plan-refresh", type=int, default=PLAN_REFRESH,
+                        help="10b5-1 표시가 없는 옛 공시를 이번 실행에 다시 읽을 개수(0=안 함)")
     parser.add_argument("--push", action="store_true", default=False)
     parser.add_argument("--no-push", action="store_true")
     args = parser.parse_args()
@@ -361,7 +505,7 @@ def main():
         sys.stderr.reconfigure(encoding="utf-8")
 
     print("=== SEC Form 4 내부자 거래 수집 시작 ===")
-    payload = build(backfill_days=args.backfill_days, top=args.top)
+    payload = build(backfill_days=args.backfill_days, top=args.top, plan_refresh=args.plan_refresh)
 
     with repository_publish_lock(ROOT):
         write_files(payload)

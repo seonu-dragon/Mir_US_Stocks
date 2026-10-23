@@ -54,9 +54,22 @@ function migrateLegacyPortfolio() {
   window.safeStorage.remove(PORTFOLIO_KEY_LEGACY);
 }
 
+// 거래 원장(ledger.js)에 거래가 있는 종목은 수량·평단을 원장으로 계산한 값으로 덮는다.
+// 원장이 없는 종목·원장이 비어 있는 사용자는 목록을 그대로 돌려받는다(기존 동작 무변경).
+function pfApplyLedger(list, marketId) {
+  if (!window.MirLedger || typeof window.MirLedger.reconcile !== "function") return { next: list, changed: false };
+  try { return window.MirLedger.reconcile(list, marketId || (isKrMarket() ? "kr" : "us")); } catch (_) { return { next: list, changed: false }; }
+}
+
+function pfLedgerTickers() {
+  try { return window.MirLedger ? window.MirLedger.tickers() : new Set(); } catch (_) { return new Set(); }
+}
+
 function loadPortfolio() {
   migrateLegacyPortfolio();
   portfolio = storedPortfolio();
+  const led = pfApplyLedger(portfolio);
+  if (led.changed) { portfolio = led.next; window.safeStorage.setJSON(portfolioStorageKey(), portfolio); }
 }
 
 function savePortfolio() {
@@ -78,8 +91,8 @@ function savePortfolio() {
   // 반대 시장 포지션만 들어온 경우(구형 클라이언트가 그쪽 시장에서 push 한 payload)엔
   // 현재 시장 목록을 비우지 않는다. 사용자가 비운 경우(둘 다 0건)는 그대로 반영.
   if (mine.length || !foreign.length) {
-    portfolio = mine;
-    window.safeStorage.setJSON(portfolioStorageKey(cur), mine);
+    portfolio = pfApplyLedger(mine, cur).next;
+    window.safeStorage.setJSON(portfolioStorageKey(cur), portfolio);
   } else {
     portfolio = storedPortfolio(cur);
   }
@@ -99,7 +112,7 @@ function applyCloudPortfolio(list) {
   if (!Array.isArray(list) || !list.length) return;
   const split = { us: [], kr: [] };
   list.filter((p) => p && p.ticker).slice(0, 120).forEach((p) => split[portfolioMarketOf(p.ticker)].push(p));
-  ["us", "kr"].forEach((id) => window.safeStorage.setJSON(portfolioStorageKey(id), split[id]));
+  ["us", "kr"].forEach((id) => window.safeStorage.setJSON(portfolioStorageKey(id), pfApplyLedger(split[id], id).next));
   portfolio = storedPortfolio();
 }
 
@@ -950,6 +963,7 @@ function setupPortfolio() {
       if (!stockByTicker(t)) { showAppToast(`'${t}' 종목을 찾지 못했습니다. 티커·종목명을 확인해 주세요.`); return; }
       if (!(qty > 0)) { showAppToast("수량은 0보다 커야 합니다."); return; }
       if (!(cost > 0)) { showAppToast("평단가는 0보다 커야 합니다."); return; }
+      if (pfLedgerTickers().has(t)) { showAppToast("거래 기록이 있는 종목입니다. 아래 '거래 기록'에서 매수·매도를 추가해 주세요.", 3200); return; }
       const existing = portfolio.find((p) => p.ticker === t);
       if (existing) { existing.qty = qty; existing.avgCost = cost; }
       else portfolio.push({ ticker: t, qty, avgCost: cost });
@@ -977,9 +991,11 @@ function setupPortfolio() {
       }
       clearTimeout(pfClearTimer);
       clear.dataset.armed = ""; clear.textContent = "전체 삭제";
+      // 거래 기록도 함께 지운다 — 남겨 두면 원장 종목이 보유로 다시 계산돼 돌아온다.
+      const ledgerGone = window.MirLedger ? window.MirLedger.clearMarket() : 0;
       portfolio = []; savePortfolio(); renderPortfolio();
       const more = byId("pfMore"); if (more) more.open = false;
-      showAppToast("보유 종목을 모두 지웠습니다.");
+      showAppToast(ledgerGone ? `보유 종목과 거래 기록 ${ledgerGone}건을 모두 지웠습니다.` : "보유 종목을 모두 지웠습니다.");
     });
     // 메뉴 항목을 누르면 메뉴를 닫는다(전체 삭제 첫 클릭은 확인 대기라 열어 둔다). 바깥을 눌러도 닫는다.
     byId("pfMore")?.addEventListener("click", (e) => {
@@ -1022,6 +1038,8 @@ function donutSvg(slices) {
 function renderPortfolio() {
   setupPortfolio();
   setupPortfolioExtensions();
+  if (window.MirLedger) { try { window.MirLedger.render(); } catch (_) { /* 거래 기록 패널 실패가 보유 표를 막지 않게 */ } }
+  const ledgerSet = pfLedgerTickers();
   const summaryEl = byId("pfSummary");
   const tableEl = byId("pfTable");
   const pieEl = byId("pfPie");
@@ -1096,13 +1114,16 @@ function renderPortfolio() {
     const logo = typeof companyLogoHtml === "function" ? companyLogoHtml(r.ticker, null, stockLabel(r.ticker, r.stock), 22) : "";
     const editing = pfEditing === r.ticker;
     return `<tr class="pf-row${editing ? " is-editing" : ""}">
-    <th scope="row"><button type="button" class="pf-name ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${logo}<span><b>${escapeHtml(stockLabel(r.ticker, r.stock))}</b><small>${r.qty.toLocaleString()}주 · 평단 ${marketCfg().formatPrice(r.avgCost)}<span class="pf-cur"> · 현재 ${marketCfg().formatPrice(r.price)}</span></small></span></button></th>
+    <th scope="row"><button type="button" class="pf-name ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${logo}<span><b>${escapeHtml(stockLabel(r.ticker, r.stock))}</b><small>${r.qty.toLocaleString()}주 · 평단 ${marketCfg().formatPrice(r.avgCost)}${ledgerSet.has(r.ticker) ? '<span class="pf-ledger-tag" title="거래 기록으로 계산"> · 기록</span>' : ""}<span class="pf-cur"> · 현재 ${marketCfg().formatPrice(r.price)}</span></small></span></button></th>
     <td class="ins-num pf-day"><b class="${cls(r.changePct)}">${fmtDailyPct(r.changePct)}</b><small class="${cls(dayAmt)}">${fmtPfDelta(dayAmt)}</small></td>
     <td class="ins-num pf-col-value">${fmtPfMoney(r.value)}</td>
     <td class="ins-num pf-pl"><b class="${cls(r.pl)}">${fmtPfDelta(r.pl)}</b><small class="${cls(r.pl)}">${fmtPct(r.plPct)}</small></td>
     <td class="ins-num pf-col-weight"><span class="pf-wbar"><i style="width:${((r.value / maxW) * 100).toFixed(1)}%"></i></span>${w.toFixed(1)}%</td>
     <td class="ins-num pf-col-edit"><button type="button" class="ghost compact-btn pf-edit" data-ticker="${escapeHtml(r.ticker)}" aria-expanded="${editing}" title="수량·평단 수정 또는 삭제">${editing ? "닫기" : "편집"}</button></td>
-  </tr>${editing ? `<tr class="pf-edit-row"><td colspan="6"><div class="pf-edit-form" data-ticker="${escapeHtml(r.ticker)}">
+  </tr>${editing && ledgerSet.has(r.ticker) ? `<tr class="pf-edit-row"><td colspan="6"><div class="pf-edit-form" data-ticker="${escapeHtml(r.ticker)}">
+      <span class="muted font-small">수량·평단은 아래 '거래 기록'으로 계산됩니다. 거래를 추가·수정해 주세요.</span>
+      <button type="button" class="ghost compact-btn pf-del" data-ticker="${escapeHtml(r.ticker)}" data-ledger="1">종목·거래 기록 삭제</button>
+    </div></td></tr>` : editing ? `<tr class="pf-edit-row"><td colspan="6"><div class="pf-edit-form" data-ticker="${escapeHtml(r.ticker)}">
       <label>수량<input type="number" min="0" step="any" class="pf-edit-qty" value="${r.qty}"></label>
       <label>평단가<input type="number" min="0" step="any" class="pf-edit-cost" value="${r.avgCost}"></label>
       <button type="button" class="primary compact-btn pf-edit-save">저장</button>
@@ -1127,10 +1148,17 @@ function renderPortfolio() {
     savePortfolio(); renderPortfolio();
   }));
   tableEl.querySelectorAll(".pf-del").forEach((b) => b.addEventListener("click", () => {
+    // 거래 기록이 있는 종목은 두 번 눌러야 지운다(거래까지 함께 지워진다).
+    if (b.dataset.ledger === "1" && b.dataset.armed !== "1") {
+      b.dataset.armed = "1"; b.textContent = "한 번 더 누르면 거래 기록까지 삭제";
+      setTimeout(() => { if (b.isConnected) { b.dataset.armed = ""; b.textContent = "종목·거래 기록 삭제"; } }, 4000);
+      return;
+    }
+    const gone = window.MirLedger ? window.MirLedger.removeTicker(b.dataset.ticker) : 0;
     portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker);
     pfEditing = "";
     savePortfolio(); renderPortfolio();
-    showAppToast(`${stockLabel(b.dataset.ticker)} 삭제했습니다.`);
+    showAppToast(`${stockLabel(b.dataset.ticker)} 삭제했습니다${gone ? `(거래 기록 ${gone}건 포함)` : ""}.`);
   }));
 
   // 섹터/종목 비중 도넛

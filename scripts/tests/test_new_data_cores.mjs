@@ -182,6 +182,21 @@ test("스크리너 필드: 30일 창·상향/하향 수·목표가 중앙값·�
   assert.equal(noRat.ratingUp30, null, "의견 파일이 없으면 0 이 아니라 null");
 });
 
+test("매출 컨센서스 행: 전년 대비는 평균 ÷ 전년 매출, 없으면 야후 growth, 평균 없는 행은 뺀다", () => {
+  const P = { revCols: ["period", "end", "avg", "low", "high", "n", "yearAgo", "growth"], tickers: {
+    AAA: { p: [], r: [], vc: "TWD", v: [["0q", "2026-09-30", 110, 100, 120, 20, 100, 0.5], ["0y", null, 400, null, null, null, null, 0.08], ["+1y", null, null, null, null, 3, null, null]] },
+    BBB: { p: [], r: [] },
+  } };
+  const rows = ar.revenueRows(P, "AAA");
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].label, "이번 분기"); assert.equal(rows[0].cur, "TWD");
+  assert.ok(Math.abs(rows[0].yoy - 10) < 1e-9);            // 110/100 − 1 (야후 0.5 보다 우선)
+  assert.ok(Math.abs(rows[1].yoy - 8) < 1e-9);             // 전년 값 없음 → 야후 growth
+  assert.equal(rows[1].low, null);
+  assert.deepEqual(ar.revenueRows(P, "BBB"), []);
+  assert.deepEqual(ar.revenueRows(P, "ZZZ"), []);
+});
+
 test("국내 우선주 배당 기록은 보통주 티커로", () => {
   const P = { lastYear: 2025, cols: ["up", "paid", "cagr5", "cagr10", "last", "since", "capped", "paidCapped", "lastCut", "specials"],
     tickers: {}, pref: { "005930": { t: "005935", name: "삼성전자우", v: [2, 12, -11.04, 14.77, 1669, 2014, false, true, 2021, 0] } } };

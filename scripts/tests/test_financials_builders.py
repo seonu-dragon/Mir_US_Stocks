@@ -420,3 +420,37 @@ def test_kr_needs_refreshes_latest_annual_once_for_new_fields():
     assert kr.needs(raw, "F", 2025, "11011", today, set(), refresh) is False
     raw["reports"]["2025_11011"] = {"none": "2026-09-20"}
     assert kr.needs(raw, "F", 2025, "11011", today, set(), refresh) is False    # 없던 보고서는 기존 규칙
+
+
+# ─────────────────────────── 주주환원 현금(2026-10-23) ───────────────────────────
+def test_us_buyback_dividend_cash_annual_quarter_sign_and_fallback_tag():
+    facts = _us_facts()
+    g = facts["facts"]["us-gaap"]
+    # 자사주: 보통주 전용 태그, 누계로만 공시(2분기 = 누계 차이). 부호를 음수로 태깅한 회사.
+    g["PaymentsForRepurchaseOfCommonStock"] = {"units": {"USD": [
+        _f("2024-10-01", "2025-09-30", -80, "k25", 2025, "FY", "10-K", "2025-11-01"),
+        _f("2024-10-01", "2025-06-30", -60, "q3p", 2025, "Q3", "10-Q", "2025-08-01"),
+        _f("2025-10-01", "2025-12-31", -25, "q1", 2026, "Q1", "10-Q", "2026-02-01"),
+        _f("2025-10-01", "2026-03-31", -45, "q2", 2026, "Q2", "10-Q", "2026-05-01"),
+    ]}}
+    # 배당: 보통주 전용 태그가 없어 지분 전체 태그(PaymentsOfDividends)로
+    g["PaymentsOfDividends"] = {"units": {"USD": [
+        _f("2024-10-01", "2025-09-30", 16, "k25", 2025, "FY", "10-K", "2025-11-01"),
+    ]}}
+    doc = us.extract_company(facts, ticker="TST", cik=1, updated="t")
+    a = doc["annual"][-1]
+    assert a["buyback"] == 80 and a["divPaid"] == 16         # 유출 크기(양수)
+    assert doc["tags"]["buyback"] == "PaymentsForRepurchaseOfCommonStock"
+    assert doc["tags"]["divPaid"] == "PaymentsOfDividends"
+    qs = {(r["fy"], r["fq"]): r for r in doc["quarterly"]}
+    assert qs[(2025, 4)]["buyback"] == 20 and "buyback" in qs[(2025, 4)]["d"]   # 80 − 60
+    assert qs[(2026, 2)]["buyback"] == 20 and "buyback" in qs[(2026, 2)]["d"]   # 45 − 25
+    assert "divPaid" not in qs[(2026, 2)]                    # 분기 공시가 없으면 결측(0 아님)
+
+
+def test_us_missing_buyback_tag_is_missing_not_zero():
+    doc = us.extract_company(_us_facts(), ticker="TST", cik=1, updated="t")
+    for r in doc["annual"] + doc["quarterly"] + [doc["ttm"]]:
+        assert "buyback" not in r and "divPaid" not in r
+    assert "buyback" in fc.INDEX_FIELDS.split(",") and "divPaid" in fc.FLOW_FIELDS
+    assert us.FIELDS_VERSION >= 3                             # 새 필드 → 한 번 전체 재수집

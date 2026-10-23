@@ -74,8 +74,9 @@ STALE_DAYS = 120
 RESCAN_OVERLAP_DAYS = 3         # companyfacts 반영 지연 대비 겹쳐 읽는다
 MAX_SCAN_GAP_DAYS = 45          # 이보다 오래 끊겼으면 색인 대신 전체 재수집
 # 추출 필드 세대. 필드를 보태면 올린다 — 상태의 fieldsVersion 이 이보다 낮으면 한 번 전체 재수집해
-# 옛 파일에도 새 필드가 채워진다(2 = 2026-09-27 재무 보강: grossProfit·cogs·sga·retainedEarnings·ppe·ltDebt).
-FIELDS_VERSION = 2
+# 옛 파일에도 새 필드가 채워진다(2 = 2026-09-27 재무 보강: grossProfit·cogs·sga·retainedEarnings·ppe·ltDebt,
+# 3 = 2026-10-23 주주환원 현금: buyback·divPaid).
+FIELDS_VERSION = 3
 
 # 계정별 태그 후보 — 앞이 우선. 기간마다 첫 번째로 값이 있는 태그를 쓴다.
 US_GAAP_TAGS = {
@@ -117,6 +118,9 @@ US_GAAP_TAGS = {
             "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"],
     # 장기차입금(비유동). 단일 태그가 없으면 debt 구성 태그(LongTermDebt − LongTermDebtCurrent)로 — lt_debt_from_parts
     "ltDebt": ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"],
+    # 주주환원 현금(2026-10-23) — 현금흐름표 재무활동. 보통주 전용 태그를 먼저, 없으면 지분 전체 태그.
+    "buyback": ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"],
+    "divPaid": ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"],
 }
 # 판관비 단일 태그가 없는 회사(MSFT 등 — 판매·마케팅과 일반관리비를 따로 공시)는 두 줄이 같은 기간에
 # 모두 있을 때만 합한다(한쪽만 있으면 판관비가 아니라 결측).
@@ -160,6 +164,9 @@ IFRS_TAGS = {
     "retainedEarnings": ["RetainedEarnings"],
     "ppe": ["PropertyPlantAndEquipment"],
     "ltDebt": ["NoncurrentPortionOfNoncurrentBorrowings", "LongtermBorrowings"],
+    "buyback": ["PaymentsToAcquireOrRedeemEntitysShares"],
+    "divPaid": ["DividendsPaidToEquityHoldersOfParentClassifiedAsFinancingActivities",
+                "DividendsPaidClassifiedAsFinancingActivities", "DividendsPaid"],
 }
 IFRS_DEBT = {
     "total": ["Borrowings"],
@@ -543,8 +550,7 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
             if v is not None:
                 row["sga"] = v
                 tags_here["sga"] = "SellingAndMarketingExpense+GeneralAndAdministrativeExpense"
-        if field_capex_negative(row):
-            row["capex"] = abs(row["capex"])
+        normalize_outflows(row)
         if has_core(row):
             row["_tags"] = tags_here
             annual_rows.append(row)
@@ -612,8 +618,7 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
                                                     if e_ == end and 75 <= (_days(s_, e_) or 0) <= 105]) or (None,))[0])
             if v is not None:
                 row["sga"] = v
-        if field_capex_negative(row):
-            row["capex"] = abs(row["capex"])
+        normalize_outflows(row)
         if derived:
             row["d"] = sorted(set(derived))
         if has_core(row):
@@ -662,6 +667,17 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
         "ttm": build_ttm(quarter_out, annual_out),
     }
     return doc
+
+
+# 유출 계정은 크기(양수)로 맞춘다 — 회사마다 부호가 섞여 들어온다(음수로 태깅한 회사가 있다).
+OUTFLOW_FIELDS = ("capex", "buyback", "divPaid")
+
+
+def normalize_outflows(row: dict) -> None:
+    for f in OUTFLOW_FIELDS:
+        v = row.get(f)
+        if isinstance(v, (int, float)) and v < 0:
+            row[f] = abs(v)
 
 
 def field_capex_negative(row: dict) -> bool:

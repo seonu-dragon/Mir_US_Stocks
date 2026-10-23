@@ -323,7 +323,66 @@
     };
   }
 
+  // ── 미국 주주환원 현금(재무 파일 buyback · divPaid · sbc — SEC 현금흐름표, financials_common.py) ──
+  // 연간 최근 years(기본 5)개 회계연도 + TTM. 공시 태그가 없는 값은 null(0 으로 채우지 않는다).
+  // total = 자사주 + 배당 — 배당 태그가 없을 때는 opts.noDividends(배당 기록상 무배당)일 때만 배당 0 으로 본다.
+  // net = 자사주 − 주식보상비용(SBC) — 희석 상쇄분을 뺀 순매입.
+  function cashReturnRow(r, noDividends) {
+    if (!r) return null;
+    const bb = num(r.buyback), dv = num(r.divPaid), sbc = num(r.sbc);
+    if (bb === null && dv === null) return null;
+    const dvForTotal = dv !== null ? dv : (noDividends ? 0 : null);
+    return {
+      fy: r.fy != null ? r.fy : null,
+      end: r.end || null,
+      buyback: bb,
+      div: dv,
+      sbc,
+      total: bb !== null && dvForTotal !== null ? bb + dvForTotal : null,
+      net: bb !== null && sbc !== null ? bb - sbc : null,
+    };
+  }
+
+  function cashReturns(file, opts) {
+    const o = opts || {};
+    if (!file) return null;
+    const n = Number.isFinite(o.years) ? o.years : 5;
+    const nd = !!o.noDividends;
+    const years = (file.annual || []).map((r) => cashReturnRow(r, nd)).filter(Boolean).slice(-n);
+    const t = file.ttm ? cashReturnRow(file.ttm, nd) : null;
+    const ttm = t ? Object.assign(t, { basis: file.ttm.basis || null, quarters: file.ttm.quarters || null }) : null;
+    if (!years.length && !ttm) return null;
+    const rows = years.concat(ttm ? [ttm] : []);
+    const has = {
+      buyback: rows.some((r) => r.buyback !== null),
+      div: rows.some((r) => r.div !== null),
+      sbc: rows.some((r) => r.sbc !== null && r.buyback !== null),
+    };
+    return { years, ttm, has };
+  }
+
+  // 시가총액 대비 수익률(%). marketValue = 시가총액(보고 통화와 같은 통화, 원 단위 금액).
+  // opts.divYieldPct === 0(소스상 무배당)이면 배당 현금이 없을 때 배당 0 으로 합산한다 — 다른 경우엔 결측.
+  function cashReturnYields(row, marketValue, opts) {
+    const o = opts || {};
+    const mv = num(marketValue);
+    const out = { buyback: null, div: null, total: null, net: null };
+    if (!row || mv === null || mv <= 0) return out;
+    const bb = num(row.buyback), sbc = num(row.sbc);
+    let dv = num(row.div);
+    if (dv === null && num(row.total) !== null && bb !== null) dv = row.total - bb;   // noDividends 로 0 이 된 경우
+    if (dv === null && o.divYieldPct === 0) dv = 0;
+    if (bb !== null) out.buyback = (bb / mv) * 100;
+    if (dv !== null) out.div = (dv / mv) * 100;
+    if (bb !== null && dv !== null) out.total = ((bb + dv) / mv) * 100;
+    if (bb !== null && sbc !== null) out.net = ((bb - sbc) / mv) * 100;
+    return out;
+  }
+
   const api = {
+    cashReturnRow,
+    cashReturns,
+    cashReturnYields,
     cleanDividends,
     frequency,
     trailingSum,

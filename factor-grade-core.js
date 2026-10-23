@@ -3,7 +3,7 @@
 // module.exports 로 같은 코드를 쓴다. IIFE 라 최상위 이름을 전역에 흘리지 않는다.
 //
 // 정의
-// - 각 팩터(밸류·성장·수익성·모멘텀·재무 건전성)는 구성 지표 몇 개로 이뤄진다.
+// - 각 팩터(밸류·성장·수익성·모멘텀·재무 건전성·EPS 리비전)는 구성 지표 몇 개로 이뤄진다.
 // - 비교 집단 = 같은 업종(industry). 그 업종에서 팩터 값이 있는 종목이 minSample(기본 10) 개
 //   미만이면 상위 분류(sector)로 올리고, 거기서도 모자라면 등급을 보류한다.
 // - 구성 지표마다 집단 안 백분위(0~100, 좋은 쪽이 100)를 구하고, 그 평균(합성 점수)을
@@ -68,6 +68,18 @@
       ],
       validation: [],
     },
+    // EPS 리비전(2026-10-23, US — 야후 earningsTrend 올해 회계연도 컨센서스). 추정치 과거 이력이 없어
+    // factor_validation 으로 검증하지 않았다(validation 비어 있음 → '검증 대상 아님' 표시). 검증 이력이 쌓여
+    // 통과하기 전까지 예측 점수로 내세우지 않는다. optional: 구성 지표가 하나도 없는 시장(국내)에선 팩터째 뺀다.
+    {
+      key: "revision", label: "EPS 리비전", desc: "컨센서스 EPS 가 올라갈수록 상위", optional: true,
+      metrics: [
+        { key: "epsRev30", label: "EPS 추정치 30일 변화", dir: 1, unit: "%" },
+        { key: "epsRev90", label: "EPS 추정치 90일 변화", dir: 1, unit: "%" },
+        { key: "epsNetUp30", label: "30일 순상향 비율", dir: 1, unit: "%" },
+      ],
+      validation: [],
+    },
   ];
 
   function finite(v) {
@@ -117,7 +129,7 @@
     const factors = (opts.factors || FACTORS).map((f) => ({
       ...f,
       metrics: f.metrics.filter((m) => (typeof opts.metricAvailable === "function" ? opts.metricAvailable(m.key) !== false : true)),
-    }));
+    })).filter((f) => !f.optional || f.metrics.length);
     const universe = (Array.isArray(stocks) ? stocks : []).filter((s) => s && s.ticker && !exclude(s));
     const byTicker = new Map(universe.map((s) => [s.ticker, s]));
     const valueCache = new Map();

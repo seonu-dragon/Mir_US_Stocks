@@ -4,6 +4,8 @@
 //   배당 기록 = 종목 상세 dividends(야후 배당락 이벤트, 분할 조정) · 현재 수익률 = MAP_FUNDAMENTALS
 //   EPS·주식수 = 재무 확장 파일(financials.js loadFinancials 캐시) · 자사주 = KR_DISCLOSURES/KR_EVENT_DETAILS(국내 최근 창),
 //   MATERIAL_EVENTS(미국 8-K), 이벤트 스터디 종목 샤드(약 5년 공시 건수 — timeline.js tlHistoryFor 캐시를 같이 쓴다).
+//   미국 주주환원 현금 = 재무 파일 buyback·divPaid·sbc(SEC 현금흐름표 실제 지급액, TTM + 최근 5개 회계연도).
+//   8-K 의 '승인 한도'(이사회 승인 금액)와는 다른 값이라 카드를 따로 둔다.
 // 자료가 하나도 없으면(ETF·배당·자사주 기록 없음) 카드 전체를 숨긴다. 늦게 도착한 자료는 refreshFeatureViews 가
 // renderShareholder 를 다시 부른다(같은 내용이면 다시 그리지 않음).
 // 클래식 스크립트(전역 공유) — 이름은 shr* / renderShareholder.
@@ -159,6 +161,63 @@ function shrBuybackBody(o) {
   return parts.join("");
 }
 
+// 미국 주주환원 현금(실제 지급액) — 회계연도 막대(자사주 + 배당 누적). 결측은 '—' 표기, 0 으로 그리지 않는다.
+function shrCashSvg(years, width) {
+  const W = Math.max(280, Math.round(width || 420)), H = W < 520 ? 170 : 200;
+  const padL = 56, padR = 8, top = 16, bottom = 26;
+  const n = years.length;
+  if (!n) return "";
+  const stack = (y) => (Number.isFinite(y.buyback) ? y.buyback : 0) + (Number.isFinite(y.div) ? y.div : 0);
+  const max = Math.max(...years.map(stack), 0) || 1;
+  const plotH = H - top - bottom;
+  const yy = (v) => top + (max - v) / max * plotH;
+  const slot = (W - padL - padR) / n;
+  const bw = Math.min(slot * 0.6, 40);
+  let bars = "", labels = "";
+  years.forEach((d, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const x = (cx - bw / 2).toFixed(1);
+    const tip = `FY${d.fy} 자사주 ${shrMoney(d.buyback, "USD")} · 배당 ${shrMoney(d.div, "USD")}`;
+    let base = 0;
+    [["buyback", "var(--mf-c1)"], ["div", "var(--mf-c2)"]].forEach(([k, color]) => {
+      const v = d[k];
+      if (!Number.isFinite(v) || v <= 0) return;
+      const y1 = yy(base + v), y0 = yy(base);
+      bars += `<rect x="${x}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, y0 - y1).toFixed(1)}" fill="${color}"><title>${escapeHtml(tip)}</title></rect>`;
+      base += v;
+    });
+    if (!Number.isFinite(d.buyback) && !Number.isFinite(d.div)) {
+      bars += `<text x="${cx.toFixed(1)}" y="${(top + plotH - 4).toFixed(1)}" text-anchor="middle" class="mf-axis shr-none">—</text>`;
+    }
+    labels += `<text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle" class="mf-axis">FY${escapeHtml(String(d.fy).slice(-2))}</text>`;
+  });
+  const grid = [max, max / 2].map((v) => `<line x1="${padL}" x2="${W - padR}" y1="${yy(v).toFixed(1)}" y2="${yy(v).toFixed(1)}" class="mf-grid"/><text x="${padL - 6}" y="${(yy(v) + 4).toFixed(1)}" text-anchor="end" class="mf-axis mf-tick">${escapeHtml(shrMoney(v, "USD"))}</text>`).join("");
+  const zero = `<line x1="${padL}" x2="${W - padR}" y1="${yy(0).toFixed(1)}" y2="${yy(0).toFixed(1)}" class="mf-zero"/>`;
+  return `<svg class="mf-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="회계연도별 자사주 매입·배당 지급 차트">${grid}${zero}${bars}${labels}</svg>`;
+}
+
+function shrCashTable(cr) {
+  const h = cr.has;
+  const cols = [["buyback", "자사주 매입", h.buyback], ["div", "배당 지급", h.div], ["total", "합계", h.buyback && (h.div || cr.years.concat(cr.ttm || []).some((r) => r.total !== null))],
+    ["sbc", "주식보상(SBC)", h.sbc], ["net", "순매입(SBC 차감)", h.sbc]].filter((c) => c[2]);
+  const rows = (cr.ttm && cr.ttm.basis === "4Q" ? [Object.assign({ label: "최근 4분기" }, cr.ttm)] : [])
+    .concat(cr.years.slice().reverse().map((y) => Object.assign({ label: `FY${y.fy}` }, y)));
+  const head = `<th>기간</th>${cols.map((c) => `<th class="ins-num">${escapeHtml(c[1])}</th>`).join("")}`;
+  const body = rows.map((r) => `<tr><th scope="row">${escapeHtml(r.label)}</th>${cols.map((c) => `<td class="ins-num">${escapeHtml(shrMoney(r[c[0]], "USD"))}</td>`).join("")}</tr>`).join("");
+  return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function shrCashLead(cr, yields) {
+  const t = cr.ttm;
+  const basis = t && t.basis === "4Q" ? "최근 4분기" : "직전 회계연도";
+  const tiles = [];
+  if (t && cr.has.buyback) tiles.push([`자사주 매입(${basis})`, shrMoney(t.buyback, "USD"), Number.isFinite(yields.buyback) ? `시가총액 대비 ${yields.buyback.toFixed(2)}%` : ""]);
+  if (t && cr.has.div) tiles.push([`배당 지급(${basis})`, shrMoney(t.div, "USD"), Number.isFinite(yields.div) ? `시가총액 대비 ${yields.div.toFixed(2)}%` : ""]);
+  tiles.push(["주주수익률(자사주+배당)", Number.isFinite(yields.total) ? `${yields.total.toFixed(2)}%` : "—", ""]);
+  if (cr.has.sbc && Number.isFinite(yields.net)) tiles.push(["순매입 수익률(SBC 차감)", `${yields.net.toFixed(2)}%`, ""]);
+  return `<dl class="shr-kpis shr-kpis-cash">${tiles.map(([k, v, sub]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>${sub ? `<dd class="shr-kpi-sub">${escapeHtml(sub)}</dd>` : ""}</div>`).join("")}</dl>`;
+}
+
 function shrOpenDividendRank() {
   if (typeof activateTab === "function") activateTab("search", { sub: "top" });
   let tries = 0;
@@ -237,13 +296,18 @@ function renderShareholder(item) {
   const pref = kr && feats.dividendGrowth !== false && window.DIVIDEND_GROWTH && window.MirDivGrowthCore
     ? window.MirDivGrowthCore.prefRecord(window.DIVIDEND_GROWTH, ticker) : null;
 
-  const hasBuyback = !!(share || (recent && recent.rows.length) || hist || us8k.length);
+  // 미국 주주환원 현금(SEC 현금흐름표). 배당 태그가 없을 때 무배당 판정: 배당 기록(상세)상 최근 1년 0회이거나 소스 수익률 0.
+  const noDividends = (Array.isArray(item.dividends) && s.trailing && s.trailing.count === 0) || mapFund.divYield === 0;
+  const cash = !kr && fin && fin.currency === "USD" ? sh.cashReturns(fin, { noDividends }) : null;
+  const capB = typeof itemCapForValuation === "function" ? itemCapForValuation(item) : Number(item.marketCapB);
+  const cashYields = cash ? sh.cashReturnYields(cash.ttm, capB > 0 ? capB * 1e9 : null, { divYieldPct: mapFund.divYield }) : null;
+  const hasBuyback = !!(share || (recent && recent.rows.length) || hist || us8k.length || cash);
   // 상세 파일이 아직 없으면(배당 기록을 모름) 기다린다 — 빈 카드를 먼저 띄우지 않는다.
   if (!Array.isArray(item.dividends) && !Array.isArray(item.chartSeries) && !hasBuyback) { shrHide(host); return; }
   if (!s.hasDividends && !hasBuyback) { shrHide(host); return; }
 
   const width = shrWidth(host);
-  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth, pref]);
+  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth, pref, cash, cashYields]);
   shrBind(host);
   if (sig === shrSig && !host.hidden && host.firstElementChild) return;
   shrSig = sig;
@@ -274,13 +338,26 @@ function renderShareholder(item) {
     const ds = (window.KR_DISCLOSURES.disclosures || []).map((d) => d.fileDate).filter(Boolean).sort();
     return ds.length ? `${ds[0]}~${ds[ds.length - 1]} 공시분` : "";
   })() : "";
+  if (cash) {
+    cards.push(mirChartCard({
+      id: "shr.cash",
+      title: "주주환원 현금",
+      sub: "실제 지급액",
+      lead: shrCashLead(cash, cashYields),
+      unitLeft: "(USD)",
+      chart: cash.years.length ? `<div class="mf-chart-wrap">${shrCashSvg(cash.years, width)}</div>` : "",
+      table: shrCashTable(cash),
+      legend: [{ label: "자사주 매입", color: "var(--mf-c1)", shape: "bar" }].concat(cash.has.div ? [{ label: "배당 지급", color: "var(--mf-c2)", shape: "bar" }] : []),
+      source: fin.lastFiled ? `${fin.lastFiled} 공시까지` : "",
+    }));
+  }
   const bbBody = shrBuybackBody({ kr, cur, share, recent, hist, us8k, discWindow });
   if (bbBody) {
     cards.push(mirChartCard({
       id: "shr.buyback",
       title: "자사주 · 주식수",
       chart: `<div class="shr-bb">${bbBody}</div>`,
-      help: kr ? "국내 자사주 금액·주식수는 최근 공시 창(약 1주) 안의 공시만 있습니다. 공시 건수 표는 이벤트 기록(약 5년)에서 세었고 금액은 없습니다." : "미국은 재무 파일에 자사주 매입 현금(현금흐름표) 계정을 아직 싣지 않아, 희석 주식수 변화와 8-K 발표만 보여 줍니다.",
+      help: kr ? "국내 자사주 금액·주식수는 최근 공시 창(약 1주) 안의 공시만 있습니다. 공시 건수 표는 이벤트 기록(약 5년)에서 세었고 금액은 없습니다." : "8-K 승인 한도는 이사회가 승인한 매입 가능 금액이고, 실제로 쓴 현금은 '주주환원 현금' 카드에 있습니다.",
     }));
   }
   if (!cards.length) { shrHide(host); return; }

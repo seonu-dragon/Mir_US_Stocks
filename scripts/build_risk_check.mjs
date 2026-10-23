@@ -8,8 +8,10 @@
 //   국내 감사의견                   data/korea/audit_opinion.json
 // 계산: risk-check-core.js(종목 화면 카드와 같은 코드 — 두 곳의 판정이 갈라지지 않게).
 // 출력: data/risk_check.json/.js · data/korea/risk_check.json/.js (window.RISK_CHECK, 시장별)
-//   { schema, market, updatedAtKst, source, count, cols, tickers: { <티커>: [fy, f, fOf, pass, fail, of, z, m] } }
+//   { schema, market, updatedAtKst, source, count, cols, tickers: { <티커>: [fy, f, fOf, pass, fail, of, z, m, bb, dv, sbc] } }
 //   f = Piotroski 통과 수(판정 항목 7개 미만이면 null), z·m = Altman Z·Beneish M(계산 불가면 null).
+//   bb·dv·sbc = 주주환원 현금(재무 파일 ttm 행의 buyback·divPaid·sbc, 보고 통화 USD 만, 결측 null).
+//     수식 스크리너가 현재 시가총액으로 자사주·주주수익률을 계산한다(shareholder-core.js cashReturnYields).
 //
 // 빌더 규약: 원자적 쓰기, 직전 대비 종목 수가 절반 미만으로 줄면 쓰지 않고 exit 1, 입력이 없으면 exit 1.
 // 실행: node scripts/build_risk_check.mjs [--market us|kr]   (weekly-earnings-history.yml financials 잡, DCF 기저율 다음)
@@ -22,10 +24,20 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const core = require(path.join(ROOT, "risk-check-core.js"));
+const shCore = require(path.join(ROOT, "shareholder-core.js"));
 
 const args = process.argv.slice(2);
 const only = args.includes("--market") ? args[args.indexOf("--market") + 1] : null;
-const COLS = ["fy", "f", "fOf", "pass", "fail", "of", "z", "m"];
+const COLS = ["fy", "f", "fOf", "pass", "fail", "of", "z", "m", "bb", "dv", "sbc"];
+
+// 주주환원 현금(TTM 우선). USD 보고 파일만 — 시가총액(USD)과 나눌 값이라 통화가 다르면 쓰지 않는다.
+function cashCols(m, file) {
+  if (m.id !== "us" || file.currency !== "USD") return null;
+  // TTM 행(4분기 합, 분기가 없으면 빌더가 만든 최신 연간)만 쓴다 — 값이 있는 옛 연도로 내려가지 않는다(묵은 값 방지).
+  const row = file.ttm ? shCore.cashReturnRow(file.ttm) : null;
+  if (!row) return null;
+  return { bb: row.buyback, dv: row.div, sbc: row.buyback !== null ? row.sbc : null };
+}
 
 const MARKETS = [
   { id: "us", index: "data/financials_index.json", dir: "data/financials", snapshot: "data/market_snapshot.json",
@@ -92,8 +104,12 @@ function buildMarket(m) {
       industry: row && row.industry,
       audit: m.id === "kr" ? audit[ticker] || null : null,
     });
-    const c = core.compactRow(res);
-    if (!c || !c.of) continue;
+    const risk = core.compactRow(res);
+    // 판정 항목이 없으면 위험 칸은 전부 결측(0건 경고로 읽히지 않게) — 주주환원 현금만 있는 종목도 남긴다.
+    const c = risk && risk.of ? Object.assign({}, risk) : { fy: risk ? risk.fy : null };
+    const cash = cashCols(m, file);
+    if (cash) Object.assign(c, cash);
+    if (!c.of && !cash) continue;
     out[ticker] = COLS.map((k) => (c[k] === undefined ? null : c[k]));
   }
   const count = Object.keys(out).length;
@@ -112,7 +128,7 @@ function buildMarket(m) {
     market: m.id,
     updatedAtKst: kstStamp(),
     source: m.source,
-    note: "과거 재무제표로 계산한 점검 — 매도 신호·예측 아님. f=Piotroski 통과 수(판정 항목 fOf개 중, 7개 미만이면 null), pass/fail/of=체크리스트 통과·경고·판정 수(데이터 없음·해당 없음 제외), z=Altman, m=Beneish(계산 불가면 null).",
+    note: "과거 재무제표로 계산한 점검 — 매도 신호·예측 아님. f=Piotroski 통과 수(판정 항목 fOf개 중, 7개 미만이면 null), pass/fail/of=체크리스트 통과·경고·판정 수(데이터 없음·해당 없음 제외), z=Altman, m=Beneish(계산 불가면 null). bb/dv/sbc=자사주 매입·배당 지급·주식보상 현금(재무 파일 ttm 행, USD, 결측 null).",
     financialsUpdatedAtKst: index.updatedAtKst || null,
     count,
     cols: COLS,

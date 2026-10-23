@@ -42,6 +42,33 @@
     });
   }
 
+  // 매출 컨센서스(빌더 v · revCols · vc=통화). growth = 평균 ÷ 전년 동기 매출 − 1(%), 전년 값이 없으면 야후 growth.
+  const REV_COLS = ["period", "end", "avg", "low", "high", "n", "yearAgo", "growth"];
+  function revenueRows(payload, ticker) {
+    const rec = payload && payload.tickers && payload.tickers[ticker];
+    if (!rec || !Array.isArray(rec.v)) return [];
+    const cols = Array.isArray(payload.revCols) && payload.revCols.length ? payload.revCols : REV_COLS;
+    const cur = typeof rec.vc === "string" && rec.vc ? rec.vc : null;
+    return rec.v.map((arr) => {
+      const o = {};
+      cols.forEach((c, i) => { o[c] = arr[i] === undefined ? null : arr[i]; });
+      const avg = num(o.avg), ya = num(o.yearAgo), g = num(o.growth);
+      if (avg === null || avg <= 0) return null;
+      return {
+        period: o.period,
+        label: PERIOD_LABEL[o.period] || o.period,
+        end: o.end || null,
+        avg,
+        low: num(o.low),
+        high: num(o.high),
+        n: num(o.n),
+        yearAgo: ya,
+        yoy: ya !== null && ya > 0 ? (avg / ya - 1) * 100 : (g !== null ? g * 100 : null),
+        cur,
+      };
+    }).filter(Boolean);
+  }
+
   const RATING_COLS = ["d", "firm", "act", "from", "to", "pt", "ptPrev"];
   function tickerRatings(payload, ticker) {
     const rec = payload && payload.tickers && payload.tickers[ticker];
@@ -187,7 +214,7 @@
     return `${n > 0 ? "+" : ""}${n.toFixed(digits == null ? 1 : digits)}%`;
   }
 
-  const api = { PERIOD_LABEL, ACTION_LABEL, KIND_LABEL, num, changePct, estimateRows, tickerRatings, revisionLeaders, feedRows, filterFeed, kindCounts, ratingIndex, screenMetrics, actionLabel, gradeText, fmtPct };
+  const api = { PERIOD_LABEL, ACTION_LABEL, KIND_LABEL, num, changePct, estimateRows, revenueRows, tickerRatings, revisionLeaders, feedRows, filterFeed, kindCounts, ratingIndex, screenMetrics, actionLabel, gradeText, fmtPct };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirAnalystRevCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

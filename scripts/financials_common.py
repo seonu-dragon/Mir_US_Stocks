@@ -72,6 +72,9 @@
     grossProfit   매출총이익                                   통화   (2026-09-27 추가 — 아래 '재무 보강' 참고)
     cogs          매출원가                                     통화   매출총이익이 없는 회사도 있다(서비스업 등)
     sga           판매비와관리비(SG&A)                          통화
+    buyback       자사주 매입 현금(재무활동 유출) — **양수 = 유출 크기**  통화   (2026-10-23 추가, US 만)
+    divPaid       배당금 지급 현금(재무활동 유출) — **양수 = 유출 크기**  통화   (2026-10-23 추가, US 만)
+                  공시 태그가 없으면 키가 없다(0 아님) — 배당·매입을 안 한 회사도, 태그를 안 쓴 회사도 결측.
   기말(잔액) 값 — 해당 기말 시점. ttm 은 최근 분기말
     assets        자산총계                                     통화
     liab          부채총계   (주의: 옛 financialsHistory 의 'debt' 는 부채총계였다. 여기 debt 는 차입금이다)
@@ -116,14 +119,14 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 
 FLOW_FIELDS = ("rev", "op", "net", "pretax", "tax", "interest", "da", "sbc", "ocf", "capex",
-               "epsDil", "sharesDilAvg", "grossProfit", "cogs", "sga")
+               "epsDil", "sharesDilAvg", "grossProfit", "cogs", "sga", "buyback", "divPaid")
 INSTANT_FIELDS = ("assets", "liab", "equity", "cash", "debt", "curAssets", "curLiab",
                   "receivables", "sharesOut", "retainedEarnings", "ppe", "ltDebt")
 # 인덱스 파일의 fields 문자열(두 빌더 공용)
 INDEX_FIELDS = ",".join(("rev", "op", "net", "pretax", "tax", "interest", "da", "sbc", "ocf", "capex", "fcf",
                          "epsDil", "sharesDilAvg", "grossProfit", "cogs", "sga", "assets", "liab", "equity", "cash",
                          "debt", "netDebt", "curAssets", "curLiab", "receivables", "sharesOut", "retainedEarnings",
-                         "ppe", "ltDebt"))
+                         "ppe", "ltDebt", "buyback", "divPaid"))
 DERIVED_FIELDS = ("fcf", "netDebt")
 ALL_FIELDS = FLOW_FIELDS + INSTANT_FIELDS + DERIVED_FIELDS
 

@@ -104,6 +104,8 @@ const FEATURE_DATA = {
   earningsMoveCompare: { global: "EARNINGS_MOVE_COMPARE", path: "data/earnings_move_compare.js", usOnly: true },
   // 실적 보도자료(8-K 2.02 EX-99.1) 한국어 요약(build_earnings_releases.py, Gemini). US 전용.
   earningsReleases: { global: "EARNINGS_RELEASES", path: "data/earnings_releases.js", usOnly: true },
+  // 10-Q·10-K MD&A 한국어 요약 + 직전 대비 달라진 점(build_mda_summaries.py, 시총 상위 40, ~60KB). 종목 이벤트·공시 탭에서만(lazy, mda-summary.js).
+  mdaSummaries: { global: "MDA_SUMMARIES", path: "data/mda_summaries.js", usOnly: true, lazy: true },
   // FINRA 일일 공매도 거래량(통합). 미국만 공개라 US 전용.
   finraShort: { global: "FINRA_SHORT_VOLUME", path: "data/finra_short_volume.js", usOnly: true },
   // 배당 + 다음 실적 예정일(Yahoo). US 전용(KR 은 별도 배당 트래커가 있음).
@@ -168,6 +170,9 @@ const FEATURE_DATA = {
   // 국내 증권사 목표주가 상향·하향(build_kr_target_changes.py) — 최근 30일 변경 + 종목별 이력 샤드 버전.
   // 종목 › 찾기 '목표가 변경' 목록과 컨센서스 카드의 '증권사별 목표가 이력'이 처음 필요할 때만 받는다(lazy).
   krTargetChanges: { global: "KR_TARGET_CHANGES", path: "data/korea/target_changes.js", krOnly: true, lazy: true },
+  // 증권사별 의견·목표가 변경 사후 성적표(build_broker_scorecard.py) — 시장별 파일(US data/broker_scorecard.js · KR
+  // data/korea/broker_scorecard.js, 수십 KB). 찾기 › 목표가 변경 › '증권사 사후 성적'을 처음 열 때만(lazy, target-changes.js).
+  brokerScorecard: { global: "BROKER_SCORECARD", path: "data/broker_scorecard.js", marketSpecific: true, lazy: true },
   // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
   // '과거 위기 재생' 을 열 때만 받는다(lazy).
   crisisHistory: { global: "CRISIS_HISTORY", path: "data/crisis_history.js", lazy: true },
@@ -498,6 +503,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
           () => { if (typeof renderSegments === "function") renderSegments(item); },
           () => { if (typeof renderRiskFactors === "function") renderRiskFactors(item); },
+          () => { if (typeof renderMdaSummary === "function") renderMdaSummary(item); },
           () => { if (typeof renderRiskCheck === "function") renderRiskCheck(item); },
           // 주주환원 — 재무 파일·국내 공시·8-K·이벤트 기록 샤드가 각각 늦게 온다(shareholder.js).
           () => { if (typeof renderShareholder === "function") renderShareholder(item); },

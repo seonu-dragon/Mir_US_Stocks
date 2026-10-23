@@ -322,6 +322,22 @@ test("completionPrefix: 커서 앞 단어", () => {
   assert.deepEqual(core.completionPrefix("roe > ", 6), { prefix: "", start: 6 });
 });
 
+test("acceptConverted: 파서·필드 목록을 통과한 조건식만(AI 변환 결과 검증)", () => {
+  const opts = { fields: FIELDS, aliases: { per: "pe" } };
+  const okR = core.acceptConverted("  roe >= 15\n and per < 20 ", opts);
+  assert.equal(okR.ok, true);
+  assert.equal(okR.formula, "roe >= 15 and per < 20");
+  assert.deepEqual(okR.fields.sort(), ["pe", "roe"]);
+  const unknown = core.acceptConverted("roe > 15 and foo < 3", opts);
+  assert.equal(unknown.ok, false, "모르는 필드");
+  assert.match(unknown.error, /알 수 없는 필드/);
+  assert.equal(core.acceptConverted("roe / pe", opts).ok, false, "조건식이 아니면 거부");
+  assert.equal(core.acceptConverted("roe >", opts).ok, false, "파싱 실패");
+  assert.equal(core.acceptConverted("", opts).ok, false);
+  assert.equal(core.acceptConverted(null, opts).ok, false);
+  assert.equal(core.acceptConverted("roe > 1 and ".repeat(80) + "roe > 1", opts).ok, false, "너무 김");
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

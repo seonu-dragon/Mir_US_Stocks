@@ -79,7 +79,7 @@ export function llmOriginAllowed(request) {
 // 하나의 공용 바인딩을 모든 버킷에 쓰지 않는 이유: 바인딩 하나는 한도가 하나라
 // 글쓰기(분당 3)와 공감(분당 30)을 같은 한도로 묶게 된다.
 export const RATE_LIMIT_BUCKETS = {
-  chat: 10, summary: 10, move: 6, evnews: 20, reasons: 6,
+  chat: 10, summary: 10, move: 6, evnews: 20, reasons: 6, formula: 6,
   post: 3, comment: 6, like: 30, report: 5, vote: 5, clear: 2, sync_put: 10,
 };
 
@@ -443,6 +443,17 @@ export async function handleFetch(request, env) {
         return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
       }
       return cors(await handleChat(request, env));
+    }
+
+    // 수식 스크리너 '문장 → 수식' 변환(POST /formula, 2026-10-23). Workers AI 만 쓴다(Gemini 무료 한도 보호).
+    // 답은 수식 문자열 하나이고, 프런트가 자기 파서·필드 목록으로 다시 검증해 통과한 것만 보여 준다.
+    // 옛 워커는 이 경로를 모르는 경로(404 not_found)로 답해 프런트가 버튼을 숨긴다.
+    if (request.method === "POST" && url.pathname === "/formula") {
+      if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+      if (await ipRateLimited(request, env, "formula", 6, 60)) {
+        return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
+      }
+      return cors(await handleFormula(request, env));
     }
 
     // Shared community board.
@@ -4284,6 +4295,64 @@ export function looksDegenerateReply(text, expectKorean = true) {
     if (top / (words.length - 2) > 0.2) return true;
   }
   return false;
+}
+
+// ── 문장 → 수식(수식 스크리너) ─────────────────────────────────────────────
+const FORMULA_MAX_TEXT = 300;
+const FORMULA_MAX_FIELDS = 200;
+const FORMULA_FIELD_RE = /^[A-Za-z][A-Za-z0-9_]{0,40}$/;
+const FORMULA_CHARS_RE = /^[A-Za-z0-9_ .,()<>=!&|+\-*/]+$/;
+const FORMULA_FUNCS = "abs(x) · min(a,b,…) · max(a,b,…) · avg(a,b,…) · sectorMedian(x) · sectorPct(x) · industryMedian(x) · industryPct(x) · median(x) · pct(x) · rank(x)(1 = 가장 큼)";
+
+// 모델 답 → 수식 한 줄. 코드 울타리·'수식:' 머리말·따옴표를 걷고, 허용 문자 밖이거나 NONE 이면 빈 문자열.
+export function cleanFormulaReply(text) {
+  let s = String(text || "").replace(/```[a-z]*\n?/gi, "").replace(/```/g, "");
+  s = s.split(/\r?\n/).map((l) => l.trim()).find((l) => l) || "";
+  s = s.replace(/;\s*$/, "").replace(/^(formula|수식|answer|output)\s*[:：]\s*/i, "").replace(/^[`"'“”]+|[`"'“”]+$/g, "").trim();
+  s = s.replace(/\s+/g, " ").replace(/;$/, "").trim();
+  if (!s || /^none$/i.test(s) || s.length > 600 || !FORMULA_CHARS_RE.test(s)) return "";
+  if (/<\s*\/|\/\s*>|<[a-z]+>/i.test(s)) return ""; // 태그 모양(<x>·</x>)은 수식이 아니다
+  return s;
+}
+
+export function formulaPrompt(text, fields, market) {
+  const list = fields.map(([k, label]) => `${k}: ${label}`).join("\n");
+  return `${market === "kr" ? "국내" : "미국"} 주식 스크리너의 수식 문법으로 아래 문장을 바꿔라.\n\n`
+    + "[문법] 비교 < <= > >= == != · 논리 and or not · 산술 + - * / · 괄호 · 숫자(퍼센트 값은 % 없이 숫자만, 예: 15).\n"
+    + `[함수] ${FORMULA_FUNCS}\n`
+    + `[필드 — 이 목록의 이름만 쓸 수 있다]\n${list}\n\n`
+    + "규칙: 수식 한 줄만 출력(설명·코드 울타리 금지). 목록에 없는 필드·함수를 만들지 마라. "
+    + `문장을 이 필드로 표현할 수 없으면 NONE 만 출력.\n\n[문장]\n${text}`;
+}
+
+async function handleFormula(request, env) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: "bad_json" }, 400, 0); }
+  const text = typeof (body && body.text) === "string" ? body.text.trim() : "";
+  if (!text || text.length > FORMULA_MAX_TEXT) return json({ error: "bad_text" }, 400, 0);
+  const fields = (Array.isArray(body.fields) ? body.fields : [])
+    .filter((f) => Array.isArray(f) && FORMULA_FIELD_RE.test(String(f[0] || "")))
+    .slice(0, FORMULA_MAX_FIELDS)
+    .map(([k, label]) => [String(k), String(label || "").replace(/[\r\n]+/g, " ").slice(0, 40)]);
+  if (!fields.length) return json({ error: "no_fields" }, 400, 0);
+  if (!env || !env.AI) return json({ formula: "", error: "no_ai_binding" }, 503, 0);
+  const market = body.market === "kr" ? "kr" : "us";
+  const messages = [
+    { role: "system", content: "You translate stock-screening sentences (Korean or English) into one formula line in the given grammar, using only the listed field names. Output only the formula, or NONE." },
+    { role: "user", content: formulaPrompt(text, fields, market) },
+  ];
+  let lastError = "no_model";
+  for (const model of CHAT_MODELS) {
+    try {
+      const result = await env.AI.run(model, { messages, max_tokens: 160, temperature: 0 });
+      const formula = cleanFormulaReply(result && result.response);
+      if (formula) return json({ formula, model }, 200, 0);
+      lastError = `no_formula:${model}`;
+    } catch (e) {
+      lastError = `${model}: ${(e && e.message) || e}`;
+    }
+  }
+  return json({ formula: "", error: lastError }, 200, 0);
 }
 
 async function handleChat(request, env) {

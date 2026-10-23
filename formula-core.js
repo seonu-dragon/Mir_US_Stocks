@@ -553,11 +553,22 @@
     return m ? { prefix: m[0], start: m.index } : { prefix: "", start: s.length };
   }
 
+  // 'AI로 변환'(워커 POST /formula) 답 검증. LLM 출력은 믿지 않는다 — 한 줄·길이·이 파서(필드 목록 = options.fields)를
+  // 통과하고 필터(조건식)일 때만 쓴다. 반환 { ok, formula, error, fields }.
+  function acceptConverted(raw, options = {}) {
+    const s = String(raw == null ? "" : raw).replace(/\s+/g, " ").trim();
+    if (!s) return { ok: false, formula: "", error: "변환 결과가 비어 있습니다.", fields: [] };
+    if (s.length > MAX_SOURCE) return { ok: false, formula: s.slice(0, 80), error: `변환 결과가 너무 깁니다(최대 ${MAX_SOURCE}자).`, fields: [] };
+    const c = compile(s, { ...options, expect: "bool" });
+    if (!c.ok) return { ok: false, formula: s, error: c.error, fields: [] };
+    return { ok: true, formula: s, error: "", fields: c.fields };
+  }
+
   const api = {
     FUNCTIONS, FormulaError, DEFAULT_MIN_GROUP, MAX_SOURCE,
     tokenize, parse, compile, evaluate, filterIndices,
     percentileOf, descRankOf, medianSorted, editDistance, suggest,
-    encodeState, decodeState, completionPrefix,
+    encodeState, decodeState, completionPrefix, acceptConverted,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirFormulaCore = api;

@@ -5413,6 +5413,7 @@ function renderSearch(options = {}) {
   if (typeof renderFinancials === "function") renderFinancials(item);
   if (typeof renderSegments === "function") renderSegments(item);
   if (typeof renderRiskFactors === "function") renderRiskFactors(item);
+  if (typeof renderMdaSummary === "function") renderMdaSummary(item);
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderShareholder === "function") renderShareholder(item);
   if (typeof renderDcf === "function") renderDcf(item);
@@ -7297,6 +7298,8 @@ function dataTrustSources() {
     rows.push(source("애널리스트 의견 변경", "Yahoo Finance", window.US_RATING_CHANGES, ["rows"], 96, "매일 06:30", "usRatingChanges", "", true));
     rows.push(source("EPS 추정치 변화", "Yahoo Finance", window.US_ESTIMATE_REVISIONS, ["tickers"], 96, "매일 06:30", "usEstimateRevisions"));
   }
+  // 증권사 사후 성적표(build_broker_scorecard.py) — US 는 애널리스트 스텝(매일 06:30), KR 은 목표가 변경 다음(평일 국내 마감 브리핑).
+  rows.push(source("증권사 사후 성적표", cfg.id === "kr" ? "네이버 증권 리포트 · 종목 일봉" : "Yahoo Finance 의견 이력 · 종목 일봉", window.BROKER_SCORECARD, ["firms"], cfg.id === "kr" ? 168 : 96, cfg.id === "kr" ? "평일 국내 마감 뒤" : "매일 06:30", "brokerScorecard", "", true));
   // 배당 성장 이력 — 주 1회(수요일 기업개요 워크플로우). 10일(240시간).
   if (cfg.features?.dividendGrowth !== false) rows.push(source("배당 성장 이력", cfg.id === "kr" ? "DART 사업보고서 배당에 관한 사항(2013~)" : "Yahoo Finance 배당 기록(1985~)", window.DIVIDEND_GROWTH, ["tickers"], 240, "매주 수요일", "dividendGrowth"));
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
@@ -7488,6 +7491,7 @@ function dataTrustSources() {
     // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.
     rows.push(source("실적 전 비교", "SEC 8-K · Yahoo 옵션", window.EARNINGS_MOVE_COMPARE, ["stocks"], 72, "매일 06:30", "earningsMoveCompare", "", true));
     rows.push(source("실적 보도자료 요약", "SEC 8-K 보도자료 · AI 자동 요약", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
+    rows.push(source("MD&A 요약", "SEC 10-Q·10-K MD&A · AI 자동 요약", window.MDA_SUMMARIES, ["items"], 96, "매일 13:23", "mdaSummaries", "", true));
     // PER·PBR·PSR 밴드(US, 2026-09-26) — 주간 재무 확장 뒤 산출. 검증 결론(SPY 대비·전체 대비)도 적는다.
     if (cfg.features?.valuationBand === true) {
       const vbMeta = window.US_VALUATION_BAND_META;

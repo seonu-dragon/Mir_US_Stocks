@@ -155,6 +155,9 @@ jobs:
       # 미상환 CB·BW 오버행(cb-overhang-core.js): 희석률·10% 배지·총수 없음/합계 불일치 시 배지 없음·만기 지난 행 제외.
       - name: CB overhang core tests
         run: node scripts/tests/test_cb_overhang_core.mjs
+      # 국내 컨센서스 변화(kr-consensus-moves-core.js): 상향·하향 상위·기관 수 하한·승계 제외·카드 줄·화살표 표기.
+      - name: KR consensus moves core tests
+        run: node scripts/tests/test_kr_consensus_moves_core.mjs
       # 관심 리스트 표(watchlist-core.js): 열 정렬(값 없는 행 맨 뒤)·토글 순환·끌어 옮기기 재배열·메모 병합·동기화 상한 맞추기.
       - name: Watchlist core tests
         run: node scripts/tests/test_watchlist_core.mjs

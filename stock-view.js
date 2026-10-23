@@ -118,7 +118,7 @@ function activateStockView(view, { push = false, scroll = false } = {}) {
 // 기관 보유 변화 카드(inst-holders.js)도 탭이 열렸을 때만 샤드를 받으므로 여기서 한 번 부른다.
 // 국내는 수급(krFlow)·기업집단·국민연금 카드가 부팅 뒤 유휴 시간에 받는 데이터셋을 읽어, 딥링크(&view=flow)로
 // 바로 들어오면 몇 초간 카드가 비어 있었다 — 탭을 열면 바로 요청하고 도착하면 다시 그린다.
-const SD_KR_FLOW_KEYS = ["krFlow", "krCorpGroups", "krNps"];
+const SD_KR_FLOW_KEYS = ["krFlow", "krCorpGroups", "krNps", "krStakeValue"];
 function sdEnsureFlowData() {
   if (typeof ensureFeatureData !== "function") return;
   if (typeof isKrMarket === "function" && isKrMarket()) {

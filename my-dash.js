@@ -163,14 +163,21 @@ DASH_RENDER.targets = function targets() {
   if (!p) { ensureFeatureData(key).then((ok) => { if (ok) renderMyDash(); }); return ""; }
   const core = window.MirDashCore;
   const rows = core.recentMine(core.targetChanges(p, dashMarket()), mine, dashToday(), 30).slice(0, 8);
-  if (!rows.length) return '<p class="muted">최근 30일 안에 내 종목 목표가·의견 변경이 없습니다.</p>';
+  // 국내: 컨센서스 평균 목표가의 1주 변화(감지일 기준, kr-consensus-moves-core.js) — 증권사별 변경 목록 아래에 덧붙인다.
+  const kc = isKrMarket() && window.MirKrConsMovesCore ? window.MirKrConsMovesCore.mine(window.KR_CONSENSUS, mine).slice(0, 5) : [];
+  const consHtml = kc.length ? `<p class="muted" style="margin:8px 0 2px;font-size:var(--fs-cap)">컨센서스 평균 목표가 · 1주 변화</p><ul class="dash-list">${kc.map((r) => {
+    const s = stockByTicker(r.ticker);
+    return `<li><span>${dashTickerBtn(r.ticker, s ? stockLabel(s) : r.ticker)}</span>
+      <span><span class="${cls(r.tp1w)}">${escapeHtml(window.MirKrConsMovesCore.arrow(r.tp1w))}</span>${r.tp1m != null ? ` <span class="muted">1개월 ${escapeHtml(window.MirKrConsMovesCore.arrow(r.tp1m))}</span>` : ""}</span></li>`;
+  }).join("")}</ul>` : "";
+  if (!rows.length) return consHtml || '<p class="muted">최근 30일 안에 내 종목 목표가·의견 변경이 없습니다.</p>';
   const fmt = (v) => (Number.isFinite(Number(v)) ? Number(v).toLocaleString("en-US") : "");
   return `<ul class="dash-list">${rows.map((r) => {
     const s = stockByTicker(r.ticker);
     const pt = r.pt != null ? `${r.ptPrev != null && r.ptPrev !== r.pt ? `${fmt(r.ptPrev)}→` : ""}${fmt(r.pt)}` : "";
     return `<li><span>${dashTickerBtn(r.ticker, s ? stockLabel(s) : r.ticker)} <span class="muted">${escapeHtml(String(r.firm || "").slice(0, 16))}</span></span>
       <span><span class="${cls(r.dir)}">${escapeHtml(pt || r.note)}</span> <span class="muted">${escapeHtml(String(r.fileDate).slice(5, 10))}</span></span></li>`;
-  }).join("")}</ul>`;
+  }).join("")}</ul>${consHtml}`;
 };
 
 DASH_RENDER.calendar = function calendar() {

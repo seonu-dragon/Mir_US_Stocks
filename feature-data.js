@@ -198,6 +198,11 @@ const FEATURE_DATA = {
   // 재무 안전 묶음(DART 정기보고서 주요정보 — 미상환 사채·CP 만기, 감사보수·비감사용역, 공모·사모자금 사용내역,
   // build_kr_fin_safety.py, 시총 상위 600). 재무 탭 '재무 위험 점검' 카드가 KR 종목을 그릴 때만 받는다(lazy, risk-check.js).
   krFinSafety: { global: "KR_FIN_SAFETY", path: "data/korea/fin_safety.js", feature: "krDart", krOnly: true, lazy: true },
+  // 대량보유자 역검색(build_kr_major_holders.py, DART majorstock 전체 이력 → 보고자별 5%+ 보유 회사). 공시 › 지분 변동
+  // '보고자별 5% 보유' 를 처음 열 때만 받는다(lazy).
+  krMajorHolders: { global: "KR_MAJOR_HOLDERS", path: "data/korea/major_holders.js", feature: "krOwnership", krOnly: true, lazy: true },
+  // 상장 지분 시가(build_kr_stake_value.py, DART 타법인 출자현황 × 스냅샷 종가). 종목 수급·보유 탭 카드가 쓸 때만(lazy).
+  krStakeValue: { global: "KR_STAKE_VALUE", path: "data/korea/stake_value.js", feature: "krDart", krOnly: true, lazy: true },
   // 미국 액면분할·병합 일정(Nasdaq 분할 캘린더, build_us_splits.py, ~3KB). 통합 캘린더를 열 때만.
   usSplits: { global: "US_SPLITS", path: "data/us_splits.js", feature: "usSplits", usOnly: true, lazy: true },
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는

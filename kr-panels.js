@@ -167,6 +167,18 @@ function krConsensusCard(item, opts = {}) {
 
   const rowsHtml = rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("");
 
+  // 1개월·3개월 변화(매일 받은 컨센서스를 쌓아 비교 — scripts/kr_consensus_history.py). 날짜는 감지일 기준.
+  let chgHtml = "";
+  const mc = window.MirKrConsMovesCore;
+  const chgRows = mc && c.chg ? mc.cardRows(c.chg) : [];
+  if (chgRows.length) {
+    const cell = (v, unit) => (v == null ? `<td class="muted">—</td>` : `<td class="${cls(v)}">${mc.arrow(v, unit)}</td>`);
+    const base = c.chg.base || {};
+    const baseNote = [base["1m"] ? `1개월 ${base["1m"]}` : "", base["3m"] ? `3개월 ${base["3m"]}` : ""].filter(Boolean).join(" · ");
+    chgHtml = `<div class="muted" style="margin:8px 0 2px;font-size:var(--fs-cap)">컨센서스 변화${baseNote ? ` · ${escapeHtml(baseNote)} 대비` : ""}</div>
+      <table class="krflow-table"><thead><tr><th></th><th>1개월</th><th>3개월</th></tr></thead><tbody>${chgRows.map((r) => `<tr><th>${escapeHtml(r.label)}</th>${cell(r.m1, r.unit)}${cell(r.m3, r.unit)}</tr>`).join("")}</tbody></table>`;
+  }
+
   // 최근 리포트 목록: 증권사 · 목표가 · 투자의견 · 작성일(작성 당시 주가).
   let reportsHtml = "";
   const reports = Array.isArray(c.reports) ? c.reports.slice(0, 5) : [];
@@ -198,6 +210,7 @@ function krConsensusCard(item, opts = {}) {
       <table class="krflow-table">
         <tbody>${rowsHtml}</tbody>
       </table>
+      ${chgHtml}
       ${reportsHtml}
       ${typeof tcKrHistoryDetailsHtml === "function" ? tcKrHistoryDetailsHtml(item.ticker) : ""}
       ${caveatHtml}
@@ -439,6 +452,116 @@ function setupKrDartEvents() {
   if (search) search.addEventListener("input", () => { krDartQuery = search.value; renderKrDisclosures(); });
 }
 
+// 상장 지분 시가 카드(종목 분석 › 수급·보유) — 정기보고서 '타법인 출자현황'의 상장 피출자사 지분 × 스냅샷 종가.
+// 사실 계산만: 합·모회사 시총·비율. '저평가'·'할인' 같은 해석은 쓰지 않는다(build_kr_stake_value.py).
+function krStakeEok(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "—";
+  if (Math.abs(n) >= 10000) return `${(n / 10000).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}조원`;
+  return `${Math.round(n).toLocaleString("ko-KR")}억원`;
+}
+
+function krStakeValueCard(item) {
+  if (!isKrMarket() || !item?.ticker) return "";
+  const rec = window.KR_STAKE_VALUE?.companies?.[item.ticker];
+  if (!rec || !Array.isArray(rec.listed) || !rec.listed.length) return "";
+  const sv = window.KR_STAKE_VALUE;
+  const head = [`상장 지분 시가 합 ${krStakeEok(rec.sum)}`];
+  if (Number.isFinite(Number(rec.cap))) head.push(`모회사 시총 ${krStakeEok(rec.cap)}${rec.prefIncluded ? "(우선주 포함)" : ""}`);
+  if (Number.isFinite(Number(rec.ratio))) head.push(`비율 ${Number(rec.ratio).toFixed(1)}%`);
+  const rows = rec.listed.slice(0, 12).map((x) => {
+    const s = stockByTicker(x.t);
+    const label = s ? stockLabel(s) : x.n;
+    return `<tr><th><button type="button" class="ins-ticker" data-group-ticker="${escapeHtml(x.t)}" style="background:none;border:0;padding:0;color:var(--text);cursor:pointer;font:inherit">${escapeHtml(label)}</button></th>
+      <td>${Number(x.pct).toFixed(2)}%</td><td>${krStakeEok(x.val)}</td></tr>`;
+  }).join("");
+  const more = rec.listed.length > 12 ? `<p class="muted" style="font-size:var(--fs-cap)">외 ${rec.listed.length - 12}곳</p>` : "";
+  const foot = [
+    `${escapeHtml(rec.report || "")} 기준일 ${escapeHtml(rec.asOf || "")} 주식 수 × 종가${sv.priceAsOf ? `(${escapeHtml(String(sv.priceAsOf).slice(0, 10))})` : ""}`,
+    rec.unlistedN ? `비상장 ${rec.unlistedN}곳 장부가 ${krStakeEok(rec.unlistedBook)}(합에 미포함)` : "",
+    rec.link ? `<a href="${escapeHtml(krPanelHref(rec.link))}" target="_blank" rel="noopener">DART 원문</a>` : "",
+  ].filter(Boolean).join(" · ");
+  return `
+    <div class="krflow-card" data-group-card>
+      <div class="krflow-head"><b>상장 지분 시가</b></div>
+      <p style="margin:4px 0 6px;font-variant-numeric:tabular-nums">${head.map(escapeHtml).join(" · ")}</p>
+      <table class="krflow-table"><thead><tr><th>상장 피출자사</th><th>지분율</th><th>지분 시가</th></tr></thead><tbody>${rows}</tbody></table>
+      ${more}
+      <p class="krflow-note">${foot}</p>
+    </div>`;
+}
+
+// ===== 보고자별 5% 보유(국내판 Superstar, KR_MAJOR_HOLDERS — build_kr_major_holders.py) =====
+let krHolderPick = "";
+
+function renderKrHolderIndex() {
+  const meta = byId("krOwnMeta");
+  const table = byId("krOwnTable");
+  if (!table) return;
+  const payload = window.KR_MAJOR_HOLDERS;
+  if (!payload) {
+    table.innerHTML = `<p class="muted">보고자별 보유 데이터를 불러오는 중…</p>`;
+    if (typeof ensureFeatureData === "function") {
+      ensureFeatureData("krMajorHolders").then((ok) => {
+        if (krOwnKind !== "holder") return;
+        if (ok) renderKrHolderIndex();
+        else table.innerHTML = `<p class="muted">보고자별 보유 데이터를 아직 받지 못했습니다.</p>`;
+      });
+    }
+    return;
+  }
+  const holders = Array.isArray(payload.holders) ? payload.holders : [];
+  const cov = payload.coverage || {};
+  if (meta) {
+    meta.textContent = [
+      payload.updatedAtKst,
+      `보고자 ${holders.length}곳`,
+      cov.universe ? `수집 ${Number(cov.fetched || 0).toLocaleString()}/${Number(cov.universe).toLocaleString()}사${cov.fetched < cov.universe ? "(채우는 중)" : ""}` : "",
+    ].filter(Boolean).join(" · ");
+  }
+  if (!holders.length) {
+    table.innerHTML = `<p class="muted">표시할 보고자가 없습니다.</p>`;
+    return;
+  }
+  const q = krOwnQuery.trim().toLowerCase();
+  const list = q
+    ? holders.filter((h) => [h.name, ...(h.aka || [])].some((v) => String(v || "").toLowerCase().includes(q))
+      || (h.rows || []).some((r) => String(r[1] || "").toLowerCase().includes(q) || String(r[0]) === q))
+    : holders;
+  if (!list.length) {
+    table.innerHTML = `<p class="muted">검색어에 맞는 보고자가 없습니다.</p>`;
+    return;
+  }
+  if (!list.some((h) => h.id === krHolderPick)) krHolderPick = list[0].id;
+  const h = list.find((x) => x.id === krHolderPick);
+  const options = list.slice(0, 300).map((x) => `<option value="${escapeHtml(x.id)}"${x.id === krHolderPick ? " selected" : ""}>${escapeHtml(x.name)} (${x.n})</option>`).join("");
+  const body = (h.rows || []).map((r) => {
+    const [ticker, company, ratio, chg, date, rcept, tp, exit] = r;
+    const s = stockByTicker(ticker);
+    const link = rcept ? `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${encodeURIComponent(rcept)}` : "";
+    return `<tr${exit ? ' class="muted"' : ""}>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(ticker)}">${escapeHtml(s ? stockLabel(s) : company || ticker)}</button></td>
+      <td><b>${krOwnNum(ratio, 2)}%</b>${exit ? ` <span class="muted">5% 미만 보고</span>` : ""}</td>
+      <td>${krOwnDelta(chg, "%p", 2)}</td>
+      <td>${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">${escapeHtml(date || "")}</a>` : escapeHtml(date || "")}</td>
+      <td>${escapeHtml(tp || "")}</td>
+    </tr>`;
+  }).join("");
+  const aka = h.aka && h.aka.length ? `<p class="muted" style="font-size:var(--fs-cap);margin:4px 0">다른 표기: ${h.aka.map(escapeHtml).join(", ")}</p>` : "";
+  table.innerHTML = `
+    <label class="grow" style="display:block;margin-bottom:8px">보고자
+      <select id="krHolderSelect" style="max-width:100%">${options}</select>
+    </label>
+    ${aka}
+    <table class="insider-table table-wide">
+      <thead><tr><th>종목</th><th>보유비율</th><th>직전 대비</th><th>보고일</th><th>구분</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    <p class="muted" style="font-size:var(--fs-cap)">회사마다 이 보고자의 가장 최근 대량보유 보고 기준(특별관계자 합산 · 보고일 = DART 접수일). 5% 미만 보고는 최근 ${payload.exitDays || 365}일 것만.</p>`;
+  byId("krHolderSelect")?.addEventListener("change", (ev) => { krHolderPick = ev.target.value; renderKrHolderIndex(); });
+  delegateTickerClicks(table, ".ins-ticker");
+}
+
 // ===== KR 지분 변동 (대량보유 5%룰 / 임원·주요주주) =====
 let krOwnQuery = "";
 let krOwnKind = "major";
@@ -522,6 +645,10 @@ function renderKrOwnership() {
     renderKrOwnProfile();
     return;
   }
+  if (krOwnKind === "holder") {
+    renderKrHolderIndex();
+    return;
+  }
   const payload = window.KR_OWNERSHIP;
   if (!payload) {
     table.innerHTML = `<p class="muted">지분공시 데이터를 불러오는 중…</p>`;
@@ -586,13 +713,15 @@ function setupKrOwnershipEvents() {
   byId("krOwnKinds")?.querySelectorAll("[data-krown]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const kind = btn.dataset.krown;
-      krOwnKind = ["insider", "profile"].includes(kind) ? kind : "major";
+      krOwnKind = ["insider", "profile", "holder"].includes(kind) ? kind : "major";
       byId("krOwnKinds").querySelectorAll("[data-krown]").forEach((b) => {
         b.classList.toggle("is-active", b === btn);
       });
       // 지배구조 탭은 다른 데이터셋을 쓴다 — 처음 열 때 받아온다.
       if (krOwnKind === "profile") {
         renderWithFeature("krOwnProfile", renderKrOwnership, "krOwnTable");
+      } else if (krOwnKind === "holder") {
+        renderKrHolderIndex();
       } else {
         renderWithFeature("krOwnership", renderKrOwnership, "krOwnTable");
       }

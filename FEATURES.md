@@ -484,6 +484,9 @@
 - **애널리스트 컨센서스**:
   - *US*: Finnhub 무료 티어 — 매수/보유/매도 추천 분포의 월별 추세와 분기 EPS 추정 vs 실제(서프라이즈%).
   - *KR*: FnGuide 컨센서스(네이버 금융 경유) — 목표주가·투자의견·추정기관수 + 최근 증권사 리포트 목록.
+  - *KR 컨센서스 변화(2026-10-23)*: `build_kr_consensus.py` 가 매 실행 실제로 받은 종목(승계분 제외)을 `data/korea/consensus_history.json`(변경점 기록, 종목당 60행·200일, 배포 제외)에 쌓고 1주·1개월·3개월 전 관측과 비교한 `chg`(목표가 %, 의견 점수 차, FY1·FY2 추정 매출·영업이익 % — 같은 회계연도끼리)를 붙인다(`scripts/kr_consensus_history.py`). 관측이 GAP_DAYS(6일)보다 비면 그 기간 변화는 없음. FY2 는 FnGuide 연간 표(cF1001, encparam 필요)에서 FY1 일치·정합성 통과분만. 날짜는 감지일. 화면: 컨센서스 카드 '컨센서스 변화' 표, 시장 › 시그널 '컨센서스 상향·하향 (국내)'(목표가 1주·1개월 / 영업이익 추정 1·3개월, 기관 3곳 이상, `kr-consensus-moves.js`), 내 대시보드 목표가 위젯의 '컨센서스 평균 목표가 · 1주 변화'. 첫 이력은 GitHub 의 과거 consensus.json 판(2026-09-04~)으로 백필(`--backfill-github`).
+  - *KR 대량보유자 역검색(2026-10-23)*: `build_kr_major_holders.py` — DART majorstock 전체 이력을 회사 단위로 받아 (회사, 보고자)별 최신 보고만 남기고 보고자별로 묶는다(이름 정규화·별칭 `scripts/kr_holder_names.py`, 개인 제외, 5% 미만 보고는 1년 안 것만 표시). `data/korea/major_holders.{json,js}`(`KR_MAJOR_HOLDERS`, lazy). 공시 › 지분 변동 '보고자별 5% 보유'.
+  - *KR 상장 지분 시가(2026-10-23)*: `build_kr_stake_value.py` — DART 타법인 출자현황(otrCprInvstmntSttus)의 상장 피출자사 기말 주식 수 × 스냅샷 종가 합 vs 모회사 시총(사실 계산만, 해석 문구 없음). 주식 수/상장주식수 지분율 자기검증, 비상장은 장부가로 따로. `data/korea/stake_value.{json,js}`(`KR_STAKE_VALUE`, lazy). 종목 수급·보유 탭 '상장 지분 시가' 카드.
 
 ### ⑭ KR 전용 데이터 패널
 

@@ -1272,6 +1272,10 @@ html[data-market="kr"][data-theme="dark"] {
             <summary>EPS 추정치 변화 (미국)</summary>
             <div id="estimateRevisions"></div>
           </details>
+          <details class="ia-fold ia-widget-fold" id="fold-krConsensusMoves">
+            <summary>컨센서스 상향·하향 (국내)</summary>
+            <div id="krConsensusMoves"></div>
+          </details>
           <details class="ia-fold ia-widget-fold" id="fold-wikiAttention">
             <summary>위키피디아 관심도</summary>
             <div id="wikiAttention"></div>
@@ -2219,6 +2223,7 @@ html[data-market="kr"][data-theme="dark"] {
             <button class="sub-tab" data-disc="krown" data-krown-kind="major">5%룰</button>
             <button class="sub-tab" data-disc="krown" data-krown-kind="insider">임원</button>
             <button class="sub-tab" data-disc="krown" data-krown-kind="profile">지배구조</button>
+            <button class="sub-tab" data-disc="krown" data-krown-kind="holder">5% 보유자</button>
           </nav>
           <div class="feed-sub-bar">
             <span>새 공시를 RSS 리더로 받아 보기 — 시장별 주요 공시·시총 상위 종목별 피드</span>
@@ -2443,6 +2448,7 @@ html[data-market="kr"][data-theme="dark"] {
             <button class="sub-tab is-active" data-krown="major">대량보유 5%룰</button>
             <button class="sub-tab" data-krown="insider">임원·주요주주</button>
             <button class="sub-tab" data-krown="profile">지배구조·유통물량</button>
+            <button class="sub-tab" data-krown="holder">보고자별 5% 보유</button>
           </nav>
           <div class="institutional-picker">
             <label class="grow">
@@ -3510,6 +3516,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="vix-term.js"></script>
     <script src="analyst-revisions-core.js"></script>
     <script src="analyst-revisions.js"></script>
+    <script src="kr-consensus-moves-core.js"></script>
+    <script src="kr-consensus-moves.js"></script>
     <script src="dividend-growth-core.js"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=3d94000f51"></script>

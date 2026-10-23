@@ -93,7 +93,7 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   실행의 `load_cached_history` 가 직전 detail 에서 되돌려 이어 붙인다. 종목 상세 수급 탭 '외국인 보유율 추이'가 읽는다.
 - 캐시 마지막 봉 종가가 그 봉 고가·저가 밖이면 US·KR `load_cached_history` 가 그 봉을 버린다
   (`UD.drop_corrupted_last_bar`, 메우지 않음). KR 은 yahoo-cache 로 이월만 되던 묵은 캐시(마지막 봉 5일↑)를
-  실행당 `KR_HISTORY_STALE_REFRESH`(기본 200)개씩 오래된 순으로 다시 받는다(2026-10-21).
+  실행당 `KR_HISTORY_STALE_REFRESH`(기본 400 — 2026-10-22 #388 에서 200→400)개씩 오래된 순으로 다시 받는다(2026-10-21).
 - US 스냅샷의 `changePctSuspect`("split"|"noVolume"): |당일 등락률| > 300% 인데 거래량 근거가 없거나 최근 분할이
   있으면 붙는다(`update_data.flag_implausible_change`, AMTD +4,875%). 값은 그대로 두고 섹터 평균·시장 폭·요약
   집계에서만 뺀다. 프론트 섹터 등락률은 시총가중(`signals.js capWeightedChange`)이다.
@@ -162,7 +162,7 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 **없는 데이터는 기능을 끈다.** 빈 화면을 띄우거나 없는 파일을 계속 요청하지 않는다.
 `market_config.js` 의 `features` 로 시장별로 차단한다(키가 없으면 켜진 것으로 본다 —
 판정은 `=== false` 로 할 것. `!features.x` 로 쓰면 키 없는 시장까지 꺼진다).
-현재 KR 에서 꺼 둔 것: `breakoutStats`(US 만 산출). KR `earningsCalendar` 는 2026-10-02 에 켰다 —
+`breakoutStats` 는 2026-10-23(#401)에 KR 도 켰다(네이버 봉 기준 `build_breakout_retest.py --market kr`). KR `earningsCalendar` 는 2026-10-02 에 켰다 —
 국내엔 실적 예정일 공개 소스가 없어(워커·야후는 빈 배열) `build_kr_earnings_calendar.py` 가 DART 실제 발표
 이력(작년 같은 분기 잠정실적·정기보고서 접수일 + 364일)으로 **추정**하고, 화면은 행마다 '추정' 배지를 단다.
 콘솔 404 를 방치하면 진짜 404 를 가린다.

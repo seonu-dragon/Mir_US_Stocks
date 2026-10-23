@@ -1182,7 +1182,7 @@ function setupLightbox() {
   });
 }
 
-// 사이트 도우미 챗봇 (Cloudflare Worker /chat → Workers AI)
+// 사이트 도우미 챗봇 (Cloudflare Worker /chat. ANTHROPIC_API_KEY 가 있으면 클로드, 없으면 Gemini·Workers AI)
 const CHAT_SUGGESTIONS = ["PER이 뭐야?", "NVDA 요약해줘", "시장 지도 보는 법", "모멘텀 점수가 뭐야?"];
 let chatHistory = [];
 let chatBusy = false;
@@ -1321,7 +1321,7 @@ function setupChatbot() {
     adjustForKeyboard();
     if (!greeted) {
       greeted = true;
-      addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법·투자 용어는 물론, 그냥 편하게 말 걸어 주셔도 좋아요. ");
+      addChatMessage("bot", "무엇을 물어볼까요. 사이트에 있는 데이터도 함께 볼 수 있어요.");
     }
   }
 
@@ -9028,7 +9028,7 @@ formatMarkdownToHtml.__selftest = function selftest() {
 
 // 종목 AI 리포트 12시간 캐시(localStorage). 키 = 시장·티커·스냅샷 날짜·질의 — 종목을 열 때마다
 // LLM 을 부르지 않는다. 스냅샷이 바뀌면(날짜) 자연히 새 키가 된다.
-const AI_REPORT_CACHE_KEY = "mir_ai_report_cache_v1";
+const AI_REPORT_CACHE_KEY = "mir_ai_report_cache_v2";
 const AI_REPORT_CACHE_TTL_MS = 12 * 3600 * 1000;
 const AI_REPORT_CACHE_MAX = 40;
 function aiReportCacheKey(ticker, customQuery) {
@@ -9096,7 +9096,7 @@ async function loadAiDeepReport(ticker, customQuery = null) {
   try {
     if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
     
-    const query = customQuery || `${stock.company} (${stock.ticker}) 종목의 최근 차트 보조지표 상태와 펀더멘탈, 리스크 요인을 분석한 투자 의견 리포트`;
+    const query = customQuery || `${stock.company} (${stock.ticker})의 최근 차트, 펀더멘탈, 리스크를 이 사이트 데이터와 함께 짚어 줘.`;
     const stockContext = await buildStockChatContext(ticker);
     
     const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {

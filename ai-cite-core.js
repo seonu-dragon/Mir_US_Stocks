@@ -183,7 +183,7 @@
     { key: "earnings", test: /다음실적:/, ask: /실적|어닝/, l: "실적 일정", q: (n) => `${n} 다음 실적 발표 일정과 예상치를 정리해줘` },
     { key: "flow", test: /수급 순매수/, ask: /수급|외국인|기관/, l: "수급 변화", q: (n) => `${n} 최근 외국인·기관 수급 변화를 설명해줘` },
     { key: "smart", test: /내부자\(Form4\)|기관13F|의회매매/, ask: /내부자|13F|기관|의회/, l: "내부자·기관 동향", q: (n) => `${n} 내부자·기관 보유 동향을 정리해줘` },
-    { key: "valuation", test: /(PER|P\/B|P\/S):/, ask: /PER|PBR|밸류|저평가|고평가/i, l: "밸류에이션 수준", q: (n) => `${n} 현재 PER·PBR 수준을 같은 업종과 비교해 설명해줘(추천 없이)` },
+    { key: "valuation", test: /(PER|P\/B|P\/S):/, ask: /PER|PBR|밸류|저평가|고평가/i, l: "밸류에이션 수준", q: (n) => `${n} 현재 PER·PBR 수준을 같은 업종과 비교해 설명해줘` },
     { key: "technical", test: /RSI\(14\)/, ask: /RSI|MACD|이평|기술적|차트/i, l: "기술적 지표", q: (n) => `${n} RSI·MACD·이동평균 상태를 해석해줘` },
     { key: "news", test: null, ask: /뉴스|기사|소식/, l: "관련 뉴스", q: (n) => `${n} 최근 뉴스 핵심만 정리해줘` },
   ];

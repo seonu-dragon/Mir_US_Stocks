@@ -720,9 +720,8 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
     const numbered = cite ? cite.numberContext(rawStockContext) : { text: rawStockContext, sources: [] };
     const stockContext = numbered.text;
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
-    // 뉴스에서 옮긴 증권사 투자의견·목표가 문장은 채팅에서도 '원문 평가 · ' 로 표시하고 첫 문장에서 내린다(2026-10-23
-    // 라이브: '니드햄은 매수를 재확인하며 300달러 목표가를 유지했습니다 [N5]'가 일반 문장으로 나왔다).
-    const rated = (t) => (cite && typeof cite.labelAnalystRatings === "function" ? cite.labelAnalystRatings(t) : String(t || ""));
+    // 답변 문장은 모델이 쓴 그대로 둔다. 각주 목록에 없는 인용 표기만 걷는다.
+    const rated = (t) => String(t || "");
     const plain = (t) => (cite ? cite.stripCitations(rated(t)) : rated(t));
 
     // 답변 확정(스트리밍/타이핑 종료) 시 공통 마무리: 이력 저장 + 배지 부착
@@ -1996,16 +1995,16 @@ function aiVerdictPanel(item) {
 }
 
 const AI_DASH_CHIPS = [
-  { l: "기술적 위치", q: "현재 주가의 기술적 위치(추세·지지/저항·모멘텀)를 매수/매도 추천 없이 짚어줘" },
+  { l: "기술적 위치", q: "현재 주가의 기술적 위치(추세·지지/저항·모멘텀)를 짚어줘" },
   { l: "핵심 리스크", q: "이 종목의 핵심 하방 리스크 요인을 짚어줘" },
   { l: "동종업체 비교", q: "주요 동종업체 대비 강점과 약점을 비교해줘" },
   { l: "실적 전망", q: "다가오는 실적과 향후 실적 전망을 정리해줘" },
-  { l: "밸류에이션 점검", q: "현재 밸류에이션이 과거 평균·동종업체 대비 어느 수준인지 매수/매도 추천 없이 점검해줘" },
+  { l: "밸류에이션 점검", q: "현재 밸류에이션이 과거 평균·동종업체 대비 어느 수준인지 점검해줘" },
 ];
 
 // 자동 요약 코멘트 캐시 — (시장, 스냅샷 날짜, 티커) 키로 12시간. 같은 종목을 다시 열 때
 // LLM 을 또 부르지 않는다(메모리 + localStorage). 후속 질문(Q&A)은 캐시하지 않는다.
-const AI_DASH_LLM_CACHE_KEY = "mir_ai_dash_llm_cache_v1";
+const AI_DASH_LLM_CACHE_KEY = "mir_ai_dash_llm_cache_v2";
 const AI_DASH_LLM_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 const AI_DASH_LLM_CACHE_MAX = 40;
 const aiDashLlmMemCache = new Map();
@@ -2081,17 +2080,15 @@ async function fetchAiDashLlmComment(item, seq, opts) {
   const controller = aiStreamBegin();
   aiDashLlmController = controller;
   try {
-    // 참고 레이아웃(1.png)의 AI 의견 카드: 요약 + 포인트/리스크 불릿.
-    // 단, 사이트 정책상 매수/매도/목표가 추천은 절대 하지 않는다.
-    const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 아래 형식의 한국어 요약 의견을 작성해줘.\n형식:\n(2문장 이내의 종합 요약)\n**관찰 포인트**\n- (2~3개, 각 1줄)\n**리스크**\n- (2~3개, 각 1줄)\n규칙: 매수/매도/목표가 추천·단정 금지, 제공된 데이터에 있는 사실만 사용, 형식 외 다른 머리말 금지. 증권사 투자의견·목표가는 '원문 평가 · <증권사>:' 로 출처와 함께 적고 첫 문장에 두지 말 것.`;
+    const query = custom || `${item.company || item.ticker}(${item.ticker})의 차트·펀더멘탈·수급에서 지금 볼 점을 말해 줘.`;
     const rawStockContext = await buildStockChatContext(item.ticker);
     if (seq !== aiDashSeq) return; // 사용자가 다른 종목으로 이동함
     // 문장별 출처 각주(ai-cite-core.js) — 채팅과 같은 방식. 스트리밍 중엔 표기를 숨긴다.
     const cite = window.MirAiCite || null;
     const numbered = cite ? cite.numberContext(rawStockContext) : { text: rawStockContext, sources: [] };
     const stockContext = numbered.text;
-    // 뉴스에서 옮긴 증권사 투자의견·목표가 문장은 '원문 평가 · ' 로 표시하고 첫 문장에서 내린다(프롬프트 규칙의 안전망).
-    const rated = (t) => (cite && typeof cite.labelAnalystRatings === "function" ? cite.labelAnalystRatings(t) : String(t || ""));
+    // 답변 문장은 모델이 쓴 그대로 둔다. 각주 목록에 없는 인용 표기만 걷는다.
+    const rated = (t) => String(t || "");
     const plain = (t) => (cite ? cite.stripCitations(rated(t)) : String(t || ""));
 
     const paint = (text, loading) => {

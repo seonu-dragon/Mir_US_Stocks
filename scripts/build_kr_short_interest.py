@@ -69,6 +69,21 @@ def _import_pykrx_stock(attempts: int = 4):
     raise RuntimeError(f"pykrx 로그인 실패(재시도 소진): {last}")
 
 
+def krx_login_state() -> bool | None:
+    """pykrx import 뒤 KRX 로그인 세션이 실제로 섰는가. True/False, 판정 불가면 None.
+
+    pykrx 포크는 로그인 실패(CD010 비밀번호 변경 필요 등)에도 예외 없이 import 되고, 이후 조회가
+    전부 빈 응답이 된다(2026-10-20~). 세션 유무로 판정해 원인을 첫 줄에 찍고 일찍 끝낸다.
+    """
+    try:
+        from pykrx.website.comm import webio
+    except Exception:
+        return None
+    if not hasattr(webio, "_session"):
+        return None
+    return webio._session is not None
+
+
 def load_universe() -> dict[str, dict]:
     """스냅샷에서 티커→{company, market} 를 만든다. KRX 잔고는 종목명을 주지
     않으므로 이름은 여기서 붙인다. 스냅샷에 없는 티커(우선주·상폐 등)는 제외."""
@@ -219,6 +234,10 @@ def balance_history(stock, ticker: str, settle: str, days: int = 45) -> list[dic
 
 def build():
     stock = _import_pykrx_stock()
+    if krx_login_state() is False:
+        print("  [실패] KRX 로그인 안 됨 — 로그에 'CD010/비밀번호 변경이 필요' 가 있으면 "
+              "data.krx.co.kr 에서 비밀번호를 바꾸고 Secrets KRX_PW(로컬 .env)를 갱신할 것")
+        return None
     universe = load_universe()
     settle, cur = find_available(stock)
     if not cur:

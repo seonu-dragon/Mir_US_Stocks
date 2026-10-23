@@ -103,6 +103,13 @@ def load_benchmark_regimes(market):
     return regime_by_date, current
 
 
+def measurable_segments(rows, stats=None):
+    """한 봉 4배 밖 종가 불연속(수정 안 된 역분할·호가 오류, 예 PPCB 0.01 → 625)에서 끊은
+    연속 구간 중 MIN_BARS 이상만. 그 봉을 가로지르는 전방 창이 평균을 통째로 끌고 가서
+    US doji 60일 평균이 +168.5% 로 발행됐었다(근거·임계 선택은 pattern_lib 주석)."""
+    return [s for s in pl.split_at_discontinuities(rows, stats=stats) if len(s) >= MIN_BARS]
+
+
 def summarize(returns):
     if not returns:
         return None
@@ -145,6 +152,7 @@ def main():
     scanned = 0
     skipped = 0
     event_total = 0
+    disc_stats = {"breaks": 0}
     for i, fp in enumerate(files):
         try:
             d = json.loads(fp.read_text(encoding="utf-8"))
@@ -156,36 +164,38 @@ def main():
         if d.get("historySource") not in ("yahoo", "yahoo-cache"):
             skipped += 1
             continue
-        rows = pl.rows_from_chart_series(d.get("chartSeries") or [])
-        if len(rows) < MIN_BARS:
+        rows_all = pl.rows_from_chart_series(d.get("chartSeries") or [])
+        segments = measurable_segments(rows_all, disc_stats)
+        if not segments:
             skipped += 1
             continue
         scanned += 1
-        # 배당 포함 총수익용 누적 배당(없으면 None → 기존 가격 수익률 그대로).
-        div_cum = pl.dividend_cum_from_detail(rows, d.get("dividends"))
+        for rows in segments:
+            # 배당 포함 총수익용 누적 배당(없으면 None → 기존 가격 수익률 그대로).
+            div_cum = pl.dividend_cum_from_detail(rows, d.get("dividends"))
 
-        # 기준선: 일정 간격 봉의 전방 수익률
-        for k in range(pl.PIVOT_WIN, len(rows), BASELINE_STRIDE):
-            # 레짐: 그 봉 날짜의 벤치마크 상태(벤치마크에 없는 날짜면 분리 생략)
-            reg = regime_by_date.get(rows[k].get("d")) if regime_by_date else None
-            for h in pl.HORIZONS:
-                r = fwd_return(rows, k, h, div_cum)
-                if r is not None:
-                    base_rets[h].append(r)
-                    if reg:
-                        reg_base_rets[reg][h].append(r)
+            # 기준선: 일정 간격 봉의 전방 수익률
+            for k in range(pl.PIVOT_WIN, len(rows), BASELINE_STRIDE):
+                # 레짐: 그 봉 날짜의 벤치마크 상태(벤치마크에 없는 날짜면 분리 생략)
+                reg = regime_by_date.get(rows[k].get("d")) if regime_by_date else None
+                for h in pl.HORIZONS:
+                    r = fwd_return(rows, k, h, div_cum)
+                    if r is not None:
+                        base_rets[h].append(r)
+                        if reg:
+                            reg_base_rets[reg][h].append(r)
 
-        # 패턴 확정 이벤트의 전방 수익률
-        for ev in pl.detect_confirmations(rows):
-            event_total += 1
-            pat_dir[ev["pattern"]] = ev["dir"]
-            reg = regime_by_date.get(rows[ev["confirm_idx"]].get("d")) if regime_by_date else None
-            for h in pl.HORIZONS:
-                r = fwd_return(rows, ev["confirm_idx"], h, div_cum)
-                if r is not None:
-                    pat_rets[ev["pattern"]][h].append(r)
-                    if reg:
-                        reg_pat_rets[reg][ev["pattern"]][h].append(r)
+            # 패턴 확정 이벤트의 전방 수익률
+            for ev in pl.detect_confirmations(rows):
+                event_total += 1
+                pat_dir[ev["pattern"]] = ev["dir"]
+                reg = regime_by_date.get(rows[ev["confirm_idx"]].get("d")) if regime_by_date else None
+                for h in pl.HORIZONS:
+                    r = fwd_return(rows, ev["confirm_idx"], h, div_cum)
+                    if r is not None:
+                        pat_rets[ev["pattern"]][h].append(r)
+                        if reg:
+                            reg_pat_rets[reg][ev["pattern"]][h].append(r)
 
         if (i + 1) % 500 == 0:
             print(f"  …{i + 1}/{len(files)} 처리 (scanned={scanned}, events={event_total})",
@@ -224,6 +234,8 @@ def main():
         "horizons": list(pl.HORIZONS),
         "min_bars": MIN_BARS,
         "return_basis": "total (dividends included when detail has them)",
+        # 한 봉 4배 밖 종가 불연속에서 시계열을 끊어 그 봉을 가로지르는 전방 창은 뺀다.
+        "discontinuity_cleaning": {"max_bar_ratio": pl.MAX_BAR_RATIO, "breaks": disc_stats["breaks"]},
         "baseline": baseline,
         "patterns": patterns,
     }

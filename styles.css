@@ -8875,6 +8875,9 @@ i.eps-sb-act.neg { background: var(--neg); }
 .bh-base { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .bh-foot { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .bh-grid { grid-template-columns: minmax(0, 1fr); } }
+.svi-panel { margin-top: var(--space-2); }
+.svi-panel svg { height: 96px; }
+.svi-note { margin: 6px 0 0; font-size: 11px; }
 /* 섹터별 시장 폭 표(breadth-history.js renderSectorBreadth) */
 .sb-table-wrap { overflow-x: auto; margin-top: var(--space-2); }
 .sb-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
@@ -13951,6 +13954,11 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ei-cal-table { width: 100%; }
 .ei-cal-table small { color: var(--muted); }
 .ei-cal-sub { font-size: var(--fs-cap); color: var(--muted); min-width: 140px; }
+.es-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.es-kpis div { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r-sm, 6px); }
+.es-kpis span { font-size: var(--fs-cap); color: var(--muted); }
+.es-kpis strong { font-variant-numeric: tabular-nums; color: var(--text); }
+@media (max-width: 640px) { .es-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ei-rel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; margin-top: 8px; }
 .ei-rel-pop { margin-bottom: 8px; }
 @media (max-width: 640px) {

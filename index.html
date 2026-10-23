@@ -1209,6 +1209,8 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="breadth-card" id="marketBreadthCard" aria-label="시장 폭 지표"></section>
           <!-- 시장 폭 추이(breadth-history.js renderBreadthHistory) — 종목별 일봉 집계, 시장별 파일(lazy) -->
           <section class="breadth-card bh-card" id="breadthHistoryCard" aria-label="시장 폭 추이" hidden></section>
+          <!-- 공매도 거래량 비율 지수(breadth-history.js renderShortVolumeIndex) — US 전용, FINRA 일별 공매도 거래량 -->
+          <section class="breadth-card bh-card" id="shortVolIndexCard" aria-label="공매도 거래량 비율 지수" hidden></section>
           <!-- 섹터별 시장 폭(breadth-history.js renderSectorBreadth) — 같은 market_breadth 파일의 sectors -->
           <section class="breadth-card bh-card" id="sectorBreadthCard" aria-label="섹터별 시장 폭" hidden></section>
           <div class="markets-tables" id="marketsTables"></div>

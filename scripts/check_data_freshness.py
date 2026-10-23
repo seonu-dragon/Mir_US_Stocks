@@ -69,6 +69,8 @@ CHECKS = {
         # 오늘의 이슈(build_market_issues.py) — 이슈 0개가 정상인 날이 있어 0건은 보지 않는다.
         ("data/market_issues.json", 4, False),
         ("data/earnings_calendar.json", 5, False),
+        # 실적 시즌 스코어보드(build_earnings_scoreboard.py, US 스냅샷 잡). 시즌 첫날 0건이 정상이라 0건은 보지 않는다.
+        ("data/earnings_scoreboard.json", 5, False),
         ("data/options_stats.json", 4, False),
         # 옵션 포지션(build_options_flow.py, 스냅샷 뒤 continue-on-error 스텝). 0종목(count)도 잡는다.
         ("data/options_flow.json", 4, True),
@@ -77,6 +79,8 @@ CHECKS = {
         ("data/macro_indicators.json", 7, False),
         ("data/yield_curve.json", 7, False),
         ("data/finra_short_volume.json", 7, False),
+        # 같은 빌더의 S&P 500 공매도 거래량 비율 지수(누적 이력). 0건 = 이력 소실.
+        ("data/short_volume_index.json", 7, True),
         ("data/analyst_consensus.json", 10, False),
         ("data/federal_contracts.json", 10, False),
         ("data/pattern_stats.json", 10, False),

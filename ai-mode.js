@@ -1955,11 +1955,16 @@ function aiVerdictPanel(item) {
     : nUp === nDown ? `신호 ${nDir}개 · 방향 엇갈림`
     : `신호 ${nDir}개 중 ${nSame}개가 같은 방향`;
 
+  // 코멘트는 잡힌 신호를 나열만 한다 — '긍정/부정 신호가 더 많다' 같은 방향 판정은 쓰지 않는다
+  // (개수 비교는 위 배지가 이미 보여 주고, 신호마다 무게가 달라 개수 우세가 방향을 뜻하지 않는다).
   const name = item.company || item.ticker;
-  const dir = !nDir ? "방향을 가를 만한 신호가 잡히지 않았습니다"
-    : nUp > nDown ? "긍정 신호가 더 많습니다" : nDown > nUp ? "부정 신호가 더 많습니다" : "신호가 엇갈려 뚜렷한 방향성이 약합니다";
-  const comment = `${escapeHtml(name)}은(는) 현재 ${dir}.` +
-    (strengths[0] ? ` 눈에 띄는 신호는 ${escapeHtml(strengths[0].t)}` + (risks[0] ? `이며, 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : `입니다.`) : (risks[0] ? ` 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : ""));
+  const listSig = (arr) => arr.slice(0, 2).map((x) => escapeHtml(x.t)).join(" · ");
+  const parts = [];
+  if (strengths.length) parts.push(`관찰 신호: ${listSig(strengths)}`);
+  if (risks.length) parts.push(`리스크 신호: ${listSig(risks)}`);
+  const comment = parts.length
+    ? `${escapeHtml(name)} — ${parts.join(" / ")}.`
+    : `${escapeHtml(name)} — 방향을 가를 만한 신호가 잡히지 않았습니다.`;
 
   const li = (arr, empty) => arr.length ? arr.slice(0, 3).map((x) => `<li>${escapeHtml(x.t)}</li>`).join("") : `<li class="muted">${empty}</li>`;
 
@@ -1972,7 +1977,7 @@ function aiVerdictPanel(item) {
     <p class="ai-verdict-comment">${comment}</p>
     <div class="ai-verdict-cols">
       <div class="ai-verdict-pts">
-        <span class="ai-verdict-pts-h up">관찰 포인트</span>
+        <span class="ai-verdict-pts-h">관찰 포인트</span>
         <ul>${li(strengths, "특이 긍정 신호 없음")}</ul>
       </div>
       <div class="ai-verdict-pts">
@@ -2075,14 +2080,16 @@ async function fetchAiDashLlmComment(item, seq, opts) {
   try {
     // 참고 레이아웃(1.png)의 AI 의견 카드: 요약 + 포인트/리스크 불릿.
     // 단, 사이트 정책상 매수/매도/목표가 추천은 절대 하지 않는다.
-    const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 아래 형식의 한국어 요약 의견을 작성해줘.\n형식:\n(2문장 이내의 종합 요약)\n**관찰 포인트**\n- (2~3개, 각 1줄)\n**리스크**\n- (2~3개, 각 1줄)\n규칙: 매수/매도/목표가 추천·단정 금지, 제공된 데이터에 있는 사실만 사용, 형식 외 다른 머리말 금지.`;
+    const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 아래 형식의 한국어 요약 의견을 작성해줘.\n형식:\n(2문장 이내의 종합 요약)\n**관찰 포인트**\n- (2~3개, 각 1줄)\n**리스크**\n- (2~3개, 각 1줄)\n규칙: 매수/매도/목표가 추천·단정 금지, 제공된 데이터에 있는 사실만 사용, 형식 외 다른 머리말 금지. 증권사 투자의견·목표가는 '원문 평가 · <증권사>:' 로 출처와 함께 적고 첫 문장에 두지 말 것.`;
     const rawStockContext = await buildStockChatContext(item.ticker);
     if (seq !== aiDashSeq) return; // 사용자가 다른 종목으로 이동함
     // 문장별 출처 각주(ai-cite-core.js) — 채팅과 같은 방식. 스트리밍 중엔 표기를 숨긴다.
     const cite = window.MirAiCite || null;
     const numbered = cite ? cite.numberContext(rawStockContext) : { text: rawStockContext, sources: [] };
     const stockContext = numbered.text;
-    const plain = (t) => (cite ? cite.stripCitations(t) : String(t || ""));
+    // 뉴스에서 옮긴 증권사 투자의견·목표가 문장은 '원문 평가 · ' 로 표시하고 첫 문장에서 내린다(프롬프트 규칙의 안전망).
+    const rated = (t) => (cite && typeof cite.labelAnalystRatings === "function" ? cite.labelAnalystRatings(t) : String(t || ""));
+    const plain = (t) => (cite ? cite.stripCitations(rated(t)) : String(t || ""));
 
     const paint = (text, loading) => {
       const cur = byId("aiDashLlm");
@@ -2113,7 +2120,7 @@ async function fetchAiDashLlmComment(item, seq, opts) {
       let bodyHtml = formatMarkdownToHtml(stripEmoji(plain(reply)));
       let notes = "";
       if (cite) {
-        const applied = cite.applyCitations(stripEmoji(reply), numbered.sources.concat(cite.newsSources(result.meta && result.meta.rag)));
+        const applied = cite.applyCitations(stripEmoji(rated(reply)), numbered.sources.concat(cite.newsSources(result.meta && result.meta.rag)));
         if (applied.notes.length) {
           const prefix = `aicite${++aiCiteSeq}`;
           bodyHtml = cite.citationHtml(formatMarkdownToHtml(applied.text), prefix);

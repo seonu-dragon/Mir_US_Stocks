@@ -786,6 +786,9 @@ function resetMarketSwitchUiState(cfg) {
   const cmpInput = byId("chartCompareInput");
   if (cmpInput) cmpInput.value = "";
   if (typeof renderCompareChips === "function") renderCompareChips();
+  // 차트 분석 패널: 이전 시장 종목의 점수·문장이 새 종목 화면에 남지 않게 닫고 결과를 비운다.
+  // 다음 '차트 분석' 클릭은 새 시장 종목으로 다시 계산한다.
+  if (typeof closeChartProbPanel === "function") closeChartProbPanel({ redraw: false });
   // 차트 확대·이동은 이전 종목 봉 기준이다. 분봉 간격은 새 시장이 분봉을 끈 경우에만 일봉으로.
   chartState.zoom = 1;
   chartState.offset = 0;

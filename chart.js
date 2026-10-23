@@ -627,7 +627,8 @@ function setChartProbBtnActive(active) {
   if (probBtn) probBtn.classList.toggle("is-active", !!active);
 }
 
-function closeChartProbPanel() {
+// options.redraw=false: 시장 전환처럼 곧 새 데이터로 다시 그릴 때(이전 종목 봉으로 한 번 더 그리지 않는다).
+function closeChartProbPanel(options = {}) {
   const panel = byId("chartProbPanel");
   if (!panel) return;
   chartProbPanelOpen = false;
@@ -637,7 +638,7 @@ function closeChartProbPanel() {
   lastTechLevelsOverlay = null;
   restoreChartOverlaysFromProb();
   setChartProbBtnActive(false);
-  redrawChart();
+  if (options.redraw !== false) redrawChart();
 }
 
 function toggleChartProbAnalysis() {

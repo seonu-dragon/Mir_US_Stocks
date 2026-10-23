@@ -4117,15 +4117,17 @@ function dedupeChatNews(items) {
   return out;
 }
 
-async function retrieveChatNewsRag(userText, entities, env, market) {
+async function retrieveChatNewsRag(userText, entities, env, market, stat = null) {
   const isKr = market !== "us";
   const queries = buildChatNewsQueries(userText, entities, market);
   const pool = [];
+  if (stat) { stat.queries = queries.length; stat.searchHits = 0; stat.entityHits = 0; }
 
   for (const query of queries) {
     let batch = null;
     if (isKr) batch = await fetchNaverNewsOpenApi(query, env, 10);
     if (!batch || !batch.length) batch = await fetchGoogleNewsRecent(query, isKr);
+    if (stat) stat.searchHits += batch.length;
     batch.forEach((item) => {
       pool.push({ ...item, _score: scoreChatNewsItem(item, query, userText) });
     });
@@ -4136,6 +4138,7 @@ async function retrieveChatNewsRag(userText, entities, env, market) {
     let batch = [];
     if (isKoreanTicker(ent.ticker)) batch = await fetchNaverNews(ent.ticker);
     else batch = await fetchNews(env, ent.ticker.replace(/\./g, "-"));
+    if (stat) stat.entityHits += batch.length;
     batch.forEach((item) => {
       pool.push({
         ...item,
@@ -4324,6 +4327,8 @@ export function formulaPrompt(text, fields, market) {
     + "[문법] 비교 < <= > >= == != · 논리 and or not · 산술 + - * / · 괄호 · 숫자(퍼센트 값은 % 없이 숫자만, 예: 15).\n"
     + `[함수] ${FORMULA_FUNCS}\n`
     + `[필드 — 이 목록의 이름만 쓸 수 있다]\n${list}\n\n`
+    + "부등호 대응: 이하 → <=, 미만 → <, 이상 → >=, 초과·넘는 → >, '낮은'·'아래' → <, '높은'·'위' → >. "
+    + "예) 'PER 15 이하이고 RSI 30 이하' → per <= 15 and rsi <= 30 · 'ROE 20 이상' → roe >= 20 · '배당 3 초과' → divYield > 3\n"
     + "규칙: 수식 한 줄만 출력(설명·코드 울타리 금지). 목록에 없는 필드·함수를 만들지 마라. "
     + `문장을 이 필드로 표현할 수 없으면 NONE 만 출력.\n\n[문장]\n${text}`;
 }
@@ -4388,9 +4393,20 @@ async function handleChat(request, env) {
 
   let newsRagBlock = "";
   let newsSources = [];
+  // 뉴스 근거 단계별 건수(진단용, 비밀값 없음) — 2026-10-23 라이브에서 근거가 0건인데 로컬 같은 코드는 6건이라 어디서
+  // 비는지 응답 메타로 본다.
+  const ragStat = { needs: false, entities: 0 };
   if (chatNeedsNewsRag(userText, stockContext)) {
+    ragStat.needs = true;
     const entities = collectChatEntities(userText, stockContext, searchHints, market);
-    newsSources = await retrieveChatNewsRag(userText, entities, env, market);
+    ragStat.entities = entities.length;
+    try {
+      newsSources = await retrieveChatNewsRag(userText, entities, env, market, ragStat);
+    } catch (e) {
+      ragStat.error = String((e && e.message) || e).slice(0, 80);
+      newsSources = [];
+    }
+    ragStat.items = newsSources.length;
     newsRagBlock = formatChatNewsRagBlock(newsSources);
   }
 
@@ -4403,7 +4419,7 @@ async function handleChat(request, env) {
   }
   if (newsRagBlock) systemContent += newsRagBlock;
 
-  const ragMeta = newsSources.length ? { rag: chatRagMeta(newsSources) } : {};
+  const ragMeta = { ...(newsSources.length ? { rag: chatRagMeta(newsSources) } : {}), ragStat };
 
   // 만약 환경 변수에 GEMINI_API_KEY가 존재하면 Google Gemini API를 호출하여 성능을 대폭 향상합니다.
   const expectKorean = /[가-힣]/.test(userText);
@@ -4437,6 +4453,7 @@ async function handleChat(request, env) {
               reply: text,
               model: geminiModel,
               rag: chatRagMeta(newsSources),
+              ragStat,
             });
           }
           break; // 빈 답 — 모델 문제가 아니므로 Workers AI 로
@@ -4490,6 +4507,7 @@ async function handleChat(request, env) {
           reply: text,
           model,
           rag: chatRagMeta(newsSources),
+          ragStat,
         });
       }
       lastError = `empty_response:${model}`;

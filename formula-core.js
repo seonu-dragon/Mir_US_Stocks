@@ -555,12 +555,40 @@
 
   // 'AI로 변환'(워커 POST /formula) 답 검증. LLM 출력은 믿지 않는다 — 한 줄·길이·이 파서(필드 목록 = options.fields)를
   // 통과하고 필터(조건식)일 때만 쓴다. 반환 { ok, formula, error, fields }.
+  // 문장의 '숫자 + 이하/이상' 방향과 수식의 부등호가 어긋나는지(2026-10-23 라이브: 'PER 15 이하' → per > 15).
+  // 같은 숫자에 문장은 작다 쪽인데 수식은 크다 쪽이면(또는 반대) 어긋남. 판단할 수 없으면 null.
+  const DIR_LOW_RE = /^\s*%?\s*(이하|미만|아래|밑|보다\s*(낮|작|적)|under|below|less|or\s*less)/i;
+  const DIR_HIGH_RE = /^\s*%?\s*(이상|초과|넘|위|보다\s*(높|크|많)|over|above|more|or\s*more|at\s*least)/i;
+  function directionMismatch(text, formula) {
+    const want = new Map();
+    const t = String(text || "");
+    const numRe = /(-?\d+(?:\.\d+)?)/g;
+    let m;
+    while ((m = numRe.exec(t))) {
+      const rest = t.slice(m.index + m[0].length, m.index + m[0].length + 12);
+      const dir = DIR_LOW_RE.test(rest) ? -1 : DIR_HIGH_RE.test(rest) ? 1 : 0;
+      if (dir) want.set(Number(m[1]), dir);
+    }
+    if (!want.size) return null;
+    const f = String(formula || "");
+    const cmp = /([A-Za-z_][\w.]*)\s*(<=|>=|<|>)\s*(-?\d+(?:\.\d+)?)|(-?\d+(?:\.\d+)?)\s*(<=|>=|<|>)\s*([A-Za-z_][\w.]*)/g;
+    while ((m = cmp.exec(f))) {
+      let num, op;
+      if (m[1]) { num = Number(m[3]); op = m[2]; } else { num = Number(m[4]); op = m[5].replace("<", "#").replace(">", "<").replace("#", ">"); }
+      const got = op.startsWith("<") ? -1 : 1;
+      if (want.has(num) && want.get(num) !== got) return `문장의 '${num}' 방향과 수식의 부등호(${op})가 다릅니다`;
+    }
+    return null;
+  }
+
   function acceptConverted(raw, options = {}) {
     const s = String(raw == null ? "" : raw).replace(/\s+/g, " ").trim();
     if (!s) return { ok: false, formula: "", error: "변환 결과가 비어 있습니다.", fields: [] };
     if (s.length > MAX_SOURCE) return { ok: false, formula: s.slice(0, 80), error: `변환 결과가 너무 깁니다(최대 ${MAX_SOURCE}자).`, fields: [] };
     const c = compile(s, { ...options, expect: "bool" });
     if (!c.ok) return { ok: false, formula: s, error: c.error, fields: [] };
+    const mismatch = options.sourceText ? directionMismatch(options.sourceText, s) : null;
+    if (mismatch) return { ok: false, formula: s, error: mismatch, fields: c.fields };
     return { ok: true, formula: s, error: "", fields: c.fields };
   }
 
@@ -568,7 +596,7 @@
     FUNCTIONS, FormulaError, DEFAULT_MIN_GROUP, MAX_SOURCE,
     tokenize, parse, compile, evaluate, filterIndices,
     percentileOf, descRankOf, medianSorted, editDistance, suggest,
-    encodeState, decodeState, completionPrefix, acceptConverted,
+    encodeState, decodeState, completionPrefix, acceptConverted, directionMismatch,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirFormulaCore = api;

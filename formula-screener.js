@@ -942,7 +942,7 @@ function fxAiConvert() {
       if (r.status === 429) { fxAiShow(`<p class="fx-error">요청이 잦습니다. 잠시 후 다시 시도해 주세요.</p>`); return; }
       const raw = body && typeof body.formula === "string" ? body.formula : "";
       if (!r.ok || !raw) { fxAiShow(`<p class="fx-error">이 문장은 수식으로 바꾸지 못했습니다. 필드 이름으로 직접 적어 주세요.</p>`); return; }
-      const v = window.MirFormulaCore.acceptConverted(raw, fxCompileOptions("bool"));
+      const v = window.MirFormulaCore.acceptConverted(raw, { ...fxCompileOptions("bool"), sourceText: text });
       if (!v.ok) {
         fxAiShow(`<p class="fx-error">변환 결과가 수식 검사를 통과하지 못해 쓰지 않았습니다 — ${escapeHtml(v.error)}</p><p class="muted"><code>${escapeHtml(v.formula)}</code></p>`);
         return;

@@ -76,6 +76,8 @@
       note: typeof r.note === "string" ? r.note.slice(0, 200) : "",
     };
     if (type === "split") tx.ratio = num(r.ratio);
+    // 배당: 상세 배당 이벤트 제안을 확인해 기록한 경우 그 배당락일(제안 중복 방지용).
+    if (type === "dividend" && isIso(r.exDate)) tx.exDate = r.exDate;
     const fx = optNum(r.fx);
     if (fx !== null) tx.fx = fx;
     if (typeof r.createdAt === "number" && Number.isFinite(r.createdAt)) tx.createdAt = r.createdAt;

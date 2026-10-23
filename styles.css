@@ -17845,6 +17845,19 @@ html[data-theme="dark"] {
 .lg-del.is-armed { color: var(--neg); font-weight: 700; }
 .lg-err td { background: color-mix(in srgb, var(--neg) 8%, transparent); }
 .pf-ledger-tag { color: var(--primary); }
+/* 거래 원장 2단계 — 기간 수익률 표 · 상세 이벤트 기록 제안 */
+.lg-perf, .lg-sugg { margin-bottom: 10px; }
+.lg-perf-head, .lg-sugg-head { margin: 0 0 6px; font-size: var(--fs-cap); font-weight: 700; }
+.lg-perf-head small, .lg-sugg-head small { font-weight: 400; margin-left: 4px; }
+.lg-perf-wrap { max-height: none; }
+.lg-perf-table th[scope="row"] { font-weight: 600; white-space: nowrap; }
+.lg-perf-table th[scope="row"] small { font-size: 11px; font-weight: 400; }
+.lg-sugg ul { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 4px; }
+.lg-sugg li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border: 1px dashed var(--line); border-radius: var(--r-sm); font-size: var(--fs-cap); }
+.lg-sugg-acts { display: inline-flex; gap: 4px; }
+.lg-sugg-acts .compact-btn { min-height: 26px; padding: 2px 8px; font-size: var(--fs-cap); }
+.lg-est { display: inline-block; padding: 0 6px; border-radius: 999px; font-size: 10px; border: 1px solid var(--line); color: var(--text-muted); }
+.lg-pre-note { flex-basis: 100%; margin: 0; font-size: 11px; color: var(--text-muted); }
 @media (max-width: 640px) {
   .lg-col-fee { display: none; }
   .lg-form input, .lg-form select, .lg-form input[data-lg-ticker], .lg-form input[type="date"] { width: calc(50vw - 40px); }

@@ -47,7 +47,7 @@ def test_employees_dept_total_rows_by_sex():
     # 삼성전자 모양: 부문(DX·DS)×성별 + '성별합계' 부문 행 2개(남·여). 합계 행만 더한다.
     rows = [_row("DX", "남", "38,119"), _row("DX", "여", "12,698"), _row("DS", "남", "56,154"),
             _row("DS", "여", "21,910"), _row("성별합계", "남", "94,273"), _row("성별합계", "여", "34,608")]
-    assert cp.parse_kr_employees(rows) == {"emp": 128881, "empAsOf": "2025-12-31"}
+    assert cp.parse_kr_employees(rows) == {"emp": 128881, "empAsOf": "2025-12-31"}   # 급여·근속 칸이 없으면 싣지 않는다
 
 
 def test_employees_grand_total_row():
@@ -81,16 +81,17 @@ def test_kr_priority_order():
         "C": {"name": "c", "empYear": 2025},                         # 변경 공시
         "E": {"name": "e", "empYear": 2025},                         # 최근에 받음 — 할 일 없음
     }
-    state = {"A": {"c": "2026-01-01", "e": 2025, "ev": 2}, "B": {"c": "2026-09-01", "e": 2024, "ev": 2},
-             "C": {"c": "2026-09-01", "e": 2025, "ev": 2}, "E": {"c": "2026-09-20", "e": 2025, "ev": 2},
+    state = {"A": {"c": "2026-01-01", "e": 2025, "ev": cp.EMP_PARSER}, "B": {"c": "2026-09-01", "e": 2024, "ev": cp.EMP_PARSER},
+             "C": {"c": "2026-09-01", "e": 2025, "ev": cp.EMP_PARSER}, "E": {"c": "2026-09-20", "e": 2025, "ev": cp.EMP_PARSER},
              "M": {"miss": "2026-09-26"}}
     plan = cp.kr_priority(["A", "B", "C", "D", "E", "M"], records, state, 2025, {"C"}, today)
-    assert plan == [("D", "full"), ("C", "company"), ("B", "emp"), ("A", "company")]
+    # 보수 상위 5인(p)을 아직 안 받은 회사는 맨 뒤에 'pay' 가 붙는다(A 는 개황 갱신과 별도 작업).
+    assert plan == [("D", "full"), ("C", "company"), ("B", "emp"), ("A", "company"), ("A", "pay"), ("E", "pay")]
 
 
 def test_kr_priority_does_not_retry_emp_same_year():
     today = date(2026, 9, 26)
-    plan = cp.kr_priority(["B"], {"B": {"name": "b"}}, {"B": {"c": "2026-09-01", "e": 2025, "ev": 2}}, 2025, set(), today)
+    plan = cp.kr_priority(["B"], {"B": {"name": "b"}}, {"B": {"c": "2026-09-01", "e": 2025, "ev": cp.EMP_PARSER}}, 2025, set(), today)
     assert plan == []
 
 

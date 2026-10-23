@@ -2,6 +2,8 @@
 // =====================================================
 // 계산은 risk-check-core.js(window.MirRiskCheckCore). 입력은 재무 확장 종목 파일(financials.js loadFinancials)
 // + 스냅샷 시가총액(Altman 제조업 모형의 X4) + 국내 감사의견(KR_AUDIT_OPINION). 새 데이터 수집 없음.
+// KR 은 카드 아래에 '재무 안전'(KR_FIN_SAFETY, build_kr_fin_safety.py — 미상환 사채·CP 만기, 감사보수·비감사용역,
+// 공모·사모자금 사용내역)을 덧붙인다. 점수에는 넣지 않는다(판정 기준이 없는 원문 수치).
 // 과거 재무제표로 계산한 점검이며 매도 신호·예측이 아니다. 데이터 없음·해당 없음은 점수에 넣지 않는다.
 // 클래식 스크립트(전역 공유) — 이름은 rc* / *RiskCheck* 로 충돌을 피한다.
 
@@ -81,6 +83,53 @@ function rcBeneishHtml(c) {
     ${c.status === "missing" ? '<p class="mf-note">8개가 모두 있어야 M 을 냅니다. 일부 변수만으로는 판정하지 않습니다.</p>' : ""}</details>`;
 }
 
+function rcDartLink(rc) {
+  return /^\d{14}$/.test(String(rc || "")) ? ` <a class="rc-safe-src" href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${rc}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
+}
+
+// 재무 안전(KR). 데이터가 없는 부분은 통째로 뺀다.
+function rcSafetyHtml(item) {
+  const core = window.MirRiskCheckCore;
+  if (!core || !core.safetyRecord) return "";
+  const rec = core.safetyRecord(window.KR_FIN_SAFETY, item && item.ticker);
+  if (!rec) return "";
+  const m = (v) => escapeHtml(core.fmtMillion(v));
+  const parts = [];
+  const lad = core.debtLadder(rec);
+  const d = rec.debt || {};
+  if (lad) {
+    const multi = lad.cols.length > 1;
+    const head = lad.cols.map(([, label]) => `<th class="num">${escapeHtml(label)}</th>`).join("") + (multi ? '<th class="num">합계</th>' : "");
+    const body = lad.rows.map((r) => `<tr><th scope="row">${escapeHtml(r.label)}</th>${r.cells.map((c) => `<td class="num">${c ? m(c) : '<span class="muted">–</span>'}</td>`).join("")}${multi ? `<td class="num">${r.total ? m(r.total) : '<span class="muted">–</span>'}</td>` : ""}</tr>`).join("");
+    const foot = `<tr><th scope="row">합계</th>${lad.total.cells.map((c) => `<td class="num">${m(c)}</td>`).join("")}${multi ? `<td class="num">${m(lad.total.total)}</td>` : ""}</tr>`;
+    parts.push(`<div class="rc-safe-block">
+        <div class="rc-safe-title">미상환 사채·CP 만기<span class="muted">${escapeHtml(d.asOf || "")}${lad.near1yPct !== null ? ` · 1년 이내 ${lad.near1yPct.toFixed(0)}%` : ""}</span>${rcDartLink(d.rc)}</div>
+        <div class="table-wrap"><table class="insider-table rc-table rc-safe-table"><thead><tr><th>잔여 만기</th>${head}</tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>
+      </div>`);
+  } else if (d.zero) {
+    parts.push(`<div class="rc-safe-block"><div class="rc-safe-title">미상환 사채·CP 없음<span class="muted">${escapeHtml(d.asOf || "")}</span>${rcDartLink(d.rc)}</div></div>`);
+  }
+  const aud = core.auditRows(rec);
+  if (aud.length) {
+    const body = aud.map((a) => `<tr><th scope="row">${a.term !== null ? `제${a.term}기` : ""}</th><td>${escapeHtml(a.by)}</td><td class="num">${a.fee !== null ? m(a.fee) : '<span class="muted">–</span>'}</td><td class="num">${a.hours !== null ? `${a.hours.toLocaleString("en-US")}시간` : '<span class="muted">–</span>'}</td><td class="num">${a.nonAudit === null ? '<span class="muted">–</span>' : a.nonAudit === 0 ? "없음" : `${a.nonAudit}건${a.ratioPct !== null ? ` · ${a.ratioPct.toFixed(1)}%` : ""}`}</td></tr>`).join("");
+    parts.push(`<div class="rc-safe-block">
+        <div class="rc-safe-title">감사인·감사보수<span class="muted">${escapeHtml(String((rec.audit || {}).y || ""))} 사업보고서</span>${rcDartLink((rec.audit || {}).rc)}</div>
+        <div class="table-wrap"><table class="insider-table rc-table rc-safe-table"><thead><tr><th>사업연도</th><th>감사인</th><th class="num">감사보수</th><th class="num">감사시간</th><th class="num" title="비감사용역 계약 건수 · 감사보수 대비 보수 비율">비감사용역</th></tr></thead><tbody>${body}</tbody></table></div>
+      </div>`);
+  }
+  const funds = core.fundRows(rec);
+  if (funds.length) {
+    const f = rec.funds || {};
+    const body = funds.map((r) => `<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.kind)} · ${escapeHtml(r.name)}</td><td>${escapeHtml(r.use)}</td><td class="num">${r.plan !== null ? m(r.plan) : '<span class="muted">–</span>'}</td><td class="num${r.gap !== null && r.gap < 0 ? " rc-safe-gap" : ""}"${r.why ? ` title="${escapeHtml(r.why)}"` : ""}>${r.real !== null ? m(r.real) : '<span class="muted">–</span>'}</td></tr>`).join("");
+    parts.push(`<details class="rc-more rc-safe-funds"><summary>공모·사모자금 사용내역 ${funds.length}건${f.more ? ` 외 ${escapeHtml(String(f.more))}건` : ""} <span class="muted">${escapeHtml(f.p || "")}</span></summary>
+        <div class="table-wrap"><table class="insider-table rc-table rc-safe-table"><thead><tr><th>납입일</th><th>구분</th><th>계획 용도</th><th class="num">계획</th><th class="num">실제 사용</th></tr></thead><tbody>${body}</tbody></table></div>
+        ${rcDartLink(f.rc || d.rc)}
+      </details>`);
+  }
+  if (!parts.length) return "";
+  return `<section class="rc-safe" aria-label="재무 안전"><h4 class="rc-safe-h">재무 안전</h4>${parts.join("")}</section>`;
+}
+
 function rcSectionHtml(res, file, item) {
   const cur = file.currency;
   const basis = file.market === "kr" ? ` · ${file.basis === "OFS" ? "별도" : "연결"}` : "";
@@ -104,6 +153,7 @@ function rcSectionHtml(res, file, item) {
       </div>
     </div>
     <ul class="rc-list">${checks}</ul>
+    ${file.market === "kr" ? rcSafetyHtml(item) : ""}
     ${fscore && res.piotroski.items.length ? rcPiotroskiHtml(res.piotroski, cur) : ""}
     ${beneish ? rcBeneishHtml(beneish) : ""}
     <details class="rc-more"><summary>산식·판정 기준</summary><dl class="rc-rules">${res.checks.map((c) => `<dt>${escapeHtml(c.label)}</dt><dd>${escapeHtml(c.rule)}</dd>`).join("")}</dl></details>
@@ -169,8 +219,14 @@ function renderRiskCheck(item) {
     return;
   }
   const key = mfTickerKey(ticker);
+  if (file.market === "kr" && !window.KR_FIN_SAFETY && typeof FEATURE_DATA !== "undefined" && FEATURE_DATA.krFinSafety
+      && typeof ensureFeatureData === "function") {
+    ensureFeatureData("krFinSafety").then((ok) => {
+      if (ok && typeof selectedTicker !== "undefined" && mfTickerKey(selectedTicker) === key) renderRiskCheck(item);
+    });
+  }
   // 같은 종목·같은 입력이면 다시 그리지 않는다(refreshFeatureViews 가 부팅 중 여러 번 부른다 — 펼친 상세 보존).
-  const sig = `${key}|${rcMarketValue(item, file) || ""}|${file.market === "kr" && window.KR_AUDIT_OPINION ? 1 : 0}`;
+  const sig = `${key}|${rcMarketValue(item, file) || ""}|${file.market === "kr" && window.KR_AUDIT_OPINION ? 1 : 0}|${file.market === "kr" && window.KR_FIN_SAFETY ? 1 : 0}`;
   if (rcCurrent && rcCurrent.file === file && rcCurrent.sig === sig && !host.hidden && host.firstElementChild) return;
   const res = riskCheckEvaluate(file, item);
   if (!res) { rcHide(host); return; }

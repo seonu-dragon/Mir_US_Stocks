@@ -374,6 +374,76 @@
     return item("leverage", "부채비율 급증", a - b >= LEVERAGE_JUMP_PP ? "fail" : "pass", { rule, evidence: [ev(`FY${p.fy}`, b, "pct"), ev(`FY${t.fy}`, a, "pct"), ev("변화", a - b, "pp")] });
   }
 
+  // ── 재무 안전 묶음(KR_FIN_SAFETY, build_kr_fin_safety.py — 금액 백만원) ───────────────────────────
+  const SAFETY_BUCKETS = ["1년 이하", "1~2년", "2~3년", "3년 초과"];
+  const SAFETY_KINDS = [["bond", "회사채"], ["cp", "CP"], ["stb", "단기사채"]];
+
+  function safetyRecord(data, ticker) {
+    const c = data && data.companies;
+    if (!c || !ticker) return null;
+    let r = c[ticker] || null;
+    if (r && r.alias) r = c[r.alias] || null;
+    return r && (r.debt || r.funds || r.audit) ? r : null;
+  }
+
+  // 백만원 → "8,100억"·"1.2조"·"35억"·"4.5억"·"800만". 0 → "0", 없음 → "".
+  function fmtMillion(m) {
+    const v = num(m);
+    if (v === null) return "";
+    if (v === 0) return "0";
+    const a = Math.abs(v), s = v < 0 ? "-" : "";
+    if (a >= 1e6) return `${s}${(a / 1e6).toFixed(a >= 1e8 ? 0 : 1).replace(/\.0$/, "")}조`;
+    if (a >= 100) {
+      const e = a / 100;
+      return `${s}${e >= 100 ? Math.round(e).toLocaleString("en-US") : e.toFixed(e >= 10 ? 0 : 1).replace(/\.0$/, "")}억`;
+    }
+    return `${s}${Math.round(a * 100).toLocaleString("en-US")}만`;
+  }
+
+  // 만기 사다리 → { cols: [[key, 라벨]], rows: [{ label, cells: [..], total }], total: {cells, total}, near1yPct }
+  // 잔액이 있는 증권만 열로. 없으면 null.
+  function debtLadder(rec) {
+    const k = rec && rec.debt && rec.debt.k;
+    if (!k) return null;
+    const cols = SAFETY_KINDS.filter(([key]) => k[key] && num(k[key].sm) > 0);
+    if (!cols.length) return null;
+    const rows = SAFETY_BUCKETS.map((label, i) => {
+      const cells = cols.map(([key]) => num((k[key].l || [])[i]) || 0);
+      return { label, cells, total: cells.reduce((a, b) => a + b, 0) };
+    });
+    const totals = cols.map(([key]) => num(k[key].sm) || 0);
+    const grand = totals.reduce((a, b) => a + b, 0);
+    return {
+      cols,
+      rows,
+      total: { cells: totals, total: grand },
+      near1yPct: grand > 0 ? (rows[0].total / grand) * 100 : null,
+    };
+  }
+
+  // 자금 사용내역 행 → { date, kind, name, use, plan, real, gap(실제−계획, 둘 다 있을 때), why }
+  function fundRows(rec) {
+    const rows = rec && rec.funds && rec.funds.rows;
+    if (!Array.isArray(rows)) return [];
+    return rows.filter(Array.isArray).map((r) => {
+      const plan = num(r[5]), real = num(r[6]);
+      return {
+        kind: r[0] || "", name: [r[1], r[2]].filter(Boolean).join(" "), date: r[3] || "", use: r[4] || "",
+        plan, real, gap: plan !== null && real !== null ? real - plan : null, why: r[7] || "",
+      };
+    });
+  }
+
+  // 감사 행 → { term, by, fee(백만원|null), hours, nonAudit(건수|null), ratioPct(|null) }. 최신 연도가 먼저.
+  function auditRows(rec) {
+    const ys = rec && rec.audit && rec.audit.years;
+    if (!Array.isArray(ys)) return [];
+    return ys.filter((y) => y && y.by).map((y) => ({
+      term: num(y.t), by: y.by, fee: num(y.fee), hours: num(y.h),
+      nonAudit: num(y.na), ratioPct: num(y.nr) === null ? null : num(y.nr) * 100,
+    }));
+  }
+
   function auditCheck(audit) {
     const rule = "최신 사업보고서 감사의견이 '적정의견' 이 아니면 경고(의견거절·한정·부적정은 상장폐지 사유)";
     if (!audit || !audit.opinion) return item("audit", "감사의견", "missing", { rule, reason: "감사의견 수집 목록에 없음" });
@@ -455,6 +525,11 @@
     earningsQualityCheck,
     leverageJumpCheck,
     auditCheck,
+    safetyRecord,
+    fmtMillion,
+    debtLadder,
+    fundRows,
+    auditRows,
     evaluate,
     compactRow,
   };

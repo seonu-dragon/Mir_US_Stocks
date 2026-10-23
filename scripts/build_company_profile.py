@@ -7,6 +7,12 @@ KR (DART_API_KEY 필요)
   - company.json      대표자·주소·전화·홈페이지·설립일·결산월·표준산업분류 코드·법인구분
   - empSttus.json     직원 수(최신 사업보고서, reprt_code 11011). '성별합계'·'합계' 행이 있으면 그 행만 더하고,
                       없으면 모든 행을 더한다(부문×성별 행을 이중으로 세지 않기 위해).
+                      같은 행들의 1인 평균 급여액(jan_salary_am)·평균 근속연수(avrg_cnwk_sdytrn)를 인원(sm) 가중 평균
+                      (empSal 원 · empTen 년). 근속은 '12.3' 과 '14년 11개월' 두 표기가 섞여 온다.
+                      시총 상위 HIST_TOP 사는 직전 2개 사업연도도 한 번 받아 empHist [[연도, 인원, 평균 급여]] 로 쌓는다.
+  - indvdlByPay.json  개인별 보수지급 금액(5억 이상 상위 5인) — 직원 수와 같은 사업연도. 2026 사업연도부터(2026-05 이후
+                      제출분) 은 Ver 2.0 indvdlByPayV2.json(group[] · fscl_year '당기' 행)이고 없으면 1.0 으로 다시 본다.
+                      pay = {"y": 연도, "rows": [[이름, 직위, 보수총액(원)]]}.
   - 상장일은 싣지 않는다(KIND 조회를 확인하지 못했다 — 추정으로 채우지 않는다).
   - DART 하루 호출 한도(2만)를 다른 KR 워크플로우와 나눠 쓰므로 실행당 --max-calls(기본 2,500) 안에서
     우선순위대로 받는다: ① 아직 없는 회사(시총 순) ② 대표이사·상호·본점 변경 공시가 난 회사(kr_disclosures)
@@ -70,7 +76,7 @@ KR_DISCLOSURES = ROOT / "data" / "kr_disclosures.json"
 SHARDS = {"us": 16, "kr": 32}
 SOURCES = {
     "us": "SEC EDGAR submissions",
-    "kr": "DART 기업개황·직원현황(사업보고서)",
+    "kr": "DART 기업개황·직원현황·개인별 보수(사업보고서)",
 }
 SEC_UA = {"User-Agent": "Mir-US-Stocks/1.0 (contact@seonu-dragon.xyz)", "Accept-Encoding": "gzip, deflate"}
 SEC_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
@@ -79,7 +85,14 @@ SEC_SLEEP = 0.13
 KR_COMPANY_REFRESH_DAYS = 90
 # 직원 수 파서 버전. 합계 행 판정을 고치면 올린다 — 상태의 "ev" 가 낮은 회사는 직원 수를 다시 받는다.
 # 2: '성별 총계' 표기를 합계로 인식(1 에서는 부문 행과 합계 행을 이중으로 더했다, 삼성전기 24,346 → 12,173).
-EMP_PARSER = 2
+# 3: 평균 급여·근속(empSal·empTen) 추가 — 기존 레코드도 한 번씩 다시 받는다.
+EMP_PARSER = 3
+# 직원 수 추이(직전 2개 사업연도)를 한 번 더 받는 시총 상위 회사 수.
+HIST_TOP = 300
+HIST_YEARS = 3
+PAY_MIN = 500_000_000          # 5억 — 표 자체가 5억 이상이지만 오기재 행을 거른다
+EMP_FIELDS = ("emp", "empYear", "empAsOf", "empSal", "empTen")
+EMP_KEEP = EMP_FIELDS + ("empHist", "pay")
 KR_CHANGE_TITLES = ("대표이사", "상호", "본점", "소재지")
 ETF_SECTORS = {"EXCHANGE TRADED FUNDS", "ETF", "etf"}
 
@@ -161,38 +174,64 @@ def _is_total(v: str) -> bool:
     return v in ("합계", "전체", "계", "총계", "총합계") or v.endswith("합계") or v.endswith("총계")
 
 
-def parse_kr_employees(rows: list[dict]) -> dict | None:
-    """empSttus 행들 → {"emp": 인원, "empAsOf": 결산일}. 행 구조가 회사마다 달라 합계 행을 우선한다.
+def _emp_heads(r):
+    v = _int(r.get("sm"))
+    if v is None:
+        a, b = _int(r.get("rgllbr_co")), _int(r.get("cnttk_co"))
+        if a is not None or b is not None:
+            v = (a or 0) + (b or 0)
+    return v
 
-    - 사업부문(fo_bbm)과 성별(sexdstn) 둘 다 합계인 행이 있으면 그 행 하나.
-    - 사업부문이 '합계'인 행들(성별로 나뉨) → 그 행들의 합.
-    - 성별이 '합계'인 행들(부문별로 나뉨) → 그 행들의 합.
-    - 합계 행이 없으면 모든 행의 합(부문×성별이 겹치지 않는 표).
-    인원은 sm(합계), 없으면 정규직+계약직.
-    """
-    def heads(r):
-        v = _int(r.get("sm"))
-        if v is None:
-            a, b = _int(r.get("rgllbr_co")), _int(r.get("cnttk_co"))
-            if a is not None or b is not None:
-                v = (a or 0) + (b or 0)
-        return v
 
+def pick_employee_rows(rows: list[dict]) -> list[dict]:
+    """합계 행 우선 선택(이중 계산 방지). parse_kr_employees 설명 참고."""
     rows = [r for r in rows or [] if isinstance(r, dict)]
-    if not rows:
-        return None
     both = [r for r in rows if _is_total(r.get("fo_bbm")) and _is_total(r.get("sexdstn"))]
     dept_total = [r for r in rows if _is_total(r.get("fo_bbm")) and not _is_total(r.get("sexdstn"))]
     sex_total = [r for r in rows if _is_total(r.get("sexdstn")) and not _is_total(r.get("fo_bbm"))]
     if both:
-        pick = both[:1]
-    elif dept_total:
-        pick = dept_total
-    elif sex_total:
-        pick = sex_total
-    else:
-        pick = rows
-    vals = [heads(r) for r in pick]
+        return both[:1]
+    if dept_total:
+        return dept_total
+    if sex_total:
+        return sex_total
+    return rows
+
+
+def parse_tenure(v) -> float | None:
+    """평균 근속연수 '12.3' · '14년 11개월' · '9년' · '8개월' → 년(float). 못 읽으면 None."""
+    s = clean(v).replace(" ", "")
+    if not s or s == "-":
+        return None
+    m = re.fullmatch(r"(?:(\d+)년)?(?:(\d+)개월)?", s)
+    if m and (m.group(1) or m.group(2)):
+        return int(m.group(1) or 0) + int(m.group(2) or 0) / 12
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)(?:년)?", s)
+    return float(m.group(1)) if m else None
+
+
+def _weighted(pairs) -> float | None:
+    pairs = [(v, w) for v, w in pairs if v is not None and w]
+    tot = sum(w for _, w in pairs)
+    return sum(v * w for v, w in pairs) / tot if tot else None
+
+
+def parse_kr_employees(rows: list[dict]) -> dict | None:
+    """empSttus 행들 → {"emp": 인원, "empAsOf": 결산일, "empSal": 1인 평균 급여(원), "empTen": 평균 근속(년)}.
+
+    행 구조가 회사마다 달라 합계 행을 우선한다.
+    - 사업부문(fo_bbm)과 성별(sexdstn) 둘 다 합계인 행이 있으면 그 행 하나.
+    - 사업부문이 '합계'인 행들(성별로 나뉨) → 그 행들의 합.
+    - 성별이 '합계'인 행들(부문별로 나뉨) → 그 행들의 합.
+    - 합계 행이 없으면 모든 행의 합(부문×성별이 겹치지 않는 표).
+    인원은 sm(합계), 없으면 정규직+계약직. 평균 급여·근속은 고른 행들의 값을 인원으로 가중 평균한다
+    (값이 있는 행이 하나도 없으면 싣지 않는다).
+    """
+    rows = [r for r in rows or [] if isinstance(r, dict)]
+    if not rows:
+        return None
+    pick = pick_employee_rows(rows)
+    vals = [_emp_heads(r) for r in pick]
     vals = [v for v in vals if v is not None]
     if not vals:
         return None
@@ -203,7 +242,45 @@ def parse_kr_employees(rows: list[dict]) -> dict | None:
     stl = clean(rows[0].get("stlm_dt"))
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", stl):
         out["empAsOf"] = stl
+    sal = _weighted((_int(r.get("jan_salary_am")), _emp_heads(r)) for r in pick)
+    if sal is not None and sal > 0:
+        out["empSal"] = int(round(sal / 1_000_000) * 1_000_000) if sal >= 1_000_000 else int(round(sal))
+    ten = _weighted((parse_tenure(r.get("avrg_cnwk_sdytrn")), _emp_heads(r)) for r in pick)
+    if ten is not None and 0 < ten < 60:
+        out["empTen"] = round(ten, 1)
     return out
+
+
+def parse_kr_top_pay(data: dict, v2: bool) -> list[list] | None:
+    """indvdlByPay(1.0) · indvdlByPayV2(2.0) 응답 → [[이름, 직위, 보수총액(원)]] 큰 순(최대 5).
+
+    status 가 000 이 아니면 None(다음 해에 다시). 표가 비어 있으면(5억 이상 없음) [].
+    2.0 은 group[] 에 당기·전기·전전기 행이 같이 오므로 fscl_year '당기' 만 쓴다.
+    """
+    if str((data or {}).get("status")) != "000":
+        return None
+    src = data.get("group") if v2 else data.get("list")
+    out = []
+    for r in src or []:
+        if not isinstance(r, dict):
+            continue
+        if v2 and clean(r.get("fscl_year")) not in ("당기", ""):
+            continue
+        nm = clean(r.get("nm"))
+        amt = _int(r.get("mendng_totamt"))
+        if not nm or nm == "-" or amt is None or amt < PAY_MIN:
+            continue
+        out.append([nm, clean(r.get("ofcps")).replace(" /", "/").replace("/ ", "/") if clean(r.get("ofcps")) != "-" else "", amt])
+    out.sort(key=lambda x: -x[2])
+    return out[:5]
+
+
+def merge_emp_hist(hist, year: int, emp: int | None, sal: int | None) -> list[list]:
+    """[[연도, 인원, 평균급여|None]] — 연도 오름차순, 최근 HIST_YEARS 개."""
+    by = {int(h[0]): list(h) for h in hist or [] if isinstance(h, (list, tuple)) and len(h) >= 2}
+    if emp:
+        by[int(year)] = [int(year), int(emp), sal]
+    return [by[y] for y in sorted(by)][-HIST_YEARS:]
 
 
 def preferred_base(code: str) -> str | None:
@@ -215,10 +292,11 @@ def preferred_base(code: str) -> str | None:
 
 
 def kr_priority(tickers: list[str], records: dict, state: dict, target_year: int, changed: set[str],
-                today: date) -> list[tuple[str, str]]:
-    """(ticker, 작업) 목록 — 작업은 'full'(개황+직원), 'emp'(직원만), 'company'(개황만). 앞이 우선."""
-    first, change, emp, stale = [], [], [], []
-    for t in tickers:
+                today: date, hist_top: int = HIST_TOP) -> list[tuple[str, str]]:
+    """(ticker, 작업) 목록 — 작업은 'full'(개황+직원), 'emp'(직원만), 'company'(개황만), 'pay'(보수 상위 5인만),
+    'hist'(직전 사업연도 직원 수). 앞이 우선. tickers 는 시총 순이어야 한다(hist 는 앞 hist_top 개만)."""
+    first, change, emp, stale, pay, hist = [], [], [], [], [], []
+    for rank, t in enumerate(tickers):
         rec = records.get(t)
         st = state.get(t) or {}
         if not rec or "name" not in rec:
@@ -243,8 +321,13 @@ def kr_priority(tickers: list[str], records: dict, state: dict, target_year: int
             age = 9999
         if age >= KR_COMPANY_REFRESH_DAYS:
             stale.append((age, t))
+        ey = rec.get("empYear")
+        if ey and (st.get("p") or 0) < ey:
+            pay.append((t, "pay"))
+        elif ey and rank < hist_top and (st.get("h") or 0) < ey:
+            hist.append((t, "hist"))
     stale.sort(reverse=True)
-    return first + change + emp + [(t, "company") for _, t in stale]
+    return first + change + emp + [(t, "company") for _, t in stale] + pay + hist
 
 
 def kr_changed_since(state: dict) -> set[str]:
@@ -388,6 +471,33 @@ def run_us(records: dict, top: int, only: set[str]) -> tuple[int, int]:
     return ok, fail
 
 
+def fetch_employees(corp: str, yr: int, api_key: str) -> dict | None:
+    from build_kr_disclosures import dart_get
+
+    data = dart_get("empSttus.json", {"corp_code": corp, "bsns_year": str(yr), "reprt_code": "11011"}, api_key)
+    if str(data.get("status")) != "000":
+        return None
+    return parse_kr_employees(data.get("list") or [])
+
+
+def fetch_top_pay(corp: str, yr: int, api_key: str) -> tuple[list | None, int]:
+    """(보수 상위 5인 행 | None, 호출 수). 2026 사업연도부터는 Ver 2.0 을 먼저 보고, 비어 있으면 1.0."""
+    from build_kr_disclosures import dart_get
+
+    params = {"corp_code": corp, "bsns_year": str(yr), "reprt_code": "11011"}
+    calls = 0
+    order = (("indvdlByPayV2.json", True), ("indvdlByPay.json", False)) if yr >= 2026 else (("indvdlByPay.json", False),)
+    result = None
+    for path, v2 in order:
+        calls += 1
+        rows = parse_kr_top_pay(dart_get(path, params, api_key), v2)
+        if rows:
+            return rows, calls
+        if rows is not None:
+            result = rows      # 000 인데 5억 이상 없음 — 다음 버전도 비어 있으면 [] 로 확정
+    return result, calls
+
+
 def run_kr(records: dict, state: dict, max_calls: int, only: set[str], api_key: str) -> tuple[int, int]:
     from build_kr_disclosures import dart_get, load_corp_map
 
@@ -424,7 +534,7 @@ def run_kr(records: dict, state: dict, max_calls: int, only: set[str], api_key: 
     stamp = today.isoformat()
     try:
         for t, job in plan:
-            need = 2 if job == "full" else 1
+            need = {"full": 3, "emp": 2, "hist": 2}.get(job, 1)
             if calls + need > max_calls:
                 break
             corp = corp_map[t]
@@ -439,7 +549,7 @@ def run_kr(records: dict, state: dict, max_calls: int, only: set[str], api_key: 
                         state[t] = st
                         fail += 1
                         continue
-                    keep = {k: rec[k] for k in ("emp", "empYear", "empAsOf") if k in rec}
+                    keep = {k: rec[k] for k in EMP_KEEP if k in rec}
                     new = {**base, **keep}
                     st["c"] = stamp
                     rec = new
@@ -452,22 +562,44 @@ def run_kr(records: dict, state: dict, max_calls: int, only: set[str], api_key: 
                         if calls >= max_calls:
                             break
                         calls += 1
-                        data = dart_get("empSttus.json", {"corp_code": corp, "bsns_year": str(yr),
-                                                          "reprt_code": "11011"}, api_key)
-                        if str(data.get("status")) == "000":
-                            got = parse_kr_employees(data.get("list") or [])
-                            if got:
-                                got["empYear"] = yr
-                                break
+                        got = fetch_employees(corp, yr, api_key)
+                        if got:
+                            got["empYear"] = yr
+                            break
                         if job == "emp":
                             break          # 해마다 한 번 시도하면 충분 — 전년도는 이미 있거나 없다
                     st["e"] = target_year
                     st["ev"] = EMP_PARSER
                     if got:
-                        rec.update(got)
-                    elif reparse:
-                        for k in ("emp", "empYear", "empAsOf"):
+                        for k in EMP_FIELDS:
                             rec.pop(k, None)
+                        rec.update(got)
+                        rec["empHist"] = merge_emp_hist(rec.get("empHist"), got["empYear"], got["emp"], got.get("empSal"))
+                    elif reparse:
+                        for k in EMP_FIELDS + ("empHist",):
+                            rec.pop(k, None)
+                if job in ("full", "emp", "pay") and rec.get("empYear") and (st.get("p") or 0) < rec["empYear"]                         and calls < max_calls:
+                    yr = rec["empYear"]
+                    rows, used = fetch_top_pay(corp, yr, api_key)
+                    calls += used
+                    if rows is not None:
+                        st["p"] = yr
+                        if rows:
+                            rec["pay"] = {"y": yr, "rows": rows}
+                        else:
+                            rec.pop("pay", None)
+                if job == "hist" and rec.get("empYear"):
+                    ey = rec["empYear"]
+                    have = {int(h[0]) for h in rec.get("empHist") or []}
+                    for yr in range(ey - 1, ey - HIST_YEARS, -1):
+                        if yr in have or calls >= max_calls:
+                            continue
+                        calls += 1
+                        got = fetch_employees(corp, yr, api_key)
+                        if got:
+                            rec["empHist"] = merge_emp_hist(rec.get("empHist"), yr, got["emp"], got.get("empSal"))
+                    if calls < max_calls:
+                        st["h"] = ey
             except SystemExit:
                 raise
             except Exception as exc:
@@ -533,6 +665,8 @@ def main() -> int:
                 "updatedAtKst": now_kst(), "asOfMax": dates[-1] if dates else None, "ver": ver}
         if m == "kr":
             meta["withEmployees"] = sum(1 for v in records.values() if v.get("emp"))
+            meta["withSalary"] = sum(1 for v in records.values() if v.get("empSal"))
+            meta["withPay"] = sum(1 for v in records.values() if v.get("pay"))
         markets_meta[m] = meta
         print(f"[{m.upper()}] 레코드 {len(records)} · 바뀐 샤드 {len(w)}")
 

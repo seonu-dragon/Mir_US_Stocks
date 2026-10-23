@@ -92,6 +92,26 @@ test("인원 표기", () => {
   assert.equal(core.fmtCount(null), "");
 });
 
+test("원 금액 줄임 표기(급여·보수)", () => {
+  assert.equal(core.fmtKrw(157000000), "1.57억");
+  assert.equal(core.fmtKrw(13407000000), "134억");
+  assert.equal(core.fmtKrw(2256000000), "22.6억");
+  assert.equal(core.fmtKrw(61000000), "6,100만");
+  assert.equal(core.fmtKrw(1.2e12), "1.2조");
+  assert.equal(core.fmtKrw(0), "");
+  assert.equal(core.fmtKrw(null), "");
+});
+
+test("직원 수 추이", () => {
+  const t = core.empTrend([[2025, 128881, 157000000], [2023, 124804, 120000000], [2024, 129480, null]]);
+  assert.deepEqual(t.map((r) => r.y), [2023, 2024, 2025]);
+  assert.equal(t[0].chg, null);
+  assert.ok(Math.abs(t[1].chg - (129480 / 124804 - 1) * 100) < 1e-9);
+  assert.ok(t[2].chg < 0);
+  assert.deepEqual(core.empTrend([[2025, 10, null]]), []);
+  assert.deepEqual(core.empTrend(null), []);
+});
+
 console.log(`company-info-core: ${passed} passed, ${failures.length} failed`);
 if (failures.length) {
   for (const f of failures) console.error("  FAIL " + f);

@@ -14285,6 +14285,19 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
 .rc-rules dt { font-weight: 600; margin-top: 6px; }
 .rc-rules dd { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
 .rc-table th[scope="row"] { text-align: left; font-weight: 500; cursor: help; }
+/* 재무 안전(KR, risk-check.js rcSafetyHtml) — 미상환 사채·CP 만기 · 감사보수 · 자금 사용내역 */
+.rc-safe { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.rc-safe-h { margin: 0 0 6px; font-size: var(--fs-sub); font-weight: 600; }
+.rc-safe-block { margin-top: 8px; }
+.rc-safe-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: var(--fs-sub); font-weight: 500; }
+.rc-safe-title .muted { font-weight: 400; font-size: var(--fs-cap); }
+.rc-safe-src { font-size: var(--fs-cap); font-weight: 400; }
+.rc-safe-table { max-width: 640px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.rc-safe-table th[scope="row"] { cursor: default; white-space: nowrap; }
+.rc-safe-table .num { text-align: right; white-space: nowrap; }
+.rc-safe-table tfoot th, .rc-safe-table tfoot td { font-weight: 600; }
+.rc-safe-gap { color: var(--muted); text-decoration: underline dotted; }
+.rc-safe-table th, .rc-safe-table td { padding: 4px 6px; }
 @media (max-width: 640px) {
   .rc-list, .rc-sub { grid-template-columns: 1fr; }
   .rc-score { align-items: flex-start; }

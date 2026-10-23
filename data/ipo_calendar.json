@@ -1,11 +1,113 @@
 {
-  "updatedAtKst": "2026-10-22 13:34 KST",
-  "lastFileDate": "2026-10-21",
+  "updatedAtKst": "2026-10-23 13:34 KST",
+  "lastFileDate": "2026-10-22",
   "partialFetch": false,
-  "count": 557,
+  "count": 567,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "CitroTech Inc.",
+      "ticker": "CITR",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-22",
+      "accession": "0001683168-26-008017:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/894556/000168316826008017/citrotech_424b4.htm",
+      "offerPrice": 2.5,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Ambitious Entertainment, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-22",
+      "accession": "0001493152-26-048068:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1900851/000149315226048068/forms-1a.htm"
+    },
+    {
+      "company": "Ambitious Entertainment, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-22",
+      "accession": "0001493152-26-048068:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1900851/000149315226048068/forms-1a.htm"
+    },
+    {
+      "company": "AMC Robotics Corp",
+      "ticker": "AMCI",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-22",
+      "accession": "0001493152-26-047958:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1937891/000149315226047958/forms-1.htm"
+    },
+    {
+      "company": "Neo Aeronautics, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-22",
+      "accession": "0001213900-26-111649:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2036444/000121390026111649/ea0309131-s1a2_neo.htm"
+    },
+    {
+      "company": "Neo Aeronautics, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-22",
+      "accession": "0001213900-26-111649:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2036444/000121390026111649/ea0309131-s1a2_neo.htm"
+    },
+    {
+      "company": "reAlpha Tech Corp.",
+      "ticker": "AIRE",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-22",
+      "accession": "0001213900-26-111519:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1859199/000121390026111519/ea0306283-03.htm"
+    },
+    {
+      "company": "Phoenix Energy One, LLC",
+      "ticker": "PHXE-P",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-22",
+      "accession": "0001193125-26-429061:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1818643/000119312526429061/d194117ds1.htm"
+    },
+    {
+      "company": "Aspen Neuroscience, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-22",
+      "accession": "0001193125-26-428300:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2124080/000119312526428300/na-20261022.htm"
+    },
+    {
+      "company": "Aspen Neuroscience, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-22",
+      "accession": "0001193125-26-428300:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2124080/000119312526428300/na-20261022.htm"
+    },
     {
       "company": "FuturePeak Acquisition Corp",
       "ticker": null,

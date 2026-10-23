@@ -144,7 +144,7 @@ test("gaugeColor: 점수·비율과 무관한 중립색(등락색 없음)", () =
 test("analysis.js 화면 문자열(주석 제외)에 금지 문구·돌파 고정 문장 없음", () => {
   const src = fs.readFileSync(path.join(ROOT, "analysis.js"), "utf-8")
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .split("\n").map((l) => l.replace(/(^|[^:"'`])\/\/.*$/, "$1")).join("\n");
+    .split(/\r?\n/).map((l) => l.replace(/(^|[^:"'`])\/\/.*$/, "$1")).join("\n");
   for (const w of BANNED.concat(["반등 경향", "지속 우위"])) assert.ok(!src.includes(w), `'${w}' 가 코드 문자열에 있음`);
 });
 

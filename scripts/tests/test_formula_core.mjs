@@ -338,6 +338,14 @@ test("acceptConverted: 파서·필드 목록을 통과한 조건식만(AI 변환
   assert.equal(core.acceptConverted("roe > 1 and ".repeat(80) + "roe > 1", opts).ok, false, "너무 김");
 });
 
+test("directionMismatch: 문장 '이하'인데 수식 '>' 면 어긋남", () => {
+  assert.ok(core.directionMismatch("PER 15 이하이고 RSI 30 이하", "per > 15 and rsi < 30"));
+  assert.equal(core.directionMismatch("PER 15 이하이고 RSI 30 이하", "per <= 15 and rsi <= 30"), null);
+  assert.equal(core.directionMismatch("ROE 20 이상", "roe >= 20"), null);
+  assert.ok(core.directionMismatch("ROE 20 이상", "20 > roe"));
+  assert.equal(core.directionMismatch("시총 상위 종목", "marketCap > 10"), null);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

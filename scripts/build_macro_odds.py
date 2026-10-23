@@ -28,6 +28,14 @@
    재사용한다. 각 지표의 현재값·공식(또는 발표 기관·원 논문이 쓰는) 임계값·초과 여부·기준
    시각만 나란히 둔다. **합성 점수는 만들지 않는다** — "N개 중 M개 임계 초과" 만 센다.
    임계가 공인되지 않은 지표(GZ 침체확률 등)는 값만 보여 주고 개수에서 뺀다.
+   2026-10-23 추가(직접 수집, 모두 공인 임계 없음 → 판정 제외):
+     - Big Four(FRED PAYEMS·INDPRO·RRSFS·W875RX1): 12개월 고점 대비 %, 6개월 변화 %.
+     - 뉴욕연은 수익률곡선 침체확률(12개월 뒤) — capital_markets/allmonth.xls(옛 xls, xlrd).
+     - 뉴욕연은 CMDI(회사채 시장 디스트레스, 주간) — interactives/data/cmdi/cmdi_interactive_data.xlsx.
+     받지 못한 행은 빠진다(지어내지 않음).
+
+3) 연준 경제전망(SEP) 정책금리 중간값 경로 vs 현재 목표 범위 vs 예측시장(fedPath) — FRED
+   FEDTARMD·FEDTARRL/RH·FEDTARCTL/CTH(연도별) + 각 LR(장기, 관찰일 = SEP 발표일) + DFEDTARL/U.
 
 산출물: data/macro_odds.json + data/macro_odds.js(window.MACRO_ODDS).
 두 예측시장이 모두 실패하면 기존 파일을 유지하고 exit 1.
@@ -530,14 +538,16 @@ def _series_tail(ind, n=24):
     return out
 
 
-def build_recession_signals():
-    if not INDUSTRY_JSON.exists():
-        return None
-    try:
-        d = json.loads(INDUSTRY_JSON.read_text(encoding="utf-8"))
-    except Exception as exc:  # noqa: BLE001
-        print(f"  [recession] industry_indicators.json 읽기 실패: {exc}")
-        return None
+def build_recession_signals(extra_rows=None):
+    """산업 지표 재사용 행 + (있으면) 이 빌더가 직접 받은 행(Big Four·뉴욕연은 확률·CMDI)."""
+    extra_rows = list(extra_rows or [])
+    d = {}
+    if INDUSTRY_JSON.exists():
+        try:
+            d = json.loads(INDUSTRY_JSON.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [recession] industry_indicators.json 읽기 실패: {exc}")
+            d = {}
     inds = d.get("indicators") or {}
     by_id = inds if isinstance(inds, dict) else {i.get("id"): i for i in inds}
     rows = []
@@ -580,6 +590,7 @@ def build_recession_signals():
             "frequency": ind.get("frequency"), "carriedSince": ind.get("carriedSince"),
             "history": tail, "scale": scale,
         })
+    rows.extend(extra_rows)
     if not rows:
         return None
     evaluated = [r for r in rows if r["breached"] is not None]
@@ -589,6 +600,312 @@ def build_recession_signals():
         "breached": sum(1 for r in evaluated if r["breached"]),
         "indicators": rows,
     }
+
+
+# ---------------------------------------------------------------------------
+# 직접 수집(2026-10-23) — FRED fredgraph.csv(키 없음, 식별 UA) · 뉴욕연은 공개 파일.
+# 파서·계산은 네트워크와 분리해 scripts/tests/test_macro_odds.py 가 고정 표본으로 확인한다.
+FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={fid}&cosd={start}"
+FRED_UA = {"User-Agent": "Mir US Stocks research (dydtjsdn@gmail.com)"}  # 브라우저 UA 는 FRED 가 끊는다
+NYFED_YC_URL = "https://www.newyorkfed.org/medialibrary/media/research/capital_markets/allmonth.xls"
+NYFED_YC_PAGE = "https://www.newyorkfed.org/research/capital_markets/ycfaq.html"
+NYFED_CMDI_URL = "https://www.newyorkfed.org/medialibrary/research/interactives/data/cmdi/cmdi_interactive_data.xlsx"
+NYFED_CMDI_PAGE = "https://www.newyorkfed.org/research/policy/cmdi"
+NYFED_UA = {"User-Agent": UA["User-Agent"]}  # 파일 다운로드라 Accept: json 을 빼고 보낸다
+
+
+def parse_fred_csv(text):
+    """fredgraph.csv → [(YYYY-MM-DD, float)]. 첫 줄이 observation_date 가 아니면(없는 ID 는 HTML) 빈 목록."""
+    lines = (text or "").splitlines()
+    if not lines or not lines[0].lower().startswith("observation_date"):
+        return []
+    out = []
+    for line in lines[1:]:
+        parts = line.split(",")
+        if len(parts) < 2:
+            continue
+        v = fnum(parts[1].strip()) if parts[1].strip() not in ("", ".") else None
+        if v is not None:
+            out.append((parts[0].strip(), v))
+    return out
+
+
+def fetch_fred(fid, start):
+    raw = sec.http_get_with_backoff(FRED_CSV.format(fid=fid, start=start), headers=FRED_UA, timeout=30,
+                                    retries=3, label=f"FRED {fid}")
+    return parse_fred_csv(raw.decode("utf-8", "replace"))
+
+
+# --- FOMC 경제전망(SEP) 중간값 vs 현재 목표 범위 vs 예측시장 ---------------------------------
+# 연도별(관찰일 = 그 해 1월 1일, 값 = 그 해 말 정책금리 전망)과 장기(관찰일 = SEP 발표일).
+SEP_FIELDS = {"median": "FEDTARMD", "rangeLo": "FEDTARRL", "rangeHi": "FEDTARRH",
+              "ctLo": "FEDTARCTL", "ctHi": "FEDTARCTH"}
+RATE_DELTA = {"cut": -0.25, "hold": 0.0, "hike": 0.25}  # '0.5%p 이상'은 폭이 열려 있어 범위를 안 낸다
+
+
+def fed_path_from_series(series, now_year, fomc_groups=()):
+    """series: {FRED ID: [(date, v)]} → 화면용 묶음. 중간값이 없으면 None.
+
+    SEP 발표일은 장기 중간값(FEDTARMDLR)의 마지막 관찰일이다. 연도별 시리즈는 관찰일에 빈티지가
+    드러나지 않으므로, 첫 전망 연도가 발표일의 연도와 다르면(연도별만 옛 빈티지) 연도별 행을 버린다."""
+    lr_med = series.get("FEDTARMDLR") or []
+    sep_date = lr_med[-1][0] if lr_med else None
+    out = {"source": "FRED · 연준 경제전망(SEP)", "sepDate": sep_date, "years": [], "longerRun": None,
+           "current": None, "market": []}
+    if sep_date:
+        lr = {"median": lr_med[-1][1]}
+        for k, fid in SEP_FIELDS.items():
+            if k == "median":
+                continue
+            s = series.get(fid + "LR") or []
+            if s and s[-1][0] == sep_date:
+                lr[k] = s[-1][1]
+        out["longerRun"] = lr
+        med = series.get("FEDTARMD") or []
+        if med and med[0][0][:4] == sep_date[:4]:
+            by_year = {}
+            for k, fid in SEP_FIELDS.items():
+                for d, v in series.get(fid) or []:
+                    by_year.setdefault(int(d[:4]), {})[k] = v
+            for y in sorted(by_year):
+                row = by_year[y]
+                if y >= now_year and "median" in row:
+                    out["years"].append({"year": y, **row})
+    up, lo = series.get("DFEDTARU") or [], series.get("DFEDTARL") or []
+    if up and lo and up[-1][0] == lo[-1][0]:
+        out["current"] = {"lower": lo[-1][1], "upper": up[-1][1], "date": up[-1][0]}
+    for g in fomc_groups or ():
+        outs = [o for o in g.get("outcomes") or [] if fnum(o.get("prob")) is not None and o.get("code")]
+        if not outs:
+            continue
+        lead = max(outs, key=lambda o: o["prob"])
+        m = {"venue": g.get("venue"), "eventDate": g.get("eventDate"), "closeTime": g.get("closeTime"),
+             "code": lead["code"], "label": lead.get("label"), "prob": lead["prob"], "lower": None, "upper": None}
+        cur = out["current"]
+        if cur and lead["code"] in RATE_DELTA:
+            m["lower"] = round(cur["lower"] + RATE_DELTA[lead["code"]], 2)
+            m["upper"] = round(cur["upper"] + RATE_DELTA[lead["code"]], 2)
+        out["market"].append(m)
+    if not out["years"] and not out["longerRun"]:
+        return None
+    return out
+
+
+def build_fed_path(now, fomc_groups=(), fetch=None):
+    fetch = fetch or fetch_fred
+    ids = list(SEP_FIELDS.values()) + [f + "LR" for f in SEP_FIELDS.values()]
+    sep_start = f"{now.year - 1}-01-01"
+    series = {}
+    for fid in ids:
+        try:
+            series[fid] = fetch(fid, sep_start)
+        except Exception as exc:  # noqa: BLE001 — 한 시리즈 실패는 그 칸만 비운다
+            print(f"  [sep] {fid} 실패: {type(exc).__name__}: {exc}")
+    cur_start = (now - timedelta(days=40)).strftime("%Y-%m-%d")
+    for fid in ("DFEDTARU", "DFEDTARL"):
+        try:
+            series[fid] = fetch(fid, cur_start)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [sep] {fid} 실패: {type(exc).__name__}: {exc}")
+    return fed_path_from_series(series, now.year, fomc_groups)
+
+
+# --- Big Four(NBER 가 보는 4개 동행지표) ------------------------------------------------------
+BIG_FOUR = [
+    ("bf_payems", "PAYEMS", "비농업 고용"),
+    ("bf_indpro", "INDPRO", "산업생산"),
+    ("bf_rrsfs", "RRSFS", "실질 소매판매"),
+    ("bf_w875rx1", "W875RX1", "실질 개인소득(이전소득 제외)"),
+]
+BIG_FOUR_BASIS = ("NBER 경기순환 판정위원회가 보는 4개 동행지표(Advisor Perspectives 'Big Four' 구성). "
+                  "현재값 = 최근 값 ÷ 최근 12개월(이번 달 포함) 최고치 − 1, 6개월 = 최근 값 ÷ 6개월 전 값 − 1. "
+                  "공인 임계가 없어 판정에서 뺀다")
+
+
+def _month_key(d):
+    return str(d)[:7]
+
+
+def _shift_month(key, n):
+    y, m = int(key[:4]), int(key[5:7])
+    t = y * 12 + (m - 1) + n
+    return f"{t // 12:04d}-{t % 12 + 1:02d}"
+
+
+def big_four_stats(obs):
+    """월간 [(date, v)] → {value: 12개월 고점 대비 %, change6: 6개월 변화 %, high, highDate, date}.
+    12개월 창에 관찰이 10개 미만이거나 6개월 전 값이 없으면 None(지어내지 않는다)."""
+    by_m = {}
+    for d, v in obs or []:
+        if v is not None:
+            by_m[_month_key(d)] = v
+    if not by_m:
+        return None
+    last = max(by_m)
+    cur = by_m[last]
+    window = [(k, by_m[k]) for k in (_shift_month(last, -i) for i in range(12)) if k in by_m]
+    prev6 = by_m.get(_shift_month(last, -6))
+    if len(window) < 10 or prev6 in (None, 0):
+        return None
+    hk, hv = max(window, key=lambda kv: kv[1])
+    if not hv:
+        return None
+    return {"date": last, "value": round((cur / hv - 1) * 100, 2), "change6": round((cur / prev6 - 1) * 100, 2),
+            "high": hv, "highDate": hk}
+
+
+def big_four_rows(fetch=None, now=None):
+    fetch = fetch or fetch_fred
+    now = now or datetime.now(timezone.utc)
+    start = f"{now.year - 3}-01-01"
+    rows = []
+    for rid, fid, label in BIG_FOUR:
+        try:
+            obs = fetch(fid, start)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [big4] {fid} 실패: {type(exc).__name__}: {exc}")
+            continue
+        st = big_four_stats(obs)
+        if not st:
+            continue
+        hist = [{"d": _month_key(d), "v": v} for d, v in obs[-24:]]
+        ch = st["change6"]
+        rows.append({
+            "id": rid, "name": f"Big Four · {label} — 12개월 고점 대비", "value": st["value"], "unit": "%",
+            "digits": 1, "signed": True, "date": st["date"],
+            "sub": f"6개월 {'+' if ch > 0 else ''}{ch:.1f}%",
+            "change6": ch, "high": st["high"], "highDate": st["highDate"],
+            "threshold": None, "compare": None, "thresholdText": "공인 기준 없음", "breached": None,
+            "basis": BIG_FOUR_BASIS, "source": f"FRED {fid}", "sourceUrl": f"https://fred.stlouisfed.org/series/{fid}",
+            "frequency": "M", "carriedSince": None, "history": hist, "scale": 1.0,
+        })
+    return rows
+
+
+# --- 뉴욕연은 수익률곡선 침체확률(12개월 뒤) ------------------------------------------------
+def _parse_month_cell(v):
+    """'01-Sep-2026' 문자열 또는 엑셀 일련번호 → 'YYYY-MM'."""
+    if isinstance(v, (int, float)) and v > 1000:
+        return (datetime(1899, 12, 30) + timedelta(days=int(v))).strftime("%Y-%m")
+    s = str(v or "").strip()
+    for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).strftime("%Y-%m")
+        except ValueError:
+            continue
+    return None
+
+
+def parse_nyfed_recprob(rows):
+    """allmonth.xls 'rec_prob' 시트 행 → {value %, date(스프레드 기준월), target(대상월), spread, history}.
+
+    파일의 Rec_prob 는 '그 달에 침체일 확률'(12개월 전 스프레드로 계산)이라 마지막 Rec_prob 행이
+    최신 스프레드 달 + 12개월이다. 두 달이 12개월 차이가 아니면 형식이 바뀐 것으로 보고 None."""
+    head_i = next((i for i, r in enumerate(rows) if r and str(r[0]).strip() == "Date"), None)
+    if head_i is None:
+        return None
+    head = [str(x).strip() for x in rows[head_i]]
+    if "Rec_prob" not in head or "Spread" not in head:
+        return None
+    ip, isp = head.index("Rec_prob"), head.index("Spread")
+    probs, spreads = [], []
+    for r in rows[head_i + 1:]:
+        if not r:
+            continue
+        m = _parse_month_cell(r[0])
+        if not m:
+            continue
+        p = fnum(r[ip]) if len(r) > ip and r[ip] not in ("", None) else None
+        s = fnum(r[isp]) if len(r) > isp and r[isp] not in ("", None) else None
+        if p is not None:
+            probs.append((m, p))
+        if s is not None:
+            spreads.append((m, s))
+    if not probs or not spreads:
+        return None
+    target, p = probs[-1]
+    base, spread = spreads[-1]
+    if _shift_month(base, 12) != target:
+        return None
+    return {"value": round(p * 100, 1), "date": base, "target": target, "spread": round(spread, 2),
+            "history": [{"d": m, "v": round(v * 100, 1)} for m, v in probs[-24:]]}
+
+
+def nyfed_recprob_row(raw=None):
+    try:
+        if raw is None:
+            raw = sec.http_get_with_backoff(NYFED_YC_URL, headers=NYFED_UA, timeout=60, retries=3, label="NY Fed allmonth.xls")
+        import xlrd  # requirements-actions.txt / macro-odds.yml — 옛 xls(BIFF)
+        sheet = xlrd.open_workbook(file_contents=raw).sheet_by_index(0)
+        st = parse_nyfed_recprob([sheet.row_values(i) for i in range(sheet.nrows)])
+    except Exception as exc:  # noqa: BLE001 — 행만 빠진다
+        print(f"  [nyfed] 수익률곡선 침체확률 실패: {type(exc).__name__}: {exc}")
+        return None
+    if not st:
+        print("  [nyfed] 수익률곡선 침체확률: 형식 불일치 — 행 생략")
+        return None
+    return {
+        "id": "nyfed_yc_prob", "name": "뉴욕연은 수익률곡선 침체확률 (12개월 뒤)", "value": st["value"], "unit": "%",
+        "digits": 1, "date": st["date"], "sub": f"대상 {st['target']}", "target": st["target"], "spread": st["spread"],
+        "threshold": None, "compare": None, "thresholdText": "공인 기준 없음", "breached": None,
+        "basis": "뉴욕연은 — 10년−3개월 국채 스프레드(월평균) 프로빗 모형의 12개월 뒤 침체 확률. 모형 값이라 임계 판정에서 뺀다",
+        "source": "뉴욕연은", "sourceUrl": NYFED_YC_PAGE, "frequency": "M", "carriedSince": None,
+        "history": st["history"], "scale": 1.0,
+    }
+
+
+# --- 뉴욕연은 회사채 시장 디스트레스 지수(CMDI) ------------------------------------------------
+def parse_cmdi(rows):
+    """cmdi_interactive_data.xlsx 첫 시트(문자열 행렬) → {value, date, history}. 날짜는 엑셀 일련번호."""
+    head_i = next((i for i, r in enumerate(rows) if "Market CMDI" in r), None)
+    if head_i is None:
+        return None
+    head = rows[head_i]
+    iv = head.index("Market CMDI")
+    pts = []
+    for r in rows[head_i + 1:]:
+        if len(r) <= iv:
+            continue
+        n = fnum(r[0])
+        v = fnum(r[iv]) if r[iv] != "" else None
+        if n is None or n < 1000 or v is None:
+            continue
+        pts.append(((datetime(1899, 12, 30) + timedelta(days=int(n))).strftime("%Y-%m-%d"), v))
+    if not pts:
+        return None
+    pts.sort()
+    d, v = pts[-1]
+    return {"value": round(v, 2), "date": d, "history": [{"d": x, "v": round(y, 2)} for x, y in pts[-26:]]}
+
+
+def cmdi_row(raw=None):
+    try:
+        if raw is None:
+            raw = sec.http_get_with_backoff(NYFED_CMDI_URL, headers=NYFED_UA, timeout=60, retries=3, label="NY Fed CMDI")
+        from industry_fetchers import xlsx_first_sheet_rows  # openpyxl 없이 zip+XML
+        st = parse_cmdi(xlsx_first_sheet_rows(raw))
+    except Exception as exc:  # noqa: BLE001
+        print(f"  [nyfed] CMDI 실패: {type(exc).__name__}: {exc}")
+        return None
+    if not st:
+        print("  [nyfed] CMDI: 형식 불일치 — 행 생략")
+        return None
+    return {
+        "id": "nyfed_cmdi", "name": "회사채 시장 디스트레스 지수 (CMDI)", "value": st["value"], "unit": "",
+        "digits": 2, "date": st["date"], "sub": "0~1",
+        "threshold": None, "compare": None, "thresholdText": "공인 기준 없음", "breached": None,
+        "basis": "뉴욕연은 — 발행시장·유통시장(가격·거래) 지표를 묶은 0~1 지수(주간). 공인 임계가 없어 판정에서 뺀다",
+        "source": "뉴욕연은", "sourceUrl": NYFED_CMDI_PAGE, "frequency": "W", "carriedSince": None,
+        "history": st["history"], "scale": 1.0,
+    }
+
+
+def build_extra_recession_rows(now):
+    rows = big_four_rows(now=now)
+    for r in (nyfed_recprob_row(), cmdi_row()):
+        if r:
+            rows.append(r)
+    return rows
 
 
 # ---------------------------------------------------------------------------
@@ -606,7 +923,12 @@ def build(now=None):
             msg = f"HTTP {code}" if code else type(exc).__name__
             print(f"[odds] {venue} 수집 실패: {msg} {exc}")
             sources[venue] = {"ok": False, "error": msg}
-    recession = build_recession_signals()
+    recession = build_recession_signals(build_extra_recession_rows(now))
+    try:
+        fed_path = build_fed_path(now, [g for g in groups if g.get("topic") == "fomc"])
+    except Exception as exc:  # noqa: BLE001 — 부가 블록, 실패하면 숨긴다
+        print(f"  [sep] 실패: {type(exc).__name__}: {exc}")
+        fed_path = None
     return {
         "updatedAtKst": kst_now().strftime("%Y-%m-%d %H:%M KST"),
         "source": "Kalshi · Polymarket 공개 시장 데이터 / FRED · 연준",
@@ -620,6 +942,7 @@ def build(now=None):
         "groups": groups,
         "excluded": excluded,
         "recession": recession,
+        "fedPath": fed_path,
     }
 
 

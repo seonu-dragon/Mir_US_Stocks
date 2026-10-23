@@ -139,6 +139,13 @@
     return list.filter((r) => r && keys.some((k) => String(r[k] || "").toLowerCase().includes(needle)));
   }
 
+  // 내부자 거래 Rule 10b5-1 계획 매매(build_insider_trades.py 의 plan10b51). true 만 '계획'이다 —
+  // false·null(체크박스 이전 공시·판단 근거 없음)은 계획이 아니라는 뜻이 아니라 '표시 없음'.
+  function isPlanTrade(r) { return Boolean(r && r.plan10b51 === true); }
+  function excludePlanTrades(rows) {
+    return (Array.isArray(rows) ? rows : []).filter((r) => r && !isPlanTrade(r));
+  }
+
   function countForm144(rows) {
     const out = { all: 0, sold: 0, pending: 0, unknown: 0 };
     for (const r of Array.isArray(rows) ? rows : []) {
@@ -158,6 +165,8 @@
     filterForm144,
     countForm144,
     filterByQuery,
+    isPlanTrade,
+    excludePlanTrades,
     usdShort,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

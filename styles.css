@@ -7919,6 +7919,36 @@ button.community-hot-ticker {
 .ins-code.ins-buy { background: color-mix(in srgb, var(--pos) 15%, transparent); }
 .ins-code.ins-sell { background: color-mix(in srgb, var(--neg) 15%, transparent); }
 .ins-code.ins-neutral { background: rgba(148, 163, 184, 0.15); }
+.insider-filter[hidden] { display: none; }
+.inst-consensus { margin: var(--space-3, 12px) 0; }
+.inst-consensus[hidden] { display: none; }
+.cons-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 6px; }
+.cons-head h3 { margin: 0; font-size: var(--fs-body, 15px); }
+.cons-head span { font-size: var(--fs-cap); color: var(--text-muted); }
+.cons-table { min-width: 0; width: 100%; }
+.cons-sort {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  height: auto;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cons-sort.is-active { color: var(--accent); }
+.cons-more { margin-top: 8px; }
+.ins-plan {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-cap);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
 .ins-value.ins-buy { color: var(--pos); }
 .ins-value.ins-sell { color: var(--neg); }
 .ins-sub { font-size: var(--fs-cap); color: var(--text-muted); }

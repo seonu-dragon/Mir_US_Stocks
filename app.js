@@ -2651,6 +2651,9 @@ function compute13fChanges() {
 function render13fHighlights() {
   const el = byId("inst13fHighlights");
   if (!el) return;
+  // 슈퍼투자자 합의 표(전체 보유 기준)가 있으면 그쪽을 쓴다 — 여기 집계는 기관당 상위 25종목만 봐서
+  // '25위 밖으로 밀림'도 전량 매도로 센다.
+  if (typeof _consensusData !== "undefined" && _consensusData) { el.innerHTML = ""; el.hidden = true; return; }
   const { newBuys, soldOut } = compute13fChanges();
   if (!newBuys.length && !soldOut.length) { el.innerHTML = ""; return; }
   const list = (arr, c) => arr.map((x) => `<button type="button" class="hl-chip ${c}" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(stockLabel(x.ticker))} <em>${x.n}</em></button>`).join("");

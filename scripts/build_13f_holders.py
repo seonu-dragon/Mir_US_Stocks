@@ -35,6 +35,11 @@ CUSIP → 티커(무료·합법)
 산출물(data/institutional_holders/)
 - `<A>.json` … 티커 첫 글자 샤드 {"n": {cik: 기관명}, "t": {티커: 레코드}} — 종목을 열 때 하나만 받는다
 - `index.json/.js` … window.US_INST_HOLDERS_INDEX(분기 목록·샤드 버전·규칙·커버리지)
+- `consensus.json` … 슈퍼투자자 합의(공시 › 13F): 이 사이트가 추적하는 기관(institutions_13f_registry
+  UNIQUE_INSTITUTIONS, 약 100곳)만 놓고 종목별 [보유, 신규, 전량 청산, 증가, 감소, 유지] 기관 수. 비교 규칙은
+  위와 같다(두 분기 모두 낸 추적 기관끼리, 분할 조정은 그 종목 전체 기관으로 추정한 비율). 점수는 만들지 않는다.
+  13f.info 스냅샷(build_13f_snapshot.py)은 기관당 상위 25종목만 남겨 '청산'과 '25위 밖으로 밀림'을 못 가르므로
+  전체 보유가 있는 이 데이터셋에서 센다. 인덱스의 consensus.ver 가 파일 버전이다(없으면 화면이 표를 숨긴다).
 - `state.json` … 분기별 CUSIP 합계(추이용, 브라우저는 안 읽음) · `cusip_map.json` … OpenFIGI 캐시
 증분: 이미 처리한 최신 데이터셋이면 아무것도 안 하고 끝난다(--force 로 다시). 새 창이 나오면 그 창과
 직전 창 두 개만 받는다. 처음(state 없음)에는 추이용으로 --quarters+1 개 창을 차례로 받는다.
@@ -76,6 +81,7 @@ OUT_JSON = DIR / "index.json"
 OUT_JS = DIR / "index.js"
 STATE_JSON = DIR / "state.json"
 CUSIP_MAP = DIR / "cusip_map.json"
+CONSENSUS_JSON = DIR / "consensus.json"
 ETF_CUSIP_MAP = ROOT / "data" / "etf_holdings" / "cusip_map.json"
 INST_13F = ROOT / "data" / "institutional_13f.json"
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -442,20 +448,9 @@ def merge_opts_by_ticker(opt: dict, cmap: dict[str, str]) -> dict[str, dict[str,
     return out
 
 
-def ticker_record(cur: dict[int, list[int]], prev: dict[int, list[int]] | None,
-                  cur_filers: set[int], prev_filers: set[int], *, opts: dict | None = None,
-                  shares_out: float | None = None, trend: list | None = None) -> dict:
-    """한 종목의 최신 분기 레코드. cur/prev = {CIK: [주식 수, 가치]}.
-
-    c = [신규, 청산, 증가, 감소, 유지, 비교 가능 기관 수] — 두 분기 모두 제출한 기관끼리만.
-    top = [[CIK, 주식 수, 직전 주식 수(분할 조정·비교 불가면 None), 가치], …] 주식 수 상위 10.
-    """
-    prev = prev or {}
-    held = {c: v for c, v in cur.items() if v[0] > 0}
-    prev_held = {c: v for c, v in prev.items() if v[0] > 0}
-    ratio = split_ratio(held, prev_held) if prev_held else None
-    adj = ratio or 1.0
-    both = cur_filers & prev_filers
+def change_counts(held: dict[int, list[int]], prev_held: dict[int, list[int]], both: set[int],
+                  adj: float = 1.0) -> list[int]:
+    """[신규, 청산, 증가, 감소, 유지] — both(두 분기 모두 13F 를 낸 기관)끼리만. adj = 직전 수량 분할 보정."""
     new = closed = inc = dec = same = 0
     for c in both:
         a = held.get(c)
@@ -473,6 +468,51 @@ def ticker_record(cur: dict[int, list[int]], prev: dict[int, list[int]] | None,
                 inc += 1
             else:
                 dec += 1
+    return [new, closed, inc, dec, same]
+
+
+def consensus_entry(cur: dict[int, list[int]] | None, prev: dict[int, list[int]] | None,
+                    cur_filers: set[int], prev_filers: set[int], tracked: set[int],
+                    split: float | None = None) -> list[int] | None:
+    """추적 기관만 본 한 종목 [보유, 신규, 청산, 증가, 감소, 유지]. 보유도 청산도 없으면 None."""
+    held = {c: v for c, v in (cur or {}).items() if c in tracked and v[0] > 0}
+    prev_held = {c: v for c, v in (prev or {}).items() if c in tracked and v[0] > 0}
+    counts = change_counts(held, prev_held, cur_filers & prev_filers & tracked, split or 1.0)
+    if not held and not counts[1]:
+        return None
+    return [len(held), *counts]
+
+
+def build_consensus(cur_t: dict, prev_t: dict, splits: dict[str, float], cur_filers: set[int],
+                    prev_filers: set[int], tracked: set[int]) -> dict[str, list[int]]:
+    out: dict[str, list[int]] = {}
+    for t in sorted(cur_t.keys() | prev_t.keys()):
+        ent = consensus_entry(cur_t.get(t), prev_t.get(t), cur_filers, prev_filers, tracked, splits.get(t))
+        if ent:
+            out[t] = ent
+    return out
+
+
+def tracked_ciks() -> set[int]:
+    from institutions_13f_registry import UNIQUE_INSTITUTIONS
+    return {int(i["cik"]) for i in UNIQUE_INSTITUTIONS if str(i.get("cik") or "").isdigit()}
+
+
+def ticker_record(cur: dict[int, list[int]], prev: dict[int, list[int]] | None,
+                  cur_filers: set[int], prev_filers: set[int], *, opts: dict | None = None,
+                  shares_out: float | None = None, trend: list | None = None) -> dict:
+    """한 종목의 최신 분기 레코드. cur/prev = {CIK: [주식 수, 가치]}.
+
+    c = [신규, 청산, 증가, 감소, 유지, 비교 가능 기관 수] — 두 분기 모두 제출한 기관끼리만.
+    top = [[CIK, 주식 수, 직전 주식 수(분할 조정·비교 불가면 None), 가치], …] 주식 수 상위 10.
+    """
+    prev = prev or {}
+    held = {c: v for c, v in cur.items() if v[0] > 0}
+    prev_held = {c: v for c, v in prev.items() if v[0] > 0}
+    ratio = split_ratio(held, prev_held) if prev_held else None
+    adj = ratio or 1.0
+    both = cur_filers & prev_filers
+    new, closed, inc, dec, same = change_counts(held, prev_held, both, adj)
     comparable = sum(1 for c in both if c in held or c in prev_held)
     shares = sum(v[0] for v in held.values())
     value = sum(v[1] for v in held.values())
@@ -808,10 +848,13 @@ def main() -> int:
     shards: dict[str, dict] = {}
     cur_filers = filers.get(latest_p, set())
     prev_filers = filers.get(prev_p, set())
+    splits: dict[str, float] = {}
     for t, cur in cur_t.items():
         trend = [trend_tot[p].get(t) for p in all_periods]
         rec = ticker_record(cur, prev_t.get(t), cur_filers, prev_filers, opts=opt_t.get(t),
                             shares_out=shares_outstanding(t), trend=trend)
+        if rec.get("split"):
+            splits[t] = rec["split"]
         if rec["h"] <= 0:
             continue
         sh = shards.setdefault(shard_key(t), {"n": {}, "t": {}})
@@ -841,6 +884,23 @@ def main() -> int:
         if len(stale.stem) == 1 and stale.stem not in shards:
             stale.unlink()
 
+    # 슈퍼투자자 합의(추적 기관만) — 화면은 공시 › 13F. 추적 기관이 최신 분기에 하나도 안 냈으면 쓰지 않는다.
+    tracked = tracked_ciks()
+    cons = build_consensus(cur_t, prev_t, splits, cur_filers, prev_filers, tracked)
+    consensus_meta = None
+    if cons and tracked & cur_filers:
+        cons_obj = {"period": latest_p, "prev": prev_p, "preliminary": True,
+                    "tracked": len(tracked), "filed": len(tracked & cur_filers),
+                    "compared": len(tracked & cur_filers & prev_filers),
+                    "cols": ["holders", "new", "soldOut", "added", "reduced", "same"], "t": cons}
+        write_if_changed(CONSENSUS_JSON, cons_obj)
+        text = json.dumps(cons_obj, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        consensus_meta = {"ver": format(zlib.crc32(text.encode("utf-8")), "08x"), "count": len(cons),
+                          "filed": cons_obj["filed"], "tracked": cons_obj["tracked"]}
+        print(f"슈퍼투자자 합의: 종목 {len(cons):,}개 · 추적 기관 {cons_obj['filed']}/{len(tracked)}곳 제출")
+    else:
+        print("[warn] 슈퍼투자자 합의: 추적 기관 보고분이 없어 건너뜀")
+
     ds_by_period = {d["period"]: d for d in datasets}
     payload = {
         "updatedAtKst": now_kst().strftime("%Y-%m-%d %H:%M KST"),
@@ -861,6 +921,8 @@ def main() -> int:
                      "cusips": len(cur_totals), "bySource": src_count},
         "errors": errors[:20],
     }
+    if consensus_meta:
+        payload["consensus"] = consensus_meta
     write_data(OUT_JSON, OUT_JS, "US_INST_HOLDERS_INDEX", payload, indent=None)
     state_out = {"latestDataset": datasets[-1]["name"], "updatedAtKst": payload["updatedAtKst"],
                  "periods": dict(sorted(periods_state.items()))}

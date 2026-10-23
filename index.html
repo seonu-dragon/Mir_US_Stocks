@@ -2455,6 +2455,7 @@ html[data-market="kr"][data-theme="dark"] {
           </details>
           <div class="institutional-meta" id="institutionalMeta"></div>
           <div class="inst-13f-highlights" id="inst13fHighlights"></div>
+          <section class="inst-consensus" id="instConsensus" hidden></section>
           <div class="institutional-picker">
             <label class="grow">
               기관 검색
@@ -2525,6 +2526,9 @@ html[data-market="kr"][data-theme="dark"] {
               <button type="button" data-kind="buy">매수 P</button>
               <button type="button" data-kind="sell">매도 S</button>
               <button type="button" data-kind="f144" title="SEC Form 144 — 계열인이 팔기 전에 내는 매도 예정 신고">Form 144 매도 예정</button>
+            </div>
+            <div class="insider-filter" id="insiderPlanFilter" role="group" aria-label="계획 매매 필터" hidden>
+              <button type="button" aria-pressed="false" title="Rule 10b5-1 사전 계획에 따른 거래를 뺍니다">계획 매매 제외</button>
             </div>
             <label class="grow">
               검색

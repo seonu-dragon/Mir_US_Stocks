@@ -34,6 +34,7 @@ function delegateTickerClicks(container, selector = ".ins-ticker") {
 let insiderKind = "all";
 let insiderQuery = "";
 let insiderExactTicker = false;   // 스마트머니 줄에서 넘어온 티커 검색 — 직접 입력하면 해제
+let insiderExcludePlan = false;   // '계획 매매 제외' 칩 — Rule 10b5-1 사전 계획 거래(plan10b51 === true)를 뺀다
 
 function insiderFmtShares(n) {
   return Number.isFinite(n) ? Math.round(n).toLocaleString() : "—";
@@ -61,6 +62,18 @@ function setupInsiderControls() {
         filter.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b === btn));
         renderInsiderTrades();
       });
+    });
+  }
+  const plan = byId("insiderPlanFilter");
+  if (plan && !plan.dataset.bound) {
+    plan.dataset.bound = "1";
+    plan.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button");
+      if (!btn) return;
+      insiderExcludePlan = !insiderExcludePlan;
+      btn.classList.toggle("is-active", insiderExcludePlan);
+      btn.setAttribute("aria-pressed", String(insiderExcludePlan));
+      renderInsiderTrades();
     });
   }
   const search = byId("insiderSearch");
@@ -148,8 +161,27 @@ function renderForm144Table() {
   }
 }
 
+// 10b5-1 표시를 가진 행이 하나라도 있을 때만 칩을 보인다(기능 도입 전 데이터면 숨김). 페이로드별로 한 번만 센다.
+let _insiderPlanPayload = null, _insiderPlanAvail = false;
+function insiderPlanAvailable(payload) {
+  if (payload !== _insiderPlanPayload) {
+    _insiderPlanPayload = payload;
+    _insiderPlanAvail = Boolean(payload && Array.isArray(payload.trades) && payload.trades.some((r) => r && r.plan10b51 === true));
+  }
+  return _insiderPlanAvail;
+}
+
+function insiderPlanBadge(r) {
+  const SF = window.MirSecFilings;
+  if (!(SF && SF.isPlanTrade ? SF.isPlanTrade(r) : r && r.plan10b51 === true)) return "";
+  const tip = `Rule 10b5-1 사전 계획 거래${r.planAdoptedDate ? ` · 계획 채택 ${r.planAdoptedDate}` : ""}`;
+  return `<span class="ins-plan" title="${escapeHtml(tip)}">10b5-1</span>`;
+}
+
 function renderInsiderTrades() {
   setupInsiderControls();
+  const planGroup = byId("insiderPlanFilter");
+  if (planGroup) planGroup.hidden = insiderKind === "f144" || !insiderPlanAvailable(window.INSIDER_TRADES);
   if (insiderKind === "f144") { renderForm144Table(); return; }
   renderInsiderCluster();
   const wrap = byId("insiderTable");
@@ -167,6 +199,10 @@ function renderInsiderTrades() {
   const q = insiderQuery.trim().toLowerCase();
   let rows = payload.trades;
   if (insiderKind !== "all") rows = rows.filter((r) => r.kind === insiderKind);
+  if (insiderExcludePlan && insiderPlanAvailable(payload)) {
+    const SF = window.MirSecFilings;
+    rows = SF && SF.excludePlanTrades ? SF.excludePlanTrades(rows) : rows.filter((r) => r.plan10b51 !== true);
+  }
   if (q) {
     const SF = window.MirSecFilings;
     rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "issuer", "owner"], { exactTicker: insiderExactTicker }) : rows.filter((r) =>
@@ -187,7 +223,7 @@ function renderInsiderTrades() {
         <td class="ins-date">${escapeHtml(r.txDate || r.fileDate || "")}</td>
         <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button></td>
         <td class="ins-owner"><span>${escapeHtml(r.owner || "")}</span><em>${escapeHtml(r.relation || "")}</em></td>
-        <td><span class="ins-code ${kc}">${escapeHtml(r.codeLabel || r.code || "")}</span></td>
+        <td><span class="ins-code ${kc}">${escapeHtml(r.codeLabel || r.code || "")}</span>${insiderPlanBadge(r)}</td>
         <td class="ins-num">${insiderFmtShares(r.shares)}</td>
         <td class="ins-num">${price}</td>
         <td class="ins-num ins-value ${kc}">${insiderFmtUsd(r.value)}</td>

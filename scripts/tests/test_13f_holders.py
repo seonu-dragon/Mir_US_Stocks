@@ -237,6 +237,36 @@ def test_record_adjusts_for_split():
     assert rec["top"][0] == [1, 260, 200, 1400]     # 직전 수량도 분할 조정
 
 
+def test_consensus_counts_only_tracked_institutions():
+    cur = {1: [100, 1000], 2: [50, 500], 3: [70, 700], 5: [10, 100], 7: [40, 400], 99: [1, 1]}
+    prev = {1: [100, 900], 2: [80, 700], 3: [60, 500], 4: [30, 300], 6: [20, 200], 98: [5, 5]}
+    cur_filers = {1, 2, 3, 4, 5, 7, 98, 99}
+    prev_filers = {1, 2, 3, 4, 5, 6, 98, 99}
+    tracked = {1, 2, 3, 4, 5, 6, 7}           # 98·99 는 추적 밖 — 청산·신규로 세지 않는다
+    # [보유, 신규, 청산, 증가, 감소, 유지]: 7 은 직전 13F 없음, 6 은 이번 분기 미제출 → 비교 밖
+    assert b.consensus_entry(cur, prev, cur_filers, prev_filers, tracked) == [5, 1, 1, 1, 1, 1]
+    # 같은 집계 규칙이 전체 기관 레코드와 일치한다(추적 = 전체일 때)
+    everyone = cur_filers | prev_filers
+    rec = b.ticker_record(cur, prev, cur_filers, prev_filers)
+    assert b.consensus_entry(cur, prev, cur_filers, prev_filers, everyone)[1:] == rec["c"][:5]
+
+
+def test_consensus_split_adjusts_and_keeps_fully_sold_tickers():
+    prev = {1: [100, 1000], 2: [100, 1000], 3: [100, 1000]}
+    cur = {1: [200, 1100], 2: [260, 1400]}     # 2:1 분할 — 1 유지 · 2 증가 · 3 청산
+    filers = {1, 2, 3}
+    assert b.consensus_entry(cur, prev, filers, filers, filers, split=2) == [2, 0, 1, 1, 0, 1]
+    # 최신 분기에 추적 기관 보유가 0 이어도 청산이 있으면 남긴다, 둘 다 없으면 뺀다
+    out = b.build_consensus({"AAA": {9: [5, 5]}}, {"BBB": {3: [10, 10]}, "AAA": {9: [5, 5]}}, {},
+                            filers | {9}, filers | {9}, filers)
+    assert out == {"BBB": [0, 0, 1, 0, 0, 0]}
+
+
+def test_tracked_ciks_are_registry_ints():
+    t = b.tracked_ciks()
+    assert 1067983 in t and len(t) >= 50 and all(isinstance(c, int) for c in t)
+
+
 def test_ticker_totals_from_state():
     state = {"2026-03-31": {"totals": {"C1": [3, 30, 300], "C2": [1, 5, 50], "C3": [9, 9, 9]}}}
     assert b.ticker_totals(state, "2026-03-31", {"C1": "XYZ", "C2": "XYZ"}) == {"XYZ": [4, 35, 350]}

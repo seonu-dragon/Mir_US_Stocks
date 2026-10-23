@@ -151,6 +151,9 @@ CHECKS = {
         ("data/kr_event_details.json", 5, False),
         # 미상환 CB·BW(build_kr_cb_overhang.py) — 새 정기보고서가 없어도 실행마다 updatedAtKst 를 새로 쓴다.
         ("data/korea/cb_overhang.json", 5, True),
+        # 대량보유자 역검색·상장 지분 시가 — 실행마다 updatedAtKst 를 새로 쓴다(새 공시·보고서가 없어도).
+        ("data/korea/major_holders.json", 5, True),
+        ("data/korea/stake_value.json", 5, True),
     ],
     # weekly-earnings-history.yml(일요일 03:02 KST). 매주 같은 시각에 도니 정상이면
     # 나이 0일, 한 번 실패하면 7일 — 6일로 잡아야 실패 1회를 바로 잡는다.

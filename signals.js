@@ -942,6 +942,7 @@ function renderSignals() {
   if (typeof renderUoaWidget === "function") renderUoaWidget();
   if (typeof renderRatingChanges === "function") renderRatingChanges();
   if (typeof renderEstimateRevisions === "function") renderEstimateRevisions();
+  if (typeof renderKrConsensusMoves === "function") renderKrConsensusMoves();
   renderWikiAttention();
   const el = byId("signalsGrid");
   if (!el) return;

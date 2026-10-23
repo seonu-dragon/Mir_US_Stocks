@@ -19,7 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     # 2026-10-14: 소유 스텝이 평소 5분 → 13분 걸리고 KSD(평소 14~24분)가 남은 시간을 넘겨 잡 전체가
     # 45분 한도로 취소됐다(로그 0줄, 신선도 관문도 못 돎). 잡 한도를 넉넉히 두고 KSD 는 스텝 한도로 끊는다.
-    timeout-minutes: 90
+    # 2026-10-23: 대량보유자(최대 20분)·지분 시가(최대 15분) 스텝을 더하며 90 → 120.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5
         with:
@@ -72,6 +73,24 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python -u scripts/build_kr_cb_overhang.py --push --max-docs 400 --time-budget-min 15
+
+      # 대량보유자 역검색(국내판 Superstar) — majorstock 전체 이력을 회사 단위로 받아 보고자별로 묶는다. 처음엔 전 종목
+      # (≈2,600사)을 실행당 1,500회씩 나눠 채우고, 이후엔 위 지분 스텝의 최근 7일 대량보유 공시 회사 + 오래 묵은 회사 일부만.
+      - name: Build KR major holders (대량보유자 역검색)
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python -u scripts/build_kr_major_holders.py --push --max-calls 1500 --time-budget-min 15
+
+      # 상장 지분 시가(지주·그룹사) — 정기보고서 타법인 출자현황. 새 정기보고서가 나온 회사만 부르고(분기마다 수백 회),
+      # 그 밖의 실행은 DART 호출 없이 스냅샷 종가로 시가만 다시 계산한다. 대상 후보는 위 대량보유자 상태를 읽는다.
+      - name: Build KR listed stake value (타법인 출자 × 시가)
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python -u scripts/build_kr_stake_value.py --push --max-calls 600 --time-budget-min 10
 
       # 한국예탁결제원 기업정보서비스_GW — 배당·증자·감자를 구조화 필드로 받는 정식
       # 소스(DART 원문 파싱과 별개 산출물). 시총 상위 500종목 × 회사단위 조회라

@@ -3928,7 +3928,8 @@ function renderStockFlowPanel(item) {
   if (!el) return;
   const foreign = typeof krForeignRetentionCard === "function" ? krForeignRetentionCard(item) : "";
   const own = typeof krOwnershipCard === "function" ? krOwnershipCard(item) : "";
-  const html = item ? [krFlowCard(item), foreign, own, krGroupCard(item), krNpsCard(item)].join("").trim() : "";
+  const stake = typeof krStakeValueCard === "function" ? krStakeValueCard(item) : "";
+  const html = item ? [krFlowCard(item), foreign, own, krGroupCard(item), stake, krNpsCard(item)].join("").trim() : "";
   // 일별 보기(<details>)를 열어 둔 채 늦은 데이터로 다시 그리면 접히지 않게 상태를 옮긴다.
   const wasOpen = !!el.querySelector("details[open]");
   el.innerHTML = html ? `<h3 class="sd-card-title">수급 · 보유</h3>${html}` : "";
@@ -7277,9 +7278,11 @@ function dataTrustSources() {
     rows.push(source("감사의견", "DART 정기보고서", window.KR_AUDIT_OPINION, ["opinions"], 240, "매주 일요일", "krAudit"));
     rows.push(source("미상환 CB·BW", "DART 정기보고서", window.KR_CB_OVERHANG, ["companies"], 120, "평일 15:30", "krCbOverhang"));
     rows.push(source("재무 안전(사채·감사·자금)", "DART 정기보고서", window.KR_FIN_SAFETY, ["companies"], 240, "매주 토요일", "krFinSafety"));
+    rows.push(source("상장 지분 시가", "DART 타법인 출자현황", window.KR_STAKE_VALUE, ["companies"], 120, "평일 15:30", "krStakeValue"));
   }
   if (cfg.features?.krOwnership === true) {
     rows.push(source("소유구조 프로필", "DART 정기보고서", window.KR_OWNERSHIP_PROFILE, ["profiles"], 240, "매주 일요일", "krOwnProfile"));
+    rows.push(source("대량보유자 역검색", "DART 대량보유 보고", window.KR_MAJOR_HOLDERS, ["holders"], 120, "평일 15:30", "krMajorHolders"));
   }
   if (cfg.id === "kr" && cfg.features?.earningsCalendar !== false) {
     rows.push(source("실적 예정일(추정)", "DART 발표 이력", window.KOREA_EARNINGS_CALENDAR, ["earnings"], 72, "매일", "", "", true));

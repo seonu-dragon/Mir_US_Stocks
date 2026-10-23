@@ -62,6 +62,10 @@
                 (실시간 조회는 하지 않는다 — 브라우저는 커밋된 스냅샷만 읽는 레포다)
   units         금액 단위(목표가·EPS 는 원, 매출·영업이익 추정치는 억원)
 
+  stocks[*]     … + estimateFy2·revenueEstimate2·operatingEstimate2(다음 회계연도, FnGuide 연간 표 — fy2_estimates)
+                + chg(1주·1개월·3개월 전 대비 목표가·의견·추정치 변화 — kr_consensus_history.py, 감지일 기준)
+  changesAsOf   chg 를 계산한 날(KST). 이력은 data/korea/consensus_history.json(빌더 전용, 배포 제외).
+
 값이 하나도 안 모이면 기존 파일을 덮지 않고 exit 1. 이번 실행에서 못 받은 종목은
 sec_client.merge_previous_stocks 로 직전 값을 유지하고, 종목은 받았는데 보조 단계만
 실패한 경우는 carry_stage_fields 가 reports·estimateCount 를 이어붙인다(부분 실패에
@@ -255,26 +259,131 @@ def fetch_estimate_count(code: str) -> dict | None:
     if not raw:
         return None
     html = raw.decode("utf-8", "replace")
+    enc = _ENCPARAM.search(html)
+    annual = fetch_fnguide_annual(code, enc.group(1)) if enc else None
     block = _CTB15.search(html)
     if not block:
-        return None
+        return {"_annual": annual} if annual else None
     cells = []
     for cell in _TD.findall(block.group(0)):
         text = re.sub(r"\s+", "", _TAG.sub("", cell)).replace("&nbsp;", "")
         if text:
             cells.append(text)
     if len(cells) < 5:
-        return None
+        return {"_annual": annual} if annual else None
     opinion, target, eps, _per, count = cells[-5:]
     n = num(count)
     if n is None or n <= 0:
-        return None
-    return {
+        return {"_annual": annual} if annual else None
+    out = {
         "estimateCount": int(n),
         "_target": num(target),
         "_opinion": num(opinion),
         "_eps": num(eps),
     }
+    if annual:
+        out["_annual"] = annual
+    return out
+
+
+# ------------------------------------------- 2b) 다음 회계연도(FY2) 추정 매출·영업이익(FnGuide 연간 표)
+#
+# 네이버 finance/annual(3번 경로)은 추정 열이 한 해(FY1)뿐이다. FY2 는 같은 FnGuide 화면의 연간 재무 표
+# (navercomp.wisereport cF1001.aspx, freq_typ=Y)에만 있다 — 삼성전자 2026/12(E)·2027/12(E)·2028/12(E)
+# (2026-10-23 실측). 이 표는 c1010001 페이지가 주는 encparam 이 있어야 응답한다(없으면 빈 본문). 표 행:
+# 매출액 · 영업이익 · 영업이익(발표기준) … 금액은 억원. 열 머리 'YYYY/MM' + 추정이면 '(E)'.
+# 영업이익 행의 추정 칸이 비어 있으면(삼성전자) 영업이익(발표기준) 행을 쓴다.
+
+_ENCPARAM = re.compile(r"encparam\s*:\s*'([^']+)'")
+_ANNUAL_HEAD = re.compile(r"(\d{4})/(\d{2})(\(E\))?")
+_ANNUAL_ROW = re.compile(r'<th[^>]*class="[^"]*\btitle\b[^"]*"[^>]*>(.*?)</th>(.*?)</tr>', re.S)
+_TITLE_ATTR = re.compile(r'<td[^>]*title="([^"]*)"')
+
+
+def parse_fnguide_annual(html: str) -> dict | None:
+    """cF1001 연간 표 → {"cols": [(라벨 'YYYY.MM', 추정 여부)], "rev": [...], "op": [...]} (값은 억원 또는 None)."""
+    text = re.sub(r"\s+", " ", html or "")
+    first = _ANNUAL_HEAD.search(text)
+    if not first:
+        return None
+    head_end = text.find("</thead>", first.start())
+    if head_end < 0:
+        return None
+    heads = _ANNUAL_HEAD.findall(text[first.start():head_end])
+    text = text[head_end:]
+    cols = [(f"{y}.{m}", bool(e)) for y, m, e in heads]
+    if not cols:
+        return None
+    rows: dict[str, list] = {}
+    for title, cells in _ANNUAL_ROW.findall(text):
+        name = re.sub(r"\s+", "", _TAG.sub("", title))
+        if name in rows:
+            continue
+        vals = [num(v) for v in _TITLE_ATTR.findall(cells)]
+        if len(vals) == len(cols):
+            rows[name] = vals
+    rev = rows.get("매출액")
+    op = rows.get("영업이익")
+    op_rep = rows.get("영업이익(발표기준)")
+    if op and op_rep:
+        op = [b if a is None and cols[i][1] else a for i, (a, b) in enumerate(zip(op, op_rep))]
+    elif not op:
+        op = op_rep
+    if not rev and not op:
+        return None
+    return {"cols": cols, "rev": rev or [None] * len(cols), "op": op or [None] * len(cols)}
+
+
+def fetch_fnguide_annual(code: str, encparam: str) -> dict | None:
+    import urllib.parse
+    q = urllib.parse.urlencode({"cmp_cd": code, "fin_typ": "0", "freq_typ": "Y", "encparam": encparam})
+    headers = {**FNG_HEADERS, "Referer": f"https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd={code}"}
+    raw = _open(f"https://navercomp.wisereport.co.kr/v2/company/ajax/cF1001.aspx?{q}", headers)
+    if not raw:
+        return None
+    return parse_fnguide_annual(raw.decode("utf-8", "replace"))
+
+
+def fy2_estimates(rec: dict, annual: dict | None) -> dict:
+    """FY1(rec.estimateFy, 3번 경로) 다음 회계연도의 추정 매출·영업이익. 못 믿으면 {}.
+
+    - FY1 추정 매출·영업이익이 정합성 필터를 통과해 rec 에 남아 있을 때만(FY1 이 오염이면 FY2 도 같은 소스다).
+    - 같은 표의 FY1 값이 3번 경로 FY1 과 1% 넘게 어긋나면 다른 기준(연결/별도·갱신 시점)으로 보고 버린다.
+    - FY2 도 영업이익률 밴드, max(FY1, 최근 실적 최고치) 대비 매출 EST_REV_YOY_MAX·영업이익 EST_OP_YOY_MAX 배 이내.
+    """
+    fy1 = str(rec.get("estimateFy") or "").replace("/", ".").rstrip(".")
+    rev1, op1 = rec.get("revenueEstimate"), rec.get("operatingEstimate")
+    if not annual or not fy1 or not isinstance(rev1, (int, float)) or not isinstance(op1, (int, float)):
+        return {}
+    cols = annual["cols"]
+    idx = next((i for i, (lab, est) in enumerate(cols) if lab == fy1 and est), None)
+    if idx is None or idx + 1 >= len(cols) or not cols[idx + 1][1]:
+        return {}
+    a_rev1, a_op1 = annual["rev"][idx], annual["op"][idx]
+
+    def close(a, b):
+        return isinstance(a, (int, float)) and abs(a - b) <= max(1.0, abs(b) * 0.01)
+
+    if not close(a_rev1, rev1) or not close(a_op1, op1):
+        return {}
+    rev2, op2 = annual["rev"][idx + 1], annual["op"][idx + 1]
+    if not isinstance(rev2, (int, float)) or not isinstance(op2, (int, float)) or rev2 <= 0:
+        return {}
+    margin = op2 / rev2
+    if margin > EST_MARGIN_MAX or margin < EST_MARGIN_MIN:
+        return {}
+    # 분모는 3번 경로와 같은 원칙 — FY1 과 최근 실적연도(최대 3년) 최고치 중 큰 값(저점 회복을 오염으로 보지 않게).
+    actual = [i for i, (_lab, est) in enumerate(cols) if not est][-3:]
+
+    def ref(series, first):
+        return max([series[i] for i in actual if isinstance(series[i], (int, float))] + [first])
+
+    rev_ref, op_ref = ref(annual["rev"], rev1), ref(annual["op"], op1)
+    if rev_ref > 0 and rev2 / rev_ref > EST_REV_YOY_MAX:
+        return {}
+    if op_ref > 0 and op2 / op_ref > EST_OP_YOY_MAX:
+        return {}
+    return {"revenueEstimate2": round(rev2), "operatingEstimate2": round(op2), "estimateFy2": cols[idx + 1][0]}
 
 
 # ------------------------------------------------- 3) 추정 매출액·영업이익(컨센서스 연도)
@@ -467,6 +576,7 @@ _EST_PRIVATE = ("_revenuePrev", "_operatingPrev", "_epsPrev")
 _REVOP_FIELDS = ("revenueEstimate", "operatingEstimate")
 _EST_VALUE_FIELDS = ("revenueEstimate", "operatingEstimate", "epsEstimate")
 _EST_FIELDS = ("revenueEstimate", "operatingEstimate", "epsEstimate", "estimateFy")
+_FY2_FIELDS = ("revenueEstimate2", "operatingEstimate2", "estimateFy2")
 
 
 # ------------------------------------------------------------------------- 빌드
@@ -512,11 +622,16 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
 
     have = [c for c in codes if c in stocks]
 
+    annuals: dict[str, dict] = {}
     if with_counts:
         counts = run_pool(fetch_estimate_count, have, workers)
         ok = mismatch = 0
         for code, result in zip(have, counts):
             if not result:
+                continue
+            if result.get("_annual"):
+                annuals[code] = result["_annual"]
+            if "estimateCount" not in result:
                 continue
             target = stocks[code].get("targetPrice")
             fng = result.get("_target")
@@ -526,7 +641,8 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
                 continue
             stocks[code]["estimateCount"] = result["estimateCount"]
             ok += 1
-        print(f"  2/4 추정기관수 {ok}/{len(have)}종목 (교차검증 불일치 {mismatch}건, {time.time() - t0:.0f}초)")
+        print(f"  2/4 추정기관수 {ok}/{len(have)}종목 (교차검증 불일치 {mismatch}건) · 연간 표 {len(annuals)}종목 "
+              f"({time.time() - t0:.0f}초)")
 
     fwd = run_pool(fetch_forward_financials, have, workers)
     got_revop = got_eps = revop_dropped = eps_dropped = 0
@@ -558,6 +674,13 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
                 got_revop += 1
             if had_eps and not eps_bad:
                 got_eps += 1
+    got_fy2 = 0
+    for code in have:
+        extra = fy2_estimates(stocks[code], annuals.get(code))
+        if extra:
+            stocks[code].update(extra)
+            got_fy2 += 1
+    print(f"      FY2 추정 매출·영업이익 {got_fy2}종목(FY1 일치·정합성 통과분)")
     est_dropped = revop_dropped                # payload.estimateDropped = 오염 재무 종목 수
     print(f"  3/4 추정 실적 채택: 매출·영업이익 {got_revop}종목(오염 {revop_dropped}제외) · "
           f"EPS {got_eps}종목(오염 {eps_dropped}제외) ({time.time() - t0:.0f}초)")
@@ -614,6 +737,8 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
     payload["units"] = {
         "targetPrice": "원", "price": "원", "epsEstimate": "원",
         "revenueEstimate": "억원", "operatingEstimate": "억원",
+        "revenueEstimate2": "억원", "operatingEstimate2": "억원",
+        "chg": "tp*·r*·o* 는 %, op* 는 의견 점수 차(점)",
     }
     payload["opinionScale"] = "1=매도 · 2=비중축소 · 3=중립 · 4=매수 · 5=적극매수"
     if upsides:
@@ -689,9 +814,43 @@ def enforce_margin_guard(payload: dict) -> int:
                 changed = True
         if not any(rec.get(k) is not None for k in _EST_VALUE_FIELDS):
             rec.pop("estimateFy", None)
+        # FY2 는 FY1 매출·영업이익이 남아 있을 때만(fy2_estimates 와 같은 조건) + 자기 영업이익률 밴드.
+        rev2, op2 = rec.get("revenueEstimate2"), rec.get("operatingEstimate2")
+        fy2_bad = rec.get("revenueEstimate") is None or rec.get("operatingEstimate") is None
+        if isinstance(rev2, (int, float)) and rev2 > 0 and isinstance(op2, (int, float)):
+            fy2_bad = fy2_bad or not (EST_MARGIN_MIN <= op2 / rev2 <= EST_MARGIN_MAX)
+        if fy2_bad and any(k in rec for k in _FY2_FIELDS):
+            for k in _FY2_FIELDS:
+                rec.pop(k, None)
+            changed = True
         if changed:
             touched += 1
     return touched
+
+
+def attach_changes(payload: dict, today: str | None = None, history_path=None) -> None:
+    """이번 실행에서 실제로 받은 종목을 이력(consensus_history.json)에 쌓고 stocks[*].chg 를 붙인다.
+
+    승계분(carriedSince)은 쌓지도, chg 를 달지도 않는다 — 오늘 관측이 아닌 값으로 '변화 없음'을 지어내지 않는다.
+    """
+    import kr_consensus_history as KH
+
+    today = today or datetime.now(KST).date().isoformat()
+    path = history_path or KH.HISTORY_JSON
+    hist = KH.load_history(path)
+    observed = KH.add_snapshot(hist, payload.get("stocks") or {}, today)
+    KH.finalize(hist, today)
+    KH.save_history(hist, path)
+    with_chg = 0
+    for code, rec in (payload.get("stocks") or {}).items():
+        rec.pop("chg", None)
+        rows = (hist.get("s") or {}).get(code)
+        chg = KH.changes(rows, today) if rows and not rec.get("carriedSince") else None
+        if chg:
+            rec["chg"] = chg
+            with_chg += 1
+    payload["changesAsOf"] = today
+    print(f"[컨센서스] 변화 이력: 오늘 관측 {observed}종목 · 비교값 {with_chg}종목 · 이력 {len(hist.get('s') or {})}종목")
 
 
 def main() -> int:
@@ -738,6 +897,10 @@ def main() -> int:
         payload["estimateDropped"] = payload.get("estimateDropped", 0) + extra
         print(f"[컨센서스] 승계분 최종 안전망: 오염 추정 {extra}종목 추가 제외")
     payload["count"] = len(payload["stocks"])
+    try:
+        attach_changes(payload)
+    except Exception as exc:  # noqa: BLE001 — 이력은 부가 기능, 본 산출물은 그대로 낸다
+        print(f"[컨센서스] 변화 이력 갱신 실패(본 파일은 계속): {type(exc).__name__}: {exc}")
     # write_data 경유(0-row 방어 + .json/.js 원자적 동시 기록). 예전엔 여기서만
     # atomic_write_text 를 직접 불러 공통 규약 밖에 있었다(2026-09-15 감사).
     import sec_client as sec_mod
@@ -750,7 +913,7 @@ def main() -> int:
         import sec_client as sec
         with repository_publish_lock(ROOT):
             if not sec.git_publish(
-                ["data/korea/consensus.json", "data/korea/consensus.js"],
+                ["data/korea/consensus.json", "data/korea/consensus.js", "data/korea/consensus_history.json"],
                 "KR analyst consensus",
             ):
                 return 1

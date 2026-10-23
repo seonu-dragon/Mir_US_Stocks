@@ -7078,6 +7078,10 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
   },
+  "공매도 거래비중": {
+    kr: { workflow: "Korea close briefing", script: "scripts/build_kr_short_volume.py" },
+    tabs: "공매도 패널 · 종목 분석",
+  },
   "회사 KPI": { us: { workflow: "Material events (SEC 8-K)", script: "scripts/build_earnings_releases.py" }, tabs: "종목 탭 · 분석 · 재무 · 회사 KPI" },
   "오늘의 이슈": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_market_issues.py --market us" },
@@ -7223,6 +7227,9 @@ function dataTrustSources() {
   // 시장 폭 추이(2026-10-22) — 스냅샷 직후 매일. 주말·연휴를 넘겨도 4일이면 넉넉하다. lazy.
   if (cfg.features?.marketBreadth !== false) rows.push(source("시장 폭 추이", "종목별 일봉 집계(자체 계산)", window.MARKET_BREADTH, ["rows"], 24 * 4, "매일", "marketBreadth"));
   if (cfg.id === "us" && cfg.features?.finraAts !== false) rows.push(source("다크풀(ATS) 비중", "FINRA OTC Transparency(ATS 주간)", window.FINRA_ATS, ["tickers"], 24 * 8, "화·금", "finraAts"));
+  // 국내 일일 공매도 거래비중(T+1, 2026-10-23 등록). 잔고(120h)와 같은 KRX 로그인을 쓰는데 신뢰도 센터·건강 감시에
+  // 프로필이 없어 신선도 관문 6일(144h)로만 봤다 — 10-20 로그인 만료(CD010)를 사흘 넘게 '정상'으로 보였다. lazy.
+  if (cfg.id === "kr" && cfg.features?.shortInterest !== false) rows.push(source("공매도 거래비중", "KRX 공매도 종합포털", window.KR_SHORT_VOLUME, ["rows"], 24 * 4, "T+1 매 거래일", "krShortVolume"));
   if (cfg.features?.shortInterest !== false) rows.push(source("공매도", cfg.id === "kr" ? "KRX 공매도 종합포털" : "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], cfg.id === "kr" ? 120 : 1080, cfg.id === "kr" ? "T+2 매 거래일" : "월 2회", "short"));
   if (cfg.features?.sec13f !== false) {
     const row = source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f");

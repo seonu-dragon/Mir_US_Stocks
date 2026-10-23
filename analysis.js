@@ -3182,6 +3182,30 @@ function renderInstitutionalFlowCard(result) {
   </div>`;
 }
 
+// 국내 일일 공매도 거래비중(거래대금 기준, KR_SHORT_VOLUME.history) 최근 추이 — 스파크라인 + 5일/N일 평균.
+// 데이터는 lazy(krShortVolume)라 처음엔 비어 있을 수 있다: 받으면 [data-kr-short-vol] 자리를 채운다.
+// 이력에 없는 종목(거래비중 상위 목록 밖)·빠진 날은 그대로 비워 둔다(메우지 않는다).
+let _krShortVolCardTried = false;
+function krShortVolTrendHtml(ticker) {
+  const SI = typeof window !== "undefined" ? window.MirShortInterest : null;
+  const v = typeof window !== "undefined" ? window.KR_SHORT_VOLUME : null;
+  if (!SI || !SI.volumeTrend || !v || !v.history) return "";
+  const t = SI.volumeTrend(v.history, ticker);
+  if (!t) return "";
+  const spark = SI.sparkSvg(t.values);
+  const txt = SI.fmtVolumeTrend(t);
+  if (!spark && !txt) return "";
+  return `${spark}${txt ? ` <span>거래대금 기준 ${escapeHtml(txt)}</span>` : ""}`;
+}
+function fillKrShortVolTrend() {
+  if (typeof document === "undefined") return;
+  document.querySelectorAll("[data-kr-short-vol]").forEach((el) => {
+    const html = krShortVolTrendHtml(el.getAttribute("data-kr-short-vol"));
+    el.innerHTML = html;
+    el.hidden = !html;
+  });
+}
+
 // 국내 공매도 잔고 — KRX 잔고비중(잔고 ÷ 상장주식수, T+2) 사실 표시. US 식 커버일수·스퀴즈 문구는 쓰지 않는다.
 function renderKrShortBalanceCard(result) {
   if (!isKrAnalysisMode()) return "";
@@ -3194,10 +3218,17 @@ function renderKrShortBalanceCard(result) {
   const md = (d) => (/^\d{4}$/.test(String(d)) ? `${String(d).slice(0, 2)}.${String(d).slice(2)}` : "");
   const trend = hist.length >= 2 ? `${md(hist[0].d)} ${Number(hist[0].r).toFixed(2)}% → ${md(hist[hist.length - 1].d)} ${Number(hist[hist.length - 1].r).toFixed(2)}%` : "";
   const date = String(s.settlementDate || "").slice(5).replace("-", ".");
+  const volTicker = String(s.ticker || "");
+  const volHtml = volTicker ? krShortVolTrendHtml(volTicker) : "";
+  if (volTicker && !window.KR_SHORT_VOLUME && !_krShortVolCardTried && typeof ensureFeatureData === "function") {
+    _krShortVolCardTried = true;
+    Promise.resolve(ensureFeatureData("krShortVolume")).then((ok) => { if (ok) fillKrShortVolTrend(); }).catch(() => {});
+  }
   return `<div class="card kr-short-card">
     <h3>공매도 잔고${date ? ` <span class="muted">${escapeHtml(date)} 기준</span>` : ""}</h3>
     <p class="base-line">잔고비중 <b>${ratio.toFixed(2)}%</b>${Number.isFinite(chg) ? ` <span class="muted">잔고 전기 대비 ${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%</span>` : ""}${Number.isFinite(trade) ? ` · 거래비중 <b>${trade.toFixed(1)}%</b>` : ""}</p>
     ${trend ? `<p class="muted" style="margin:0;font-size:12px;">${escapeHtml(trend)}</p>` : ""}
+    ${volTicker ? `<p class="muted kr-short-vol-trend" data-kr-short-vol="${escapeHtml(volTicker)}" style="margin:4px 0 0;font-size:12px;"${volHtml ? "" : " hidden"}>${volHtml}</p>` : ""}
   </div>`;
 }
 

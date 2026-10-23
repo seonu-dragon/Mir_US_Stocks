@@ -736,17 +736,13 @@ function applyShortLabels(isBal) {
 }
 
 // KR 상위 종목의 공매도 잔고비중 시계열(빌더가 history 로 부착). 잔고 증가=공매도 압력↑
-// 이라 상승 추세를 빨강으로 그린다. 없으면 빈 문자열.
+// 이라 상승 추세를 var(--pos)(국내 모드 빨강), 감소를 var(--neg)(파랑)로 그린다. 없으면 빈 문자열.
 function shortSparkline(hist) {
   if (!Array.isArray(hist) || hist.length < 3) return "";
   const vals = hist.map((p) => Number(p.r)).filter(Number.isFinite);
   if (vals.length < 3) return "";
-  const min = Math.min(...vals), max = Math.max(...vals), range = (max - min) || 1;
-  const W = 62, H = 18, n = vals.length;
-  const pts = vals.map((v, i) => `${(i / (n - 1) * W).toFixed(1)},${(H - (v - min) / range * H).toFixed(1)}`).join(" ");
-  const col = vals[vals.length - 1] >= vals[0] ? "#e5484d" : "#30a46c";
-  return `<svg class="short-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
-    + `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+  const SI = window.MirShortInterest;
+  return SI && SI.sparkSvg ? SI.sparkSvg(vals) : "";
 }
 
 // KR 일일 공매도 거래비중 보기(KR_SHORT_VOLUME). 잔고(T+2)와 별개의 일일 지표라
@@ -767,14 +763,27 @@ function renderKrShortVolume(payload, wrap, meta) {
   rows.sort((a, b) => (Number(b.ratioPct) || 0) - (Number(a.ratioPct) || 0));
   if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}종목 · 거래일 ${escapeHtml(payload.date || "")}${overheated.size ? ` · 과열 ${overheated.size}종목` : ""}`;
   if (!rows.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
+  // 최근 거래일 이력(빌더가 실제 받은 날만, 빠진 날은 메우지 않음). 2거래일 이상 쌓였을 때만 열을 낸다.
+  const SI = window.MirShortInterest;
+  const hist = payload.history;
+  const histDays = hist && Array.isArray(hist.dates) ? hist.dates.length : 0;
+  const showTrend = !!(SI && SI.volumeTrend && histDays >= 2);
+  const trendCell = (r) => {
+    const t = SI.volumeTrend(hist, r.ticker);
+    if (!t) return `<td class="ins-num short-spark-cell">—</td>`;
+    const avg = t.avg5 != null ? `<div class="ins-sub">5일 ${t.avg5.toFixed(2)}%</div>` : "";
+    return `<td class="ins-num short-spark-cell">${SI.sparkSvg(t.values)}${avg}</td>`;
+  };
   const body = rows.slice(0, 200).map((r, i) => `<tr>
     <td class="ins-date">${i + 1}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(tickerHint(r.ticker))}</div></td>
     <td class="ins-num"><strong>${Number.isFinite(Number(r.ratioPct)) ? `${Number(r.ratioPct).toFixed(2)}%` : "—"}</strong></td>
+    ${showTrend ? trendCell(r) : ""}
     <td class="ins-num">${krMoneyEok(r.shortValue)}</td>
     <td>${overheated.has(r.ticker) ? `<span class="ins-code ins-sell">과열</span>` : ""}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>#</th><th>종목</th><th class="ins-num">거래비중</th><th class="ins-num">공매도 거래대금</th><th>과열</th></tr></thead><tbody>${body}</tbody></table>`;
+  const trendHdr = showTrend ? `<th class="ins-num">추이(${histDays}거래일)</th>` : "";
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>#</th><th>종목</th><th class="ins-num">거래비중</th>${trendHdr}<th class="ins-num">공매도 거래대금</th><th>과열</th></tr></thead><tbody>${body}</tbody></table>`;
   delegateTickerClicks(wrap, ".ins-ticker");
 }
 

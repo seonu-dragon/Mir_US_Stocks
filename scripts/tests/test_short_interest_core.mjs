@@ -73,6 +73,53 @@ test("종목 요약: 있는 종목·없는 종목·결측", () => {
   assert.equal(S.tickerSummary(payload, ""), null);
 });
 
+// ── 국내 거래비중 이력 ──
+const H = {
+  dates: ["2026-10-14", "2026-10-15", "2026-10-16", "2026-10-21", "2026-10-22", "2026-10-23"],
+  series: {
+    FULL: [1, 2, 3, 4, 5, 6],
+    GAP: [1, null, 3, 4, 5, 6],          // 최근 5일 중 하나 비면 5일 평균 없음
+    FEW: [null, null, null, null, 2, 4],
+    BAD: [1, 2],                          // 길이 불일치 → 무시
+    NONE: [null, null, null, null, null, null],
+  },
+};
+
+test("volumeTrend: 5일 평균은 최근 5거래일 값이 다 있을 때만", () => {
+  const t = S.volumeTrend(H, "FULL");
+  assert.equal(t.avg5, 4);
+  assert.equal(t.n, 6);
+  assert.equal(t.avgN, 3.5);
+  assert.equal(t.last, 6);
+  assert.equal(S.volumeTrend(H, "GAP").avg5, null);
+  assert.equal(S.volumeTrend(H, "GAP").n, 5);
+  assert.equal(S.volumeTrend(H, "GAP").avgN, null);   // 실제 값 5개 → 긴 평균 생략(5일과 같은 정보)
+});
+
+test("volumeTrend: 없거나 깨진 이력은 null", () => {
+  assert.equal(S.volumeTrend(H, "BAD"), null);
+  assert.equal(S.volumeTrend(H, "NONE"), null);
+  assert.equal(S.volumeTrend(H, "MISSING"), null);
+  assert.equal(S.volumeTrend(null, "FULL"), null);
+  assert.equal(S.volumeTrend({ dates: [], series: {} }, "FULL"), null);
+});
+
+test("fmtVolumeTrend: 실제 개수로 라벨", () => {
+  assert.equal(S.fmtVolumeTrend(S.volumeTrend(H, "FULL")), "5일 평균 4.00% · 6일 평균 3.50%");
+  assert.equal(S.fmtVolumeTrend(S.volumeTrend(H, "FEW")), "");
+  assert.equal(S.fmtVolumeTrend(null), "");
+});
+
+test("sparkSvg: 빈칸에서 선을 끊고 색은 방향", () => {
+  const up = S.sparkSvg([1, null, 3, 4]);
+  assert.match(up, /var\(--pos\)/);
+  assert.equal((up.match(/M/g) || []).length, 2);     // 끊긴 두 구간
+  assert.match(S.sparkSvg([5, 4, 3]), /var\(--neg\)/);
+  assert.match(S.sparkSvg([2, 2]), /var\(--muted\)/);
+  assert.equal(S.sparkSvg([null, 3, null]), "");
+  assert.equal(S.sparkSvg([]), "");
+});
+
 if (failures.length) {
   console.error(`short-interest-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`);
   process.exit(1);

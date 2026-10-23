@@ -156,6 +156,43 @@ function renderEarningsInsight(item) {
   box.innerHTML = (cmp ? eiCompareHtml(cmp) : "") + relHtml;
 }
 
+// 오늘 › 캘린더 › 실적 일정 — 실적 시즌 스코어보드(S&P 500, window.EARNINGS_SCOREBOARD ←
+// scripts/build_earnings_scoreboard.py, Finnhub 실제 vs 컨센서스). 커버리지 n/구성 종목 수와 출처를 함께 적는다.
+// 블렌디드 성장률은 없다(빌더가 계산하지 않는다). 상회·하회는 주가 등락이 아니라 등락색을 쓰지 않는다.
+function earningsScoreboardSectionHtml() {
+  if (typeof isKrMarket === "function" && isKrMarket()) return "";
+  const p = window.EARNINGS_SCOREBOARD;
+  if (!p) { eiEnsure("earningsScoreboard"); return ""; }
+  const o = p.overall || {};
+  if (!o.n) return "";
+  const name = (s) => (typeof sectorShortName === "function" ? sectorShortName(s) : s);
+  const sectors = (p.sectors || []).map((s) => `<tr>
+      <th scope="row">${escapeHtml(name(s.sector))}</th>
+      <td class="ins-num">${Number(s.n) || 0}</td>
+      <td class="ins-num">${eiPct(s.beatPct)}</td>
+      <td class="ins-num">${eiPct(s.missPct)}</td>
+      <td class="ins-num">${eiPct(s.medianSurprisePct, true)}</td>
+      <td class="ins-num">${eiPct(s.revBeatPct)}</td>
+    </tr>`).join("");
+  return `
+    <details class="ei-cal es-board">
+      <summary>실적 시즌 스코어보드 · ${escapeHtml(p.universe || "S&P 500")} ${escapeHtml(p.season || "")} <span>발표 ${Number(o.n) || 0}/${Number(p.total) || "—"}</span></summary>
+      <div class="es-kpis">
+        <div><span>EPS 상회</span><strong>${eiPct(o.beatPct)}</strong></div>
+        <div><span>EPS 하회</span><strong>${eiPct(o.missPct)}</strong></div>
+        <div><span>서프라이즈 중앙값</span><strong>${eiPct(o.medianSurprisePct, true)}</strong></div>
+        <div><span>매출 상회</span><strong>${eiPct(o.revBeatPct)}</strong></div>
+      </div>
+      <div class="table-wrap">
+        <table class="insider-table ei-cal-table">
+          <thead><tr><th>섹터</th><th class="ins-num">발표</th><th class="ins-num">EPS 상회</th><th class="ins-num">EPS 하회</th><th class="ins-num">서프라이즈 중앙값</th><th class="ins-num">매출 상회</th></tr></thead>
+          <tbody>${sectors}</tbody>
+        </table>
+      </div>
+      <p class="ei-note">${escapeHtml(eiMd(p.from))}~${escapeHtml(eiMd(p.to))} 발표분 · 추정치 Finnhub 컨센서스(FactSet 집계 아님) · 기준 ${escapeHtml(p.updatedAtKst || "")}</p>
+    </details>`;
+}
+
 // 오늘 › 캘린더 › 실적 일정 — 표시 기간 안의 종목 중 비교 데이터가 있는 것만 표로.
 function earningsMoveCompareSectionHtml(items) {
   if (typeof isKrMarket === "function" && isKrMarket()) return "";

@@ -7107,6 +7107,8 @@ const TRUST_RECOVERY = {
     tabs: "시장 탭 · 시장 폭 · 시장 폭 추이",
   },
   "다크풀(ATS) 비중": { us: { workflow: "Short interest (Nasdaq/FINRA)", script: "scripts/build_finra_ats.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 다크풀(ATS) 거래 비중" },
+  "실적 시즌 스코어보드": { us: { workflow: "Daily US market snapshot", script: "scripts/build_earnings_scoreboard.py" }, tabs: "오늘 · 캘린더 · 실적 일정 · 실적 시즌 스코어보드" },
+  "공매도 거래량 비율 지수": { us: { workflow: "Daily US market snapshot", script: "scripts/build_finra_short_volume.py" }, tabs: "시장 탭 · 시장 폭 · 공매도 거래량 비율 지수" },
   "배당 결정": {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_corp_disclosures.py" },
     tabs: "종목검색 · 배당 서브탭",
@@ -7237,6 +7239,9 @@ function dataTrustSources() {
   if (cfg.id === "us" && cfg.features?.fdicBanks !== false) rows.push(source("은행 건전성(FDIC)", "FDIC BankFind 콜 리포트", window.FDIC_BANKS, ["banks"], 24 * 9, "매주", "fdicBanks"));
   // 시장 폭 추이(2026-10-22) — 스냅샷 직후 매일. 주말·연휴를 넘겨도 4일이면 넉넉하다. lazy.
   if (cfg.features?.marketBreadth !== false) rows.push(source("시장 폭 추이", "종목별 일봉 집계(자체 계산)", window.MARKET_BREADTH, ["rows"], 24 * 4, "매일", "marketBreadth"));
+  // 공매도 거래량 비율 지수(2026-10-23) — FINRA 일별(T+1), US 스냅샷 잡이 매일 다시 쓴다. 연휴 감안 5일. lazy.
+  if (cfg.id === "us") rows.push(source("실적 시즌 스코어보드", "Finnhub 실적 캘린더(실제 vs 컨센서스)", window.EARNINGS_SCOREBOARD, ["rows"], 24 * 5, "매일", "earningsScoreboard", "", true));
+  if (cfg.id === "us") rows.push(source("공매도 거래량 비율 지수", "FINRA 규정 SHO 일별 공매도 거래량(자체 가중 평균)", window.SHORT_VOLUME_INDEX, ["history"], 24 * 5, "매일", "shortVolIndex"));
   if (cfg.id === "us" && cfg.features?.finraAts !== false) rows.push(source("다크풀(ATS) 비중", "FINRA OTC Transparency(ATS 주간)", window.FINRA_ATS, ["tickers"], 24 * 8, "화·금", "finraAts"));
   // 국내 일일 공매도 거래비중(T+1, 2026-10-23 등록). 잔고(120h)와 같은 KRX 로그인을 쓰는데 신뢰도 센터·건강 감시에
   // 프로필이 없어 신선도 관문 6일(144h)로만 봤다 — 10-20 로그인 만료(CD010)를 사흘 넘게 '정상'으로 보였다. lazy.

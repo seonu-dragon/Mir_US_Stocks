@@ -5,7 +5,43 @@
 // renderMarketBreadth(app.js) 끝에서 불린다. 파일이 없거나 점이 모자라면 카드를 숨긴다.
 // 같은 파일의 sectors 로 '섹터별 시장 폭' 표(#sectorBreadthCard)도 그린다 — 50·200일선 위 비율, 1개월 변화, BPI.
 
+// 공매도 거래량 비율 지수 — data/short_volume_index.js(window.SHORT_VOLUME_INDEX, lazy·US 전용).
+// S&P 500 종목의 FINRA 장외 공매도 거래량 비율을 거래대금으로 가중 평균. 잔고가 아니고 매수·매도 해석을 붙이지 않는다.
+function renderShortVolumeIndex() {
+  const host = byId("shortVolIndexCard");
+  if (!host) return;
+  const core = window.MirBreadthHistoryCore;
+  const hide = () => { host.hidden = true; host.innerHTML = ""; };
+  if (!core || !core.svIndexStats || isKrMarket()) return hide();
+  const p = window.SHORT_VOLUME_INDEX;
+  if (!p) {
+    hide();
+    if (typeof ensureFeatureData === "function") ensureFeatureData("shortVolIndex").then((ok) => { if (ok && window.SHORT_VOLUME_INDEX) renderShortVolumeIndex(); });
+    return;
+  }
+  const s = core.svIndexStats(p);
+  if (!s) return hide();
+  const w = 100;
+  const h = 40;
+  const pct = (v) => `${Number(v).toFixed(1)}%`;
+  const avgY = (h - ((s.avg20 - s.dom[0]) / ((s.dom[1] - s.dom[0]) || 1)) * h).toFixed(2);
+  const facts = [`20일 평균 ${pct(s.avg20)}`, `구간 ${pct(s.min)}~${pct(s.max)}`];
+  if (s.pctile !== null) facts.push(`구간 내 백분위 ${s.pctile}`);
+  host.hidden = false;
+  host.innerHTML = `<div class="breadth-head"><h3>${escapeHtml(p.name || "공매도 거래량 비율 지수(S&P 500, 잔고 아님)")}</h3><span class="muted">${escapeHtml(s.last.d)} 기준</span></div>
+    <figure class="bh-panel svi-panel">
+      <figcaption><span>${escapeHtml(facts.join(" · "))}</span><strong>${escapeHtml(pct(s.last.v))}</strong></figcaption>
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="공매도 거래량 비율 지수 추이">
+        <line class="bh-base" x1="0" x2="${w}" y1="${avgY}" y2="${avgY}"></line>
+        <path class="bh-line" d="${core.linePath(s.pts, w, h, s.dom)}"></path>
+      </svg>
+      <div class="bh-foot"><span>${escapeHtml(core.shortDate(s.pts[0].d, s.last.d))}</span><span>점선 = 20일 평균</span><span>${escapeHtml(core.shortDate(s.last.d, s.last.d))}</span></div>
+    </figure>
+    <p class="muted svi-note">FINRA 장외 보고 거래량 중 공매도 비율의 거래대금 가중 평균 · ${s.last.n || ""}종목</p>`;
+}
+
 function renderBreadthHistory() {
+  renderShortVolumeIndex();
   const host = byId("breadthHistoryCard");
   if (!host) return;
   const core = window.MirBreadthHistoryCore;

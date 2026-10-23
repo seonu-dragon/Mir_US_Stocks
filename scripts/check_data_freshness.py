@@ -69,6 +69,8 @@ CHECKS = {
         # 오늘의 이슈(build_market_issues.py) — 이슈 0개가 정상인 날이 있어 0건은 보지 않는다.
         ("data/market_issues.json", 4, False),
         ("data/earnings_calendar.json", 5, False),
+        # 실적 시즌 스코어보드(build_earnings_scoreboard.py, US 스냅샷 잡). 시즌 첫날 0건이 정상이라 0건은 보지 않는다.
+        ("data/earnings_scoreboard.json", 5, False),
         ("data/options_stats.json", 4, False),
         # 옵션 포지션(build_options_flow.py, 스냅샷 뒤 continue-on-error 스텝). 0종목(count)도 잡는다.
         ("data/options_flow.json", 4, True),
@@ -77,6 +79,8 @@ CHECKS = {
         ("data/macro_indicators.json", 7, False),
         ("data/yield_curve.json", 7, False),
         ("data/finra_short_volume.json", 7, False),
+        # 같은 빌더의 S&P 500 공매도 거래량 비율 지수(누적 이력). 0건 = 이력 소실.
+        ("data/short_volume_index.json", 7, True),
         ("data/analyst_consensus.json", 10, False),
         ("data/federal_contracts.json", 10, False),
         ("data/pattern_stats.json", 10, False),
@@ -194,6 +198,8 @@ CHECKS = {
         # Form 144 매도 예정(build_form144.py, insider-trades.yml 의 다음 스텝). 추적 상위 1000종목이면
         # 하루 수십 건이 나와 45일 보관분이 0건일 수 없다 — 0건(count)도 잡는다.
         ("data/form144.json", 4, True),
+        # 푸시 워커용 내부자·13F 피드(build_push_smart_money.py, insider-trades.yml 의 다음 스텝). 조용한 주엔 0건이 정상.
+        ("data/push_smart_money.json", 4, False),
         # 의회 공시는 제출이 몰려 빈 날이 있지만 tradeCount 는 5년 누적이라
         # 0 이면 소스가 깨진 것이다.
         ("data/congress_trades.json", 8, True),

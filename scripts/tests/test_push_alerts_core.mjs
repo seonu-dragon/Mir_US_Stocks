@@ -296,6 +296,52 @@ test("의견·추정치(2026-10-21): 기본 꺼짐, 임계값 범위, 07:30 칸,
   for (const bad of ["매수", "매도", "추천합니다", "전망"]) assert.ok(!n.body.includes(bad), `금칙어 ${bad}`);
 });
 
+test("내부자·13F(2026-10-23): 기본 꺼짐, 15:00 칸, 창·중복·since·국내 제외, 상위 25 표기", () => {
+  const d = core.normalizePrefs({});
+  assert.equal(d.kinds.insider, false);
+  assert.equal(d.kinds.inst13f, false);
+  // 2026-09-29(화) 15:00 KST
+  assert.equal(core.planJobs(Date.UTC(2026, 8, 29, 6, 0)).jobs.smartMoneyUs, true);
+  assert.equal(core.planJobs(Date.UTC(2026, 8, 27, 6, 0)).jobs.smartMoneyUs, false, "일요일은 건너뛴다");
+  const lists = core.normalizeLists({ us: { watch: ["NVDA"], hold: [{ t: "AAPL", q: 1 }] }, kr: { watch: ["005930"] } });
+  const feed = {
+    insiderCols: ["t", "fd", "td", "owner", "rel", "code", "shares", "value", "plan"],
+    insider: [
+      ["NVDA", "2026-09-28", "2026-09-25", "Huang Jen-Hsun", "CEO", "S", 120000, 21500000, 1],
+      ["AAPL", "2026-09-29", "2026-09-26", "Doe Jane", "Director", "P", 1000, 230000, 0],
+      ["AAPL", "2026-09-20", "2026-09-18", "Old Row", "Director", "P", 10, 2000, 0],   // 4일 창 밖
+      ["MSFT", "2026-09-29", "2026-09-26", "Not Mine", "CFO", "S", 10, 4000, 0],      // 내 목록 밖
+      ["NVDA", "2026-09-29", "2026-09-26", "Gift", "CFO", "G", 10, 0, 0],             // P·S 아님
+    ],
+    instCols: ["t", "inst", "name", "kind", "q", "filed", "valueM", "seen"],
+    inst13f: [
+      ["AAPL", "pershing", "퍼싱 스퀘어", "new", "Q2 2026", "2026-08-14", 2093, "2026-09-28"],
+      ["NVDA", "berkshire", "버크셔 해서웨이", "out25", "Q2 2026", "2026-08-14", 95, "2026-09-27"],
+      ["NVDA", "tiger", "타이거", "exit", "Q2 2026", "2026-08-14", 50, "2026-09-01"],  // 7일 창 밖
+      ["AAPL", "x", "X", "weird", "Q2 2026", "", 1, "2026-09-28"],                     // 모르는 종류
+    ],
+  };
+  const prefs = { kinds: { insider: true, inst13f: true } };
+  const a = core.evaluateSmartMoney({ prefs, lists, market: "us", feed, fired: {}, today: "2026-09-29", since: "2026-09-01" });
+  assert.equal(a.length, 4, JSON.stringify(a.map((x) => x.text)));
+  assert.ok(a.some((x) => x.text === "AAPL 내부자 장내 매수 Doe Jane(Director) 1,000주 $230K (9/29 신고)"), JSON.stringify(a.map((x) => x.text)));
+  assert.ok(a.some((x) => x.text === "NVDA 내부자 장내 매도 Huang Jen-Hsun(CEO) 120,000주 $21.5M (9/28 신고 · 10b5-1 계획)"));
+  assert.ok(a.some((x) => x.text === "AAPL 13F 신규 편입 · 퍼싱 스퀘어 (Q2 2026 · 8/14 제출)"));
+  assert.ok(a.some((x) => x.text.startsWith("NVDA 13F 상위 25 보유에서 이탈 · 버크셔")));
+  assert.equal(core.evaluateSmartMoney({ prefs, lists, market: "kr", feed, fired: {}, today: "2026-09-29" }).length, 0);
+  assert.equal(core.evaluateSmartMoney({ prefs: {}, lists, market: "us", feed, fired: {}, today: "2026-09-29" }).length, 0, "기본 꺼짐");
+  assert.equal(core.evaluateSmartMoney({ prefs, lists, market: "us", feed: null, fired: {}, today: "2026-09-29" }).length, 0);
+  const since = core.evaluateSmartMoney({ prefs, lists, market: "us", feed, fired: {}, today: "2026-09-29", since: "2026-09-29" });
+  assert.deepEqual(since.map((x) => x.ticker), ["AAPL"], "구독 전 신고·처음 본 13F 는 보내지 않는다");
+  const fired = {};
+  a.forEach((x) => { fired[x.key] = "2026-09-29"; });
+  assert.equal(core.evaluateSmartMoney({ prefs, lists, market: "us", feed, fired, today: "2026-09-30" }).length, 0);
+  const n = core.composeAlertNotification(a.filter((x) => x.kind === "inst13f"), "us", { stamp: "x" });
+  assert.ok(n.body.includes("최대 45일 지연") && n.body.includes("사실 알림(추천 아님)"), n.body);
+  const n2 = core.composeAlertNotification(a.filter((x) => x.kind === "insider"), "us", { stamp: "x" });
+  assert.ok(n2.body.includes("SEC Form 4 신고"), n2.body);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length}건\n  ${failures.join("\n  ")}`);
   process.exit(1);

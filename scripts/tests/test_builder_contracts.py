@@ -32,7 +32,6 @@ LEGACY_DIRECT_WRITERS = frozenset({
     "build_breakout_retest",
     "build_cftc_cot",
     "build_federal_contracts",
-    "build_finra_short_volume",
     "build_insider_trades",
     "build_kiwoom_exports",
     "build_kr_corp_groups",

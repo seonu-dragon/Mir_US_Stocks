@@ -100,6 +100,14 @@ jobs:
         timeout-minutes: 5
         run: python scripts/build_finra_short_volume.py
 
+      # 실적 시즌 스코어보드(Finnhub 실적 캘린더 실제 vs 추정, S&P 500). 주 단위 몇 번 호출. 실패해도 계속.
+      - name: Build earnings season scoreboard (Finnhub)
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: python scripts/build_earnings_scoreboard.py
+
       # 옵션 심리(풋콜·맥스페인, Yahoo 크럼). 실패해도 스냅샷 갱신 계속.
       - name: Build US options stats (Yahoo)
         continue-on-error: true

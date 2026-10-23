@@ -89,6 +89,23 @@ test("sectorRows: 최신값·1개월 변화·BPI, 50일선 위 높은 순", () =
   assert.deepEqual(core.sectorRows(null), []);
 });
 
+test("svIndexStats: 최신값·20일 평균·백분위(60점 이상만)", () => {
+  const hist = [];
+  for (let i = 0; i < 80; i += 1) hist.push({ d: `2026-01-${String(i).padStart(3, "0")}`, v: 40 + (i % 10), n: 500 });
+  const s = core.svIndexStats({ history: hist });
+  assert.equal(s.pts.length, 80);
+  assert.equal(s.last.v, 49);
+  assert.equal(s.min, 40);
+  assert.equal(s.max, 49);
+  assert.equal(s.pctile, 100);
+  assert.equal(s.avg20, 44.5);
+  assert.ok(s.dom[0] < 40 && s.dom[1] > 49);
+  assert.equal(core.svIndexStats({ history: hist.slice(0, 10) }).pctile, null);
+  assert.equal(core.svIndexStats({ history: [hist[0]] }), null);
+  assert.equal(core.svIndexStats(null), null);
+  assert.equal(core.svIndexStats({ history: hist }, 30).pts.length, 30);
+});
+
 if (failures.length) {
   console.error(`breadth-history-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`);
   process.exit(1);

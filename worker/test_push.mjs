@@ -462,6 +462,37 @@ await test("크론(07:30 KST): 애널리스트 의견·목표가·EPS 추정치 
   eq((await runCron(env3, now, { fetchImpl: f4.impl })).sent, 0, "사흘 넘게 묵은 추정치 파일은 쓰지 않는다");
 });
 
+await test("크론(15:00 KST): 내부자 장내 매수·매도·13F 변화 알림, 켠 구독만, 파일은 켠 사람이 있을 때만", async () => {
+  const now = Date.UTC(2026, 8, 29, 6, 0); // 2026-09-29(화) 15:00 KST
+  const feed = {
+    insiderCols: ["t", "fd", "td", "owner", "rel", "code", "shares", "value", "plan"],
+    insider: [
+      ["NVDA", "2026-09-29", "2026-09-26", "Huang Jen-Hsun", "CEO", "S", 120000, 21500000, 1],
+      ["MSFT", "2026-09-29", "2026-09-26", "Not Mine", "CFO", "S", 10, 4000, 0],
+    ],
+    instCols: ["t", "inst", "name", "kind", "q", "filed", "valueM", "seen"],
+    inst13f: [["AAPL", "pershing", "Pershing", "new", "Q2 2026", "2026-08-14", 2093, "2026-09-29"]],
+  };
+  const env = await makeEnv();
+  await seed(env, { prefs: { kinds: { insider: true, inst13f: true, disclosure: false, earnings: false } } }, "sm");
+  await seed(env, {}, "off");
+  const f = fakeFetch({ data: { "push_smart_money.json": feed } });
+  const s = await runCron(env, now, { fetchImpl: f.impl });
+  ok(s.jobs.includes("smartMoneyUs"), `jobs=${s.jobs}`);
+  eq(s.sent, 1, "켠 구독 1건만");
+  const msg = await openPush(f.sent[0]);
+  ok(msg.body.includes("NVDA 내부자 장내 매도 Huang Jen-Hsun(CEO) 120,000주 $21.5M (9/29 신고 · 10b5-1 계획)"), msg.body);
+  ok(msg.body.includes("AAPL 13F 신규 편입 · Pershing (Q2 2026 · 8/14 제출)"), msg.body);
+  ok(!msg.body.includes("MSFT"), msg.body);
+  ok(msg.body.includes("최대 45일 지연"), msg.body);
+  eq((await runCron(env, now + 86400000, { fetchImpl: fakeFetch({ data: { "push_smart_money.json": feed } }).impl })).sent, 0, "같은 신고·같은 13F 변화는 다시 안 보낸다");
+  const env2 = await makeEnv();
+  await seed(env2, {}, "only-off");
+  const f2 = fakeFetch({ data: { "push_smart_money.json": feed } });
+  await runCron(env2, now, { fetchImpl: f2.impl });
+  ok(!f2.calls.some((u) => u.includes("push_smart_money")), "아무도 안 켰으면 파일을 받지 않는다");
+});
+
 await test("크론: 할 일 없는 칸(주말 새벽)은 아무것도 부르지 않는다", async () => {
   const env = await makeEnv();
   await seed(env);

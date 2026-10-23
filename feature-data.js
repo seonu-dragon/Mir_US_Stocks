@@ -106,8 +106,12 @@ const FEATURE_DATA = {
   earningsReleases: { global: "EARNINGS_RELEASES", path: "data/earnings_releases.js", usOnly: true },
   // 10-Q·10-K MD&A 한국어 요약 + 직전 대비 달라진 점(build_mda_summaries.py, 시총 상위 40, ~60KB). 종목 이벤트·공시 탭에서만(lazy, mda-summary.js).
   mdaSummaries: { global: "MDA_SUMMARIES", path: "data/mda_summaries.js", usOnly: true, lazy: true },
+  // 실적 시즌 스코어보드(build_earnings_scoreboard.py, Finnhub). S&P 500 이번 시즌 발표분 집계. US 전용.
+  earningsScoreboard: { global: "EARNINGS_SCOREBOARD", path: "data/earnings_scoreboard.js", usOnly: true, lazy: true },
   // FINRA 일일 공매도 거래량(통합). 미국만 공개라 US 전용.
   finraShort: { global: "FINRA_SHORT_VOLUME", path: "data/finra_short_volume.js", usOnly: true },
+  // 같은 빌더의 시장 단위 지수(S&P 500 거래대금 가중 공매도 거래량 비율, 누적 이력 ~14KB). 시장 폭 카드.
+  shortVolIndex: { global: "SHORT_VOLUME_INDEX", path: "data/short_volume_index.js", usOnly: true, lazy: true },
   // 배당 + 다음 실적 예정일(Yahoo). US 전용(KR 은 별도 배당 트래커가 있음).
   usCalendar: { global: "US_STOCK_CALENDAR", path: "data/us_calendar.js", usOnly: true },
   // US 증자·희석(S-3/S-3ASR/424B5 등 SEC 등록서류). 종목검색 탭 첫 진입 때만 시도

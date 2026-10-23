@@ -649,7 +649,8 @@ function renderEarningsCalendarMarket(rows) {
 
   if (!items.length) {
     const reason = earnWatchOnly ? "관심종목 중 " : earnSector !== "all" ? "이 섹터에서 " : "";
-    body.innerHTML = `<p class="muted">선택 기간에 ${reason}실적 발표 예정 종목이 없습니다. 필터를 넓히거나 범위를 바꿔 보세요.</p>`;
+    const board = typeof earningsScoreboardSectionHtml === "function" ? earningsScoreboardSectionHtml() : "";
+    body.innerHTML = `${board}<p class="muted">선택 기간에 ${reason}실적 발표 예정 종목이 없습니다. 필터를 넓히거나 범위를 바꿔 보세요.</p>`;
     return;
   }
 
@@ -675,7 +676,9 @@ function renderEarningsCalendarMarket(rows) {
   const body_html = earnView === "calendar" ? earningsCalendarGrid(items, today) : earningsListView(items, today);
   // 실적 전 비교(과거 반응 vs 옵션 예상변동폭) — earnings-insight.js, US 전용.
   const compareHtml = typeof earningsMoveCompareSectionHtml === "function" ? earningsMoveCompareSectionHtml(items) : "";
-  body.innerHTML = highlightHtml + compareHtml + body_html;
+  // 실적 시즌 스코어보드(S&P 500 발표분 상회·하회 집계) — earnings-insight.js, US 전용.
+  const boardHtml = typeof earningsScoreboardSectionHtml === "function" ? earningsScoreboardSectionHtml() : "";
+  body.innerHTML = boardHtml + highlightHtml + compareHtml + body_html;
 
   delegateTickerClicks(body, "[data-ticker]");
 }

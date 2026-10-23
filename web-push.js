@@ -369,6 +369,8 @@ function renderPushAlerts() {
       <label class="watch-alert-toggle-only">${chk("pushUseDisclosure", p.kinds.disclosure)}<span>새 공시(미국 8-K · 국내 DART 주요 공시)</span></label>
       <label>${chk("pushUseRating", p.kinds.rating)}<span>미국 애널리스트 의견 상향·하향 · 목표가 ±</span><input id="pushTargetPct" type="number" min="5" max="100" step="1" value="${p.targetPct}" aria-label="목표가 변경 기준 퍼센트"${dis}><em>%</em></label>
       <label>${chk("pushUseEstimate", p.kinds.estimate)}<span>미국 EPS 추정치 7일 ±</span><input id="pushEstPct" type="number" min="1" max="50" step="0.5" value="${p.estPct}" aria-label="EPS 추정치 변화 기준 퍼센트"${dis}><em>%</em></label>
+      <label class="watch-alert-toggle-only">${chk("pushUseInsider", p.kinds.insider)}<span>관심 종목 내부자 장내 매수/매도(미국 Form 4)</span></label>
+      <label class="watch-alert-toggle-only">${chk("pushUseInst13f", p.kinds.inst13f)}<span>관심 종목 13F 신규 편입/청산(추적 기관 · 최대 45일 지연)</span></label>
       <div class="push-alert-digest"><label class="watch-alert-toggle-only">${chk("pushUseDigest", p.kinds.digest)}<span>하루 한 번 '오늘 내 주식은' 요약</span></label>
         <span class="push-alert-markets"><label>${chk("pushDigestUs", p.digestMarkets.includes("us"))}<span>미국 07:30</span></label><label>${chk("pushDigestKr", p.digestMarkets.includes("kr"))}<span>국내 20:00</span></label></span></div>
       <label class="watch-alert-toggle-only">${chk("pushUseSync", p.useSync)}<span>클라우드 동기화 목록 자동 사용(다른 기기에서 바꾼 관심·보유도 반영)</span></label>
@@ -398,6 +400,8 @@ function mirPushReadPrefsFromUi(prev) {
       digest: Boolean(v("pushUseDigest") && v("pushUseDigest").checked),
       rating: Boolean(v("pushUseRating") && v("pushUseRating").checked),
       estimate: Boolean(v("pushUseEstimate") && v("pushUseEstimate").checked),
+      insider: Boolean(v("pushUseInsider") && v("pushUseInsider").checked),
+      inst13f: Boolean(v("pushUseInst13f") && v("pushUseInst13f").checked),
     },
     movePct: v("pushMovePct") ? v("pushMovePct").value : prev.movePct,
     targetPct: v("pushTargetPct") ? v("pushTargetPct").value : prev.targetPct,

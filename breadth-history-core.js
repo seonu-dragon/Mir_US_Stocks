@@ -114,7 +114,24 @@
     return `${ry && ry !== y ? `${y.slice(2)}/` : ""}${Number(m)}/${Number(d)}`;
   }
 
-  const api = { PANELS, panelLabel, sectorRows, series, summary, domain, linePath, baselineY, fmtValue, fmtChange, shortDate };
+  /** 공매도 거래량 비율 지수(window.SHORT_VOLUME_INDEX, build_finra_short_volume.py) 요약.
+   *  최근 span(기본 250거래일)만 그린다. 백분위 = 그 구간에서 최신값 이하인 날의 비율(60점 미만이면 null).
+   *  반환: { pts, last, avg20, min, max, pctile, dom } 또는 점이 2개 미만이면 null. */
+  function svIndexStats(payload, span = 250) {
+    const hist = payload && Array.isArray(payload.history) ? payload.history : [];
+    const pts = hist.filter((r) => r && typeof r.d === "string" && Number.isFinite(r.v)).slice(-span).map((r) => ({ d: r.d, v: r.v, n: r.n }));
+    if (pts.length < 2) return null;
+    const vals = pts.map((p) => p.v);
+    const last = pts[pts.length - 1];
+    const tail = vals.slice(-20);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const pctile = pts.length >= 60 ? Math.round((vals.filter((v) => v <= last.v).length / vals.length) * 100) : null;
+    const pad = Math.max(0.5, (max - min) * 0.08);
+    return { pts, last, avg20: Math.round((tail.reduce((a, b) => a + b, 0) / tail.length) * 100) / 100, min, max, pctile, dom: [min - pad, max + pad] };
+  }
+
+  const api = { PANELS, panelLabel, sectorRows, series, summary, domain, linePath, baselineY, fmtValue, fmtChange, shortDate, svIndexStats };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirBreadthHistoryCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

@@ -1,0 +1,80 @@
+name: US Market Close Data (SNS)
+
+on:
+  # Morning data for the "미장 마감 브리핑" blog: index / sector / macro closes (yfinance) and RSS
+  # headlines into 00_data_brief.md. No AI here: the Claude Code scheduled task picks and checks the
+  # five signals from this commit. Woken by the Cloudflare worker mir-cron (UTC cron below).
+  # 21:25 UTC = 06:25 KST the next day, after the US close in both EDT (05:00 KST) and EST (06:00 KST).
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # mir-cron: "25 21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -r SNS/Naver/automation/requirements_us_market.txt requests
+
+      - name: Collect US close data
+        run: python SNS/Naver/automation/workflows/us_market_close_workflow.py
+
+      - name: Commit daily data
+        shell: bash
+        run: |
+          DATE_KST=$(TZ=Asia/Seoul date +%F)
+          BRIEF="SNS/Naver/02_daily_work/${DATE_KST}/us_market_close/00_data_brief.md"
+          if [ ! -f "${BRIEF}" ]; then
+            echo "No brief for ${DATE_KST} (NYSE holiday)."
+            exit 0
+          fi
+          STATUS="SNS/Naver/02_daily_work/${DATE_KST}/us_market_close/status/00_data.done"
+          mkdir -p "$(dirname "${STATUS}")"
+          printf '{"stage":"us_data","completed_at":"%s","brief":"%s"}\n' "$(TZ=Asia/Seoul date -Iseconds)" "${BRIEF}" > "${STATUS}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${BRIEF}" "${STATUS}"
+          if git diff --cached --quiet; then
+            echo "No new data to commit."
+            exit 0
+          fi
+          git commit -m "chore: add ${DATE_KST} US market close data"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "push attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          exit 1
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

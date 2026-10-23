@@ -926,6 +926,7 @@ html[data-market="kr"][data-theme="dark"] {
           <button class="sub-tab is-active" data-sub="chart">섹터 차트 비교</button>
           <button class="sub-tab" data-sub="etf-rs">ETF 상대강도 순위</button>
           <button class="sub-tab" data-sub="rrg">RRG 회전</button>
+          <button class="sub-tab" data-sub="groups">업종 순위</button>
           <button class="sub-tab" data-sub="etf-lev">레버리지·인버스 ETF</button>
         </nav>
 
@@ -1184,6 +1185,20 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="rrg-wrap" id="rrgWrap"></div>
           <div class="rrg-legend" id="rrgLegend"></div>
         </div>
+
+        <!-- 업종 순위(industry-groups.js renderIndustryGroups) — market_breadth 파일의 groups, lazy -->
+        <div class="sub-panel" id="sub-groups">
+          <div class="section-title">
+            <h2>업종 순위</h2>
+          </div>
+          <div class="rrg-controls ig-controls">
+            <label>기간 <select id="igPeriod"></select></label>
+            <label>가중 <select id="igWeight"></select></label>
+            <label>섹터 <select id="igSector"></select></label>
+            <span class="muted" id="industryGroupsMeta"></span>
+          </div>
+          <div id="industryGroupsWrap"></div>
+        </div>
         </div>
         <div class="tab-leaf" id="tab-health">
           <div class="section-title">
@@ -1194,6 +1209,8 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="breadth-card" id="marketBreadthCard" aria-label="시장 폭 지표"></section>
           <!-- 시장 폭 추이(breadth-history.js renderBreadthHistory) — 종목별 일봉 집계, 시장별 파일(lazy) -->
           <section class="breadth-card bh-card" id="breadthHistoryCard" aria-label="시장 폭 추이" hidden></section>
+          <!-- 섹터별 시장 폭(breadth-history.js renderSectorBreadth) — 같은 market_breadth 파일의 sectors -->
+          <section class="breadth-card bh-card" id="sectorBreadthCard" aria-label="섹터별 시장 폭" hidden></section>
           <div class="markets-tables" id="marketsTables"></div>
           <p class="ia-footnote"><button type="button" class="ia-link" data-open="trust">데이터 신뢰도 센터 열기</button></p>
         </div>
@@ -3545,6 +3562,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="ats.js"></script>
     <script src="breadth-history-core.js"></script>
     <script src="breadth-history.js"></script>
+    <script src="industry-groups-core.js"></script>
+    <script src="industry-groups.js"></script>
     <script src="fdic-banks-core.js"></script>
     <script src="fdic-banks.js"></script>
     <script src="options-flow-core.js"></script>

@@ -1,7 +1,8 @@
 // 시장 폭 추이 — 순수 계산 모듈(DOM 없음).
 // 브라우저 window.MirBreadthHistoryCore, node 테스트 scripts/tests/test_breadth_history_core.mjs.
 // 입력 window.MARKET_BREADTH(scripts/build_market_breadth.py, 시장별 파일):
-//   { updatedAtKst, market, universe, count, rows: [{d, n, above50, above200, adv, dec, adLine, mcclellan, nh, nl}, …] }
+//   { updatedAtKst, market, universe, count, indexLabel, rows: [{d, n, above50, above200, adv, dec, adLine, mcclellan, nh, nl, bpi, bpiIdx}, …],
+//     sectors: [{name, n, above50: [rows 길이], above200: [...], bpi}] }
 (function (root) {
   "use strict";
 
@@ -11,7 +12,36 @@
     { key: "above200", label: "200일선 위 종목 비율", unit: "%", axis: "pct" },
     { key: "mcclellan", label: "맥클렐런 오실레이터", unit: "", axis: "zero" },
     { key: "nhnl", label: "52주 신고가 − 신저가", unit: "개", axis: "zero" },
+    // 강세 비율 지수 — 3박스 반전 P&F 최근 신호가 매수인 종목 비율. bpiIdx 의 이름은 payload.indexLabel(S&P 500 · 코스피 200).
+    { key: "bpiIdx", label: "BPI", unit: "%", axis: "pct", indexLabel: true },
+    { key: "bpi", label: "BPI · 전체", unit: "%", axis: "pct" },
   ];
+
+  /** 패널 이름 — 지수 BPI 는 'BPI · S&P 500' 처럼 payload 의 지수 이름을 붙인다. */
+  function panelLabel(def, payload) {
+    if (def.indexLabel && payload && payload.indexLabel) return `${def.label} · ${payload.indexLabel}`;
+    return def.label;
+  }
+
+  /** 섹터 표 행 — 최신 50·200일선 위 비율, lookback(기본 21거래일) 전 대비 변화, BPI. 50일선 위 비율 높은 순. */
+  function sectorRows(payload, lookback = 21) {
+    const list = (payload && Array.isArray(payload.sectors)) ? payload.sectors : [];
+    const lastOf = (arr) => {
+      if (!Array.isArray(arr)) return { v: null, chg: null };
+      let i = arr.length - 1;
+      while (i >= 0 && !Number.isFinite(arr[i])) i -= 1;
+      if (i < 0) return { v: null, chg: null };
+      const j = i - lookback;
+      const base = j >= 0 && Number.isFinite(arr[j]) ? arr[j] : null;
+      return { v: arr[i], chg: base === null ? null : Math.round((arr[i] - base) * 10) / 10 };
+    };
+    return list.filter((s) => s && s.name).map((s) => {
+      const a = lastOf(s.above50);
+      const b = lastOf(s.above200);
+      return { name: s.name, n: s.n, above50: a.v, chg50: a.chg, above200: b.v, chg200: b.chg,
+        bpi: Number.isFinite(s.bpi) ? s.bpi : null };
+    }).sort((x, y) => (Number.isFinite(y.above50) ? y.above50 : -1) - (Number.isFinite(x.above50) ? x.above50 : -1));
+  }
 
   /** rows → 패널 값 [{d, v}] (null 제외). nhnl 은 nh − nl. */
   function series(payload, key) {
@@ -84,7 +114,7 @@
     return `${ry && ry !== y ? `${y.slice(2)}/` : ""}${Number(m)}/${Number(d)}`;
   }
 
-  const api = { PANELS, series, summary, domain, linePath, baselineY, fmtValue, fmtChange, shortDate };
+  const api = { PANELS, panelLabel, sectorRows, series, summary, domain, linePath, baselineY, fmtValue, fmtChange, shortDate };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirBreadthHistoryCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

@@ -65,6 +65,30 @@ test("표기", () => {
   assert.equal(core.shortDate("2025-10-21", "2026-10-21"), "25/10/21");
 });
 
+test("BPI 패널 이름은 지수 이름을 붙인다", () => {
+  const def = core.PANELS.find((x) => x.key === "bpiIdx");
+  assert.equal(core.panelLabel(def, { indexLabel: "S&P 500" }), "BPI · S&P 500");
+  assert.equal(core.panelLabel(def, {}), "BPI");
+  assert.equal(core.series({ rows: [{ d: "2026-10-01", bpiIdx: 48.7 }, { d: "2026-10-02" }] }, "bpiIdx").length, 1);
+});
+
+test("sectorRows: 최신값·1개월 변화·BPI, 50일선 위 높은 순", () => {
+  const a50 = Array.from({ length: 30 }, (_, i) => 20 + i);
+  const rows = core.sectorRows({ sectors: [
+    { name: "ENERGY", n: 40, above50: a50, above200: [null, 50], bpi: 61.5 },
+    { name: "TECH", n: 90, above50: [...a50.slice(0, 29), null].map((v) => (v === null ? null : v + 30)), above200: [], bpi: null },
+  ] });
+  assert.equal(rows[0].name, "TECH");
+  assert.equal(rows[0].above50, 78);           // 끝의 null 은 건너뛰고 그 앞 값
+  assert.equal(rows[0].chg50, 21);
+  assert.equal(rows[1].above50, 49);
+  assert.equal(rows[1].chg50, 21);
+  assert.equal(rows[1].above200, 50);
+  assert.equal(rows[1].chg200, null);          // 21거래일 전 값 없음
+  assert.equal(rows[1].bpi, 61.5);
+  assert.deepEqual(core.sectorRows(null), []);
+});
+
 if (failures.length) {
   console.error(`breadth-history-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`);
   process.exit(1);

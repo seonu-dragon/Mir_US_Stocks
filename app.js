@@ -3499,6 +3499,7 @@ function setupEvents() {
       if (btn.dataset.sub === "etf-rs") renderSectorEtfRelativeStrength();
       if (btn.dataset.sub === "etf-lev") ensureFeatureData("leveraged").then(() => renderLeveragedEtfPage());
       if (btn.dataset.sub === "rrg") renderRrg();
+      if (btn.dataset.sub === "groups" && typeof renderIndustryGroups === "function") renderIndustryGroups();
     });
   });
   byId("rrgTail")?.addEventListener("change", renderRrg);

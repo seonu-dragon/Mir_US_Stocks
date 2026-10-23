@@ -19,6 +19,7 @@
     insider: { label: "내 종목 내부자 매매", markets: ["us"] },
     targets: { label: "내 종목 목표가·의견 변경", markets: ["us", "kr"] },
     calendar: { label: "다가오는 시장 일정", markets: ["us", "kr"] },
+    valueTrend: { label: "평가액 추이", markets: ["us", "kr"] },
   };
   const DEFAULT = ["regime", "watch", "issues", "movers"];
 

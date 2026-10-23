@@ -17657,3 +17657,44 @@ html[data-theme="dark"] {
   .cmp-fin-grid { grid-template-columns: minmax(0, 1fr); }
 }
 /* === 종목 비교 end === */
+/* === 내 투자: 세후 배당·금융소득 계기판·평가액 기록·집중 한도(2026-10-23) === */
+.div-tax-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 8px; }
+.div-tax-seg button { min-height: 30px; font-size: var(--fs-cap); }
+.div-tax-set { position: relative; }
+.div-tax-set > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font-size: var(--fs-cap); }
+.div-tax-set > summary::-webkit-details-marker { display: none; }
+.div-tax-pop { position: absolute; z-index: var(--z-popover, 20); top: calc(100% + 4px); left: 0; display: flex; flex-direction: column; gap: 6px; min-width: 200px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); font-size: var(--fs-cap); }
+.pl-set .div-tax-pop { left: auto; right: 0; }
+.div-tax-pop label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.div-tax-pop input { width: 72px; }
+.div-taxfree { text-align: center; }
+.fin-gauge { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); }
+.fin-gauge-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; font-size: var(--fs-cap); color: var(--text-2); }
+.fin-gauge-head strong { font-size: var(--fs-body); color: var(--text); font-variant-numeric: tabular-nums; }
+.fin-gauge-head small { font-weight: 500; color: var(--text-muted); }
+.fin-bar { display: flex; height: 10px; margin: 8px 0 6px; border-radius: 5px; overflow: hidden; background: var(--surface-3); }
+.fin-bar i, .fin-note i { display: block; height: 100%; }
+.fin-bar .is-paid, .fin-note .is-paid { background: var(--text-2); }
+.fin-bar .is-rest, .fin-note .is-rest { background: color-mix(in srgb, var(--text-2) 40%, transparent); }
+.fin-note { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; font-size: var(--fs-cap); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.fin-note i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 2px; vertical-align: middle; }
+.fin-over { color: var(--bad); font-weight: 600; }
+.fin-basis { margin: 4px 0 0; font-size: 11px; }
+.ph-chart { display: block; width: 100%; touch-action: pan-y; }
+.ph-value { fill: none; stroke: var(--text); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ph-principal { fill: none; stroke: var(--text-muted); stroke-width: 1.4; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.ph-dot, .ph-dot-p { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.ph-dot { stroke: var(--text); stroke-width: 6; }
+.ph-dot-p { stroke: var(--text-muted); stroke-width: 5; }
+.ph-legend span { display: inline-block; width: 14px; margin: 0 5px 0 2px; vertical-align: middle; }
+.ph-k-value { border-top: 2px solid var(--text); }
+.ph-k-principal { border-top: 2px dashed var(--text-muted); }
+.pl-list { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: var(--fs-sub); }
+.pl-list li { display: flex; gap: 8px; align-items: flex-start; }
+.pl-mark { flex: 0 0 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--panel); }
+.pl-list .is-pass .pl-mark { background: var(--good); }
+.pl-list .is-warn .pl-mark { background: var(--bad); }
+.pl-state { font-size: var(--fs-cap); font-weight: 600; }
+.pl-list .is-pass .pl-state { color: var(--good); }
+.pl-list .is-warn .pl-state { color: var(--bad); }
+.pl-detail { color: var(--text-2); font-variant-numeric: tabular-nums; }

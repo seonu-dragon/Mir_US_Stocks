@@ -2679,6 +2679,9 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </section>
         <section class="etfh-card lt-card" id="lookthroughCard" hidden></section>
+        <!-- 평가액·원금 추이(방문한 날 기록) · 집중 한도 점검(my-invest.js) -->
+        <section class="my-trend-card pf-hist-card" id="pfValueHistCard" hidden aria-label="평가액 추이"></section>
+        <section class="my-trend-card pf-limit-card" id="pfLimitCard" hidden aria-label="집중 한도 점검"></section>
         </div>
 
         <div class="sub-panel" id="sub-bulk-watch">
@@ -3130,7 +3133,9 @@ html[data-market="kr"][data-theme="dark"] {
               <div><h3>배당 캘린더 · 현금흐름</h3></div>
               <strong id="dividendPlannerTotal">연 $0</strong>
             </div>
+            <div class="div-tax-bar" id="dividendTaxBar"></div>
             <div class="portfolio-tool-summary" id="dividendPlannerSummary"></div>
+            <div class="fin-gauge" id="dividendFinGauge" hidden></div>
             <div class="portfolio-tool-table" id="dividendPlannerTable"></div>
             <div class="dividend-month-grid" id="dividendMonthGrid"></div>
           </section>

@@ -29,6 +29,12 @@ test("add·remove·move·addable", () => {
   assert.ok(core.addable(l, "us").some((w) => w.id === "uoa"));
 });
 
+test("평가액 추이 위젯은 두 시장 모두", () => {
+  assert.ok(core.available("us").includes("valueTrend"));
+  assert.ok(core.available("kr").includes("valueTrend"));
+  assert.equal(core.WIDGETS.valueTrend.label, "평가액 추이");
+});
+
 test("dropPastEarnings: 지난 '다음 실적' 날짜·깨진 값 제외, 오늘은 남김", () => {
   const rows = [{ ticker: "UL", nextDate: "2026-07-28" }, { ticker: "JNJ", nextDate: "2026-10-13" },
     { ticker: "AAPL", nextDate: "2026-10-22" }, { ticker: "NVDA", nextDate: "2026-11-19T00:00:00" }, { ticker: "X", nextDate: null }];

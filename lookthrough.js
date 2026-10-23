@@ -15,6 +15,11 @@
   const TOP_N = 15;
   let renderSeq = 0;
   let importState = null;   // { preview, fileName, replace }
+  // 마지막 룩스루 결과(집중 한도 점검 my-invest.js 가 다시 쓴다) — { key, r }. key = 시장 + 보유 평가액 목록.
+  let lastResult = null;
+  function positionsKey(positions) {
+    return `${isKrMarket() ? "kr" : "us"}|${positions.map((p) => `${p.ticker}:${Math.round(p.value)}`).sort().join(",")}`;
+  }
 
   const SPECIAL_SECTOR = {
     MISC: "기타",
@@ -123,14 +128,18 @@
     const seq = ++renderSeq;
     // 시장을 바꾸면 열려 있던 가져오기 미리보기(다른 시장 종목 매칭)는 닫는다.
     if (importState && importState.market !== (isKrMarket() ? "kr" : "us")) closeImport();
-    if (!core || !etfTickers.length) { host.hidden = true; host.innerHTML = ""; return; }
+    if (!core || !etfTickers.length) { lastResult = null; host.hidden = true; host.innerHTML = ""; return; }
     host.hidden = false;
     if (!host.innerHTML) host.innerHTML = foldHtml("ETF 구성 자료를 불러오는 중…", "", false);
     bind(host);
     loadEtfData(etfTickers).then((d) => {
       if (seq !== renderSeq) return;
       const sectorOf = (t) => { const s = stockByTicker(t); return s && !isStockEtf(s) ? s.sector : null; };
-      const r = core.computeLookthrough({ positions, etfs: d.etfs, missing: d.missing, sectorOf, topN: TOP_N });
+      // 노출은 전부 계산해 두고(한도 점검이 상위 밖 종목도 본다) 표에는 상위 TOP_N 만.
+      const full = core.computeLookthrough({ positions, etfs: d.etfs, missing: d.missing, sectorOf, topN: 1000 });
+      lastResult = { key: positionsKey(positions), r: full };
+      if (typeof renderMyInvLimits === "function") renderMyInvLimits();
+      const r = { ...full, exposures: full.exposures.slice(0, TOP_N) };
       const etfShare = Math.max(0, 100 - r.coverage.directPct);
       const open = ltUserOpen == null ? etfShare >= LT_OPEN_SHARE : ltUserOpen;
       const summary = `ETF 비중 ${pct(etfShare)} · 실제 종목 ${r.exposureCount}개로 펼쳐 보기`;
@@ -347,6 +356,11 @@
 
   window.MirLookthrough = {
     onPortfolioRender: render,
+    // 집중 한도 점검용: 지금 보유와 같은 구성으로 계산한 마지막 룩스루(없으면 null).
+    lastFor(positions) { return lastResult && lastResult.key === positionsKey(positions) ? lastResult.r : null; },
+    heldPositions,
+    sectorLabel,
+    mergedSectors,
     openImport,
     closeImport,
   };

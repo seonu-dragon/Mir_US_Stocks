@@ -249,6 +249,27 @@ function dividendMonthBuckets(rows) {
   return months;
 }
 
+// 세후 보기·금융소득 계기판(2026-10-23, 레퍼런스 #10). 세율은 사용자가 정한 값 하나를 곱할 뿐 세액을 추정하지 않는다.
+// 설정 { mode, kr, us } 은 이 브라우저에만(mir_dividend_tax_v1). 종목별 '비과세 계좌'(ISA·연금 등)는 dividendPlan[티커].taxFree.
+// 금융소득 계기판은 올해 1~12월 배당(세전, 비과세 제외)을 2천만 원 기준선과 비교한다. 다른 시장 합계는 그 시장을
+// 마지막으로 열었을 때 계산해 둔 값(mir_dividend_year_v1:<시장>)을 쓴다 — 보유 종목 시세·배당 자료가 시장별로만 있어서다.
+const DIVIDEND_TAX_KEY = "mir_dividend_tax_v1";
+const DIVIDEND_YEAR_KEY = (m) => `mir_dividend_year_v1:${m}`;
+function dividendTaxSettings() {
+  const core = window.MirMyInvestCore;
+  const raw = window.safeStorage.getJSON(DIVIDEND_TAX_KEY, null);
+  return core ? core.taxSettings(raw) : { mode: "gross", kr: 15.4, us: 15 };
+}
+function saveDividendTaxSettings(next) {
+  window.safeStorage.setJSON(DIVIDEND_TAX_KEY, next);
+}
+function dividendSourceReady() {
+  return isKrMarket() ? !!window.KR_DIVIDENDS : !!window.US_STOCK_CALENDAR;
+}
+function kstTodayIso() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+}
+
 let _dividendPlannerFeatureTried = false;
 function renderDividendPlanner() {
   const table = byId("dividendPlannerTable");
@@ -261,43 +282,134 @@ function renderDividendPlanner() {
     _dividendPlannerFeatureTried = true;
     ensureFeatureData(isKrMarket() ? "krDividends" : "usCalendar");
   }
+  const tax = dividendTaxSettings();
+  const rate = isKrMarket() ? tax.kr : tax.us;
+  const net = tax.mode === "net";
+  renderDividendTaxBar(tax);
   const rows = portfolioDetailRows();
   if (!rows.length) {
     byId("dividendPlannerTotal").textContent = `연 ${marketCfg().formatMoney(0)}`;
     summary.innerHTML = "";
     table.innerHTML = `<p class="muted">가상 포트폴리오에 종목을 추가하면 배당 계획을 만들 수 있습니다.</p>`;
     monthsBox.innerHTML = "";
+    renderDividendFinGauge(null);
     return;
   }
+  const core = window.MirMyInvestCore;
+  const shown = (gross, taxFree) => (net && core ? core.afterTax(gross, rate, taxFree) : gross);
   const detailed = rows.map((row) => {
     const setting = dividendSetting(row);
     const annualCash = numericDividend(setting.annualDps) * Number(row.qty || 0);
-    return { ...row, setting, annualCash };
+    return { ...row, setting, annualCash, shownCash: shown(annualCash, !!setting.taxFree) };
   });
-  const annual = detailed.reduce((sum, row) => sum + row.annualCash, 0);
+  const annual = detailed.reduce((sum, row) => sum + row.shownCash, 0);
   const portfolioValue = detailed.reduce((sum, row) => sum + row.value, 0);
-  byId("dividendPlannerTotal").textContent = `연 ${marketCfg().formatMoney(annual)}`;
+  const tag = net ? "세후 " : "";
+  byId("dividendPlannerTotal").textContent = `${tag}연 ${marketCfg().formatMoney(annual)}`;
   summary.innerHTML = `
-    <div><span>연간 예상</span><strong>${marketCfg().formatMoney(annual)}</strong></div>
+    <div><span>${tag}연간 예상</span><strong>${marketCfg().formatMoney(annual)}</strong></div>
     <div><span>월평균</span><strong>${marketCfg().formatMoney(annual / 12)}</strong></div>
     <div><span>평가액 대비</span><strong>${portfolioValue > 0 ? (annual / portfolioValue * 100).toFixed(2) : "0.00"}%</strong></div>`;
-  table.innerHTML = `<table><thead><tr><th>종목</th><th>연 DPS</th><th>주기</th><th>기준일</th><th>연 예상</th></tr></thead><tbody>${detailed.map((row) => `
+  table.innerHTML = `<table><thead><tr><th>종목</th><th>연 DPS</th><th>주기</th><th>기준일</th><th title="ISA·연금 등 비과세 계좌 — 세후 계산·금융소득 합계에서 뺍니다">비과세</th><th>${tag}연 예상</th></tr></thead><tbody>${detailed.map((row) => `
     <tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
       <td><input type="number" min="0" step="0.01" value="${numericDividend(row.setting.annualDps) || ""}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="annualDps" aria-label="${escapeHtml(stockLabel(row.ticker))}연간 주당배당금"></td>
       <td><select data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="frequency" aria-label="${escapeHtml(stockLabel(row.ticker))} 배당 주기">${[[12,"월"],[4,"분기"],[2,"반기"],[1,"연"]].map(([value, label]) => `<option value="${value}"${Number(row.setting.frequency) === value ? " selected" : ""}>${label}</option>`).join("")}</select></td>
       <td><input type="date" value="${escapeHtml(row.setting.exDate || "")}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="exDate" aria-label="${escapeHtml(stockLabel(row.ticker))}배당 기준일"></td>
-      <td><strong>${marketCfg().formatMoney(row.annualCash)}</strong></td></tr>`).join("")}</tbody></table>`;
+      <td class="div-taxfree"><input type="checkbox"${row.setting.taxFree ? " checked" : ""} data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="taxFree" aria-label="${escapeHtml(stockLabel(row.ticker))} 비과세 계좌"></td>
+      <td><strong>${marketCfg().formatMoney(row.shownCash)}</strong></td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-dividend-ticker]").forEach((control) => control.addEventListener("change", () => {
     const ticker = control.dataset.dividendTicker;
+    const field = control.dataset.dividendField;
     const current = dividendSetting(rows.find((row) => row.ticker === ticker));
-    current[control.dataset.dividendField] = control.dataset.dividendField === "exDate" ? control.value : Number(control.value || 0);
+    if (field === "taxFree") { if (control.checked) current.taxFree = true; else delete current.taxFree; }
+    else current[field] = field === "exDate" ? control.value : Number(control.value || 0);
     dividendPlan[ticker] = current;
     savePortfolioExtension(DIVIDEND_PLAN_KEY, dividendPlan);
     renderDividendPlanner();
   }));
   const months = dividendMonthBuckets(rows);
-  monthsBox.innerHTML = `${months.map((month) => `<div class="dividend-month"><span>${month.label}</span><strong>${fmtPortfolioMoney(month.value)}</strong></div>`).join("")}
-    <p class="muted dividend-month-note">배당락일 기준 +${DIVIDEND_PAYMENT_LAG_MONTHS}개월 지급 가정(현금 유입 월)</p>`;
+  // 세후 보기에선 막대를 연간 합계의 세후/세전 비율로 줄인다(비과세 종목 몫이 섞여 있어 종목별로 다시 나누지 않는다).
+  const grossAnnual = detailed.reduce((sum, row) => sum + row.annualCash, 0);
+  const ratio = grossAnnual > 0 ? annual / grossAnnual : 1;
+  monthsBox.innerHTML = `${months.map((month) => `<div class="dividend-month"><span>${month.label}</span><strong>${fmtPortfolioMoney(month.value * ratio)}</strong></div>`).join("")}
+    <p class="muted dividend-month-note">배당락일 기준 +${DIVIDEND_PAYMENT_LAG_MONTHS}개월 지급 가정(현금 유입 월)${net ? ` · 세후(${isKrMarket() ? "국내" : "미국"} ${rate}%)` : ""}</p>`;
+  // 금융소득 계기판 — 올해 1~12월(세전, 비과세 제외).
+  if (core) {
+    const today = kstTodayIso();
+    const year = Number(today.slice(0, 4));
+    const y = core.dividendYear(detailed.map((row) => ({ annualCash: row.annualCash, frequency: row.setting.frequency, exDate: row.setting.exDate, taxFree: !!row.setting.taxFree })),
+      year, today, DIVIDEND_PAYMENT_LAG_MONTHS);
+    const market = isKrMarket() ? "kr" : "us";
+    if (dividendSourceReady()) {
+      window.safeStorage.setJSON(DIVIDEND_YEAR_KEY(market), { year, paid: y.paid, total: y.total, currency: isKrMarket() ? "KRW" : "USD", at: today });
+    }
+    renderDividendFinGauge({ market, year, y });
+  }
+}
+
+function renderDividendTaxBar(tax) {
+  const host = byId("dividendTaxBar");
+  if (!host) return;
+  const net = tax.mode === "net";
+  const settingsOpen = !!host.querySelector("details[open]");
+  host.innerHTML = `<div class="segmented div-tax-seg" role="group" aria-label="세전·세후">
+      <button type="button" data-div-tax-mode="gross" class="${net ? "" : "is-active"}" aria-pressed="${!net}">세전</button>
+      <button type="button" data-div-tax-mode="net" class="${net ? "is-active" : ""}" aria-pressed="${net}">세후</button>
+    </div>
+    <details class="div-tax-set"${settingsOpen ? " open" : ""}><summary class="ghost compact-btn">세율 ${isKrMarket() ? `국내 ${tax.kr}%` : `미국 ${tax.us}%`}</summary>
+      <div class="div-tax-pop">
+        <label>국내 주식 <input type="number" min="0" max="100" step="0.1" value="${tax.kr}" data-div-tax-rate="kr" aria-label="국내 주식 배당 세율(%)"> %</label>
+        <label>미국 주식 <input type="number" min="0" max="100" step="0.1" value="${tax.us}" data-div-tax-rate="us" aria-label="미국 주식 배당 세율(%)"> %</label>
+        <small class="muted">세율은 직접 설정 · 비과세 계좌 종목은 표에서 체크</small>
+      </div></details>`;
+  if (host.dataset.bound) return;
+  host.dataset.bound = "1";
+  host.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-div-tax-mode]");
+    if (!b) return;
+    saveDividendTaxSettings({ ...dividendTaxSettings(), mode: b.dataset.divTaxMode === "net" ? "net" : "gross" });
+    renderDividendPlanner();
+  });
+  host.addEventListener("change", (ev) => {
+    const input = ev.target.closest("[data-div-tax-rate]");
+    if (!input) return;
+    const n = Number(input.value);
+    if (!(input.value !== "" && Number.isFinite(n) && n >= 0 && n <= 100)) { showAppToast("세율은 0~100 사이로 입력해 주세요."); return; }
+    saveDividendTaxSettings({ ...dividendTaxSettings(), [input.dataset.divTaxRate]: n });
+    renderDividendPlanner();
+  });
+}
+
+// 금융소득 2천만 원 계기판 — 지금 시장(방금 계산) + 다른 시장(마지막으로 열었을 때 저장한 올해 합계). 원화 환산은 현재 USD/KRW.
+function renderDividendFinGauge(cur) {
+  const host = byId("dividendFinGauge");
+  const core = window.MirMyInvestCore;
+  if (!host) return;
+  if (!core || !cur) { host.hidden = true; host.innerHTML = ""; return; }
+  const fx = currentUsdKrw();
+  const other = cur.market === "kr" ? "us" : "kr";
+  const saved = window.safeStorage.getJSON(DIVIDEND_YEAR_KEY(other), null);
+  const parts = [{ market: cur.market, paid: cur.y.paid, total: cur.y.total, currency: cur.market === "kr" ? "KRW" : "USD", at: "" }];
+  if (saved && Number(saved.year) === cur.year && Number(saved.total) > 0) {
+    parts.push({ market: other, paid: Number(saved.paid) || 0, total: Number(saved.total), currency: saved.currency === "USD" ? "USD" : "KRW", at: String(saved.at || "") });
+  }
+  const needFx = parts.some((p) => p.currency === "USD" && p.total > 0);
+  if (needFx && !fx) { host.hidden = false; host.innerHTML = `<p class="muted">${marketHeader.fxStatus === "error" ? "USD/KRW 환율이 없어 원화 합계를 낼 수 없습니다." : "USD/KRW 환율을 불러오는 중…"}</p>`; return; }
+  const krw = (v, c) => (c === "USD" ? v * fx : v);
+  const total = parts.reduce((s, p) => s + krw(p.total, p.currency), 0);
+  const paid = parts.reduce((s, p) => s + krw(p.paid, p.currency), 0);
+  if (!(total > 0)) { host.hidden = true; host.innerHTML = ""; return; }
+  const g = core.finIncomeGauge(total);
+  const won = (v) => `${Math.round(v / 10000).toLocaleString("ko-KR")}만 원`;
+  const paidPct = Math.min(100, (paid / g.threshold) * 100);
+  const restPct = Math.max(0, Math.min(100, g.pct) - paidPct);
+  const otherPart = parts[1];
+  const otherNote = otherPart ? ` · ${otherPart.market === "kr" ? "국내" : "미국"} 보유분은 ${escapeHtml(otherPart.at.slice(5))} 계산값` : "";
+  host.hidden = false;
+  host.innerHTML = `<div class="fin-gauge-head"><span>올해 배당 · 금융소득 2,000만 원 기준</span><strong>${won(total)} <small>/ 2,000만 원 · ${g.pct.toFixed(0)}%</small></strong></div>
+    <div class="fin-bar" role="img" aria-label="올해 배당 합계 ${won(total)}, 기준의 ${g.pct.toFixed(0)}%"><i class="is-paid" style="width:${paidPct.toFixed(2)}%"></i><i class="is-rest" style="width:${restPct.toFixed(2)}%"></i></div>
+    <p class="fin-note"><span><i class="is-paid"></i>지급(추정) ${won(paid)}</span><span><i class="is-rest"></i>예정 ${won(total - paid)}</span>${g.over ? `<span class="fin-over">기준 초과 ${won(total - g.threshold)}</span>` : `<span>기준까지 ${won(g.remaining)}</span>`}</p>
+    <p class="muted fin-basis">세전 · 현재 보유 수량 기준 · 비과세 계좌·이자 제외${needFx ? ` · USD/KRW ${fx.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : ""}${otherNote}</p>`;
 }
 
 function renderRebalanceCalculator() {

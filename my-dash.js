@@ -186,6 +186,11 @@ DASH_RENDER.calendar = function calendar() {
     <span class="muted">${escapeHtml(String(r.date).slice(5, 10))}${r.time ? ` ${escapeHtml(r.time)}` : ""} · ${r.daysAhead === 0 ? "오늘" : `D-${r.daysAhead}`}</span></li>`).join("")}</ul>`;
 };
 
+// 평가액 추이 — 내 투자 › 보유의 방문일 기록(my-invest.js)을 작은 차트로.
+DASH_RENDER.valueTrend = function valueTrend() {
+  return typeof pfHistWidgetHtml === "function" ? pfHistWidgetHtml() : "";
+};
+
 function renderMyDash() {
   const host = byId("myDash");
   if (!host) return;

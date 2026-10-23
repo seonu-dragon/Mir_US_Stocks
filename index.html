@@ -370,11 +370,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=8c783443f5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=8c783443f5"></noscript>
+    <link rel="preload" href="styles.css?v=0e3f1c74fb" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=0e3f1c74fb"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=fe65805ad0"></script>
+    <script src="build_id.js?v=3fcb73b2ef"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2679,6 +2679,9 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </section>
         <section class="etfh-card lt-card" id="lookthroughCard" hidden></section>
+        <!-- 평가액·원금 추이(방문한 날 기록) · 집중 한도 점검(my-invest.js) -->
+        <section class="my-trend-card pf-hist-card" id="pfValueHistCard" hidden aria-label="평가액 추이"></section>
+        <section class="my-trend-card pf-limit-card" id="pfLimitCard" hidden aria-label="집중 한도 점검"></section>
         </div>
 
         <div class="sub-panel" id="sub-bulk-watch">
@@ -3130,7 +3133,9 @@ html[data-market="kr"][data-theme="dark"] {
               <div><h3>배당 캘린더 · 현금흐름</h3></div>
               <strong id="dividendPlannerTotal">연 $0</strong>
             </div>
+            <div class="div-tax-bar" id="dividendTaxBar"></div>
             <div class="portfolio-tool-summary" id="dividendPlannerSummary"></div>
+            <div class="fin-gauge" id="dividendFinGauge" hidden></div>
             <div class="portfolio-tool-table" id="dividendPlannerTable"></div>
             <div class="dividend-month-grid" id="dividendMonthGrid"></div>
           </section>
@@ -3410,9 +3415,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="movers.js?v=33097bd4db"></script>
     <script src="ext-hours-core.js?v=b88e6773ee"></script>
     <script src="ext-hours.js?v=ad04bde4dd"></script>
-    <script src="portfolio.js?v=e65be22ced"></script>
-    <script src="my-invest-core.js?v=f6643ad3d2"></script>
-    <script src="my-invest.js?v=9c4d59c533"></script>
+    <script src="portfolio.js?v=9e23a857f4"></script>
+    <script src="my-invest-core.js?v=5da1592a4f"></script>
+    <script src="my-invest.js?v=681d88fa2e"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
     <script src="my-digest.js?v=faf5db9ef8"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
@@ -3553,7 +3558,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="my-dash.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
-    <script src="lookthrough.js?v=bf49f004ba"></script>
+    <script src="lookthrough.js?v=f667047db1"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=9228b7535f"></script>
     <script src="rail.js?v=0de42908e1"></script>

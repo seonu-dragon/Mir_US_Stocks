@@ -249,3 +249,101 @@ document.addEventListener("change", (e) => {
   dashSave(window.MirDashCore.add(dashLayout(), sel.value, dashMarket()));
   renderMyDash();
 });
+
+// ── 내 종목 컨센서스 변화 · RS 등급 · 위험 신호(2026-10-23) ── 이미 받은 데이터만 쓴다. 없으면 숨기거나 '준비 중'.
+// lazy 피처가 이 시장에 아직 없다(404·꺼짐)고 확인되면 기억해 둔다 — 다시 요청하지 않고 '준비 중'으로.
+const _dashMissing = {};
+
+/** 필요한 lazy 피처를 받고(없을 때만) 하나라도 새로 오면 다시 그린다. 모두 받았으면 true. */
+function dashNeed(keys) {
+  const m = dashMarket();
+  const missing = keys.filter((k) => typeof FEATURE_DATA !== "undefined" && FEATURE_DATA[k] && !window[FEATURE_DATA[k].global] && !_dashMissing[`${k}:${m}`]);
+  if (!missing.length) return true;
+  Promise.all(missing.map((k) => ensureFeatureData(k).then((ok) => { if (!ok) _dashMissing[`${k}:${m}`] = true; return ok; })))
+    .then(() => { if (dashMarket() === m) renderMyDash(); });
+  return false;
+}
+
+function dashName(t) {
+  const s = stockByTicker(t);
+  return dashTickerBtn(t, s ? stockLabel(s) : t);
+}
+
+DASH_RENDER.consensus = function consensus() {
+  const mine = dashMyTickers();
+  if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+  const p = window.KR_CONSENSUS;
+  if (!p) { dashNeed(["krConsensus"]); return ""; }
+  const mc = window.MirKrConsMovesCore;
+  const rows = window.MirDashCore.consensusChanges(p.stocks, mine).slice(0, 8);
+  if (!rows.length) return '<p class="muted">컨센서스가 바뀐 내 종목이 없습니다.</p>';
+  const cell = (v) => (v == null ? '<td class="ins-num muted">—</td>' : `<td class="ins-num ${cls(v)}">${escapeHtml(mc ? mc.arrow(v) : `${v}%`)}</td>`);
+  return `<table class="dash-table"><thead><tr><th></th><th class="ins-num">목표가 1주</th><th class="ins-num">1개월</th><th class="ins-num">영업이익 1개월</th></tr></thead>
+    <tbody>${rows.map((r) => `<tr><td>${dashName(r.ticker)}</td>${cell(r.tp1w)}${cell(r.tp1m)}${cell(r.op1m)}</tr>`).join("")}</tbody></table>`;
+};
+
+DASH_RENDER.rs = function rs() {
+  const mine = dashMyTickers();
+  if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+  const p = window.TECH_SIGNALS;
+  if (!p || (p.market && p.market !== dashMarket())) {
+    if (_dashMissing[`techSignals:${dashMarket()}`]) return '<p class="muted">RS 등급 자료 준비 중입니다.</p>';
+    dashNeed(["techSignals"]);
+    return "";
+  }
+  const rows = window.MirDashCore.rsRatings(p, mine).slice(0, 10);
+  if (!rows.length) return '<p class="muted">RS 등급이 있는 내 종목이 없습니다.</p>';
+  return `<ul class="dash-list">${rows.map((r) => `<li><span>${dashName(r.ticker)}${r.rsNewHigh ? ' <span class="dash-tag">RS선 신고가</span>' : ""}</span>
+    <span><strong>${r.rs}</strong></span></li>`).join("")}</ul>
+    ${p.baseDate ? `<p class="muted dash-asof">${escapeHtml(String(p.baseDate))} 기준 · 1~99</p>` : ""}`;
+};
+
+DASH_RENDER.risk = function risk() {
+  const mine = dashMyTickers();
+  if (!mine.length) return '<p class="muted">관심·보유 종목이 없습니다.</p>';
+  const kr = isKrMarket();
+  const m = dashMarket();
+  const ready = dashNeed(kr ? ["riskCheck", "krCbOverhang", "krFinSafety", "krAudit"] : ["riskCheck"]);
+  const core = window.MirDashCore;
+  const today = dashToday();
+  const rc = window.RISK_CHECK && (!window.RISK_CHECK.market || window.RISK_CHECK.market === m) ? window.RISK_CHECK : null;
+  const sources = [];
+  if (kr && window.KR_CB_OVERHANG && window.MirCbOverhangCore) {
+    sources.push({ label: "CB·BW 오버행", get: (t) => {
+      const info = window.MirCbOverhangCore.forTicker(window.KR_CB_OVERHANG, t, today);
+      return info && info.warn ? { text: `미상환 사채 ${window.MirCbOverhangCore.fmtPct(info.pct)}`, src: `DART 정기보고서${info.baseDate ? ` ${info.baseDate}` : ""}` } : null;
+    } });
+  }
+  if (kr && window.KR_FIN_SAFETY && window.MirRiskCheckCore && window.MirRiskCheckCore.debtLadder) {
+    sources.push({ label: "사채·CP 만기", get: (t) => {
+      const rec = window.MirRiskCheckCore.safetyRecord(window.KR_FIN_SAFETY, t);
+      const lad = rec && window.MirRiskCheckCore.debtLadder(rec);
+      return lad && lad.near1yPct != null && lad.near1yPct >= core.NEAR_1Y_PCT
+        ? { text: `1년 이내 만기 ${lad.near1yPct.toFixed(0)}%`, src: `DART 정기보고서${rec.debt && rec.debt.asOf ? ` ${rec.debt.asOf}` : ""}` } : null;
+    } });
+  }
+  if (kr && window.KR_AUDIT_OPINION) {
+    sources.push({ label: "감사의견", get: (t) => {
+      const o = (window.KR_AUDIT_OPINION.opinions || {})[t];
+      return o && o.adverse ? { text: String(o.opinion || "비적정"), src: `DART 사업보고서${window.KR_AUDIT_OPINION.year ? ` ${window.KR_AUDIT_OPINION.year}` : ""}` } : null;
+    } });
+  }
+  if (rc) {
+    sources.push({ label: "재무 점검", get: (t) => {
+      const r = core.riskCheckRow(rc, t);
+      return r && r.fail >= core.RISK_FAIL_MIN ? { text: `경고 ${r.fail}${r.of ? `/${r.of}` : ""}개`, src: `재무 위험 점검${r.fy ? ` FY${r.fy}` : ""}` } : null;
+    } });
+  }
+  if (window.MirDailyTable && typeof window.MirDailyTable.staleLastBar === "function") {
+    sources.push({ label: "일봉 지연", get: (t) => {
+      const it = withDetail(stockByTicker(t));
+      const s = it && Array.isArray(it.chartSeries) ? window.MirDailyTable.staleLastBar(it.chartSeries, (data && data.priceDate) || it.priceDate) : null;
+      return s ? { text: `마지막 실측 ${s.label}`, src: "일봉" } : null;
+    } });
+  }
+  if (!sources.length) return ready ? '<p class="muted">위험 신호 자료 준비 중입니다.</p>' : "";
+  const rows = core.riskFacts(mine, sources).slice(0, 8);
+  if (!rows.length) return `<p class="muted">${ready ? "확인된 위험 신호가 없습니다." : "자료를 불러오는 중입니다."}</p>`;
+  return `<ul class="dash-list dash-risk">${rows.map((r) => `<li><span>${dashName(r.ticker)}</span>
+    <span class="dash-facts">${r.facts.map((f) => `<span class="dash-fact"><b>${escapeHtml(f.label)}</b> ${escapeHtml(f.text)}${f.src ? ` <span class="muted">${escapeHtml(f.src)}</span>` : ""}</span>`).join("")}</span></li>`).join("")}</ul>`;
+};

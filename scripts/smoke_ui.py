@@ -798,6 +798,108 @@ def test_market_switch_chart_analysis(browser, base: str) -> None:
     page.close()
 
 
+# 종목 상세의 새 카드들(2026-10 추가분) — 카드가 실제로 그려지는지, 데이터가 아직 없는 기능은 조용히 숨는지.
+# (질의, 이름, 기다릴 조건 JS, 판정 JS → {ok, hidden?, detail}, 숨김 허용 여부)
+# 숨김 허용 = 그 피처가 '데이터 없으면 숨김'으로 설계돼 있어 아직 채워지지 않은 상태도 정상인 경우. JS 오류는 항상 실패.
+NEW_CARD_CHECKS = [
+    ("?market=kr&tab=search&sub=analysis&ticker=069500&view=flow", "[KR] 069500 ETF 구성 카드",
+     "() => { const el = document.getElementById('etfHoldingsCard'); return !!el && !el.hidden && el.textContent.trim().length > 20; }",
+     "() => { const el = document.getElementById('etfHoldingsCard');"
+     " return { ok: !!el && !el.hidden && /구성/.test(el.textContent), detail: el ? (el.hidden ? 'hidden' : el.textContent.trim().slice(0, 40)) : 'no el' }; }",
+     False),
+    ("?market=kr&tab=search&sub=analysis&ticker=115160&view=events", "[KR] 115160 CB 오버행 배지(헤더 경고 + 이벤트 탭 카드)",
+     "() => !!document.querySelector('#searchFacts .cbo-notice') && !!document.querySelector('#krCbOverhangCard .cbo-badge')",
+     "() => { const n = document.querySelector('#searchFacts .cbo-notice'); const b = document.querySelector('#krCbOverhangCard .cbo-badge');"
+     " return { ok: !!n && !!b && /오버행/.test(n.textContent) && /오버행/.test(b.textContent),"
+     " detail: `헤더=${n ? n.textContent.trim() : '없음'} 카드=${b ? b.textContent.trim() : '없음'}` }; }",
+     False),
+    ("?market=kr&tab=search&sub=analysis&ticker=000660&view=fin", "[KR] 000660 재무 안전 섹션(재무 탭)",
+     "() => !!document.querySelector('#riskCheckSection .rc-safe-block')",
+     "() => { const el = document.getElementById('riskCheckSection'); const n = el ? el.querySelectorAll('.rc-safe-block').length : 0;"
+     " return { ok: !!el && !el.hidden && n > 0, detail: `블록 ${n}개` }; }",
+     False),
+    ("?market=kr&tab=search&sub=analysis&ticker=000660", "[KR] 000660 컨센서스 변화 표",
+     "() => /컨센서스 변화/.test(document.getElementById('stockConsensus')?.textContent || '')",
+     "() => { const el = document.getElementById('stockConsensus'); const t = el ? el.textContent : '';"
+     " return { ok: !!el && !el.hidden && /컨센서스 변화/.test(t) && !!el.querySelector('table.krflow-table'), detail: el && el.hidden ? 'hidden' : t.trim().slice(0, 40) }; }",
+     False),
+    ("?market=kr&tab=search&sub=analysis&ticker=005930&view=flow", "[KR] 005930 지분 공시 카드(수급 탭)",
+     "() => !!document.querySelector('#stockFlowPanel .kr-own-card')",
+     "() => { const c = document.querySelector('#stockFlowPanel .kr-own-card');"
+     " return { ok: !!c && /지분 공시/.test(c.textContent) && c.getBoundingClientRect().height > 0, detail: c ? c.textContent.trim().slice(0, 40) : 'no card' }; }",
+     False),
+    ("?market=us&tab=search&sub=analysis&ticker=AAPL&view=fin", "[US] AAPL 주주환원 현금 카드",
+     "() => !!document.querySelector('#shareholderSection [data-cc-id=\"shr.cash\"]')",
+     "() => { const host = document.getElementById('shareholderSection'); const c = host && host.querySelector('[data-cc-id=\"shr.cash\"]');"
+     " return { ok: !!c && /주주환원 현금/.test(c.textContent), hidden: !c, detail: c ? c.textContent.trim().slice(0, 40) : (host && host.hidden ? '섹션 숨김' : '카드 없음') }; }",
+     True),
+    ("?market=us&tab=search&sub=analysis&ticker=NVDA&view=flow", "[US] NVDA 옵션 카드 맥스페인",
+     "() => /맥스페인/.test(document.getElementById('optionsFlowCard')?.textContent || '')",
+     "() => { const el = document.getElementById('optionsFlowCard'); const t = el ? el.textContent : '';"
+     " return { ok: !!el && !el.hidden && /맥스페인/.test(t), hidden: !el || el.hidden, detail: el && el.hidden ? 'hidden' : t.replace(/\\s+/g, ' ').trim().slice(0, 60) }; }",
+     False),
+]
+
+
+def _js_errors_since(n: int) -> list[str]:
+    # 스크립트 404(아직 발행 전인 lazy 파일)는 '숨김'으로 설계된 상태라 JS 오류로 치지 않는다.
+    return [e for e in errors[n:] if "Failed to load resource" not in e]
+
+
+def test_new_stock_cards(browser, base: str) -> None:
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+    page.route("**/chat", lambda r: r.abort())
+    page.route("**/chat?*", lambda r: r.abort())
+    for query, name, wait_js, judge_js, may_hide in NEW_CARD_CHECKS:
+        n0 = len(errors)
+        boot(page, f"{base}{query}")
+        try:
+            page.wait_for_function(wait_js, timeout=20000)
+        except Exception:
+            pass
+        st = page.evaluate(judge_js)
+        st["detail"] = re.sub(r"\s+", " ", str(st.get("detail") or ""))
+        errs = _js_errors_since(n0)
+        if may_hide and not st["ok"] and st.get("hidden"):
+            check(f"{name} — 데이터 전이라 숨김(정상), JS 오류 없음", not errs, "; ".join(errs)[:200] or st["detail"])
+        else:
+            check(name, st["ok"], st["detail"])
+            check(f"{name} JS 오류 없음", not errs, "; ".join(errs)[:200])
+
+    # 내 투자 › 대시보드 새 위젯(컨센서스 변화·RS 등급·위험 신호) — 배포 전 라이브엔 위젯이 없으니 있을 때만.
+    n0 = len(errors)
+    boot(page, f"{base}?market=kr")
+    has = page.evaluate("() => !!(window.MirDashCore && window.MirDashCore.WIDGETS.risk)")
+    if not has:
+        print("SKIP  대시보드 새 위젯 - 이 배포에는 아직 없음")
+    else:
+        page.evaluate("() => localStorage.setItem('mir_dash_kr', JSON.stringify(['consensus', 'rs', 'risk']))")
+        boot(page, f"{base}?market=kr&tab=bulk&sub=dash")
+        # 관심 목록은 앱이 메모리 값으로 다시 저장하므로 저장소가 아니라 화면 안에서 바꾼다(저장하지 않음).
+        page.evaluate("""() => { watchlist.splice(0, watchlist.length, '000660', '005930', '115160');
+          activateTab('bulk', { sub: 'dash', push: false }); }""")
+        try:
+            page.wait_for_function(
+                "() => ['consensus', 'rs', 'risk'].every((id) => { const b = document.querySelector(`#myDash [data-dash-id='${id}'] .dash-card-body`);"
+                " return b && !/불러오는 중/.test(b.textContent); })", timeout=25000)
+        except Exception:
+            pass
+        st = page.evaluate("""() => Object.fromEntries(['consensus', 'rs', 'risk'].map((id) => {
+          const b = document.querySelector(`#myDash [data-dash-id='${id}'] .dash-card-body`);
+          return [id, b ? b.textContent.replace(/\\s+/g, ' ').trim().slice(0, 70) : null];
+        }))""")
+        check("[KR] 대시보드 새 위젯 3개 렌더", all(st.values()), str(st))
+        check("[KR] RS 등급 위젯에 등급 행", bool(st.get("rs")) and bool(re.search(r"\d", st["rs"] or "")), str(st.get("rs")))
+        check("[KR] 위험 신호 위젯에 115160 CB 사실(출처 포함)",
+              "미상환 사채" in (st.get("risk") or "") and "DART" in (st.get("risk") or ""), str(st.get("risk")))
+        check("[KR] 대시보드 JS 오류 없음", not _js_errors_since(n0), "; ".join(_js_errors_since(n0))[:200])
+        page.evaluate("() => localStorage.removeItem('mir_dash_kr')")
+    shoot(page, "new_stock_cards")
+    page.close()
+
+
+
 def main() -> int:
     global shots_dir
     ap = argparse.ArgumentParser()
@@ -816,6 +918,7 @@ def main() -> int:
             tests = (test_deeplinks, test_stock_views, test_dialogs, test_trust_center,
                      test_worker_no_client_id_leak, test_kr_market, test_stage3_layout,
                      test_tab_a11y, test_ticker_deeplink_seo, test_market_switch_chart_analysis,
+                     test_new_stock_cards,
                      test_mobile)
             if args.only:
                 tests = tuple(fn for fn in tests if fn.__name__ in args.only.split(","))

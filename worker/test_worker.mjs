@@ -72,6 +72,7 @@ import {
   claimDirection,
   contradictsMove,
   chatSystemPrompt,
+  cleanFormulaReply,
   resolveChatMarket,
   formatChatNewsRagBlock,
   chatRagMeta,
@@ -266,6 +267,70 @@ await test("Origin: null 의 /chat 은 403", async () => {
     kvEnv(),
   );
   eq(res.status, 403, "status");
+});
+
+// ── 2b. POST /formula (수식 스크리너 문장 → 수식) ─────────────────────────────
+
+console.log("\n[2b] POST /formula");
+
+const formulaBody = { text: "ROE 15 이상이고 PER 20 이하", market: "us", fields: [["roe", "ROE(%)"], ["pe", "PER"], ["bad key!", "x"]] };
+
+await test("/formula: Origin 없으면 403 이고 AI 를 부르지 않는다", async () => {
+  const env = kvEnv();
+  let calls = 0;
+  env.AI = { async run() { calls += 1; return { response: "roe > 15" }; } };
+  const res = await handleFetch(req("https://w/formula", { method: "POST", body: formulaBody }), env);
+  eq(res.status, 403, "status");
+  eq((await res.json()).error, "forbidden_origin", "error");
+  eq(calls, 0, "AI 호출 0");
+});
+
+await test("/formula: 허용 Origin → 모델 답에서 수식 한 줄만 꺼내고, 필드 목록은 올바른 이름만 프롬프트에 싣는다", async () => {
+  const env = kvEnv();
+  let prompt = "";
+  env.AI = { async run(model, opts) { prompt = opts.messages[1].content; return { response: "```\n수식: roe >= 15 and pe <= 20\n```" }; } };
+  const res = await handleFetch(req("https://w/formula", { method: "POST", origin: ALLOWED, body: formulaBody }), env);
+  eq(res.status, 200, "status");
+  const data = await res.json();
+  eq(data.formula, "roe >= 15 and pe <= 20", "formula");
+  ok(prompt.includes("roe: ROE(%)") && prompt.includes("pe: PER"), "필드 목록");
+  ok(!prompt.includes("bad key!"), "잘못된 필드 이름은 빠진다");
+  ok(prompt.includes("ROE 15 이상이고 PER 20 이하"), "문장");
+});
+
+await test("/formula: NONE·허용 문자 밖 답은 빈 수식(다음 모델까지 시도)", async () => {
+  const env = kvEnv();
+  let calls = 0;
+  env.AI = { async run() { calls += 1; return { response: calls === 1 ? "NONE" : "<script>alert(1)</script>" }; } };
+  const data = await (await handleFetch(req("https://w/formula", { method: "POST", origin: ALLOWED, body: formulaBody }), env)).json();
+  eq(data.formula, "", "빈 수식");
+  ok(String(data.error).startsWith("no_formula"), "error");
+  eq(calls, 2, "모델 두 개 시도");
+});
+
+await test("/formula: 빈 문장·긴 문장·필드 없음은 400", async () => {
+  const env = kvEnv();
+  const call = (body) => handleFetch(req("https://w/formula", { method: "POST", origin: ALLOWED, body }), env);
+  eq((await call({ ...formulaBody, text: "  " })).status, 400, "빈 문장");
+  eq((await call({ ...formulaBody, text: "가".repeat(301) })).status, 400, "301자");
+  eq((await call({ ...formulaBody, fields: [] })).status, 400, "필드 없음");
+});
+
+await test("/formula: IP 리밋(formula 버킷 6/분)", async () => {
+  const env = kvEnv();
+  env.AI = { async run() { return { response: "roe > 15" }; } };
+  const call = () => handleFetch(req("https://w/formula", { method: "POST", origin: ALLOWED, body: formulaBody, headers: { "CF-Connecting-IP": "9.9.9.9" } }), env);
+  for (let i = 0; i < 6; i += 1) eq((await call()).status, 200, `${i + 1}회차`);
+  eq((await call()).status, 429, "7회차 차단");
+});
+
+await test("cleanFormulaReply: 머리말·따옴표·세미콜론 제거, 한글·태그는 거부", () => {
+  eq(cleanFormulaReply("Formula: `rsi14 < 30`;"), "rsi14 < 30");
+  eq(cleanFormulaReply("\n\n  sectorPct(roe) >= 80  \nexplanation here"), "sectorPct(roe) >= 80");
+  eq(cleanFormulaReply("roe > 15 그리고 pe < 10"), "");
+  eq(cleanFormulaReply("none"), "");
+  eq(cleanFormulaReply(""), "");
+  eq(cleanFormulaReply("a".repeat(601)), "");
 });
 
 // ── 3. 캐시 히트가 게이트를 우회하지 못한다 ───────────────────────────────────
@@ -558,8 +623,8 @@ await test("LLM 게이트가 데이터 프록시(fx·indices·calendar)까지 �
   const gated = src.split("\n")
     .filter((l) => l.includes("llmOriginAllowed(request)") && !l.includes("function llmOriginAllowed"));
   // /chat, move_analysis, cachedTickerSummary, /sync/prefs PUT, event_news(뉴스 수집 비용),
-  // move_reasons(주가 움직임 이유, 2026-10-22) 여섯 곳에서만 게이트한다.
-  eq(gated.length, 6, "게이트 호출 지점 수");
+  // move_reasons(주가 움직임 이유, 2026-10-22), /formula(문장 → 수식, 2026-10-23) 일곱 곳에서만 게이트한다.
+  eq(gated.length, 7, "게이트 호출 지점 수");
   for (const marker of ['url.searchParams.get("fx")', 'url.searchParams.get("indices")', 'url.searchParams.get("calendar")']) {
     ok(src.includes(marker), `${marker} 경로가 사라졌다`);
   }

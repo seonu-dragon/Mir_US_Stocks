@@ -891,6 +891,70 @@ function renderFormulaScreener() {
   }
 }
 
+// ---------- 'AI로 변환'(워커 POST /formula) ----------
+// 입력한 문장을 워커가 수식 한 줄로 바꿔 준다. 답은 믿지 않는다 — MirFormulaCore.acceptConverted(이 시장 필드 목록·파서)를
+// 통과한 조건식만 보여 주고, 사용자가 '이 수식으로 검색'을 눌러야 입력란에 들어가 실행된다. 옛 워커(404 not_found)면
+// worker-extras.js 와 같은 방식(wxMarkOff, 6시간 기억)으로 버튼을 숨긴다.
+let fxAiBusy = false;
+let fxAiPending = "";
+
+function fxAiOn() {
+  return typeof wxRouteOn === "function" && wxRouteOn("formula") && !!(window.MirFormulaCore && window.MirFormulaCore.acceptConverted);
+}
+
+function fxAiSyncButton() {
+  const b = byId("fxAiConvert");
+  if (!b) return;
+  b.hidden = !fxAiOn();
+  b.disabled = fxAiBusy;
+}
+
+function fxAiShow(html) {
+  const box = byId("fxAiResult");
+  if (!box) return;
+  box.hidden = !html;
+  box.innerHTML = html || "";
+}
+
+function fxAiConvert() {
+  const input = byId("fxInput");
+  const text = String(input?.value || "").trim();
+  if (fxAiBusy || !fxAiOn()) return;
+  if (!text) { fxAiShow(`<p class="muted">찾고 싶은 조건을 문장으로 적어 주세요. 예: ROE 15 이상이고 PER 업종 중앙값보다 낮은 종목</p>`); return; }
+  if (text.length > 300) { fxAiShow(`<p class="fx-error">문장이 너무 깁니다(300자까지).</p>`); return; }
+  const av = fxAvailableFields();
+  fxAiBusy = true;
+  fxAiSyncButton();
+  fxAiShow(`<p class="muted">변환 중…</p>`);
+  fetch(`${wxBase()}/formula`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, market: marketCfg().id === "kr" ? "kr" : "us", fields: av.list.map((f) => [f.key, f.label || f.key]) }),
+  })
+    .then(async (r) => {
+      let body = null;
+      try { body = await r.json(); } catch (_) { body = null; }
+      if (window.MirWorkerExtras && window.MirWorkerExtras.isUnknownRoute(r.status, body)) {
+        if (typeof wxMarkOff === "function") wxMarkOff("formula");
+        fxAiShow("");
+        return;
+      }
+      if (r.status === 429) { fxAiShow(`<p class="fx-error">요청이 잦습니다. 잠시 후 다시 시도해 주세요.</p>`); return; }
+      const raw = body && typeof body.formula === "string" ? body.formula : "";
+      if (!r.ok || !raw) { fxAiShow(`<p class="fx-error">이 문장은 수식으로 바꾸지 못했습니다. 필드 이름으로 직접 적어 주세요.</p>`); return; }
+      const v = window.MirFormulaCore.acceptConverted(raw, fxCompileOptions("bool"));
+      if (!v.ok) {
+        fxAiShow(`<p class="fx-error">변환 결과가 수식 검사를 통과하지 못해 쓰지 않았습니다 — ${escapeHtml(v.error)}</p><p class="muted"><code>${escapeHtml(v.formula)}</code></p>`);
+        return;
+      }
+      fxAiPending = v.formula;
+      fxAiShow(`<p class="fx-ai-label">변환된 수식 — 확인 후 검색하세요</p><p><code>${escapeHtml(v.formula)}</code></p>
+        <div class="fx-actions"><button type="button" class="primary" data-fx-ai="apply">이 수식으로 검색</button><button type="button" class="ghost" data-fx-ai="close">닫기</button></div>`);
+    })
+    .catch(() => fxAiShow(`<p class="fx-error">변환 요청에 실패했습니다.</p>`))
+    .finally(() => { fxAiBusy = false; fxAiSyncButton(); });
+}
+
 function fxBind() {
   if (fxBound) return;
   fxBound = true;
@@ -900,6 +964,18 @@ function fxBind() {
     if (e.key === "Enter" && !e.shiftKey && !e.defaultPrevented) { e.preventDefault(); fxRunNow({ trackSaved: true }); }
   });
   byId("fxRun")?.addEventListener("click", () => fxRunNow({ trackSaved: true }));
+  fxAiSyncButton();
+  byId("fxAiConvert")?.addEventListener("click", fxAiConvert);
+  byId("fxAiResult")?.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-fx-ai]");
+    if (!b) return;
+    if (b.dataset.fxAi === "apply" && fxAiPending && input) {
+      input.value = fxAiPending;
+      fxRunNow({ trackSaved: true });
+    }
+    fxAiPending = "";
+    fxAiShow("");
+  });
   byId("fxClear")?.addEventListener("click", () => {
     if (input) input.value = "";
     fxState.formula = "";

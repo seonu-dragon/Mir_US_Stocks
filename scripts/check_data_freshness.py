@@ -124,6 +124,8 @@ CHECKS = {
         ("data/korea/consensus.json", 5, True),
         # 증권사 목표가 상향·하향(build_kr_target_changes.py) — 실행마다 updatedAtKst 를 새로 쓴다. 연휴 감안 7일.
         ("data/korea/target_changes.json", 7, False),
+        # 증권사 사후 성적표(build_broker_scorecard.py) — 같은 워크플로우 다음 스텝, 실행마다 다시 쓴다. 0곳(count)도 잡는다.
+        ("data/korea/broker_scorecard.json", 7, True),
         ("data/korea/ecos_macro.json", 6, False),
         # 나라장터·관세청(data.go.kr) — 이 그룹(korea-close-briefing 15:42 매일 + 백업 22:00 평일)이 매 실행 다시
         # 쓰고, 실패하면 exit 1 + 기존 파일 유지라 나이로만 드러난다. 예전 8일은 해외 러너에서 공공데이터포털이
@@ -255,6 +257,8 @@ CHECKS = {
     "analyst-revisions": [
         ("data/us_estimate_revisions.json", 4, True),
         ("data/us_rating_changes.json", 4, False),
+        # 증권사 사후 성적표(US) — 같은 빌더가 의견 이력으로 함께 쓴다(build_broker_scorecard.UsScorecard).
+        ("data/broker_scorecard.json", 4, True),
     ],
     # material-events.yml(매일 13:23 KST) 의 보도자료 요약 스텝. 새 2.02 가 없어도 실행마다
     # 타임스탬프를 올리므로 나이가 늙으면 빌더(키·Gemini·SEC)가 죽은 것이다.
@@ -276,6 +280,8 @@ CHECKS = {
         ("data/earnings_releases.json", 4, False),
         # 회사 KPI 누적(같은 빌더, 2026-10-22). KPI 를 밝힌 보도자료가 없는 날도 파일 시각은 갱신된다.
         ("data/company_kpis.json", 4, False),
+        # 10-Q·10-K MD&A 요약(build_mda_summaries.py, 같은 워크플로우 다음 스텝) — 새 보고서가 없어도 실행마다 시각을 쓴다.
+        ("data/mda_summaries.json", 4, False),
     ],
     # kr-valuation-band.yml(매주 토요일). 새 달이 없어도 실행마다 메타 updatedAtKst 를 올린다 —
     # 12일이면 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료 시 전량 실패).

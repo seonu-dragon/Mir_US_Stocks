@@ -46,6 +46,14 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scripts/build_earnings_releases.py --push
+      # 10-Q·10-K MD&A 한국어 요약 + 직전 보고서 대비 달라진 점(시총 상위 40, 새 접수번호만). 같은 Gemini 무료
+      # 한도를 나눠 쓰므로 실행당 최대 3건, 숫자는 원문 MD&A 에 있는지 검증해 없으면 그 문장을 버린다.
+      - name: MD&A summaries (Gemini)
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/build_mda_summaries.py --top 40 --max 3 --push
       - name: Earnings releases freshness gate
         run: python scripts/check_data_freshness.py --group earnings-releases
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도

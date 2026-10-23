@@ -17803,3 +17803,15 @@ html[data-theme="dark"] {
 @media (max-width: 640px) {
   .ps-pick select { max-width: 110px; }
 }
+
+/* AI로 변환(수식 스크리너) · MD&A 요약 카드 · 증권사 사후 성적표 (2026-10-23) */
+.fx-ai { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.fx-ai p { margin: 0 0 6px; }
+.fx-ai code { word-break: break-all; }
+.fx-ai-label { font-size: var(--fs-cap); color: var(--text-muted); }
+.mda-meta { margin: 4px 0 8px; font-size: var(--fs-cap); color: var(--text-muted); }
+.mda-list { margin: 0 0 8px; padding-left: 18px; line-height: 1.6; }
+.mda-list li + li { margin-top: 4px; }
+.mda-sub { margin: 10px 0 6px; font-size: var(--fs-body, 14px); }
+.mda-sub .muted { font-weight: 400; font-size: var(--fs-cap); }
+.tc-score-table td.muted { font-size: var(--fs-cap); }

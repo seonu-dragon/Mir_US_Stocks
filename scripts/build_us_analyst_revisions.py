@@ -172,6 +172,17 @@ def build(top: int, pause: float = 0.25):
     est = {}
     feed = []
     ok = 0
+    # 증권사 사후 성적표 — 이 실행이 받은 전체 의견 이력을 종목 하나씩 흘려 넣는다(build_broker_scorecard.py).
+    # 실패해도 의견·추정치 파일은 그대로 발행한다.
+    try:
+        from build_broker_scorecard import UsScorecard
+        scorecard = UsScorecard()
+        if not scorecard.ok():
+            print("[경고] SPY 일봉 없음 — 증권사 성적표는 건너뜀")
+            scorecard = None
+    except Exception as exc:  # noqa: BLE001
+        print(f"[경고] 증권사 성적표 준비 실패: {exc}")
+        scorecard = None
     for i, t in enumerate(tickers, 1):
         sym = t.replace(".", "-")
         url = (f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{urllib.parse.quote(sym)}"
@@ -204,6 +215,11 @@ def build(top: int, pause: float = 0.25):
                 est[t]["v"] = revenue
                 est[t]["vc"] = revenue_currency(result)
         feed.extend(r for r in ratings if r[1] >= cutoff)
+        if scorecard is not None and ratings:
+            try:
+                scorecard.add(t, ratings)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[경고] 성적표 {t}: {exc}")
         if i % 100 == 0:
             print(f"  {i}/{len(tickers)} · 응답 {ok} · 추정치 {sum(1 for v in est.values() if v['p'])}종목 · 30일 의견 {len(feed)}건")
     if not tickers or ok < len(tickers) * 0.7:
@@ -218,7 +234,7 @@ def build(top: int, pause: float = 0.25):
                    "tickers": dict(sorted(est.items()))}
     rating_payload = {"updatedAtKst": now, "source": "Yahoo Finance (upgradeDowngradeHistory)", "asOf": today_et,
                       "windowDays": FEED_DAYS, "scanned": len(tickers), "count": len(feed), "cols": RATING_COLS, "rows": feed}
-    return est_payload, rating_payload
+    return est_payload, rating_payload, scorecard
 
 
 def main() -> int:
@@ -232,19 +248,29 @@ def main() -> int:
     ap.add_argument("--top", type=int, default=800)
     ap.add_argument("--push", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="파일을 쓰지 않고 종목별 요약만 출력(로컬 표본 확인: --top 15 --dry-run)")
+    ap.add_argument("--scorecard-only", action="store_true", help="증권사 사후 성적표만 쓴다(다른 파일·push 없음, 로컬 초기 생성용)")
     args = ap.parse_args()
     print(f"=== 애널리스트 의견·추정치 수집 (시총 상위 {args.top}) ===")
     built = build(args.top)
     if not built:
         return 1
-    est_payload, rating_payload = built
+    est_payload, rating_payload, scorecard = built
     if args.dry_run:
         for t, rec in est_payload["tickers"].items():
             eps = {r[0]: r[2] for r in rec.get("p") or []}
             rev = " · ".join(f"{r[0]} {r[2] / 1e9:.2f}B {rec.get('vc') or '?'}({r[5] or '—'}명, {r[7]})" for r in rec.get("v") or [])
             print(f"  {t:6} EPS {eps} | 매출 {rev or '—'}")
+        if scorecard is not None:
+            for f in scorecard.acc.firms()[:8]:
+                print(f"  성적표 {f['f']}: {f['k']}")
         print(f"[dry-run] 추정치 {est_payload['count']}종목 · 매출 컨센서스 {sum(1 for v in est_payload['tickers'].values() if v.get('v'))}종목 — 쓰지 않음")
         return 0
+    if args.scorecard_only:
+        if scorecard is None:
+            return 1
+        from briefing_store import repository_publish_lock
+        with repository_publish_lock(ROOT):
+            return 0 if scorecard.write(est_payload["updatedAtKst"]) else 1
     if est_payload["count"] < 50:
         print(f"[error] 추정치 종목 {est_payload['count']}개 — 소스 이상으로 보고 기존 파일 유지")
         return 1
@@ -254,9 +280,19 @@ def main() -> int:
         write_data(OUT_JSON, OUT_JS, "US_ESTIMATE_REVISIONS", est_payload, indent=None, min_ratio=0.7)
         write_data(OUT_RATINGS_JSON, OUT_RATINGS_JS, "US_RATING_CHANGES", rating_payload, indent=None)
         print(f"→ 추정치 {est_payload['count']}종목 · 30일 의견 변경 {rating_payload['count']}건")
+        wrote_scorecard = False
+        if scorecard is not None:
+            try:
+                wrote_scorecard = scorecard.write(est_payload["updatedAtKst"]) is not None
+            except SystemExit as exc:   # write_data 의 회귀 가드 — 성적표만 건너뛴다
+                print(f"[경고] 증권사 성적표 미발행: {exc}")
+            except Exception as exc:  # noqa: BLE001
+                print(f"[경고] 증권사 성적표 쓰기 실패: {exc}")
         if args.push:
             rel = ["data/us_estimate_revisions.json", "data/us_estimate_revisions.js",
                    "data/us_rating_changes.json", "data/us_rating_changes.js"]
+            if wrote_scorecard:
+                rel += ["data/broker_scorecard.json", "data/broker_scorecard.js"]
             if not git_publish(rel, "US analyst revisions (Yahoo)"):
                 return 1
     return 0

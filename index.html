@@ -1606,6 +1606,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="es-card lk-card cbo-card animate-reveal" id="krCbOverhangCard" hidden></section>
               <!-- 연차보고서 위험요인 변화(risk-factors.js renderRiskFactors) — SEC 10-K Item 1A 전년 대비, US·인덱스에 있는 종목만 -->
               <section class="financials-card rf-card animate-reveal" id="riskFactorsSection" hidden></section>
+              <!-- 10-Q·10-K MD&A 한국어 요약 + 직전 대비(mda-summary.js renderMdaSummary) — US 시총 상위 40, data/mda_summaries.js(lazy) -->
+              <section class="financials-card rf-card mda-card animate-reveal" id="mdaSummarySection" hidden></section>
             </div>
             <div class="sd-view" id="sdv-flow" data-view="flow" role="tabpanel">
               <!-- 미국 ETF 구성 종목 / 이 종목을 담은 ETF(etf-holdings.js renderEtfHoldings) — SEC N-PORT 샤드 하나만 받는다 -->
@@ -1964,9 +1966,11 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="fx-actions">
               <label>유니버스 <select id="fxBucket"></select></label>
               <button type="button" id="fxRun" class="primary">검색</button>
+              <button type="button" class="ghost" id="fxAiConvert" hidden title="입력한 문장을 수식으로 바꿉니다. 결과를 확인한 뒤 적용합니다.">AI로 변환</button>
               <button type="button" class="ghost" id="fxShare">링크 복사</button>
               <button type="button" class="ghost" id="fxClear">지움</button>
             </div>
+            <div class="fx-ai" id="fxAiResult" hidden aria-live="polite"></div>
             <div class="nl-examples fx-examples" id="fxExamples"></div>
           </div>
           <details class="ia-fold fx-fold">
@@ -3557,6 +3561,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="segments.js?v=8269869238"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>
     <script src="risk-factors.js?v=ae6b66065e"></script>
+    <script src="mda-summary.js?v=dev"></script>
     <script src="risk-check-core.js?v=e966b7efdf"></script>
     <script src="risk-check.js?v=405b546750"></script>
     <script src="shareholder.js?v=4e3ec69a5d"></script>
@@ -3576,6 +3581,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table.js?v=3368bcc3e2"></script>
     <script src="mini-chart-core.js"></script>
     <script src="mini-chart-gallery.js"></script>
+    <script src="broker-scorecard-core.js?v=dev"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
     <script src="toc-layout.js?v=a05156a05c"></script>
     <script src="mobile-cards.js?v=0e05cff78d"></script>

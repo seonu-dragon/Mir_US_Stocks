@@ -24,10 +24,82 @@ function tcStockByTicker(t) {
   return tcStockByTicker._map.get(String(t)) || null;
 }
 
-// 종목 › 찾기 › 목록 '목표가 변경'. dir: "all" | "up" | "down".
+// 종목 › 찾기 › 목록 '목표가 변경'. dir: "all" | "up" | "down" | "score"(증권사 사후 성적표).
 let tcDir = "all";
+let tcScoreKind = "";
+let tcScoreSort = { key: "n", dir: -1 };
+
+function tcModeChip() {
+  return `<button type="button" class="ft-chip${tcDir === "score" ? " is-active" : ""}" data-tc-dir="score" aria-pressed="${tcDir === "score" ? "true" : "false"}">증권사 사후 성적</button>`;
+}
+
+function tcBindDir(wrap) {
+  wrap.querySelectorAll("[data-tc-dir]").forEach((b) => b.addEventListener("click", () => {
+    tcDir = b.dataset.tcDir || "all";
+    tcRenderList(wrap);
+  }));
+}
+
+// 증권사별 의견·목표가 변경 뒤 20·60거래일 시장 대비 초과수익 — 사실 통계만(점수·순위 없음, 머리글로 정렬).
+function tcScoreCell(c) {
+  if (!c.ok) return `<td class="num muted" colspan="2">${escapeHtml(window.MirBrokerScoreCore.shortText(c))}</td>`;
+  const S = window.MirBrokerScoreCore;
+  return `<td class="num" title="표본 ${c.n}건 · 중앙값 ${escapeHtml(S.fmtSigned(c.med))}"><span class="${cls(c.avg)}">${escapeHtml(S.fmtSigned(c.avg))}</span></td><td class="num">${c.pos.toFixed(0)}%</td>`;
+}
+
+function tcRenderScore(wrap) {
+  const S = window.MirBrokerScoreCore;
+  const src = window.BROKER_SCORECARD;
+  const dirChips = `<div class="ft-chips ft-subchips" role="group" aria-label="보기">${[["all", "변경 목록"]].map(([k, label]) => `<button type="button" class="ft-chip" data-tc-dir="${k}" aria-pressed="false">${label}</button>`).join("")}${tcModeChip()}</div>`;
+  if (!S || !src || src.market !== (tcKr() ? "kr" : "us")) {
+    if (typeof ftSetMeta === "function") ftSetMeta("증권사 사후 성적");
+    wrap.innerHTML = dirChips + `<p class="ft-empty muted">${S && typeof ensureFeatureData === "function" ? "불러오는 중입니다." : "데이터가 없습니다."}</p>`;
+    tcBindDir(wrap);
+    if (S && typeof ensureFeatureData === "function") {
+      ensureFeatureData("brokerScorecard").then((ok) => {
+        if (typeof ftList !== "undefined" && ftList === "targets" && tcDir === "score") {
+          const got = window.BROKER_SCORECARD;
+          if (ok && got && got.market === (tcKr() ? "kr" : "us")) tcRenderScore(wrap);
+          else wrap.innerHTML = dirChips + `<p class="ft-empty muted">아직 집계가 없습니다.</p>`;
+          tcBindDir(wrap);
+        }
+      });
+    }
+    return;
+  }
+  const kinds = S.kinds(src);
+  const counts = S.counts(src);
+  if (!kinds.includes(tcScoreKind) || !counts[tcScoreKind]) tcScoreKind = kinds.find((k) => counts[k]) || kinds[0] || "";
+  const hz = Array.isArray(src.horizons) ? src.horizons : [20, 60];
+  const list = S.sortRows(S.rows(src, tcScoreKind), tcScoreSort.key, tcScoreSort.dir);
+  if (typeof ftSetMeta === "function") ftSetMeta(`증권사 사후 성적 · ${S.KIND_LABEL[tcScoreKind] || ""} · ${list.length}곳`);
+  const kindChips = `<div class="ft-chips ft-subchips" role="group" aria-label="변경 종류">${kinds.map((k) => `<button type="button" class="ft-chip${tcScoreKind === k ? " is-active" : ""}" data-tc-kind="${k}" aria-pressed="${tcScoreKind === k}">${escapeHtml(S.KIND_LABEL[k])} ${counts[k]}</button>`).join("")}</div>`;
+  const th = (key, label, extra = "") => {
+    const on = tcScoreSort.key === key;
+    const arrow = on ? (tcScoreSort.dir === 1 ? " ▲" : " ▼") : "";
+    return `<th scope="col" class="${key === "firm" ? "ft-name" : "num"}"${extra} aria-sort="${on ? (tcScoreSort.dir === 1 ? "ascending" : "descending") : "none"}"><button type="button" class="ft-sort" data-tc-sort="${key}">${label}${arrow}</button></th>`;
+  };
+  const head = th("firm", "증권사") + th("n", "건수")
+    + th("avg0", `${hz[0]}일 시장 대비`) + th("pos0", `${hz[0]}일 플러스`)
+    + th("avg1", `${hz[1]}일 시장 대비`) + th("pos1", `${hz[1]}일 플러스`);
+  const body = list.map((r) => `<tr class="is-static"><td class="ft-text">${escapeHtml(r.firm)}</td><td class="num">${r.total.toLocaleString()}</td>${tcScoreCell(r.h[0])}${tcScoreCell(r.h[1])}</tr>`).join("");
+  const table = list.length
+    ? (typeof ftTableHtml === "function" ? ftTableHtml(head, body, "ft-list-table tc-score-table") : `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`)
+    : `<p class="ft-empty muted">해당 변경이 없습니다.</p>`;
+  const span = src.eventsFrom ? ` · 이벤트 ${escapeHtml(String(src.eventsFrom).replace(/-/g, "."))}~${escapeHtml(String(src.eventsTo || "").replace(/-/g, "."))}` : "";
+  wrap.innerHTML = dirChips + kindChips + table
+    + `<p class="ft-list-note">발표일 종가 → ${hz.join("·")}거래일 뒤 수익률 − 같은 기간 ${escapeHtml(src.bench || "시장")} 수익률. 기간이 지난 표본 ${escapeHtml(src.minN || 20)}건 미만은 표본 부족 · ${src.market === "us" ? "현재 시총 상위 종목만(상장폐지 종목 빠짐)" : "현재 상장 종목만"}${span} · 업데이트 ${escapeHtml(src.updatedAtKst || "")}</p>`;
+  tcBindDir(wrap);
+  wrap.querySelectorAll("[data-tc-kind]").forEach((b) => b.addEventListener("click", () => { tcScoreKind = b.dataset.tcKind; tcRenderScore(wrap); }));
+  wrap.querySelectorAll("[data-tc-sort]").forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.tcSort;
+    tcScoreSort = tcScoreSort.key === key ? { key, dir: -tcScoreSort.dir } : { key, dir: key === "firm" ? 1 : -1 };
+    tcRenderScore(wrap);
+  }));
+}
 
 function tcRenderList(wrap) {
+  if (tcDir === "score") { tcRenderScore(wrap); return; }
   const kr = tcKr();
   const key = kr ? "krTargetChanges" : "usPriceTargets";
   const src = kr ? window.KR_TARGET_CHANGES : window.US_PRICE_TARGETS_INDEX;
@@ -45,10 +117,11 @@ function tcRenderList(wrap) {
   const counts = { all: all.length, up: all.filter((r) => r.pct > 0).length, down: all.filter((r) => r.pct < 0).length };
   const rows = tcDir === "all" ? all : all.filter((r) => (tcDir === "up" ? r.pct > 0 : r.pct < 0));
   if (typeof ftSetMeta === "function") ftSetMeta(`목표가 변경 · 최근 ${kr ? src.windowDays || 30 : 30}일 · ${rows.length}건`);
-  const chips = `<div class="ft-chips ft-subchips" role="group" aria-label="방향">${[["all", "전체"], ["up", "상향"], ["down", "하향"]].map(([k, label]) => `<button type="button" class="ft-chip${tcDir === k ? " is-active" : ""}" data-tc-dir="${k}" aria-pressed="${tcDir === k ? "true" : "false"}">${label} ${counts[k]}</button>`).join("")}</div>`;
+  const chips = `<div class="ft-chips ft-subchips" role="group" aria-label="방향">${[["all", "전체"], ["up", "상향"], ["down", "하향"]].map(([k, label]) => `<button type="button" class="ft-chip${tcDir === k ? " is-active" : ""}" data-tc-dir="${k}" aria-pressed="${tcDir === k ? "true" : "false"}">${label} ${counts[k]}</button>`).join("")}${window.MirBrokerScoreCore ? tcModeChip() : ""}</div>`;
   const warn = kr && src.complete === false ? `<p class="ft-list-note">리포트 이력을 채우는 중이라 일부 변경이 빠져 있을 수 있습니다.</p>` : "";
   if (!rows.length) {
     wrap.innerHTML = chips + `<p class="ft-empty muted">해당하는 목표가 변경이 없습니다.</p>` + warn;
+    tcBindDir(wrap);
     return;
   }
   const head = `<th scope="col" class="ft-name">종목</th><th scope="col" class="num">날짜</th><th scope="col">${kr ? "증권사" : "기준"}</th><th scope="col" class="num">이전 목표가</th><th scope="col" class="num">새 목표가</th><th scope="col" class="num">변화</th><th scope="col" class="num">현재가</th>`;
@@ -69,10 +142,7 @@ function tcRenderList(wrap) {
   }).join("");
   wrap.innerHTML = chips + (typeof ftTableHtml === "function" ? ftTableHtml(head, body, "ft-list-table") : `<table>${head}${body}</table>`)
     + `<p class="ft-list-note">업데이트 ${escapeHtml(src.updatedAtKst || "")}</p>` + warn;
-  wrap.querySelectorAll("[data-tc-dir]").forEach((b) => b.addEventListener("click", () => {
-    tcDir = b.dataset.tcDir || "all";
-    tcRenderList(wrap);
-  }));
+  tcBindDir(wrap);
 }
 
 // ── 국내 종목별 증권사 목표가 이력(컨센서스 카드 접힘) ─────────────────────

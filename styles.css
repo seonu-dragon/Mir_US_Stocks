@@ -17823,3 +17823,29 @@ html[data-theme="dark"] {
 .mda-sub { margin: 10px 0 6px; font-size: var(--fs-body, 14px); }
 .mda-sub .muted { font-weight: 400; font-size: var(--fs-cap); }
 .tc-score-table td.muted { font-size: var(--fs-cap); }
+
+/* 거래 기록(ledger.js, 2026-10-23) — 보유 카드와 같은 머리·메뉴, 입력 폼 · 거래 표 */
+.ledger-card { margin-top: var(--space-3); }
+.ledger-card[hidden] { display: none; }
+.lg-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-bottom: var(--space-3); padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
+.lg-form label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text-muted); }
+.lg-form label[hidden] { display: none; }
+.lg-form input, .lg-form select { width: 112px; height: 34px; padding: 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text); }
+.lg-form input[data-lg-ticker] { width: 140px; }
+.lg-form input[type="date"] { width: 140px; }
+.lg-summary { margin-bottom: 10px; }
+.lg-summary .pf-stat small { font-size: 11px; }
+.lg-table-wrap { max-height: 440px; overflow: auto; }
+.lg-table td, .lg-table th { padding: 8px 6px; font-variant-numeric: tabular-nums; }
+.lg-table td small { display: block; font-size: 11px; }
+.lg-date { white-space: nowrap; font-size: var(--fs-cap); }
+.lg-type { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; background: var(--surface-2); color: var(--text-muted); white-space: nowrap; }
+.lg-acts { white-space: nowrap; }
+.lg-acts .compact-btn { min-height: 26px; padding: 2px 8px; font-size: var(--fs-cap); }
+.lg-del.is-armed { color: var(--neg); font-weight: 700; }
+.lg-err td { background: color-mix(in srgb, var(--neg) 8%, transparent); }
+.pf-ledger-tag { color: var(--primary); }
+@media (max-width: 640px) {
+  .lg-col-fee { display: none; }
+  .lg-form input, .lg-form select, .lg-form input[data-lg-ticker], .lg-form input[type="date"] { width: calc(50vw - 40px); }
+}

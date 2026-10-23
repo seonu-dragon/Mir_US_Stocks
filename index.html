@@ -2728,6 +2728,8 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="pf-pie" id="pfPie"></div>
           </div>
         </section>
+        <!-- 거래 기록(ledger.js) — 매수·매도·분할 원장 · 실현손익. 기록한 종목의 보유 수량·평단은 원장으로 계산된다 -->
+        <section class="portfolio-card ledger-card" id="ledgerCard" hidden aria-label="거래 기록"></section>
         <section class="etfh-card lt-card" id="lookthroughCard" hidden></section>
         <!-- 평가액·원금 추이(방문한 날 기록) · 집중 한도 점검(my-invest.js) -->
         <section class="my-trend-card pf-hist-card" id="pfValueHistCard" hidden aria-label="평가액 추이"></section>
@@ -3469,6 +3471,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="portfolio.js?v=9e23a857f4"></script>
     <script src="my-invest-core.js?v=5da1592a4f"></script>
     <script src="my-invest.js?v=681d88fa2e"></script>
+    <script src="ledger-core.js"></script>
+    <script src="ledger.js"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
     <script src="my-digest.js?v=faf5db9ef8"></script>
     <script src="dca-core.js?v=69a09baee1"></script>

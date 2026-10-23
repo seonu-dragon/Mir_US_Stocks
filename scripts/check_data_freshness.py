@@ -198,6 +198,8 @@ CHECKS = {
         # Form 144 매도 예정(build_form144.py, insider-trades.yml 의 다음 스텝). 추적 상위 1000종목이면
         # 하루 수십 건이 나와 45일 보관분이 0건일 수 없다 — 0건(count)도 잡는다.
         ("data/form144.json", 4, True),
+        # 푸시 워커용 내부자·13F 피드(build_push_smart_money.py, insider-trades.yml 의 다음 스텝). 조용한 주엔 0건이 정상.
+        ("data/push_smart_money.json", 4, False),
         # 의회 공시는 제출이 몰려 빈 날이 있지만 tradeCount 는 5년 누적이라
         # 0 이면 소스가 깨진 것이다.
         ("data/congress_trades.json", 8, True),

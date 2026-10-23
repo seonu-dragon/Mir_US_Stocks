@@ -7,6 +7,7 @@
 //   1) 설정·목록 정리: normalizePrefs / normalizeLists / listsFromSyncPrefs / mergeLists
 //   2) 언제 무엇을 하나(크론 계획): planJobs(nowMs) — KST·미 동부 시각으로 시세·공시·요약 슬롯 판정
 //   3) 조건 평가: parseSpark(야후 spark 응답) → evaluatePrice / evaluateEvents / evaluateRevisions(의견·추정치, 미국)
+//      / evaluateSmartMoney(내부자 장내 매수·매도 · 추적 기관 13F 변화, 미국)
 //   4) 발송 상한·중복 방지 상태: dayState / capRemaining / recordFired / pruneState
 //   5) 알림 문구: composeAlertNotification / digestNotification(my-digest-core 의 digestToText 재사용)
 //
@@ -27,7 +28,8 @@
   };
   const DEFAULT_PREFS = {
     // rating·estimate(2026-10-21)는 켜야 받는다 — 옛 구독의 설정(kinds 에 키 없음)이 워커 배포 뒤 저절로 켜지지 않게.
-    kinds: { move: true, level: true, earnings: true, disclosure: true, digest: false, rating: false, estimate: false },
+    // insider·inst13f(2026-10-23)도 같은 이유로 켜야 받는다.
+    kinds: { move: true, level: true, earnings: true, disclosure: true, digest: false, rating: false, estimate: false, insider: false, inst13f: false },
     movePct: 5,                 // ±N% — 전일 종가 대비 등락률 절댓값
     targetPct: 20,              // 목표가 이전 → 새 값 변화율 절댓값 ±N% 이상이면 의견 유지여도 알림
     estPct: 5,                  // 올해 회계연도 컨센서스 EPS 7일 변화율 절댓값 ±N%
@@ -245,6 +247,7 @@
    *   digestUs KST 화~토 07:30 칸 — 미 장 마감 요약 + 실적 D-1(두 시장)
    *   revisionsUs 같은 칸 — 애널리스트 의견·목표가·EPS 추정치(us_rating_changes · us_estimate_revisions, 06:30 KST 수집)
    *   eventsUs KST 월~토 15:00 칸 — 8-K(13:23 KST 수집, 크론 지연 감안)
+   *   smartMoneyUs 같은 칸 — 내부자 Form 4(13:17 KST 수집)·13F 변화(push_smart_money.json)
    *   digestKr·eventsKr KST 월~금 20:00 칸 — 국내 마감 요약 + DART 주요 공시
    * 휴장일은 모른다 — 시세가 그날 것이 아니면(거래일 키) 알리지 않는 것으로 막는다.
    */
@@ -261,6 +264,7 @@
       revisionsUs: slot === 450 && k.dow >= 2 && k.dow <= 6,
       earningsD1: slot === 450,
       eventsUs: slot === 900 && k.dow >= 1 && k.dow <= 6,
+      smartMoneyUs: slot === 900 && k.dow >= 1 && k.dow <= 6,
       digestKr: slot === 1200 && kWeekday,
       eventsKr: slot === 1200 && kWeekday,
     };
@@ -446,6 +450,72 @@
     return out.sort((a, b) => b.sort - a.sort);
   }
 
+  /**
+   * 내부자 장내 매수·매도 · 추적 기관 13F 변화(미국). feed = push_smart_money.json(scripts/build_push_smart_money.py,
+   * 배열 행 + insiderCols·instCols). 관심·보유 종목만, 값이 없으면 알리지 않는다.
+   * - insider: 코드 P(장내 매수)·S(장내 매도). 신고일이 [max(since, today-4), today] 안, (종목·신고일·보고자·코드)당 한 번.
+   * - inst13f: 이 피드가 그 제출을 처음 본 날(seen)이 [max(since, today-7), today] 안. 상위 25종목만 저장돼 있어
+   *   new/exit(확실) 와 in25/out25(상위 25 진입·이탈)를 구분해 적는다. (종목·기관·분기·종류)당 한 번.
+   */
+  const INSIDER_COLS = ["t", "fd", "td", "owner", "rel", "code", "shares", "value", "plan"];
+  const INST_COLS = ["t", "inst", "name", "kind", "q", "filed", "valueM", "seen"];
+  const INST_KIND_KO = { new: "13F 신규 편입", exit: "13F 전량 청산", in25: "13F 상위 25 보유에 진입", out25: "13F 상위 25 보유에서 이탈" };
+  function fmtUsdShort(v) {
+    const n = num(v);
+    if (n == null || n <= 0) return "";
+    if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+    if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+    if (n >= 1e3) return `$${Math.round(n / 1e3)}K`;
+    return `$${Math.round(n)}`;
+  }
+  function md(iso) {
+    const s = String(iso || "");
+    return /^\d{4}-\d{2}-\d{2}/.test(s) ? `${Number(s.slice(5, 7))}/${Number(s.slice(8, 10))}` : "";
+  }
+  function evaluateSmartMoney({ prefs, lists, market, feed, fired, today, since }) {
+    const p = normalizePrefs(prefs);
+    const f = fired || {};
+    const out = [];
+    if (market !== "us" || !feed) return out;
+    const mine = new Set(marketTickers(lists, "us"));
+    if (!mine.size) return out;
+    if (p.kinds.insider && Array.isArray(feed.insider)) {
+      const cols = Array.isArray(feed.insiderCols) && feed.insiderCols.length ? feed.insiderCols : INSIDER_COLS;
+      const floor = [since, today ? addDays(today, -4) : null].filter(Boolean).sort().pop() || "";
+      feed.insider.forEach((arr) => {
+        const r = rowObj(arr, cols);
+        const t = cleanTicker(r.t);
+        if (!t || !mine.has(t) || (r.code !== "P" && r.code !== "S") || !r.fd || r.fd < floor || (today && r.fd > today)) return;
+        const key = `in:${t}:${r.fd}:${shortHash(`${r.owner}|${r.code}`)}`;
+        if (f[key]) return;
+        const shares = num(r.shares);
+        const parts = [displayName(t, lists), `내부자 장내 ${r.code === "P" ? "매수" : "매도"}`,
+          `${clip(r.owner, 28)}${r.rel ? `(${clip(r.rel, 20)})` : ""}`];
+        if (shares) parts.push(`${Math.round(shares).toLocaleString("en-US")}주`);
+        const usd = fmtUsdShort(r.value);
+        if (usd) parts.push(usd);
+        let tail = `(${md(r.fd)} 신고`;
+        if (r.plan) tail += " · 10b5-1 계획";
+        out.push({ key, kind: "insider", ticker: t, market, sort: r.code === "P" ? 48 : 46,
+          text: `${parts.join(" ")} ${tail})` });
+      });
+    }
+    if (p.kinds.inst13f && Array.isArray(feed.inst13f)) {
+      const cols = Array.isArray(feed.instCols) && feed.instCols.length ? feed.instCols : INST_COLS;
+      const floor = [since, today ? addDays(today, -7) : null].filter(Boolean).sort().pop() || "";
+      feed.inst13f.forEach((arr) => {
+        const r = rowObj(arr, cols);
+        const t = cleanTicker(r.t);
+        if (!t || !mine.has(t) || !INST_KIND_KO[r.kind] || !r.seen || r.seen < floor || (today && r.seen > today)) return;
+        const key = `13f:${t}:${r.inst}:${r.q}:${r.kind}`;
+        if (f[key]) return;
+        out.push({ key, kind: "inst13f", ticker: t, market, sort: r.kind === "new" || r.kind === "exit" ? 44 : 40,
+          text: `${displayName(t, lists)} ${INST_KIND_KO[r.kind]} · ${clip(r.name, 24)} (${clip(r.q, 10)}${r.filed ? ` · ${md(r.filed)} 제출` : ""})` });
+      });
+    }
+    return out.sort((a, b) => b.sort - a.sort);
+  }
+
   // ------------------------------------------------------------------ 4) 발송 상한·중복 방지
   /** 구독별 상태 { day, sent, fired: {key: 날짜} } — 날짜가 바뀌면 sent 를 0 으로. */
   function dayState(state, kstDate) {
@@ -489,6 +559,8 @@
     if (list.length > LIMITS.lines) lines.push(`외 ${list.length - LIMITS.lines}건`);
     if (list.some((a) => a.kind === "move" || a.kind === "level") && delayed !== false) lines.push("시세는 야후 지연 시세 · 사실 알림(추천 아님)");
     else if (list.some((a) => a.kind === "rating" || a.kind === "estimate")) lines.push("야후 애널리스트 자료 · 사실 알림(추천 아님)");
+    else if (list.some((a) => a.kind === "inst13f")) lines.push("SEC 13F는 분기말 기준·최대 45일 지연 · 사실 알림(추천 아님)");
+    else if (list.some((a) => a.kind === "insider")) lines.push("SEC Form 4 신고 · 사실 알림(추천 아님)");
     const title = list.length === 1
       ? `${MARKET_KO[market] || ""} 내 종목 알림`.trim()
       : `${MARKET_KO[market] || ""} 내 종목 알림 ${list.length}건`.trim();
@@ -530,7 +602,7 @@
     LIMITS, DEFAULT_PREFS,
     normalizePrefs, normalizeLists, emptyLists, listsFromSyncPrefs, mergeLists, marketTickers, marketOf, cleanTicker, yahooSymbol,
     planJobs, etParts, kstParts,
-    parseSpark, evaluatePrice, evaluateEvents, evaluateRevisions,
+    parseSpark, evaluatePrice, evaluateEvents, evaluateRevisions, evaluateSmartMoney,
     dayState, capRemaining, recordFired, pruneState,
     composeAlertNotification, digestNotification, siteUrl,
     fmtPct, fmtPrice, addDays, shortHash,

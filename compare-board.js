@@ -414,6 +414,8 @@
     renderTable(state.tickers);
     renderReturnChart();
     renderFinancials();
+    // 피어 산점도(peer-scatter.js) — MAP_FUNDAMENTALS 만 쓰므로 상세 로드를 기다리지 않는다.
+    if (typeof window.renderComparePeerScatter === "function") window.renderComparePeerScatter(state.tickers);
   }
 
   function renderCompareBoard() {

@@ -1693,6 +1693,7 @@ html[data-market="kr"][data-theme="dark"] {
               <div class="segmented ia-seg ia-seg-sm" id="findViewSeg" role="group" aria-label="보기 방식">
                 <button type="button" data-fview="table">표</button>
                 <button type="button" data-fview="card">카드</button>
+                <button type="button" data-fview="chart">차트</button>
               </div>
             </div>
           </div>
@@ -1791,6 +1792,7 @@ html[data-market="kr"][data-theme="dark"] {
         </details>
         <div class="table-wrap ft-table-wrap" id="topStocksTableWrap"></div>
         <div class="rank-grid" id="topStocks" hidden></div>
+        <div class="mc-wrap" id="topStocksChartWrap" hidden></div>
         </div>
         <div class="sub-panel" id="sub-screener">
         <div class="ia-find-head">
@@ -2174,6 +2176,19 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
           </div>
           <div class="cmp-fin-grid" id="compareFinGrid"></div>
+        </section>
+        <!-- 피어 산점도(peer-scatter.js) — 같은 업종 종목을 MAP_FUNDAMENTALS 두 지표로. 점선 = 업종 중앙값 -->
+        <section class="cmp-card" id="comparePeerCard" hidden>
+          <div class="cmp-card-head">
+            <h3>피어 산점도</h3>
+            <label class="ps-pick">기준 <select id="comparePeerAnchor" aria-label="기준 종목"></select></label>
+            <label class="ps-pick">X <select id="comparePeerX" aria-label="가로축 지표"></select></label>
+            <label class="ps-pick">Y <select id="comparePeerY" aria-label="세로축 지표"></select></label>
+          </div>
+          <div class="cmp-chart-wrap">
+            <svg id="comparePeerChart" class="ps-svg" viewBox="0 0 800 360" role="img" aria-label="같은 업종 종목 지표 산점도"></svg>
+          </div>
+          <div class="cmp-asof muted" id="comparePeerMeta"></div>
         </section>
         </div>
 
@@ -3424,6 +3439,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-ind-core.js"></script>
     <script src="chart-indicators.js?v=88c08456ef"></script>
     <script src="community.js?v=5af24dfee5"></script>
+    <script src="ai-cite-core.js"></script>
     <script src="ai-mode.js?v=1610d387c2"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
@@ -3520,6 +3536,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="financials.js?v=781bc6bcff"></script>
     <script src="compare-core.js"></script>
     <script src="compare-board.js"></script>
+    <script src="peer-scatter-core.js"></script>
+    <script src="peer-scatter.js"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
     <script src="segments.js?v=8269869238"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>
@@ -3539,6 +3557,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="home-dash.js?v=4e82c9ca6c"></script>
     <script src="find-table-core.js?v=915303b39a"></script>
     <script src="find-table.js?v=1007008194"></script>
+    <script src="mini-chart-core.js"></script>
+    <script src="mini-chart-gallery.js"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
     <script src="toc-layout.js?v=a05156a05c"></script>
     <script src="mobile-cards.js?v=0e05cff78d"></script>

@@ -4138,15 +4138,34 @@ async function retrieveChatNewsRag(userText, entities, env, market) {
     .map(({ _score, ...item }) => item);
 }
 
-function formatChatNewsRagBlock(news) {
+// 뉴스 근거 블록. 기사마다 [N1]·[N2] 출처 ID 를 붙여 문장별 출처를 달게 한다. 클라이언트
+// (ai-cite-core.js)는 done 메타 rag.items 에 있는 ID 만 각주로 살리고 그 밖의 표기는 지운다.
+export function formatChatNewsRagBlock(news) {
   if (!Array.isArray(news) || !news.length) return "";
-  const lines = news.map((item, index) => {
+  const lines = news.slice(0, 6).map((item, index) => {
     const date = item.publishedAt ? ` · ${item.publishedAt}` : "";
     const publisher = item.publisher ? ` · ${item.publisher}` : (item.provider ? ` · ${item.provider}` : "");
     const summary = item.summary ? `\n   요약: ${item.summary.slice(0, 220)}` : "";
-    return `${index + 1}. [${item.title}]${date}${publisher}${summary}`;
+    return `[N${index + 1}] ${item.title}${date}${publisher}${summary}`;
   });
-  return `\n\n[검색된 최근 뉴스 근거 — 아래 내용만 사실로 사용하고, 없는 내용은 지어내지 마세요]\n${lines.join("\n")}\n\n뉴스 답변 규칙:\n- 위 기사에 나온 사실만 바탕으로 설명하세요.\n- 답변 말미에 참고한 기사 제목·날짜를 짧게 언급하세요.\n- 근거가 부족하면 "확인된 뉴스가 충분하지 않다"고 솔직히 말하세요.\n- 매수/매도/목표가 추천은 하지 마세요.`;
+  return `\n\n[검색된 최근 뉴스 근거 — 아래 내용만 사실로 사용하고, 없는 내용은 지어내지 마세요]\n${lines.join("\n")}\n\n뉴스 답변 규칙:\n- 위 기사에 나온 사실만 바탕으로 설명하세요.\n- 기사 내용을 근거로 쓴 문장 끝에는 그 기사 ID 를 [N1]처럼 붙이세요. 목록에 없는 ID 는 쓰지 마세요.\n- 근거가 부족하면 "확인된 뉴스가 충분하지 않다"고 솔직히 말하세요.\n- 매수/매도/목표가 추천은 하지 마세요.`;
+}
+
+// done 메타의 rag. sources(제목 배열)는 옛 클라이언트 호환으로 두고, items 에 ID·링크·날짜를 싣는다.
+export function chatRagMeta(newsSources) {
+  if (!Array.isArray(newsSources) || !newsSources.length) return null;
+  const top = newsSources.slice(0, 6);
+  return {
+    newsCount: newsSources.length,
+    sources: top.map((n) => n.title),
+    items: top.map((n, i) => ({
+      id: `N${i + 1}`,
+      title: String(n.title || "").slice(0, 200),
+      link: /^https?:\/\//i.test(String(n.link || "")) ? String(n.link) : "",
+      date: String(n.publishedAt || "").slice(0, 10),
+      publisher: String(n.publisher || n.provider || "").slice(0, 60),
+    })),
+  };
 }
 
 // ── /chat 스트리밍(SSE) 지원 ──────────────────────────────────────────────
@@ -4312,9 +4331,7 @@ async function handleChat(request, env) {
   }
   if (newsRagBlock) systemContent += newsRagBlock;
 
-  const ragMeta = newsSources.length
-    ? { rag: { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } }
-    : {};
+  const ragMeta = newsSources.length ? { rag: chatRagMeta(newsSources) } : {};
 
   // 만약 환경 변수에 GEMINI_API_KEY가 존재하면 Google Gemini API를 호출하여 성능을 대폭 향상합니다.
   const expectKorean = /[가-힣]/.test(userText);
@@ -4347,7 +4364,7 @@ async function handleChat(request, env) {
             return json({
               reply: text,
               model: geminiModel,
-              rag: newsSources.length ? { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } : null,
+              rag: chatRagMeta(newsSources),
             });
           }
           break; // 빈 답 — 모델 문제가 아니므로 Workers AI 로
@@ -4400,7 +4417,7 @@ async function handleChat(request, env) {
         return json({
           reply: text,
           model,
-          rag: newsSources.length ? { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } : null,
+          rag: chatRagMeta(newsSources),
         });
       }
       lastError = `empty_response:${model}`;

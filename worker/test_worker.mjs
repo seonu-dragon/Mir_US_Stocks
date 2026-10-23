@@ -73,6 +73,8 @@ import {
   contradictsMove,
   chatSystemPrompt,
   resolveChatMarket,
+  formatChatNewsRagBlock,
+  chatRagMeta,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1951,6 +1953,31 @@ await test("POST /chat — 국내 market 이면 국내 프롬프트가 모델에
   const r = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: { ...chatBody, market: "kr" } }), env);
   eq(r.status, 200, "200");
   ok(seen.includes("미르의 한국 주식") && !seen.includes("미르의 미국 주식"), "국내 프롬프트");
+});
+
+await test("formatChatNewsRagBlock — 기사마다 [N1] 출처 ID, 인용 규칙", () => {
+  const block = formatChatNewsRagBlock([
+    { title: "엔비디아 실적 발표", publishedAt: "2026-10-20", publisher: "연합" },
+    { title: "Second", summary: "요약문" },
+  ]);
+  ok(block.includes("[N1] 엔비디아 실적 발표 · 2026-10-20 · 연합"), "N1 줄");
+  ok(block.includes("[N2] Second"), "N2 줄");
+  ok(block.includes("[N1]처럼"), "인용 규칙");
+  eq(formatChatNewsRagBlock([]), "", "빈 목록");
+});
+
+await test("chatRagMeta — sources(제목) 유지 + items(ID·http 링크만)", () => {
+  eq(chatRagMeta([]), null, "없으면 null");
+  const m = chatRagMeta([
+    { title: "A", link: "https://x.test/a", publishedAt: "2026-10-20T01:00:00Z", provider: "Google News" },
+    { title: "B", link: "javascript:alert(1)" },
+  ]);
+  eq(m.newsCount, 2, "count");
+  eq(m.sources.join("|"), "A|B", "옛 sources");
+  eq(m.items[0].id, "N1", "id");
+  eq(m.items[0].date, "2026-10-20", "date");
+  eq(m.items[0].publisher, "Google News", "publisher 폴백");
+  eq(m.items[1].link, "", "http 아닌 링크 제거");
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

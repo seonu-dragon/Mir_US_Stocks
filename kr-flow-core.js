@@ -35,6 +35,16 @@
     return `${r > 0 ? "+" : "-"}${commas(r)}`;
   }
 
+  // 폰 일별 표용 짧은 부호 수량: 1만 이상은 '만' 단위(10만 미만은 소수 한 자리) — +232만 / -1.2만 / +3,189.
+  function fmtSignedMan(v) {
+    if (!finite(v)) return "—";
+    const a = Math.abs(v);
+    if (a < 1e4) return fmtSigned(v);
+    const sign = v > 0 ? "+" : "-";
+    const m = a / 1e4;
+    return m >= 9.95 ? `${sign}${commas(m)}만` : `${sign}${m.toFixed(1)}만`;
+  }
+
   // 부호 없는 정수(쉼표). 1 미만 소수는 소수 둘째 자리까지(반대매매 36.35억 같은 작은 값).
   function fmtPlain(v) {
     if (!finite(v)) return "—";
@@ -269,7 +279,7 @@
     return finite(n) && n > 0 ? out.slice(0, n) : out;
   }
 
-  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, groupRows, streakLabel, foreignRetention, etfOwners, ownershipRows };
+  const api = { shardOf, fmtSigned, fmtSignedMan, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, groupRows, streakLabel, foreignRetention, etfOwners, ownershipRows };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrFlowCore = api;
 })(typeof window !== "undefined" ? window : null);

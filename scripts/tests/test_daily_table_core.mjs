@@ -2,6 +2,7 @@
 // 실행: node scripts/tests/test_daily_table_core.mjs   (CI 의 "Daily price table tests" 스텝)
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
 const D = require("../../daily-table-core.js");
@@ -222,6 +223,23 @@ test("옵션 없이 부르면 예전과 같다", () => {
   const out = D.buildDailyRows(rows, 2);
   assert.equal(out[0].official, false);
   assert.equal(out[0].provisional, "");
+});
+
+test("yahooBarsShare: 상한 35% 를 넘을 때만 칩 값", () => {
+  assert.equal(D.yahooBarsShare({ barsSource: { naver: 3353, yahoo: 444 } }), null);   // 10-22 평시 ≈12%
+  assert.deepEqual(D.yahooBarsShare({ barsSource: { naver: 2000, yahoo: 1797 } }), { pct: 47, yahoo: 1797, total: 3797 });
+  assert.equal(D.yahooBarsShare({ barsSource: { naver: 65, yahoo: 35 } }), null);       // 35% = 경계, 표시 안 함
+  assert.equal(D.yahooBarsShare({ barsSource: { naver: 0, yahoo: 0 } }), null);
+  assert.equal(D.yahooBarsShare({}), null);
+  assert.equal(D.yahooBarsShare(null), null);
+  assert.deepEqual(D.yahooBarsShare({ barsSource: { yahoo: 10 } }), { pct: 100, yahoo: 10, total: 10 });
+});
+
+test("yahooBarsShare 상한 = check_data_freshness.py KR_YAHOO_BARS_MAX", () => {
+  const py = readFileSync(new URL("../check_data_freshness.py", import.meta.url), "utf8");
+  const m = py.match(/^KR_YAHOO_BARS_MAX\s*=\s*([0-9.]+)/m);
+  assert.ok(m, "KR_YAHOO_BARS_MAX 없음");
+  assert.equal(Number(m[1]), D.YAHOO_BARS_MAX);
 });
 
 test("staleLastBar: 기준일보다 7일 넘게 오래된 마지막 봉만", () => {

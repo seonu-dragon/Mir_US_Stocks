@@ -516,11 +516,10 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        write_data(OUT_JSON, OUT_JS, "KR_CB_OVERHANG",
-                   {"updatedAtKst": now_kst(), "source": "DART 정기보고서 원문",
-                    "note": "DART_API_KEY 미설정", "count": 0, "companies": {}})
-        print("DART_API_KEY missing; wrote empty kr cb overhang payload.")
-        return 0
+        # 예전엔 빈 페이로드(companies {})를 쓰고 exit 0 — 시크릿이 빠진 run 이 498개사 파일을 덮었다.
+        from build_kr_disclosures import dart_key_missing
+
+        return dart_key_missing("CB오버행")
 
     only = {t.strip().zfill(6) for t in args.tickers.split(",") if t.strip()} or None
     state = load_json(STATE_JSON, {}) or {}

@@ -5788,6 +5788,8 @@ function inst13fIndex() {
 }
 
 function renderSmartMoney(item) {
+  // 같은 탭의 '공매도 잔고' 카드(disclosure-trackers.js)도 스마트머니와 같은 시점(종목 선택·피처 도착)에 다시 그린다.
+  if (typeof renderStockShortInterest === "function") renderStockShortInterest(item);
   const el = byId("stockSmartMoney");
   if (!el || !item) return;
   // 내부자·의회·기관(13F)·행동주의는 미국 전용 데이터라 KR 종목엔 항상 비어 있다 → 패널 숨김.
@@ -5805,15 +5807,28 @@ function renderSmartMoney(item) {
     el.innerHTML = `<h3>스마트머니 종합</h3><p class="muted">이 종목에 대한 내부자·의회·기관·대량보유 신호가 없습니다.</p>`;
     return;
   }
-  const row = (label, val, tone) => `<div class="sm-row"><span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong></div>`;
+  // 값이 있는 줄은 공시 탭의 전체 표로 간다(내부자·13D/G 는 이 티커로 검색된 채, 의회·13F 는 표가 사람·기관 단위라 탭만).
+  const row = (label, val, tone, sub) => {
+    const inner = `<span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong>`;
+    return sub ? `<button type="button" class="sm-row sm-go" data-sm-sub="${sub}">${inner}</button>` : `<div class="sm-row">${inner}</div>`;
+  };
   const insTone = insBuy > insSell ? "ins-buy" : insSell > insBuy ? "ins-sell" : "";
   el.innerHTML = `
     <h3>스마트머니 종합 · ${escapeHtml(t)}</h3>
-    ${row("내부자 (Form 4)", ins.length ? `매수 ${insBuy} · 매도 ${insSell}` : "—", insTone)}
-    ${row("의회 매매", cg ? `매수 ${cg.netBuys} · 매도 ${cg.netSells} · ${cg.politicianCount}명` : "—")}
-    ${row("기관 13F 보유", f ? `${f.holders}곳 · $${(f.valueM / 1000).toFixed(1)}B` : "—")}
-    ${row("대량보유 13D/G", act.length ? `${act.length}건 (액티비스트 ${act.filter((a) => a.kind === "activist").length})` : "—")}
-    <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
+    ${row("내부자 (Form 4)", ins.length ? `매수 ${insBuy} · 매도 ${insSell}` : "—", insTone, ins.length ? "insider" : "")}
+    ${row("의회 매매", cg ? `매수 ${cg.netBuys} · 매도 ${cg.netSells} · ${cg.politicianCount}명` : "—", "", cg ? "congress" : "")}
+    ${row("기관 13F 보유", f ? `${f.holders}곳 · $${(f.valueM / 1000).toFixed(1)}B` : "—", "", f ? "13f" : "")}
+    ${row("대량보유 13D/G", act.length ? `${act.length}건 (액티비스트 ${act.filter((a) => a.kind === "activist").length})` : "—", "", act.length ? "activist" : "")}
+    <p class="sm-note">건수는 파일에 남은 건수</p>`;
+  el.dataset.smTicker = t;
+  if (!el.dataset.smBound) {
+    el.dataset.smBound = "1";
+    el.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-sm-sub]");
+      if (!b || !el.contains(b)) return;
+      if (typeof openDisclosureForTicker === "function") openDisclosureForTicker(b.dataset.smSub, el.dataset.smTicker || "");
+    });
+  }
 }
 
 // 국내: 일봉(상세 파일 = 네이버, 그 뒤 날짜만 실시간 프록시 야후)에서 스냅샷 기준일(priceDate) 봉을 **날짜로

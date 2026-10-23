@@ -48,7 +48,33 @@
       .map((x) => x.r);
   }
 
-  const api = { MIN_AVG_VOLUME, MIN_DOLLAR_VOLUME, isIlliquid, dtc, fmtDtc, sortByDtc };
+  /** Nasdaq 결제일 "09/30/2026" → "2026-09-30". 이미 ISO 면 그대로, 못 읽으면 원문(빈 값은 null). */
+  function isoDate(s) {
+    const t = String(s == null ? "" : s).trim();
+    if (!t) return null;
+    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
+    if (m) return `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
+    return t;
+  }
+
+  /** 종목 상세(수급·보유 탭)용 한 종목 요약 — 파일에 그 티커가 없으면 null(화면은 카드를 숨긴다).
+   *  { ticker, settlementDate, shortShares, dtcText, changePct } — 모르는 값은 null(dtcText 는 "—"). */
+  function tickerSummary(payload, ticker) {
+    const t = String(ticker || "").trim().toUpperCase();
+    const rows = payload && Array.isArray(payload.rows) ? payload.rows : null;
+    if (!t || !rows) return null;
+    const row = rows.find((r) => r && String(r.ticker || "").trim().toUpperCase() === t);
+    if (!row) return null;
+    return {
+      ticker: t,
+      settlementDate: isoDate(row.settlementDate || payload.settlementDate),
+      shortShares: num(row.shortShares),
+      dtcText: fmtDtc(row, 2),
+      changePct: num(row.changePct),
+    };
+  }
+
+  const api = { MIN_AVG_VOLUME, MIN_DOLLAR_VOLUME, isIlliquid, dtc, fmtDtc, sortByDtc, isoDate, tickerSummary };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirShortInterest = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

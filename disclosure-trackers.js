@@ -33,6 +33,7 @@ function delegateTickerClicks(container, selector = ".ins-ticker") {
 // ==================== 내부자 거래 (SEC Form 4) ====================
 let insiderKind = "all";
 let insiderQuery = "";
+let insiderExactTicker = false;   // 스마트머니 줄에서 넘어온 티커 검색 — 직접 입력하면 해제
 
 function insiderFmtShares(n) {
   return Number.isFinite(n) ? Math.round(n).toLocaleString() : "—";
@@ -65,7 +66,7 @@ function setupInsiderControls() {
   const search = byId("insiderSearch");
   if (search && !search.dataset.bound) {
     search.dataset.bound = "1";
-    search.addEventListener("input", debounce(() => { insiderQuery = search.value; renderInsiderTrades(); }, 300));
+    search.addEventListener("input", debounce(() => { insiderQuery = search.value; insiderExactTicker = false; renderInsiderTrades(); }, 300));
   }
 }
 
@@ -167,7 +168,8 @@ function renderInsiderTrades() {
   let rows = payload.trades;
   if (insiderKind !== "all") rows = rows.filter((r) => r.kind === insiderKind);
   if (q) {
-    rows = rows.filter((r) =>
+    const SF = window.MirSecFilings;
+    rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "issuer", "owner"], { exactTicker: insiderExactTicker }) : rows.filter((r) =>
       (r.ticker || "").toLowerCase().includes(q) ||
       (r.issuer || "").toLowerCase().includes(q) ||
       (r.owner || "").toLowerCase().includes(q));
@@ -238,6 +240,7 @@ function renderInsiderCluster() {
 // ===== #5 액티비스트 13D/G =====
 let activistKind = "all";
 let activistQuery = "";
+let activistExactTicker = false;
 function setupActivistControls() {
   const f = byId("activistKindFilter");
   if (f && !f.dataset.bound) {
@@ -249,7 +252,7 @@ function setupActivistControls() {
     }));
   }
   const s = byId("activistSearch");
-  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { activistQuery = s.value; renderActivistStakes(); }, 300)); }
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { activistQuery = s.value; activistExactTicker = false; renderActivistStakes(); }, 300)); }
 }
 function renderActivistStakes() {
   setupActivistControls();
@@ -266,7 +269,11 @@ function renderActivistStakes() {
   const q = activistQuery.trim().toLowerCase();
   let rows = payload.filings;
   if (activistKind !== "all") rows = rows.filter((r) => r.kind === activistKind);
-  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.filer || "").toLowerCase().includes(q));
+  if (q) {
+    const SF = window.MirSecFilings;
+    rows = SF && SF.filterByQuery ? SF.filterByQuery(rows, q, ["ticker", "company", "filer"], { exactTicker: activistExactTicker })
+      : rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.filer || "").toLowerCase().includes(q));
+  }
   const shown = rows.slice(0, 300);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 공시가 없습니다.</p>`; return; }
   const body = shown.map((r) => {
@@ -862,6 +869,44 @@ function renderShortInterest() {
   const extraHdr = isBal ? `<th class="ins-num">잔고추이(6주)</th><th class="ins-num">거래비중</th>` : "";
   wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th>${extraHdr}<th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>${ftdSectionHtml()}`;
   delegateTickerClicks(wrap, ".ins-ticker");
+}
+
+// 종목 상세 '스마트머니 종합' 줄 → 공시 탭 전체 표. 내부자·13D/G 는 유형 필터를 '전체'로 되돌리고 이 티커로 검색해 둔다
+// (표가 그릴 때 읽는 상태라 무거운 데이터셋이 아직 없어도 된다 — activateTab 이 받아서 그린다). 의회·13F 는 탭만 연다.
+function openDisclosureForTicker(sub, ticker) {
+  const t = String(ticker || "").trim().toUpperCase();
+  const resetKind = (id) => byId(id)?.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b.dataset.kind === "all"));
+  if (sub === "insider") {
+    insiderKind = "all"; insiderQuery = t; insiderExactTicker = true; resetKind("insiderKindFilter");
+    const s = byId("insiderSearch"); if (s) s.value = t;
+  } else if (sub === "activist") {
+    activistKind = "all"; activistQuery = t; activistExactTicker = true; resetKind("activistKindFilter");
+    const s = byId("activistSearch"); if (s) s.value = t;
+  }
+  activateTab("institutional", { sub });
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+// 종목 상세 › 수급·보유 탭 '공매도 잔고' 카드(US 전용). 보드와 같은 SHORT_INTEREST 파일에서 그 종목 한 행만.
+// 파일에 없는 종목(보드는 Nasdaq 상장 일부만 싣는다)은 카드를 숨긴다 — 0 으로 채우지 않는다.
+function renderStockShortInterest(item) {
+  const el = byId("stockShortInterest");
+  if (!el) return;
+  const hide = () => { el.hidden = true; el.innerHTML = ""; };
+  const SI = window.MirShortInterest;
+  if (!item || !SI || typeof SI.tickerSummary !== "function" || (typeof isKrMarket === "function" && isKrMarket())) return hide();
+  const s = SI.tickerSummary(window.SHORT_INTEREST, item.ticker);
+  if (!s) return hide();
+  const row = (label, val, tone) => `<div class="sm-row"><span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong></div>`;
+  const chg = s.changePct == null ? "—" : `${s.changePct > 0 ? "+" : ""}${s.changePct.toFixed(1)}%`;
+  const chgTone = s.changePct > 0 ? "ins-buy" : s.changePct < 0 ? "ins-sell" : "";
+  el.hidden = false;
+  el.innerHTML = `
+    <h3>공매도 잔고 · ${escapeHtml(s.ticker)}</h3>
+    ${row("결제일", s.settlementDate ? escapeHtml(s.settlementDate) : "—")}
+    ${row("공매도 주식수", s.shortShares == null ? "—" : `${insiderFmtShares(s.shortShares)}주`)}
+    ${row("잔고일수", s.dtcText === "—" ? "—" : `${escapeHtml(s.dtcText)}일`)}
+    ${row("전기대비", chg, chgTone)}`;
 }
 
 // ===== 자사주 매입·소각 트래커 (KR 전용) =====

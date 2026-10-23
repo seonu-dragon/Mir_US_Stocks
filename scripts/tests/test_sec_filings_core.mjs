@@ -123,6 +123,24 @@ test("타임라인: 요약 없는 8-K 는 lines 필드가 없다", () => {
   assert.equal(items[0].lines, undefined);
 });
 
+test("공시 표 검색: 티커와 정확히 같으면 그 티커만, 아니면 부분 일치", () => {
+  const rows = [
+    { ticker: "F", issuer: "Ford Motor", owner: "Farley Jim" },
+    { ticker: "AAPL", issuer: "Apple Inc", owner: "Cook Tim" },
+    { ticker: "META", issuer: "Meta Platforms", owner: "Zuckerberg Mark" },
+    { ticker: "AAPLX", issuer: "Not Apple", owner: "x" },
+  ];
+  const f = ["ticker", "issuer", "owner"];
+  assert.deepEqual(S.filterByQuery(rows, "F", f, { exactTicker: true }).map((r) => r.ticker), ["F"]);   // 넘어온 티커: 'f' 가 든 다른 행 제외
+  assert.ok(S.filterByQuery(rows, "F", f).length > 1);                                     // 직접 입력: 부분 일치
+  assert.deepEqual(S.filterByQuery(rows, " aapl ", f, { exactTicker: true }).map((r) => r.ticker), ["AAPL"]);
+  assert.deepEqual(S.filterByQuery(rows, "cook", f).map((r) => r.ticker), ["AAPL"]);    // 티커 아니면 부분 일치
+  assert.deepEqual(S.filterByQuery(rows, "apple", f).map((r) => r.ticker), ["AAPL", "AAPLX"]);
+  assert.equal(S.filterByQuery(rows, "", f).length, 4);
+  assert.deepEqual(S.filterByQuery(rows, "zzz", f), []);
+  assert.deepEqual(S.filterByQuery(null, "F", f), []);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

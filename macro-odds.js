@@ -169,6 +169,42 @@ function moFedPathBlock(fp) {
   </div>`;
 }
 
+// 클리블랜드 연은 인플레이션 나우캐스트(빌더 inflationNowcast) — CPI 예측시장 카드 맨 위.
+// 모형 추정치. 실제치가 이미 발표된 칸은 빌더가 빼고 보낸다('—'). 블록이 없으면 숨긴다.
+const MO_NC_MEASURES = [["cpi", "CPI"], ["coreCpi", "근원 CPI"], ["pce", "PCE"], ["corePce", "근원 PCE"]];
+function moNcPeriodLabel(p) {
+  const s = String(p.period || "");
+  let m = s.match(/^(\d{4})-(\d{2})$/);
+  if (m) return `${Number(m[2])}월`;
+  m = s.match(/^(\d{4})Q([1-4])$/);
+  return m ? `${m[2]}분기` : s;
+}
+function moNowcastBlock(nc) {
+  if (!nc || !Array.isArray(nc.periods) || !nc.periods.length) return "";
+  const cell = (c, f) => {
+    const v = c ? Number(c[f]) : NaN;
+    return `<span role="cell">${Number.isFinite(v) ? `<strong>${v.toFixed(2)}%</strong>` : "—"}</span>`;
+  };
+  const rows = [];
+  nc.periods.forEach((p) => {
+    const lbl = moNcPeriodLabel(p);
+    const fields = p.kind === "quarter" ? [["qoqAnn", "연율"]] : [["mom", "전월비"], ["yoy", "전년비"]];
+    fields.forEach(([f, name]) => {
+      if (!MO_NC_MEASURES.some(([k]) => p.cells && p.cells[k] && Number.isFinite(Number(p.cells[k][f])))) return;
+      rows.push(`<div class="mo-sep-row mo-nc-row" role="row"><span role="rowheader">${escapeHtml(lbl)} ${name}</span>${MO_NC_MEASURES.map(([k]) => cell(p.cells && p.cells[k], f)).join("")}</div>`);
+    });
+  });
+  if (!rows.length) return "";
+  return `<div class="mo-venue mo-nc">
+    <div class="mo-venue-head"><a class="mo-venue-name" href="${escapeHtml(nc.sourceUrl || "#")}" target="_blank" rel="noopener noreferrer">클리블랜드 연은 나우캐스트</a><span class="mo-venue-title">모형 추정</span></div>
+    <div class="mo-sep-grid" role="table" aria-label="인플레이션 나우캐스트">
+      <div class="mo-sep-row mo-nc-row mo-sep-head" role="row"><span role="columnheader"></span>${MO_NC_MEASURES.map(([, n]) => `<span role="columnheader">${n}</span>`).join("")}</div>
+      ${rows.join("")}
+    </div>
+    <p class="mo-meta">기준 ${escapeHtml(nc.asOf || "")}</p>
+  </div>`;
+}
+
 function moRecessionCard(rec, marketGroups) {
   if (!rec || !Array.isArray(rec.indicators) || !rec.indicators.length) return "";
   const rows = rec.indicators.map((r) => {
@@ -211,7 +247,7 @@ function renderMacroOdds() {
   d.groups.forEach((g) => { (by[g.topic] = by[g.topic] || []).push(g); });
   const cards = [
     moTopicCard("fomc", by.fomc || [], moFedPathBlock(d.fedPath)),
-    moTopicCard("cpi", by.cpi || []),
+    moTopicCard("cpi", by.cpi || [], moNowcastBlock(d.inflationNowcast)),
     moRecessionCard(d.recession, by.recession || []),
     // 침체 신호 카드가 없을 때만 예측시장 침체 확률을 따로 카드로 낸다.
     d.recession && d.recession.indicators && d.recession.indicators.length ? "" : moTopicCard("recession", by.recession || []),

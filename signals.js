@@ -431,6 +431,88 @@ function renderWikiAttention() {
   host.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
+// ===== 경기순환시계 — 동행·선행지수 순환변동치 (KR_ECOS_MACRO.businessCycle) =====
+// x = 순환변동치 − 100(추세 위·아래), y = 전월 대비 변화. 사분면 이름·판정은 빌더(classify_phase)가 준다.
+// 최근 24개월 궤적 + 작은 선 차트. 색은 방향만(국내 등락색: --pos 상승 · --neg 하락).
+const EC_CYCLE_STYLE = { coincident: { dash: "", name: "동행" }, leading: { dash: "4 3", name: "선행" } };
+function ecPhaseColor(phase) {
+  return phase === "상승" || phase === "회복" ? "var(--pos)" : phase === "둔화" || phase === "하강" ? "var(--neg)" : "var(--muted)";
+}
+function ecCycleBlock(bc) {
+  const series = bc && bc.series ? Object.entries(bc.series).filter(([k, v]) => EC_CYCLE_STYLE[k] && v && Array.isArray(v.points) && v.points.length >= 6) : [];
+  if (!series.length) return "";
+  const all = series.flatMap(([, v]) => v.points);
+  const ceilTo = (x, step) => Math.max(step, Math.ceil(x / step) * step);
+  const xMax = ceilTo(Math.max(...all.map((p) => Math.abs(Number(p.v) - 100))), 0.5);
+  const yMax = ceilTo(Math.max(...all.map((p) => Math.abs(Number(p.chg)))), 0.2);
+  const S = 240, c = S / 2, r = c - 22;
+  const px = (v) => c + (Number(v) - 100) / xMax * r;
+  const py = (chg) => c - Number(chg) / yMax * r;
+  const qLbl = (x, y, t, anchor) => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" fill="${ecPhaseColor(t)}" opacity="0.85">${t}</text>`;
+  const trails = series.map(([k, v]) => {
+    const st = EC_CYCLE_STYLE[k];
+    const pts = v.points;
+    const d = pts.map((p, i) => `${i ? "L" : "M"}${px(p.v).toFixed(1)},${py(p.chg).toFixed(1)}`).join(" ");
+    const last = pts[pts.length - 1];
+    const dots = pts.slice(0, -1).map((p) => `<circle cx="${px(p.v).toFixed(1)}" cy="${py(p.chg).toFixed(1)}" r="1.6" fill="var(--muted)" opacity="0.6"/>`).join("");
+    return `<path d="${d}" fill="none" stroke="var(--text)" stroke-opacity="0.45" stroke-width="1.1" stroke-dasharray="${st.dash}"/>${dots}
+      <circle cx="${px(last.v).toFixed(1)}" cy="${py(last.chg).toFixed(1)}" r="4.5" fill="${ecPhaseColor(last.phase)}"/>
+      <text x="${(px(last.v) + 7).toFixed(1)}" y="${(py(last.chg) + 4).toFixed(1)}" font-size="10.5" fill="var(--text)">${st.name}</text>`;
+  }).join("");
+  const clock = `<svg viewBox="0 0 ${S} ${S}" width="100%" style="max-width:${S}px" role="img" aria-label="경기순환시계">
+    <line x1="${c - r}" y1="${c}" x2="${c + r}" y2="${c}" stroke="var(--line)"/>
+    <line x1="${c}" y1="${c - r}" x2="${c}" y2="${c + r}" stroke="var(--line)"/>
+    ${qLbl(S - 4, 14, "상승", "end")}${qLbl(S - 4, S - 6, "둔화", "end")}${qLbl(4, S - 6, "하강", "start")}${qLbl(4, 14, "회복", "start")}
+    <text x="${c + r}" y="${c - 4}" text-anchor="end" font-size="9" fill="var(--muted)">${(100 + xMax).toFixed(1)}</text>
+    <text x="${c - r}" y="${c - 4}" text-anchor="start" font-size="9" fill="var(--muted)">${(100 - xMax).toFixed(1)}</text>
+    <text x="${c + 4}" y="${c - r + 8}" font-size="9" fill="var(--muted)">+${yMax.toFixed(1)}</text>
+    <text x="${c + 4}" y="${c + r}" font-size="9" fill="var(--muted)">−${yMax.toFixed(1)}</text>
+    ${trails}
+  </svg>`;
+  // 선 차트: 순환변동치 수준(100 = 추세).
+  const W = 320, H = 120, padL = 30, padR = 6, padT = 8, padB = 18;
+  const vs = all.map((p) => Number(p.v));
+  let lo = Math.min(100, ...vs), hi = Math.max(100, ...vs);
+  if (hi - lo < 1) { lo -= 0.5; hi += 0.5; }
+  const n = Math.max(...series.map(([, v]) => v.points.length));
+  const lx = (i) => padL + (W - padL - padR) * i / Math.max(1, n - 1);
+  const ly = (v) => padT + (H - padT - padB) * (1 - (Number(v) - lo) / (hi - lo));
+  const lines = series.map(([k, v]) => {
+    const off = n - v.points.length;
+    const d = v.points.map((p, i) => `${i ? "L" : "M"}${lx(i + off).toFixed(1)},${ly(p.v).toFixed(1)}`).join(" ");
+    return `<path d="${d}" fill="none" stroke="var(--text)" stroke-width="1.5" stroke-dasharray="${EC_CYCLE_STYLE[k].dash}"/>`;
+  }).join("");
+  const ref = series[0][1].points;
+  const line = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="순환변동치 추이">
+    <line x1="${padL}" y1="${ly(100).toFixed(1)}" x2="${W - padR}" y2="${ly(100).toFixed(1)}" stroke="var(--muted)" stroke-dasharray="3 3" stroke-opacity="0.6"/>
+    <text x="${padL - 4}" y="${(ly(100) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">100</text>
+    <text x="${padL - 4}" y="${(ly(hi) + 6).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${hi.toFixed(1)}</text>
+    <text x="${padL - 4}" y="${(ly(lo)).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${lo.toFixed(1)}</text>
+    ${lines}
+    <text x="${padL}" y="${H - 4}" font-size="9" fill="var(--muted)">${escapeHtml(ref[0].t)}</text>
+    <text x="${W - padR}" y="${H - 4}" text-anchor="end" font-size="9" fill="var(--muted)">${escapeHtml(ref[ref.length - 1].t)}</text>
+  </svg>`;
+  const now = series.map(([k, v]) => {
+    const last = v.points[v.points.length - 1];
+    const ch = Number(last.chg);
+    const col = ch > 0 ? "var(--pos)" : ch < 0 ? "var(--neg)" : "var(--muted)";
+    return `<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums">
+      <span style="font-size:11.5px;color:var(--muted);min-width:7.5em">${escapeHtml(v.label || EC_CYCLE_STYLE[k].name)}</span>
+      <strong style="font-size:17px">${Number(last.v).toFixed(1)}</strong>
+      <span style="font-size:var(--fs-cap);color:${col}">${ch > 0 ? "▲" : ch < 0 ? "▼" : ""} ${Math.abs(ch).toFixed(1)}</span>
+      ${last.phase ? `<span style="font-size:11px;font-weight:600;color:${ecPhaseColor(last.phase)}">${escapeHtml(last.phase)}</span>` : ""}
+    </div>`;
+  }).join("");
+  return `<div class="ec-cycle" style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+    <div style="font-size:12.5px;font-weight:600;margin-bottom:8px">경기순환시계</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:center">
+      <div style="display:flex;justify-content:center">${clock}</div>
+      <div style="display:flex;flex-direction:column;gap:6px">${now}<div style="margin-top:4px">${line}</div>
+        <div style="font-size:var(--fs-cap);color:var(--muted)">실선 동행 · 점선 선행 · 기준월 ${escapeHtml(bc.asOf || "")}</div></div>
+    </div>
+  </div>`;
+}
+
 // ===== 한국 매크로 — 한국은행 ECOS (KR_ECOS_MACRO) =====
 // 미국 FRED 패널의 한국판. KR 모드에서만 시장 심리지수 바로 아래에 뜬다.
 // tone: "up"=오르면 나쁨(물가·환율·신용스프레드), "down"=오르면 좋음(뉴스심리).
@@ -459,6 +541,7 @@ function renderEcosMacro() {
   host.innerHTML = `
     <div class="section-title"><h2>한국 매크로 (한국은행 ECOS)</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      ${ecCycleBlock(m.businessCycle)}
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">${tiles}</div>
       <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">기준 ${escapeHtml(m.asOf || "")}</p>
     </div>`;

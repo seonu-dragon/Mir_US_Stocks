@@ -34,6 +34,9 @@
      - 뉴욕연은 CMDI(회사채 시장 디스트레스, 주간) — interactives/data/cmdi/cmdi_interactive_data.xlsx.
      받지 못한 행은 빠진다(지어내지 않음).
 
+4) 클리블랜드 연은 인플레이션 나우캐스트(inflationNowcast) — CPI·근원 CPI·PCE·근원 PCE 의
+   전월비·전년비(대상 월)·분기 연율. 공개 차트 JSON(아래 NOWCAST_BASE). 실패하면 블록만 빠진다.
+
 3) 연준 경제전망(SEP) 정책금리 중간값 경로 vs 현재 목표 범위 vs 예측시장(fedPath) — FRED
    FEDTARMD·FEDTARRL/RH·FEDTARCTL/CTH(연도별) + 각 LR(장기, 관찰일 = SEP 발표일) + DFEDTARL/U.
 
@@ -909,6 +912,146 @@ def build_extra_recession_rows(now):
 
 
 # ---------------------------------------------------------------------------
+# 4) 클리블랜드 연은 인플레이션 나우캐스트(inflationNowcast) — CPI 예측시장 카드 옆에 둔다.
+#    페이지(indicators-and-data/inflation-nowcasting)가 차트용으로 읽는 공개 JSON 3개
+#    (FusionCharts 설정, 대상 월·분기별 차트 1개씩, 각 5~8MB). 2026-10-23 실호출로 형식 확인:
+#      chart._comment = 파일 생성 시각("2026-10-22 00:00"), chart.subcaption = 대상("2026-10" · "2026:Q4"),
+#      dataset[].seriesname = "CPI Inflation" · "Core CPI Inflation" · "PCE Inflation" · "Core PCE Inflation"
+#      (+ "Actual …" = 발표된 실제치), data[].tooltext = "<이름>{br}MM/DD{br}<값>{br}…".
+#    모형 추정치이지 발표치가 아니다. 실제치가 이미 나온 지표는 칸을 비운다(원 페이지 표와 같은 규칙).
+#    받지 못하면 블록을 None 으로 두고 화면에서 숨긴다(지어내지 않음).
+NOWCAST_BASE = "https://www.clevelandfed.org/-/media/files/webcharts/inflationnowcasting/nowcast_{kind}.json?sc_lang=en"
+NOWCAST_PAGE = "https://www.clevelandfed.org/indicators-and-data/inflation-nowcasting"
+NOWCAST_MEASURES = (("cpi", "CPI Inflation"), ("coreCpi", "Core CPI Inflation"),
+                    ("pce", "PCE Inflation"), ("corePce", "Core PCE Inflation"))
+NOWCAST_KINDS = ("month", "year", "quarter")   # 전월비 · 전년비 · 분기 연율
+
+
+def _nowcast_period(sub):
+    """'2026-8' → '2026-08', '2026:Q4' → '2026Q4'. 모르는 형식은 None."""
+    s = str(sub or "").strip()
+    m = re.fullmatch(r"(\d{4})-(\d{1,2})", s)
+    if m and 1 <= int(m.group(2)) <= 12:
+        return f"{m.group(1)}-{int(m.group(2)):02d}"
+    m = re.fullmatch(r"(\d{4}):?Q([1-4])", s)
+    if m:
+        return f"{m.group(1)}Q{m.group(2)}"
+    return None
+
+
+def _nowcast_date(mmdd, stamp):
+    """차트 날짜 'MM/DD' 에 연도를 붙인다. 파일 생성일보다 뒤면 전년(12월 대상 → 1월 갱신 경계)."""
+    m = re.fullmatch(r"(\d{1,2})/(\d{1,2})", str(mmdd or "").strip())
+    if not m or not stamp:
+        return None
+    mo_, d_ = int(m.group(1)), int(m.group(2))
+    y = stamp.year - (1 if (mo_, d_) > (stamp.month, stamp.day) else 0)
+    try:
+        return datetime(y, mo_, d_).strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def _nowcast_points(ds, cats, stamp):
+    """한 시리즈의 (날짜, 값) 목록. 날짜는 tooltext 에서, 없으면 vline 을 뺀 카테고리 순서로."""
+    pts = []
+    for i, cell in enumerate(ds.get("data") or []):
+        if not isinstance(cell, dict) or cell.get("value") in ("", None):
+            continue
+        v = fnum(cell.get("value"))
+        if v is None:
+            continue
+        parts = str(cell.get("tooltext") or "").split("{br}")
+        mmdd = parts[1] if len(parts) > 1 and parts[1].strip() else (cats[i] if i < len(cats) else None)
+        d = _nowcast_date(mmdd, stamp)
+        if d:
+            pts.append((d, v))
+    return pts
+
+
+def parse_nowcast_charts(charts):
+    """FusionCharts 차트 목록 → {period: {measure: {"nowcast", "date", "actual", "history"}}}."""
+    out = {}
+    for ch in charts if isinstance(charts, list) else []:
+        if not isinstance(ch, dict):
+            continue
+        meta = ch.get("chart") or {}
+        period = _nowcast_period(meta.get("subcaption"))
+        try:
+            stamp = datetime.strptime(str(meta.get("_comment") or "")[:10], "%Y-%m-%d")
+        except ValueError:
+            stamp = None
+        if not period or not stamp:
+            continue
+        cats = [c.get("label") for c in ((ch.get("categories") or [{}])[0].get("category") or [])
+                if isinstance(c, dict) and str(c.get("vline", "")).lower() != "true"]
+        by_name = {str(ds.get("seriesname") or "").strip(): ds for ds in ch.get("dataset") or [] if isinstance(ds, dict)}
+        row = {}
+        for key, name in NOWCAST_MEASURES:
+            pts = _nowcast_points(by_name.get(name) or {}, cats, stamp)
+            if not pts:
+                continue
+            act = _nowcast_points(by_name.get("Actual " + name) or {}, cats, stamp)
+            d, v = pts[-1]
+            row[key] = {"nowcast": round(v, 2), "date": d,
+                        "actual": round(act[-1][1], 2) if act else None,
+                        "history": [{"d": x, "v": round(y, 3)} for x, y in pts[-30:]]}
+        if row:
+            out[period] = row
+    return out
+
+
+def nowcast_block(parsed):
+    """kind별 파싱 결과 → 화면용 블록. 실제치가 아직 안 나온 칸만, 최근 2개 월 + 최근 분기."""
+    month, year, quarter = (parsed.get(k) or {} for k in NOWCAST_KINDS)
+    periods = []
+    for per in sorted(set(month) | set(year), reverse=True)[:2]:
+        cells = {}
+        for key, _ in NOWCAST_MEASURES:
+            m, y = (month.get(per) or {}).get(key), (year.get(per) or {}).get(key)
+            src = m or y
+            if not src or any(x and x.get("actual") is not None for x in (m, y)):   # 이미 발표됨 → 칸 비움
+                continue
+            cells[key] = {"mom": m["nowcast"] if m else None, "yoy": y["nowcast"] if y else None,
+                          "date": max(x["date"] for x in (m, y) if x),
+                          "history": (y or m)["history"]}
+        if cells:
+            periods.append({"period": per, "kind": "month", "cells": cells})
+    for per in sorted(quarter, reverse=True)[:1]:
+        cells = {}
+        for key, _ in NOWCAST_MEASURES:
+            q = quarter[per].get(key)
+            if q and q.get("actual") is None:
+                cells[key] = {"qoqAnn": q["nowcast"], "date": q["date"], "history": q["history"]}
+        if cells:
+            periods.append({"period": per, "kind": "quarter", "cells": cells})
+    if not periods:
+        return None
+    dates = [c["date"] for p in periods for c in p["cells"].values()]
+    return {"asOf": max(dates), "source": "클리블랜드 연은", "sourceUrl": NOWCAST_PAGE, "periods": periods}
+
+
+def build_inflation_nowcast(fetch=None):
+    fetch = fetch or (lambda url: sec.http_get_with_backoff(url, headers=NYFED_UA, timeout=60, retries=3,
+                                                            label="Cleveland Fed nowcast"))
+    parsed = {}
+    for kind in NOWCAST_KINDS:
+        try:
+            raw = fetch(NOWCAST_BASE.format(kind=kind))
+            charts = json.loads(raw.decode("utf-8-sig") if isinstance(raw, bytes) else raw)
+            parsed[kind] = parse_nowcast_charts(charts)
+            del charts, raw
+        except Exception as exc:  # noqa: BLE001 — 한 종류가 빠져도 나머지로
+            print(f"  [nowcast] {kind} 실패: {type(exc).__name__}: {exc}")
+    blk = nowcast_block(parsed) if parsed.get("month") or parsed.get("year") else None
+    if blk:
+        print(f"  [nowcast] {', '.join(p['period'] for p in blk['periods'])} · 기준 {blk['asOf']}")
+    else:
+        print("  [nowcast] 값 없음 — 블록 생략")
+    return blk
+
+
+# ---------------------------------------------------------------------------
 def build(now=None):
     now = now or datetime.now(timezone.utc)
     excluded, sources = [], {}
@@ -929,6 +1072,11 @@ def build(now=None):
     except Exception as exc:  # noqa: BLE001 — 부가 블록, 실패하면 숨긴다
         print(f"  [sep] 실패: {type(exc).__name__}: {exc}")
         fed_path = None
+    try:
+        nowcast = build_inflation_nowcast()
+    except Exception as exc:  # noqa: BLE001 — 부가 블록, 실패하면 숨긴다
+        print(f"  [nowcast] 실패: {type(exc).__name__}: {exc}")
+        nowcast = None
     return {
         "updatedAtKst": kst_now().strftime("%Y-%m-%d %H:%M KST"),
         "source": "Kalshi · Polymarket 공개 시장 데이터 / FRED · 연준",
@@ -943,7 +1091,22 @@ def build(now=None):
         "excluded": excluded,
         "recession": recession,
         "fedPath": fed_path,
+        "inflationNowcast": nowcast,
     }
+
+
+def main_nowcast_only() -> int:
+    try:
+        payload = json.loads(OUT_JSON.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"[nowcast] 기존 {OUT_JSON.name} 읽기 실패: {exc}")
+        return 1
+    blk = build_inflation_nowcast()
+    if not blk:
+        return 1
+    payload["inflationNowcast"] = blk
+    sec.write_data(OUT_JSON, OUT_JS, "MACRO_ODDS", payload, indent=None)
+    return 0
 
 
 def main() -> int:
@@ -955,7 +1118,11 @@ def main() -> int:
             pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--push", action="store_true")
+    ap.add_argument("--nowcast-only", action="store_true",
+                    help="기존 파일의 inflationNowcast 블록만 갈아 끼운다(다른 블록 유지 — Polymarket 이 막힌 로컬용)")
     args = ap.parse_args()
+    if args.nowcast_only:
+        return main_nowcast_only()
     print("=== 예측시장 확률 + 침체 신호 (Kalshi · Polymarket · industry 재사용) ===")
     payload = build()
     if not payload["groups"]:

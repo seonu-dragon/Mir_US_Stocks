@@ -182,3 +182,89 @@ def test_recession_extra_rows_not_counted(tmp_path, monkeypatch):
     rec = mo.build_recession_signals(extra)
     assert rec["evaluated"] == 0 and rec["breached"] == 0 and rec["indicators"][0]["id"] == "nyfed_cmdi"
     assert mo.build_recession_signals([]) is None
+
+
+# ---------------------------------------------------------------------------
+# 클리블랜드 연은 인플레이션 나우캐스트(inflationNowcast) — FusionCharts JSON 파서.
+def _nc_chart(sub, stamp, labels, series):
+    """labels: 카테고리 라벨(vline 은 dict 로). series: {이름: [값|''] (vline 을 뺀 날짜 순)}."""
+    cats = [x if isinstance(x, dict) else {"label": x} for x in labels]
+    dates = [c["label"] for c in cats if c.get("vline") != "true"]
+    ds = []
+    for name, vals in series.items():
+        ds.append({"seriesname": name, "data": [
+            {"value": "" if v == "" else str(v), "tooltext": f"{name}{{br}}{dates[i]}{{br}}{v}{{br}}"}
+            for i, v in enumerate(vals)]})
+    return {"chart": {"_comment": f"{stamp} 00:00", "subcaption": sub},
+            "categories": [{"category": cats}], "dataset": ds}
+
+
+def test_nowcast_period_and_date_rules():
+    assert mo._nowcast_period("2026-8") == "2026-08"
+    assert mo._nowcast_period("2026:Q4") == "2026Q4"
+    assert mo._nowcast_period("Inflation") is None
+    stamp = datetime(2027, 1, 5)
+    assert mo._nowcast_date("01/04", stamp) == "2027-01-04"
+    assert mo._nowcast_date("12/30", stamp) == "2026-12-30"   # 12월 대상 → 1월 생성 경계
+    assert mo._nowcast_date("PCE Jul", stamp) is None
+
+
+def test_parse_nowcast_skips_vlines_and_reads_actuals():
+    ch = _nc_chart("2026-9", "2026-10-22",
+                   ["10/08", {"label": "CPI Sep", "vline": "true"}, "10/09", "10/22"],
+                   {"CPI Inflation": [0.53, 0.53, ""], "Actual CPI Inflation": ["", 0.65, ""],
+                    "PCE Inflation": [0.46, 0.47, 0.47], "Core PCE Inflation": ["", "", ""]})
+    out = mo.parse_nowcast_charts([ch, {"chart": {"subcaption": "bad"}}])
+    row = out["2026-09"]
+    assert row["cpi"]["nowcast"] == 0.53 and row["cpi"]["date"] == "2026-10-09"
+    assert row["cpi"]["actual"] == 0.65
+    assert row["pce"] == {"nowcast": 0.47, "date": "2026-10-22", "actual": None,
+                          "history": [{"d": "2026-10-08", "v": 0.46}, {"d": "2026-10-09", "v": 0.47},
+                                      {"d": "2026-10-22", "v": 0.47}]}
+    assert "corePce" not in row   # 값이 하나도 없으면 칸이 없다
+
+
+def test_nowcast_block_blanks_released_cells():
+    parsed = {
+        "month": {"2026-10": {"cpi": {"nowcast": 0.25, "date": "2026-10-22", "actual": None, "history": []}},
+                  "2026-09": {"cpi": {"nowcast": 0.53, "date": "2026-10-09", "actual": 0.65, "history": []},
+                              "pce": {"nowcast": 0.47, "date": "2026-10-22", "actual": None, "history": []}},
+                  "2026-08": {"pce": {"nowcast": 0.34, "date": "2026-09-24", "actual": None, "history": []}}},
+        "year": {"2026-10": {"cpi": {"nowcast": 3.75, "date": "2026-10-22", "actual": None, "history": [{"d": "x", "v": 1}]}},
+                 "2026-09": {"pce": {"nowcast": 3.6, "date": "2026-10-21", "actual": None, "history": []}}},
+        "quarter": {"2026Q3": {"pce": {"nowcast": 1.97, "date": "2026-10-22", "actual": None, "history": []}},
+                    "2026Q4": {"cpi": {"nowcast": 4.84, "date": "2026-10-22", "actual": None, "history": []},
+                               "pce": {"nowcast": 4.16, "date": "2026-10-22", "actual": 4.0, "history": []}}},
+    }
+    blk = mo.nowcast_block(parsed)
+    assert [p["period"] for p in blk["periods"]] == ["2026-10", "2026-09", "2026Q4"]   # 최근 2개 월 + 최근 분기
+    oct_, sep, q4 = blk["periods"]
+    assert oct_["cells"]["cpi"]["mom"] == 0.25 and oct_["cells"]["cpi"]["yoy"] == 3.75
+    assert oct_["cells"]["cpi"]["history"] == [{"d": "x", "v": 1}]
+    assert set(sep["cells"]) == {"pce"}          # 9월 CPI 는 이미 발표 → 칸 비움
+    assert sep["cells"]["pce"]["date"] == "2026-10-22"
+    assert set(q4["cells"]) == {"cpi"} and q4["kind"] == "quarter"
+    assert blk["asOf"] == "2026-10-22" and blk["source"] == "클리블랜드 연은"
+    assert mo.nowcast_block({"month": {}, "year": {}, "quarter": {}}) is None
+
+
+def test_build_inflation_nowcast_hidden_on_fetch_failure():
+    def boom(url):
+        raise OSError("blocked")
+    assert mo.build_inflation_nowcast(fetch=boom) is None
+
+
+def test_build_inflation_nowcast_from_payloads():
+    m = _nc_chart("2026-10", "2026-10-22", ["10/21", "10/22"], {"CPI Inflation": [0.25, 0.25]})
+    y = _nc_chart("2026-10", "2026-10-22", ["10/21", "10/22"], {"CPI Inflation": [3.7, 3.75]})
+
+    def fetch(url):
+        if "nowcast_month" in url:
+            return json.dumps([m]).encode("utf-8-sig")
+        if "nowcast_year" in url:
+            return json.dumps([y])
+        raise OSError("quarter down")   # 분기만 빠져도 월 값으로 낸다
+    blk = mo.build_inflation_nowcast(fetch=fetch)
+    assert blk["periods"][0]["cells"]["cpi"]["mom"] == 0.25
+    assert blk["periods"][0]["cells"]["cpi"]["yoy"] == 3.75
+    assert len(blk["periods"]) == 1

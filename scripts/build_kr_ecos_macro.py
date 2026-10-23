@@ -13,6 +13,13 @@
     731Y001/D/0000001  원/달러 매매기준율
     901Y009/M/0        소비자물가지수(2020=100) → YoY 계산
     521Y001/D/A001     뉴스심리지수(실험적, 100=중립)
+    901Y067/M/I16D·I16E  동행·선행지수 순환변동치(2020=100, 통계청 작성) — 2026-10-23
+                       StatisticItemList 로 확인(I16A 선행·I16B 동행·I16C 후행 종합지수, I16D 동행
+                       순환변동치, I16E 선행 순환변동치). 경기순환시계(businessCycle)에 쓴다.
+
+경기순환시계: x = 순환변동치 − 100(추세 위·아래), y = 전월 대비 변화. 사분면은 통계청 경기순환시계와
+같은 이름 — 상승(추세 위·오름) · 둔화(추세 위·내림) · 하강(추세 아래·내림) · 회복(추세 아래·오름).
+통계청 시계의 10개 구성지표 순환변동치는 KOSIS 키가 있어야 해 넣지 않았다(동행·선행 2개만).
 
 산출물: data/korea/ecos_macro.json + .js(window.KR_ECOS_MACRO). 값 없으면 기존
 파일 유지(정직성: 지어내지 않는다).
@@ -63,6 +70,84 @@ def fetch_series(key: str, stat: str, cycle: str, item: str, days: int = 400, n:
             continue
     out.sort(key=lambda x: x[0])
     return out
+
+
+CYCLE_STAT = "901Y067"
+CYCLE_ITEMS = (("coincident", "I16D", "동행지수 순환변동치"), ("leading", "I16E", "선행지수 순환변동치"))
+CYCLE_MONTHS = 24
+
+
+def fetch_rows_paged(key: str, stat: str, cycle: str, start: str, end: str, item: str,
+                     page: int = 1000) -> list[tuple[str, float]]:
+    """StatisticSearch 를 page 행씩 끝까지 받는다(샘플 키는 한 번에 10행까지라 로컬 확인용)."""
+    out, lo, total = [], 1, None
+    while total is None or lo <= total:
+        url = (f"https://ecos.bok.or.kr/api/StatisticSearch/{key}/json/kr/{lo}/{lo + page - 1}"
+               f"/{stat}/{cycle}/{start}/{end}/{item}")
+        req = urllib.request.Request(url, headers=UA)
+        with urllib.request.urlopen(req, timeout=30) as r:
+            d = json.loads(r.read().decode("utf-8"))
+        body = d.get("StatisticSearch") or {}
+        rows = body.get("row") or []
+        if not rows:
+            break
+        total = int(body.get("list_total_count") or len(rows))
+        for row in rows:
+            try:
+                out.append((str(row["TIME"]), float(row["DATA_VALUE"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+        lo += page
+        if lo > 2000:   # 안전 상한(월간 24~30행이면 한 번에 끝난다)
+            break
+    return sorted(set(out))
+
+
+def classify_phase(level: float, change: float, prev_dir: int | None = None) -> tuple[str | None, int | None]:
+    """순환변동치 수준(100 기준)과 전월 대비 변화로 사분면을 정한다.
+
+    변화 0 이면 직전 방향을 잇는다(없으면 판정 없음). 수준 100 은 추세 위로 본다.
+    반환: (국면 이름 | None, 이번 방향 +1/−1 | None)
+    """
+    d = 1 if change > 0 else -1 if change < 0 else prev_dir
+    if d is None:
+        return None, None
+    above = level >= 100
+    if above:
+        return ("상승" if d > 0 else "둔화"), d
+    return ("회복" if d > 0 else "하강"), d
+
+
+def cycle_points(series: list[tuple[str, float]], months: int = CYCLE_MONTHS) -> list[dict]:
+    """[(YYYYMM, 값)] → 마지막 months 개월의 {t, v, chg, phase}. 첫 달은 변화가 없어 버린다."""
+    pts, prev_v, prev_dir = [], None, None
+    for t, v in series:
+        if prev_v is not None:
+            chg = round(v - prev_v, 2)
+            phase, prev_dir = classify_phase(v, chg, prev_dir)
+            pts.append({"t": f"{t[:4]}-{t[4:6]}", "v": round(v, 2), "chg": chg, "phase": phase})
+        prev_v = v
+    return pts[-months:]
+
+
+def build_business_cycle(key: str, page: int = 1000) -> dict | None:
+    now = datetime.now(KST)
+    start = f"{now.year - 3}{now.month:02d}"   # 24개월 + 변화 계산용 여유
+    end = now.strftime("%Y%m")
+    out = {}
+    for name, item, label in CYCLE_ITEMS:
+        rows = fetch_rows_paged(key, CYCLE_STAT, "M", start, end, item, page=page)
+        pts = cycle_points(rows)
+        if len(pts) >= 6:
+            out[name] = {"label": label, "item": item, "points": pts}
+    if "coincident" not in out:
+        return None
+    return {
+        "asOf": max(s["points"][-1]["t"] for s in out.values()),
+        "source": "한국은행 ECOS (통계청 경기종합지수)",
+        "stat": CYCLE_STAT,
+        "series": out,
+    }
 
 
 def tile(key: str, label: str, unit: str, series: list[tuple[str, float]],
@@ -140,12 +225,45 @@ def build(key: str) -> dict | None:
     tiles = [x for x in tiles if x]
     if len(tiles) < 5:
         return None
-    return {
+    try:
+        cycle = build_business_cycle(key)
+    except Exception as e:  # noqa: BLE001 — 부가 블록, 실패하면 숨긴다(지어내지 않음)
+        print(f"[ecos] 경기순환시계 실패({type(e).__name__}: {e}) — 블록 생략")
+        cycle = None
+    payload = {
         "updatedAtKst": kst_now_str(),
         "asOf": max(x["asOf"] for x in tiles),
         "source": "한국은행 ECOS Open API",
         "indicators": tiles,
     }
+    if cycle:
+        payload["businessCycle"] = cycle
+    return payload
+
+
+def main_cycle_only(key: str) -> int:
+    """기존 파일의 businessCycle 블록만 갈아 끼운다(다른 지표 유지). 샘플 키(10행 제한)로도 돈다."""
+    try:
+        payload = json.loads(OUT_JSON.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(f"[ecos] 기존 파일 읽기 실패: {e}")
+        return 1
+    try:
+        cycle = build_business_cycle(key, page=10 if key == "sample" else 1000)
+    except Exception as e:  # noqa: BLE001
+        print(f"[ecos] 경기순환시계 실패({type(e).__name__}: {e}) — 기존 파일 유지")
+        return 1
+    if not cycle:
+        print("[ecos] 경기순환시계 값 부족 — 기존 파일 유지")
+        return 1
+    payload["businessCycle"] = cycle
+    compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    atomic_write_text(OUT_JSON, compact)
+    atomic_write_text(OUT_JS, f"window.KR_ECOS_MACRO = {compact};\n")
+    for s in cycle["series"].values():
+        last = s["points"][-1]
+        print(f"[ecos] {s['label']}: {last['t']} {last['v']} ({last['chg']:+g}) {last['phase']}")
+    return 0
 
 
 def main() -> int:
@@ -159,6 +277,8 @@ def main() -> int:
     if not key:
         print("[ecos] ECOS_API_KEY 없음 — 기존 파일 유지")
         return 1
+    if "--cycle-only" in sys.argv[1:]:
+        return main_cycle_only(key)
     try:
         payload = build(key)
     except Exception as e:  # noqa: BLE001
@@ -172,6 +292,11 @@ def main() -> int:
     atomic_write_text(OUT_JS, f"window.KR_ECOS_MACRO = {compact};\n")
     for x in payload["indicators"]:
         print(f"[ecos] {x['label']}: {x['value']}{x['unit']} ({x['change']:+g})")
+    cyc = payload.get("businessCycle")
+    if cyc:
+        for s in cyc["series"].values():
+            last = s["points"][-1]
+            print(f"[ecos] {s['label']}: {last['t']} {last['v']} ({last['chg']:+g}) {last['phase']}")
     print(f"{len(payload['indicators'])}개 지표 → {OUT_JSON.name}")
     return 0
 

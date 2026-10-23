@@ -110,5 +110,54 @@ test("upcomingSchedule: 같은 날·시각 지표 발표는 한 줄로", () => {
   assert.deepEqual(out.map((r) => r.title), ["A 외 2건"]);
 });
 
+test("새 위젯: consensus 는 국내만, rs·risk 는 두 시장", () => {
+  assert.ok(core.available("kr").includes("consensus") && !core.available("us").includes("consensus"));
+  for (const m of ["us", "kr"]) assert.ok(core.available(m).includes("rs") && core.available(m).includes("risk"));
+});
+
+test("consensusChanges: 변화 있는 내 종목만, |목표가 1개월| 큰 순", () => {
+  const stocks = {
+    "000660": { chg: { tp1w: 0, tp1m: -1.4, o1m: 0 } },
+    "005930": { chg: { tp1w: 2.0, tp1m: 5.5, o1m: 3.1 } },
+    "035420": { chg: { tp1w: 0, tp1m: 0, o1m: 0 } },
+    "051910": { chg: { tp1w: 1.2 } },
+    "000270": { carriedSince: "2026-10-01", chg: { tp1m: 30 } },
+    "999999": { chg: { tp1m: 50 } },
+  };
+  const out = core.consensusChanges(stocks, ["000660", "005930", "035420", "051910", "000270", "005930", "123456"]);
+  assert.deepEqual(out.map((r) => r.ticker), ["005930", "000660", "051910"]);
+  assert.deepEqual(out[0], { ticker: "005930", tp1w: 2, tp1m: 5.5, op1m: 3.1 });
+  assert.equal(out[2].tp1m, null);
+  assert.deepEqual(core.consensusChanges(null, ["005930"]), []);
+});
+
+test("rsRatings: RS 있는 내 종목만 높은 순 + RS선 신고가", () => {
+  const p = { cols: ["rs", "rsnh", "c1"], tickers: { AAPL: [55, 0, 1], NVDA: [91, 1, 2], MSFT: [null, 0, 3], TSLA: [91, false, 4] } };
+  assert.deepEqual(core.rsRatings(p, ["AAPL", "AAPL", "NVDA", "MSFT", "TSLA", "XXX"]),
+    [{ ticker: "NVDA", rs: 91, rsNewHigh: true }, { ticker: "TSLA", rs: 91, rsNewHigh: false }, { ticker: "AAPL", rs: 55, rsNewHigh: false }]);
+  assert.deepEqual(core.rsRatings(null, ["AAPL"]), []);
+  assert.deepEqual(core.rsRatings({ cols: ["c1"], tickers: { A: [1] } }, ["A"]), []);
+});
+
+test("riskCheckRow: 압축 행 → fy·fail·of", () => {
+  const p = { cols: ["fy", "f", "fOf", "pass", "fail", "of"], tickers: { A: [2025, 5, 9, 6, 2, 8] } };
+  assert.deepEqual(core.riskCheckRow(p, "A"), { fy: 2025, fail: 2, of: 8 });
+  assert.equal(core.riskCheckRow(p, "B"), null);
+  assert.equal(core.riskCheckRow(null, "A"), null);
+});
+
+test("riskFacts: 사실 있는 종목만, 많은 순, 출처 유지 · 소스 오류는 그 사실만 뺀다", () => {
+  const sources = [
+    { label: "CB", get: (t) => (t === "B" ? { text: "미상환 사채 27%", src: "DART" } : null) },
+    { label: "감사", get: (t) => (t === "B" || t === "C" ? "의견거절" : "") },
+    { label: "고장", get: () => { throw new Error("x"); } },
+  ];
+  const out = core.riskFacts(["A", "C", "B", "B"], sources);
+  assert.deepEqual(out.map((r) => [r.ticker, r.facts.length]), [["B", 2], ["C", 1]]);
+  assert.deepEqual(out[0].facts[0], { label: "CB", text: "미상환 사채 27%", src: "DART" });
+  assert.deepEqual(out[1].facts[0], { label: "감사", text: "의견거절", src: "" });
+  assert.deepEqual(core.riskFacts([], sources), []);
+});
+
 if (failures.length) { console.error(`my-dash-core: ${failures.length}개 실패\n  ${failures.join("\n  ")}`); process.exit(1); }
 console.log(`my-dash-core: ${passed}개 통과`);

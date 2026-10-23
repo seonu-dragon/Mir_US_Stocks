@@ -20,6 +20,9 @@
     targets: { label: "내 종목 목표가·의견 변경", markets: ["us", "kr"] },
     calendar: { label: "다가오는 시장 일정", markets: ["us", "kr"] },
     valueTrend: { label: "평가액 추이", markets: ["us", "kr"] },
+    consensus: { label: "내 종목 컨센서스 변화", markets: ["kr"] },
+    rs: { label: "내 종목 RS 등급", markets: ["us", "kr"] },
+    risk: { label: "내 종목 위험 신호", markets: ["us", "kr"] },
   };
   const DEFAULT = ["regime", "watch", "issues", "movers"];
 
@@ -174,7 +177,79 @@
     return out.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.title.localeCompare(b.title));
   }
 
-  const api = { upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, dropPastEarnings, relatedIndicators,
+
+  function numOrNull(v) {
+    if (v === null || v === undefined || v === "" || typeof v === "boolean") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** KR_CONSENSUS.stocks → 내 종목 중 변화가 하나라도 있는 행 [{ticker, tp1w, tp1m, op1m}] — |목표가 1개월| 큰 순
+   *  (같으면 |1주|, 티커). 승계 종목(carriedSince)·chg 없는 종목·세 값이 모두 0/없음인 종목은 뺀다. op1m = FY1 영업이익 1개월 %(chg.o1m). */
+  function consensusChanges(stocks, tickers) {
+    if (!stocks) return [];
+    const out = [];
+    for (const t of new Set((tickers || []).map(String))) {
+      const rec = stocks[t];
+      if (!rec || rec.carriedSince || !rec.chg) continue;
+      const row = { ticker: t, tp1w: numOrNull(rec.chg.tp1w), tp1m: numOrNull(rec.chg.tp1m), op1m: numOrNull(rec.chg.o1m) };
+      if (![row.tp1w, row.tp1m, row.op1m].some((v) => v != null && v !== 0)) continue;
+      out.push(row);
+    }
+    const abs = (v) => (v == null ? -1 : Math.abs(v));
+    return out.sort((a, b) => abs(b.tp1m) - abs(a.tp1m) || abs(b.tp1w) - abs(a.tp1w) || a.ticker.localeCompare(b.ticker));
+  }
+
+  /** TECH_SIGNALS({cols, tickers}) → 내 종목 RS 등급 [{ticker, rs, rsNewHigh}] 높은 순. RS 가 없는 종목은 뺀다. */
+  function rsRatings(payload, tickers) {
+    const cols = payload && Array.isArray(payload.cols) ? payload.cols : null;
+    const book = payload && payload.tickers;
+    if (!cols || !book) return [];
+    const iRs = cols.indexOf("rs");
+    const iNh = cols.indexOf("rsnh");
+    if (iRs < 0) return [];
+    const out = [];
+    for (const t of new Set((tickers || []).map(String))) {
+      const arr = book[t] || book[t.toUpperCase()];
+      if (!Array.isArray(arr)) continue;
+      const rs = numOrNull(arr[iRs]);
+      if (rs == null) continue;
+      out.push({ ticker: t, rs, rsNewHigh: iNh >= 0 && !!arr[iNh] });
+    }
+    return out.sort((a, b) => b.rs - a.rs || a.ticker.localeCompare(b.ticker));
+  }
+
+  /** RISK_CHECK({cols, tickers}) 한 종목 → {fy, fail, of} (fail = 체크리스트 경고 수). 없으면 null. */
+  function riskCheckRow(payload, ticker) {
+    const cols = payload && Array.isArray(payload.cols) ? payload.cols : null;
+    const arr = cols && payload.tickers && payload.tickers[String(ticker || "")];
+    if (!Array.isArray(arr)) return null;
+    const at = (k) => (cols.indexOf(k) >= 0 ? numOrNull(arr[cols.indexOf(k)]) : null);
+    return { fy: at("fy"), fail: at("fail"), of: at("of") };
+  }
+
+  // 사채·CP 잔액 중 1년 이내 만기 비중이 이 값(%) 이상이면 위험 신호 목록에 사실로 올린다.
+  const NEAR_1Y_PCT = 50;
+
+  /** 내 종목별 사실 모으기. sources = [{label, get(t) → {text, src}|string|null}] — 점수 없이 있는 사실만.
+   *  → [{ticker, facts: [{label, text, src}]}] 사실 많은 순(같으면 tickers 순서). 사실이 없는 종목은 뺀다. 소스 오류는 그 사실만 뺀다. */
+  function riskFacts(tickers, sources) {
+    const out = [];
+    [...new Set((tickers || []).map(String))].forEach((t, order) => {
+      const facts = [];
+      for (const s of sources || []) {
+        let v = null;
+        try { v = s.get(t); } catch (_) { v = null; }
+        if (!v) continue;
+        const f = typeof v === "string" ? { text: v, src: "" } : v;
+        if (f.text) facts.push({ label: s.label, text: String(f.text), src: String(f.src || "") });
+      }
+      if (facts.length) out.push({ ticker: t, facts, order });
+    });
+    return out.sort((a, b) => b.facts.length - a.facts.length || a.order - b.order).map(({ ticker, facts }) => ({ ticker, facts }));
+  }
+
+  const api = { consensusChanges, rsRatings, riskCheckRow, riskFacts, NEAR_1Y_PCT, upcomingSchedule, targetChanges, WIDGETS, DEFAULT, available, sanitize, add, remove, move, addable, upcomingEarnings, dropPastEarnings, relatedIndicators,
     recentMine, openMarketTrades, groupTrades };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDashCore = api;

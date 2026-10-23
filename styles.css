@@ -15736,6 +15736,12 @@ button.calp-who:hover strong { text-decoration: underline; }
 .dash-kv dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .dash-asof { margin: 6px 0 0; font-size: 11px; }
 .dash-regime { margin: 0; }
+.dash-table th { padding: 2px 0 4px; font-weight: 500; font-size: 11px; color: var(--muted); text-align: left; }
+.dash-table th.ins-num, .dash-table td.ins-num { text-align: right; }
+.dash-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; color: var(--text-2); }
+.dash-risk li { align-items: flex-start; }
+.dash-facts { display: grid; gap: 2px; text-align: right; min-width: 0; }
+.dash-fact b { font-weight: 600; }
 /* 주가 움직임 이유(move-reasons.js) — 뉴스로 확인된 이유는 강조, 소셜 의견은 흐리게(신뢰도 차이를 모양으로) */
 .mr-wrap { margin: 10px 0 4px; }
 .mr-btn { min-height: 36px; padding: 6px 14px; border: 1px solid var(--primary); border-radius: 999px; background: transparent; color: var(--primary); font-weight: 600; font-size: var(--fs-body); }

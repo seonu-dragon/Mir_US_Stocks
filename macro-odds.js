@@ -116,10 +116,11 @@ function moVenueBlock(g) {
   </div>`;
 }
 
-function moTopicCard(topic, groups) {
-  if (!groups.length) return "";
+function moTopicCard(topic, groups, lead = "") {
+  if (!groups.length && !lead) return "";
   return `<article class="mo-card">
     <h3>${escapeHtml(MO_TOPIC_TITLE[topic] || topic)}</h3>
+    ${lead}
     ${groups.map(moVenueBlock).join("")}
   </article>`;
 }
@@ -127,9 +128,45 @@ function moTopicCard(topic, groups) {
 function moFmtSignal(r) {
   const v = Number(r.value);
   if (!Number.isFinite(v)) return "—";
-  const digits = Math.abs(v) >= 10 ? 1 : 2;
+  const digits = Number.isInteger(r.digits) ? r.digits : (Math.abs(v) >= 10 ? 1 : 2);
   const unit = r.unit === "%" ? "%" : r.unit === "%p" ? "%p" : "";
-  return `${v > 0 && r.compare === "lt" ? "+" : ""}${v.toFixed(digits)}${unit}`;
+  return `${v > 0 && (r.compare === "lt" || r.signed) ? "+" : ""}${v.toFixed(digits)}${unit}`;
+}
+
+// 연준 경제전망(SEP) 정책금리 중간값 vs 현재 목표 범위 vs 예측시장 최다 결과(빌더 fedPath).
+// 연도별 열은 올해·내년 말 + 장기. 값이 없는 칸은 '—', 블록 자체는 SEP 가 없으면 숨긴다.
+function moRate(v, d = 1) {
+  const x = Number(v);
+  return Number.isFinite(x) ? `${x.toFixed(d)}%` : "—";
+}
+function moRateRange(lo, hi, d = 1) {
+  const a = Number(lo), b = Number(hi);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return "—";
+  return `${a.toFixed(d)}–${b.toFixed(d)}%`;
+}
+function moFedPathBlock(fp) {
+  if (!fp || !fp.sepDate) return "";
+  const cols = (fp.years || []).slice(0, 2).map((y) => ({ head: `${y.year} 말`, v: y }));
+  if (fp.longerRun) cols.push({ head: "장기", v: fp.longerRun });
+  if (!cols.length) return "";
+  const line = (label, fn) => `<div class="mo-sep-row" role="row"><span role="rowheader">${label}</span>${cols.map((c) => `<span role="cell">${fn(c.v)}</span>`).join("")}</div>`;
+  const cur = fp.current
+    ? `<p class="mo-sep-cur"><span class="mo-sub">현재 목표 범위</span> <strong>${moRateRange(fp.current.lower, fp.current.upper, 2)}</strong> <span class="mo-sub">${escapeHtml(fp.current.date || "")}</span></p>` : "";
+  const mkt = (fp.market || []).map((m) => {
+    const to = m.lower != null && m.upper != null ? ` → ${moRateRange(m.lower, m.upper, 2)}` : "";
+    return `<span class="mo-mkt"><span>${escapeHtml(m.venue || "")}</span><strong>${escapeHtml(m.label || "")} ${moPct(m.prob)}</strong>${to}</span>`;
+  }).join("");
+  return `<div class="mo-venue mo-sep">
+    <div class="mo-venue-head"><span class="mo-venue-name">연준 전망(SEP) 정책금리</span><span class="mo-venue-title">SEP ${escapeHtml(fp.sepDate)} 발표</span></div>
+    ${cur}
+    <div class="mo-sep-grid" role="table" aria-label="연준 경제전망 정책금리">
+      <div class="mo-sep-row mo-sep-head" role="row"><span role="columnheader"></span>${cols.map((c) => `<span role="columnheader">${c.head}</span>`).join("")}</div>
+      ${line("중간값", (v) => `<strong>${moRate(v.median)}</strong>`)}
+      ${line("중심경향", (v) => moRateRange(v.ctLo, v.ctHi))}
+      ${line("전체 범위", (v) => moRateRange(v.rangeLo, v.rangeHi))}
+    </div>
+    ${mkt ? `<div class="mo-mkts"><span class="mo-sub">예측시장 다음 회의 최다</span>${mkt}</div>` : ""}
+  </div>`;
 }
 
 function moRecessionCard(rec, marketGroups) {
@@ -141,7 +178,7 @@ function moRecessionCard(rec, marketGroups) {
     else state = `<span class="mo-state is-na">판정 없음</span>`;
     return `<div class="mo-sig" role="row">
       <div class="mo-sig-name" role="cell"><strong>${escapeHtml(r.name)}</strong></div>
-      <div class="mo-sig-val" role="cell"><strong>${moFmtSignal(r)}</strong></div>
+      <div class="mo-sig-val" role="cell"><strong>${moFmtSignal(r)}</strong>${r.sub ? `<span class="mo-sig-subv">${escapeHtml(r.sub)}</span>` : ""}</div>
       <div class="mo-sig-thr mo-sub" role="cell"><span class="mo-mlabel">임계 </span>${escapeHtml(r.thresholdText || "")}</div>
       <div class="mo-sig-state" role="cell">${state}</div>
       <div class="mo-sig-date mo-sub" role="cell"><span class="mo-mlabel">기준 </span>${escapeHtml(String(r.date || ""))}${r.carriedSince ? " (직전 값 유지)" : ""}</div>
@@ -173,7 +210,7 @@ function renderMacroOdds() {
   const by = {};
   d.groups.forEach((g) => { (by[g.topic] = by[g.topic] || []).push(g); });
   const cards = [
-    moTopicCard("fomc", by.fomc || []),
+    moTopicCard("fomc", by.fomc || [], moFedPathBlock(d.fedPath)),
     moTopicCard("cpi", by.cpi || []),
     moRecessionCard(d.recession, by.recession || []),
     // 침체 신호 카드가 없을 때만 예측시장 침체 확률을 따로 카드로 낸다.

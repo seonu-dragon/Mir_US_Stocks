@@ -1,6 +1,6 @@
 name: Macro odds (prediction markets)
 
-# 예측시장 확률(Kalshi · Polymarket 공개 API, 키 없음) + 침체 신호 모음 — 하루 3회.
+# 예측시장 확률(Kalshi · Polymarket 공개 API, 키 없음) + 침체 신호 모음 + 연준 SEP 경로(FRED) — 하루 3회.
 # 침체 신호는 산업 지표(data/industry_indicators.json)를 재사용하므로 Industry indicators(06:10 KST)
 # 뒤인 06:37 에 첫 실행을 둔다. Polymarket 은 한국 IP 에서 451 로 막히지만 미국 러너에서는 열린다.
 on:
@@ -28,6 +28,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      # 뉴욕연은 수익률곡선 침체확률(allmonth.xls, 옛 xls) 읽기용 — 버전은 requirements-actions.txt 와 같게.
+      - name: Install xlrd
+        run: python -m pip install --disable-pip-version-check xlrd==2.0.1
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"

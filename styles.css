@@ -13807,6 +13807,13 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .mo-sig-date { font-variant-numeric: tabular-nums; }
 .mo-sig-thr { padding-left: 10px; }
 .mo-mlabel { display: none; }
+.mo-sig-subv { display: block; font-size: var(--fs-cap); font-weight: 400; color: var(--muted); }
+.mo-sep-cur { margin: 0 0 6px; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.mo-sep-grid { display: flex; flex-direction: column; margin-bottom: 8px; }
+.mo-sep-row { display: grid; grid-template-columns: 5.5em repeat(3, minmax(0, 1fr)); gap: 6px; padding: 4px 0; border-top: 1px solid var(--line); font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.mo-sep-row > span:not(:first-child) { text-align: right; }
+.mo-sep-row > span:first-child { color: var(--muted); font-size: var(--fs-cap); align-self: center; }
+.mo-sep-head { border-top: 0; padding-top: 0; font-size: var(--fs-cap); color: var(--muted); }
 .mo-disclaimer { margin: 6px 0 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.65; }
 @media (max-width: 640px) {
   .movers-board { padding: 12px; }

@@ -80,3 +80,105 @@ def test_kalshi_thin_event_goes_to_excluded(monkeypatch):
     excluded = []
     assert mo.kalshi_topic("bok", series, now, excluded) is None
     assert excluded and "유동성 부족" in excluded[0]["reason"]
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-23 — SEP 경로 · Big Four · 뉴욕연은 침체확률 · CMDI (네트워크 없음)
+def test_parse_fred_csv_rejects_html_and_dots():
+    assert mo.parse_fred_csv("<html>nope</html>") == []
+    rows = mo.parse_fred_csv("observation_date,FEDTARMD\n2026-01-01,4.1\n2027-01-01,.\n2028-01-01,3.9\n")
+    assert rows == [("2026-01-01", 4.1), ("2028-01-01", 3.9)]
+
+
+def _sep_series(first_year="2026"):
+    y = int(first_year)
+    ann = lambda *v: [(f"{y + i}-01-01", x) for i, x in enumerate(v)]  # noqa: E731
+    return {
+        "FEDTARMD": ann(4.1, 4.1, 3.9), "FEDTARRL": ann(3.9, 3.1, 3.1), "FEDTARRH": ann(4.4, 4.4, 4.1),
+        "FEDTARCTL": ann(4.1, 3.6, 3.1), "FEDTARCTH": ann(4.4, 4.4, 4.1),
+        "FEDTARMDLR": [("2026-06-17", 3.1), ("2026-09-16", 3.2)],
+        "FEDTARCTLLR": [("2026-09-16", 3.0)], "FEDTARCTHLR": [("2026-09-16", 3.6)],
+        "FEDTARRLLR": [("2026-06-17", 2.9)],  # 이번 SEP 값이 아직 없다 → 장기 범위 하단은 비운다
+        "DFEDTARU": [("2026-10-22", 4.0)], "DFEDTARL": [("2026-10-22", 3.75)],
+    }
+
+
+def test_fed_path_sep_vs_current_vs_market():
+    fomc = [{"venue": "Kalshi", "eventDate": "2026-10-28", "outcomes": [
+        {"code": "cut", "label": "0.25%p 인하", "prob": 0.2}, {"code": "hold", "label": "동결", "prob": 0.75},
+        {"code": "hike", "label": "0.25%p 인상", "prob": 0.05}]},
+        {"venue": "Polymarket", "outcomes": [{"code": "cut_big", "label": "0.5%p 이상 인하", "prob": 0.6},
+                                             {"code": "hold", "label": "동결", "prob": 0.4}]}]
+    fp = mo.fed_path_from_series(_sep_series(), 2026, fomc)
+    assert fp["sepDate"] == "2026-09-16"
+    assert [y["year"] for y in fp["years"]] == [2026, 2027, 2028]
+    assert fp["years"][0] == {"year": 2026, "median": 4.1, "rangeLo": 3.9, "rangeHi": 4.4, "ctLo": 4.1, "ctHi": 4.4}
+    assert fp["longerRun"] == {"median": 3.2, "ctLo": 3.0, "ctHi": 3.6}  # 날짜 안 맞는 RLLR 은 제외
+    assert fp["current"] == {"lower": 3.75, "upper": 4.0, "date": "2026-10-22"}
+    k, p = fp["market"]
+    assert (k["code"], k["lower"], k["upper"]) == ("hold", 3.75, 4.0)
+    assert p["code"] == "cut_big" and p["lower"] is None  # 폭이 열린 결과는 범위를 만들지 않는다
+
+
+def test_fed_path_drops_stale_annual_vintage_and_past_years():
+    s = _sep_series(first_year="2025")  # 연도별만 옛 빈티지(첫 해가 발표 연도와 다름)
+    fp = mo.fed_path_from_series(s, 2026)
+    assert fp["years"] == [] and fp["longerRun"]["median"] == 3.2
+    fp2 = mo.fed_path_from_series(_sep_series(), 2027)  # 지난 해는 뺀다
+    assert [y["year"] for y in fp2["years"]] == [2027, 2028]
+    assert mo.fed_path_from_series({}, 2026) is None
+
+
+def test_big_four_stats_rule():
+    months = [f"2025-{m:02d}-01" for m in range(1, 13)] + [f"2026-{m:02d}-01" for m in range(1, 10)]
+    vals = [100 + i for i in range(len(months))]
+    vals[-4] = 130  # 2026-06 고점
+    st = mo.big_four_stats(list(zip(months, vals)))
+    # 최근 2026-09 = 120, 12개월 창 최고 130(2026-06), 6개월 전(2026-03) = 114
+    assert st["date"] == "2026-09" and st["highDate"] == "2026-06"
+    assert st["value"] == round((120 / 130 - 1) * 100, 2)
+    assert st["change6"] == round((120 / 114 - 1) * 100, 2)
+    # 6개월 전 값이 없으면 지어내지 않는다
+    gap = [(d, v) for d, v in zip(months, vals) if not d.startswith("2026-03")]
+    assert mo.big_four_stats(gap) is None
+    assert mo.big_four_stats([]) is None
+
+
+def test_big_four_rows_hidden_on_fetch_failure():
+    def fetch(fid, start):
+        if fid == "RRSFS":
+            raise OSError("down")
+        return [(f"2025-{m:02d}-01", 100.0) for m in range(1, 13)] + [("2026-01-01", 99.0)]
+    rows = mo.big_four_rows(fetch=fetch, now=datetime(2026, 10, 23, tzinfo=timezone.utc))
+    ids = [r["id"] for r in rows]
+    assert "bf_rrsfs" not in ids and len(ids) == 3
+    r = rows[0]
+    assert r["breached"] is None and r["value"] == -1.0 and r["sub"] == "6개월 -1.0%"
+
+
+def test_parse_nyfed_recprob():
+    rows = [["Date", "10 Year Treasury Yield", "3 Month Treasury Yield", "3m BEY", "Spread", "Rec_prob", "NBER_Rec"],
+            ["01-Aug-2026", 4.68, 3.72, 3.81, 0.8725, 0.2885, 0.0],
+            ["01-Sep-2026", 4.99, 3.94, 4.03, 0.9551, 0.2742, 0.0],
+            ["01-Aug-2027", "", "", "", "", 0.138825, ""],
+            ["01-Sep-2027", "", "", "", "", 0.127587, ""]]
+    st = mo.parse_nyfed_recprob(rows)
+    assert st["value"] == 12.8 and st["date"] == "2026-09" and st["target"] == "2027-09" and st["spread"] == 0.96
+    assert mo.parse_nyfed_recprob(rows[:-1]) is None  # 12개월 차이가 아니면 형식 변화로 본다
+    assert mo.parse_nyfed_recprob([["x"]]) is None
+
+
+def test_parse_cmdi_excel_serial_dates():
+    rows = [["eow_friday", "Market CMDI", "IG CMDI", "HY CMDI"],
+            ["46283", "0.17", "0.23", "0.1"], ["46290", "0.2", "0.25", "0.11"], ["46297", "", "", ""]]
+    st = mo.parse_cmdi(rows)
+    assert st == {"value": 0.2, "date": "2026-09-25", "history": [{"d": "2026-09-18", "v": 0.17}, {"d": "2026-09-25", "v": 0.2}]}
+    assert mo.parse_cmdi([["a", "b"]]) is None
+
+
+def test_recession_extra_rows_not_counted(tmp_path, monkeypatch):
+    monkeypatch.setattr(mo, "INDUSTRY_JSON", tmp_path / "missing.json")
+    extra = [{"id": "nyfed_cmdi", "name": "CMDI", "value": 0.2, "breached": None}]
+    rec = mo.build_recession_signals(extra)
+    assert rec["evaluated"] == 0 and rec["breached"] == 0 and rec["indicators"][0]["id"] == "nyfed_cmdi"
+    assert mo.build_recession_signals([]) is None

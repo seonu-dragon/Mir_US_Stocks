@@ -107,6 +107,14 @@ jobs:
         timeout-minutes: 15
         run: python scripts/build_market_breadth.py --market kr --push
 
+      # 돌파 연속성/되돌림 통계(분석 화면 '④ 돌파 연속성' 카드) — 방금 발행된 국내 일봉(네이버 수정주가)만 읽는다
+      # (외부 호출 없음, ~30초). 거래정지 봉·가격제한폭 밖 불연속·상하한가 잠김 진입은 빌더가 뺀다.
+      - name: Build breakout/retest stats (KR)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python scripts/build_breakout_retest.py --market kr --push
+
       - name: Run Korea close briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

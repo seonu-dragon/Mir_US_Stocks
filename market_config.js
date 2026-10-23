@@ -283,9 +283,10 @@
       earningsCalendar: true,
       // 국내 실적 IR 일정(통합 캘린더 '실적' 칩). DART 목록 조회가 실패하면 빌더가 기존 파일을 유지한다.
       krIrSchedule: true,
-      // 돌파/되돌림 통계(build_breakout_retest.py)는 US 만 산출한다.
-      // 없는 파일을 요청해 콘솔에 404 를 남기지 않도록 꺼 둔다.
-      breakoutStats: false,
+      // 돌파/되돌림 통계 — build_breakout_retest.py --market kr → data/korea/breakout_retest_stats.json
+      // (korea-close-briefing 매일). 2026-10-23 첫 산출: 네이버 봉 3,137종목, 상승 돌파 2.6만·하락 돌파 3.2만 건.
+      // 거래정지(거래량 0) 봉·가격제한폭 밖 불연속·상하한가 잠김 진입은 빌더가 빼고 kr_cleaning 에 센다.
+      breakoutStats: true,
       // 프리·애프터 급등락 보드(ext-hours.js) — TradingView /korea/scan 은 장전·장후 시간외 값(premarket_*·
       // postmarket_*)이 전부 null 이다(2026-10-21 실측). 정규장 등락은 오늘의 특징주·시장경보가 이미 보여 준다.
       extHoursBoard: false,

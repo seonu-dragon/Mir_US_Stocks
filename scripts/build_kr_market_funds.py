@@ -336,6 +336,7 @@ def main() -> int:
     # 3) 순매수 상위(파일만 읽음)
     top = load_top() or prev.get("top")
     streaks = load_top(key="streaks") or prev.get("streaks")
+    groups = load_top(key="groups") or prev.get("groups")
 
     if not funds_rows and not any(investors.get(m) for m in MARKETS):
         print("[중단] 증시자금·투자자별 모두 0건 — 파일을 쓰지 않는다.")
@@ -358,12 +359,14 @@ def main() -> int:
             "investors": "네이버 금융 (코스피·코스닥 투자자별 순매수)",
             "top": "네이버 금융 종목별 순매수 수량 × 종가(추정)",
             "streaks": "네이버 금융 종목별 20거래일 순매수(연속일·수량 × 종가 추정)",
+            "groups": "네이버 금융 종목별 순매수 수량 × 종가(추정) 합 · 테마 = DART 사업보고서 근거 편입(중복 편입 포함)",
         },
         "funds": {"asOf": funds_rows[-1]["d"] if funds_rows else None, "rows": funds_rows},
         "investors": {"asOf": max((investors[m][-1]["d"] for m in MARKETS if investors.get(m)), default=None),
                       **{m: investors.get(m) or [] for m in MARKETS}},
         "top": top,
         "streaks": streaks,
+        "groups": groups,
         "check": ecos_check(funds_rows, industry),
         "errors": errors[:10],
     }

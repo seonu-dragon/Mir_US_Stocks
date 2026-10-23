@@ -221,6 +221,36 @@ test("주주환원 현금: 무배당 기록이면 합계에 배당 0, 수익률�
   assert.deepEqual(none, { buyback: null, div: null, total: null, net: null });
 });
 
+// 배당락 후 회복(填息天數): 기준가 = 직전 거래일 종가, 회복 = 배당락일부터 종가 ≥ 기준가인 첫날.
+test("배당락 후 회복: 거래일·달력일, 미회복은 경과, 범위 밖·조정 시세는 뺀다", () => {
+  const bar = (d, o, c) => [o, Math.max(o, c), Math.min(o, c), c, 1000, d];
+  const series = [
+    bar("2026-01-02", 100, 100), bar("2026-01-05", 99, 98), bar("2026-01-06", 98, 99), bar("2026-01-07", 99, 100.5),
+    bar("2026-02-02", 110, 110), bar("2026-02-03", 108, 111),                     // 배당락 당일 회복
+    bar("2026-03-02", 120, 120), bar("2026-03-03", 117, 117), bar("2026-03-04", 117, 118),
+  ];
+  const divs = [["2025-06-01", 1], ["2026-01-05", 1.5], ["2026-02-03", 1], ["2026-03-03", 2], ["2026-12-01", 2]];
+  const r = sh.dividendRecovery(series, divs, { limit: 8 });
+  assert.equal(r.rows.length, 3, "이력 시작 전(2025-06)·미래(2026-12) 회차는 빠진다");
+  assert.equal(r.recoveredCount, 2);
+  assert.equal(r.lastDate, "2026-03-04");
+  const [mar, feb, jan] = r.rows;                                                 // 최신 먼저
+  assert.deepEqual([jan.baseClose, jan.recDate, jan.tradingDays, jan.calendarDays], [100, "2026-01-07", 3, 2]);
+  assert.deepEqual([feb.recovered, feb.tradingDays, feb.calendarDays], [true, 1, 0]);
+  assert.deepEqual([mar.recovered, mar.baseClose, mar.tradingDays, mar.calendarDays, mar.recDate], [false, 120, 2, 1, undefined]);
+  // 객체 봉({date, o, c})도 받는다.
+  const objs = series.map((b) => ({ date: b[5], o: b[0], c: b[3] }));
+  assert.deepEqual(sh.dividendRecovery(objs, divs).rows, r.rows);
+  // limit: 최근 n회만.
+  assert.deepEqual(sh.dividendRecovery(series, divs, { limit: 1 }).rows.map((x) => x.date), ["2026-03-03"]);
+  // 배당 소급 조정 시세로 알려진 경우는 계산하지 않는다.
+  assert.equal(sh.dividendRecovery(series, divs, { adjusted: true }).skipped, "adjusted");
+  assert.equal(sh.dividendRecovery([], divs).skipped, "noBars");
+  assert.equal(sh.dividendRecovery(series, []).skipped, "noDividends");
+  // 직전 봉이 10일 넘게 떨어져 있으면(이력 공백) 기준가를 믿지 않는다.
+  assert.equal(sh.dividendRecovery([bar("2026-01-02", 1, 1), bar("2026-02-02", 1, 1)], [["2026-02-02", 0.1]]).rows.length, 0);
+});
+
 if (failures.length) {
   console.error(`shareholder-core: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error(` - ${f}`));

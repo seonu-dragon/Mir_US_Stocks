@@ -246,3 +246,59 @@ def test_load_top_reads_streaks_key(tmp_path):
     f = tmp_path / "investor_flow.json"
     f.write_text(json.dumps({"top": {"asOf": "a"}, "streaks": {"asOf": "b"}}), encoding="utf-8")
     assert mf.load_top(f, key="streaks") == {"asOf": "b"}
+
+
+def _irow(d, close, ind, frn, org):
+    return [d, close, 0, ind, frn, org, 1.0]
+
+
+def test_compute_group_flow_sums_qty_times_close_per_window_with_overlap():
+    days = [str(20261001 + i) for i in range(25)][::-1]       # 최신순 25개 날짜
+    daily = {
+        # A: 매일 외국인 +10주 · 기관 -5주 · 개인 -5주, 종가 100
+        "A": [_irow(d, 100, -5, 10, -5) for d in days[:20]],
+        # B: 매일 외국인 -1주, 종가 1,000
+        "B": [_irow(d, 1000, 1, -1, 0) for d in days[:20]],
+        # S: 거래정지 — 창 밖 묵은 날짜만(공통 날짜에도 못 낀다)
+        "S": [_irow("20250101", 100, 0, 999999, 0)],
+    }
+    groups = {"t1": {"n": "테마1", "members": ["A", "B"]}, "t2": {"n": "테마2", "members": ["A", "A", "Z"]},
+              "t3": {"n": "빈 테마", "members": ["Z"]}, "t4": {"n": "정지", "members": ["S"]}}
+    out = {g["id"]: g for g in flow.compute_group_flow(daily, groups)}
+    assert "t3" not in out                                    # 수급 행이 없는 그룹은 뺀다
+    t1, t2 = out["t1"], out["t2"]
+    assert t1["n"] == "테마1" and t1["c"] == 2
+    assert t2["c"] == 1                                       # 중복 티커는 한 번만, 없는 종목은 세지 않음
+    # 외국인: 1일 = 10×100 − 1×1000 = 0, 5일 = 0, 20일 = 0 / A 만 있는 t2 는 1일 1,000원
+    assert t1["f"] == [0.0, 0.0, 0.0]
+    assert t2["f"] == [round(1000 / 1e8, 1), round(5000 / 1e8, 1), round(20000 / 1e8, 1)]
+    assert t1["i"] == [round((-500 + 1000) / 1e8, 1)] * 1 + [round(5 * 500 / 1e8, 1), round(20 * 500 / 1e8, 1)]
+    # 큰 금액으로 반올림 확인(억 원)
+    big = {"X": [_irow(d, 50000, 0, 200000, -100000) for d in days[:20]]}
+    g = flow.compute_group_flow(big, {"x": {"n": "x", "members": ["X"]}})[0]
+    assert g["f"] == [100.0, 500.0, 2000.0] and g["o"] == [-50.0, -250.0, -1000.0]
+    assert flow.compute_group_flow({}, groups) == []
+
+
+def test_group_flow_payload_theme_and_sector(tmp_path):
+    days = ["20261023", "20261022", "20261021"]
+    daily = {"005930": [_irow(d, 1000, 0, 100, 0) for d in days], "000660": [_irow(d, 2000, 0, -10, 0) for d in days]}
+    themes_file = tmp_path / "themes.json"
+    themes_file.write_text(json.dumps({"themes": [
+        {"id": "hbm", "name": "HBM", "members": [{"t": "005930"}, {"t": "000660"}]},
+        {"id": "empty", "name": "빈", "members": []}]}), encoding="utf-8")
+    themes = flow.load_theme_groups(themes_file)
+    assert set(themes) == {"hbm"}
+    assert flow.load_theme_groups(tmp_path / "none.json") == {}
+    p = flow.group_flow_payload(daily, themes, {"005930": "IT", "000660": "IT", "069500": "ETF"})
+    assert p["asOf"] == "2026-10-23" and p["windows"] == ["d1", "d5", "d20"]
+    assert p["from"] == {"d1": "2026-10-23", "d5": "2026-10-21", "d20": "2026-10-21"}
+    assert [g["id"] for g in p["sector"]] == ["IT"] and p["sector"][0]["c"] == 2
+    assert p["theme"][0]["f"][0] == round((100 * 1000 - 10 * 2000) / 1e8, 1)
+    assert flow.group_flow_payload({}, themes, {}) is None
+
+
+def test_load_top_reads_groups_key(tmp_path):
+    f = tmp_path / "investor_flow.json"
+    f.write_text(json.dumps({"groups": {"asOf": "c"}}), encoding="utf-8")
+    assert mf.load_top(f, key="groups") == {"asOf": "c"}

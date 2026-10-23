@@ -199,6 +199,21 @@ test("ownershipRows: 이 종목만 · 최신순 · 같은 날은 5%룰 먼저 ·
   assert.deepEqual(core.ownershipRows(null, "005930"), []);
 });
 
+test("groupRows: 창·투자자 기준 순매수/순매도 정렬과 개수 제한", () => {
+  const list = [
+    { id: "a", n: "A", c: 3, f: [10, -5, 100], o: [0, 1, 2], i: [1, 1, 1] },
+    { id: "b", n: "B", c: 1, f: [-20, 30, -50], o: [5, -1, 0], i: [1, 1, 1] },
+    { id: "c", n: "C", c: 2, f: [5, 0, 70], o: [null, 2, 1], i: [1, 1, 1] },
+    { id: "d", n: "D", c: 2 },
+  ];
+  assert.deepEqual(core.groupRows(list, 0, "f", "Buy").map((x) => x.id), ["a", "c"]);
+  assert.deepEqual(core.groupRows(list, 0, "f", "Sell").map((x) => x.id), ["b"]);
+  assert.deepEqual(core.groupRows(list, 2, "f", "Buy", 1).map((x) => x.id), ["a"]);
+  assert.deepEqual(core.groupRows(list, 1, "f", "Buy").map((x) => x.id), ["b"]);   // 0 은 어느 쪽에도 없다
+  assert.deepEqual(core.groupRows(list, 0, "o", "Buy").map((x) => x.id), ["b"]);   // 결측(null) 제외
+  assert.deepEqual(core.groupRows(null, 0, "f", "Buy"), []);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

@@ -7,7 +7,8 @@
 //        data/korea/investor_flow_daily/sNN.json(시총 상위 480종목 20거래일, build_kr_investor_flow.py)
 // 사실 표시용이다 — 수급·신용잔고로 매매 판단을 만들지 않는다.
 
-const KRFLOW_VIEW = { market: "KOSPI", period: 21, investor: "frn", topSide: "Buy", topWin: "d1", stKind: "frn", stSide: "Buy", stMarket: "all", stMin: 3 };
+const KRFLOW_VIEW = { market: "KOSPI", period: 21, investor: "frn", topSide: "Buy", topWin: "d1", stKind: "frn", stSide: "Buy", stMarket: "all", stMin: 3, gKind: "theme", gWin: 1, gKey: "f", gSide: "Buy" };
+const KRFLOW_GROUP_SHOW = 15;
 const KRFLOW_STREAK_SHOW = 15;
 const KRFLOW_PERIODS = [[5, "1주"], [21, "1개월"], [63, "3개월"]];
 const KRFLOW_INVESTORS = [["ind", "개인"], ["frn", "외국인"], ["org", "기관"]];
@@ -51,6 +52,7 @@ function renderKrFlowMarket() {
     ${krFlowInvestorCard(payload)}
     ${krFlowFundsCard(payload)}
     ${krFlowTopCard(payload)}
+    ${krFlowGroupCard(payload)}
     ${krFlowStreakCard(payload)}`;
   if (!host.dataset.kfBound) {
     host.dataset.kfBound = "1";
@@ -71,6 +73,10 @@ function krFlowOnClick(ev) {
     else if (key === "stSide") KRFLOW_VIEW.stSide = val;
     else if (key === "stMarket") KRFLOW_VIEW.stMarket = val;
     else if (key === "stMin") KRFLOW_VIEW.stMin = Number(val) || 2;
+    else if (key === "gKind") KRFLOW_VIEW.gKind = val;
+    else if (key === "gWin") KRFLOW_VIEW.gWin = Number(val) || 0;
+    else if (key === "gKey") KRFLOW_VIEW.gKey = val;
+    else if (key === "gSide") KRFLOW_VIEW.gSide = val;
     renderKrFlowMarket();
     return;
   }
@@ -211,6 +217,51 @@ function krFlowTopCard(payload) {
         ${krFlowTopTable(sect[`frn${side}`], `외국인 ${word}`)}
         ${krFlowTopTable(sect[`org${side}`], `기관 ${word}`)}
       </div>
+    </section>`;
+}
+
+// 테마·업종별 외국인·기관·개인 순매수 합. 데이터는 build_kr_investor_flow.py compute_group_flow(groups) —
+// 종목 금액(수량 × 그날 종가, 추정)을 편입 종목만큼 더한 값. 한 종목이 여러 테마에 들어가면 테마마다 더해진다.
+function krFlowGroupCard(payload) {
+  const C = window.MirKrFlowCore;
+  const g = payload.groups;
+  if (!g || !C || typeof C.groupRows !== "function") return "";
+  const v = KRFLOW_VIEW;
+  const list = g[v.gKind];
+  if (!Array.isArray(list) || !list.length) return "";
+  const winKey = (g.windows || ["d1", "d5", "d20"])[v.gWin] || "d5";
+  const from = (g.from || {})[winKey];
+  const range = from && from !== g.asOf ? `${krFlowDateShort(from)} ~ ${krFlowDateShort(g.asOf)}` : krFlowDateShort(g.asOf);
+  const word = v.gSide === "Buy" ? "순매수" : "순매도";
+  const rows = C.groupRows(list, v.gWin, v.gKey, v.gSide, KRFLOW_GROUP_SHOW);
+  const cols = [["f", "외국인"], ["o", "기관"], ["i", "개인"]];
+  const label = v.gKind === "theme" ? "테마" : "업종";
+  const body = rows.map((x, i) => `
+    <tr>
+      <td class="kf-rank">${i + 1}</td>
+      <th scope="row" title="${escapeHtml(x.n || x.id)}">${escapeHtml(x.n || x.id)}</th>
+      <td class="kf-muted-num">${escapeHtml(String(x.c))}</td>
+      ${cols.map(([k]) => { const a = Array.isArray(x[k]) ? x[k][v.gWin] : null; return `<td class="${C.tone(a)}${k === v.gKey ? " is-key" : ""}">${C.fmtSigned(a)}</td>`; }).join("")}
+    </tr>`).join("");
+  const table = rows.length
+    ? `<table class="kf-table kf-group-table">
+        <thead><tr><th></th><th>${label}</th><th>종목</th>${cols.map(([k, name]) => `<th class="${k === v.gKey ? "is-key" : ""}" title="순매수 수량 × 그날 종가 합">${name}</th>`).join("")}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>`
+    : `<p class="muted">해당 ${label} 없음</p>`;
+  return `
+    <section class="kf-card" aria-label="${label}별 ${word}">
+      <header class="kf-head">
+        <h3>${label}별 ${word}</h3>
+        ${krFlowSeg("gKind", [["theme", "테마"], ["sector", "업종"]], v.gKind)}
+        ${krFlowSeg("gWin", [[0, "1일"], [1, "5일"], [2, "20일"]], v.gWin)}
+      </header>
+      <div class="kf-streak-filters">
+        ${krFlowSeg("gKey", cols, v.gKey)}
+        ${krFlowSeg("gSide", [["Buy", "순매수"], ["Sell", "순매도"]], v.gSide)}
+      </div>
+      <p class="kf-sub">${escapeHtml(range)} · 추정 금액(억)${v.gKind === "theme" ? " · 중복 편입 포함" : ""}</p>
+      ${table}
     </section>`;
 }
 

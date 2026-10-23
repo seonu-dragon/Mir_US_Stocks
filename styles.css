@@ -6202,7 +6202,7 @@ html[data-theme="dark"] .watch-star.is-on { color: #fbbf24; }
   border-radius: var(--r-lg);
   background: var(--panel-soft);
 }
-.earn-highlight-label { font-weight: 700; font-size: var(--fs-cap); white-space: nowrap; }
+.earn-highlight-label { font-weight: 700; font-size: var(--fs-cap); }
 .earn-highlight-chips { display: flex; flex-wrap: wrap; gap: 7px; }
 .earn-hl-chip {
   display: inline-flex;
@@ -8061,6 +8061,9 @@ button.community-hot-ticker {
 .kf-table .kf-rank { color: var(--text-muted); width: 1.6em; text-align: left; }
 .kf-table tbody tr { cursor: pointer; }
 .kf-table tbody tr:hover { background: var(--surface-2); }
+.kf-group-table tbody tr { cursor: default; }
+.kf-group-table .is-key { font-weight: 600; }
+.kf-group-table .kf-muted-num { color: var(--text-muted); }
 .kf-foot { margin-top: 4px; }
 @media (max-width: 900px) {
   .kf-funds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -8104,7 +8107,7 @@ button.community-hot-ticker {
 .kt-rank-item:hover { background: var(--surface-2); }
 .kt-rank-no { flex: 0 0 auto; min-width: 1.6em; white-space: nowrap; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .kt-rank-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.kt-rank-n { color: var(--text-muted); font-size: var(--fs-cap); white-space: nowrap; }
+.kt-rank-n { color: var(--text-muted); font-size: var(--fs-cap); }
 .kt-rank-item b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kt-groups { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
 .kt-chip-f {
@@ -14237,7 +14240,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .fgrade-table th, .fgrade-table td { padding: 4px 4px; border-bottom: 1px solid var(--line); text-align: left; }
 .fgrade-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .fgrade-table tr.fgrade-unused td { color: var(--text-muted); }
-.fgrade-dir { color: var(--text-muted); font-size: var(--fs-cap); white-space: nowrap; }
+.fgrade-dir { color: var(--text-muted); font-size: var(--fs-cap); }
 .fgrade-note, .fgrade-valid { margin: 6px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.6; overflow-wrap: anywhere; }
 .fgrade-valid { padding: 4px 8px; border-left: 2px solid var(--line); }
 .fgrade-foot { margin: 8px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.65; overflow-wrap: anywhere; }
@@ -14249,7 +14252,7 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
 .mf-head h3 { margin: 0; font-size: var(--fs-body); }
 .mf-meta { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; overflow-wrap: anywhere; }
 .mf-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-.mf-badge { padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: var(--muted); font-size: var(--fs-cap); white-space: nowrap; }
+.mf-badge { padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: var(--muted); font-size: var(--fs-cap); }
 .mf-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 6px; }
 .mf-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .mf-chip { height: auto; min-height: 0; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: inherit; font-size: var(--fs-cap); cursor: pointer; }
@@ -16860,7 +16863,7 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .mfeed-text { margin: 0; font-size: var(--fs-sub); line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
 .mfeed-lines { margin: 4px 0 0; padding-left: 16px; font-size: var(--fs-cap); line-height: 1.55; color: var(--text-2); overflow-wrap: anywhere; }
 .mfeed-sub { display: block; margin-top: 2px; font-size: var(--fs-cap); color: var(--muted); }
-.mfeed-src { font-size: var(--fs-cap); white-space: nowrap; }
+.mfeed-src { font-size: var(--fs-cap); }
 .mfeed-link { color: var(--link); }
 .mfeed-list-host > .list-more-btn { margin: 10px 0 0; }
 .mfeed-empty { padding: 18px 2px; }
@@ -17716,3 +17719,6 @@ html[data-theme="dark"] {
 .pl-list .is-pass .pl-state { color: var(--good); }
 .pl-list .is-warn .pl-state { color: var(--bad); }
 .pl-detail { color: var(--text-2); font-variant-numeric: tabular-nums; }
+/* 주주환원 › 배당락 후 회복 표 — 좁은 카드에서 회복일 칸이 잘리지 않게 줄바꿈 */
+.shr-rec-table th, .shr-rec-table td { white-space: normal; padding: 6px 4px; }
+.shr-rec-table .shr-rec-sub { display: block; color: var(--text-muted); font-size: var(--fs-cap); }

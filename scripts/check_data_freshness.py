@@ -64,6 +64,8 @@ CHECKS = {
         ("data/market_snapshot.json", 2, False),
         # 시장 폭 추이(build_market_breadth.py, 스냅샷 직후 continue-on-error 스텝). 0일(count 0)도 잡는다.
         ("data/market_breadth.json", 4, True),
+        # 종목별 기술적 신호(같은 빌더가 함께 쓴다 — RS 등급·RS선 신고가·교차). 0종목도 잡는다.
+        ("data/tech_signals.json", 4, True),
         # 오늘의 이슈(build_market_issues.py) — 이슈 0개가 정상인 날이 있어 0건은 보지 않는다.
         ("data/market_issues.json", 4, False),
         ("data/earnings_calendar.json", 5, False),
@@ -99,6 +101,7 @@ CHECKS = {
     "kr": [
         ("data/korea/market_snapshot.json", 2, False),
         ("data/korea/market_breadth.json", 4, True),
+        ("data/korea/tech_signals.json", 4, True),
         ("data/korea/market_issues.json", 4, False),
         ("data/kr_disclosures.json", 4, False),
         ("data/korea/pattern_stats.json", 10, False),

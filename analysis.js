@@ -2763,6 +2763,7 @@ function buildResultHTML(result) {
       </div>
       <div class="cprob-rstack">
         ${baseHtml}
+        ${renderRsRatingCard(result)}
         ${renderMtfCard(result)}
         ${renderGapFillCard(result)}
         ${renderOptionsContextCard(result)}
@@ -2981,6 +2982,79 @@ function renderTechnicalLevelsCard(result) {
     <h3>기술적 레벨 · 변동폭</h3>
     ${parts.join("")}
   </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// RS 등급 · RS선 신고가 카드 (data/tech_signals.js — build_market_breadth.py)
+// 데이터가 lazy 라 카드는 빈 슬롯으로 먼저 그리고, 도착하면 fillRsRatingCard 가 채운다
+// (공매도 거래비중 추이와 같은 방식). 끝까지 값이 없으면 카드를 숨긴다 — 빈 카드를 남기지 않는다.
+let _rsCardTried = false;
+let _rsStandalonePromise = null;
+
+function techSignalsPayload() {
+  return (typeof window !== "undefined" && window.TECH_SIGNALS) || null;
+}
+function techRowFor(ticker) {
+  const core = typeof window !== "undefined" ? window.MirTechCore : null;
+  const p = techSignalsPayload();
+  return core && p && ticker ? core.rowFields(p, ticker) : null;
+}
+// 대시보드에서는 app.js 의 FEATURE_DATA(techSignals)로 받고, standalone analysis.html 에서는 직접 받는다.
+function ensureTechSignals() {
+  if (techSignalsPayload()) return Promise.resolve(true);
+  if (typeof ensureFeatureData === "function") return Promise.resolve(ensureFeatureData("techSignals")).catch(() => false);
+  if (!_rsStandalonePromise) {
+    const rel = isKrAnalysisMode() ? "data/korea/tech_signals.json" : "data/tech_signals.json";
+    _rsStandalonePromise = fetch(rel, { cache: "no-cache" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => { if (json) window.TECH_SIGNALS = json; return !!json; })
+      .catch(() => false);
+  }
+  return _rsStandalonePromise;
+}
+
+function rsRatingBodyHtml(ticker) {
+  const row = techRowFor(ticker);
+  const core = typeof window !== "undefined" ? window.MirTechCore : null;
+  if (!row) return "";
+  const parts = [];
+  if (row.rsRating != null) {
+    const band = core ? core.rsBand(row.rsRating) : "";
+    parts.push(`<p class="base-line">RS 등급 <b style="color:var(--primary)">${Math.round(row.rsRating)}</b><span class="muted">/99${band ? ` · ${escapeHtml(band)}` : ""}</span></p>`);
+  }
+  if (row.rsNewHigh === 1) {
+    const before = row.rsNewHighBeforePrice === 1 ? " <span class=\"muted\">(주가보다 먼저)</span>" : "";
+    parts.push(`<p class="base-line"><b>RS선 신고가</b>${before}</p>`);
+  }
+  if (!parts.length) return "";
+  const p = techSignalsPayload();
+  const bench = p && p.benchmark ? p.benchmark.label || p.benchmark.ticker : "";
+  const asOf = p && p.baseDate ? p.baseDate : "";
+  parts.push(`<p class="muted" style="margin:0;font-size:12px;">가중 12개월 성과(최근 3개월 40% + 직전 세 분기 각 20%)의 같은 시장 내 백분위${bench ? ` · RS선 = 종가 ÷ ${escapeHtml(bench)}` : ""}${asOf ? ` · ${escapeHtml(asOf)} 기준` : ""}</p>`);
+  return parts.join("");
+}
+
+function renderRsRatingCard(result) {
+  const ticker = String((result && result.ticker) || "");
+  if (!ticker) return "";
+  const body = rsRatingBodyHtml(ticker);
+  if (!body && !_rsCardTried) {
+    _rsCardTried = true;
+    ensureTechSignals().then((ok) => { if (ok) fillRsRatingCard(); });
+  }
+  return `<div class="card rs-rating-card" data-rs-ticker="${escapeHtml(ticker)}"${body ? "" : " hidden"}>
+    <h3>상대강도(RS)</h3>
+    <div class="rs-rating-body">${body}</div>
+  </div>`;
+}
+
+function fillRsRatingCard() {
+  document.querySelectorAll(".rs-rating-card[data-rs-ticker]").forEach((card) => {
+    const body = rsRatingBodyHtml(card.dataset.rsTicker);
+    const slot = card.querySelector(".rs-rating-body");
+    if (slot) slot.innerHTML = body;
+    card.hidden = !body;
+  });
 }
 
 function renderMtfCard(result) {

@@ -141,6 +141,46 @@ test("extract: 팩터 순위는 검증 파일이 있을 때만(2026-09-04 이전
   assert.equal(hi[0].t, "L1");
   assert.equal(hi[0].x.val[5], true);
 });
+// ---------------------------------------------------------------- RS 등급 · RS선 신고가
+const techSnap = {
+  priceDate: "2026-09-25",
+  stocks: [
+    { ticker: "R1", price: 10, priceDate: "2026-09-25", marketCapB: 50, groups: ["idx_sp500"], historySource: "yahoo", sector: "X",
+      closeSeries: Array.from({ length: 40 }, (_, k) => 100 + k) },
+    { ticker: "R2", price: 20, priceDate: "2026-09-25", marketCapB: 10, groups: ["idx_sp500"], historySource: "yahoo", sector: "X",
+      closeSeries: Array.from({ length: 40 }, (_, k) => 200 - k) },
+  ],
+};
+const techFile = (base, rows) => ({ baseDate: base, cols: ["rs", "rsnh", "rsnhb"], tickers: rows });
+
+test("extract: RS 등급 상위는 등급 내림차순, RS선 신고가는 rsnh=1 만", () => {
+  const tech = techFile("2026-09-25", { R1: [95, 1, 1], R2: [12, 0, 0] });
+  const out = core.extractSignals("us", { snapshot: techSnap, tech, recordDate: "2026-09-26" });
+  const top = out.filter((x) => x.k === "rs_top");
+  assert.deepEqual(top.map((x) => x.t), ["R1", "R2"]);
+  assert.equal(top[0].x.rs, 95);
+  assert.equal(top[0].x.asOf, "2026-09-25");
+  const nh = out.filter((x) => x.k === "rs_line_high");
+  assert.deepEqual(nh.map((x) => x.t), ["R1"]);
+  assert.equal(nh[0].x.before, 1);
+});
+
+test("extract: RS 신호는 tech 기준일이 스냅샷과 어긋나면 아예 적지 않는다", () => {
+  const stale = techFile("2026-09-18", { R1: [95, 1, 1], R2: [12, 0, 0] });
+  const out = core.extractSignals("us", { snapshot: techSnap, tech: stale, recordDate: "2026-09-26" });
+  assert.equal(out.filter((x) => x.k === "rs_top" || x.k === "rs_line_high").length, 0);
+  // 파일 자체가 없으면 역시 0건(옛 커밋 백필)
+  assert.equal(core.extractSignals("us", { snapshot: techSnap, recordDate: "2026-09-26" }).filter((x) => x.k.startsWith("rs_")).length, 0);
+});
+
+test("extract: RS 등급 상위에는 mom_12_1 의 5년 검증 결과가 붙는다", () => {
+  const tech = techFile("2026-09-25", { R1: [95, 0, 0] });
+  const fv = { markets: { us: { horizons: { 5: { factors: { mom_12_1: { validated: false } } }, 20: { factors: { mom_12_1: { validated: true } } }, 60: { factors: {} } } } } };
+  const out = core.extractSignals("us", { snapshot: techSnap, tech, factorValidation: fv, recordDate: "2026-09-26" });
+  const top = out.find((x) => x.k === "rs_top");
+  assert.deepEqual(top.x.val, { 5: false, 20: true, 60: false });
+});
+
 test("extract KR: 자사주는 취득·신탁체결·소각만, 해지·처분 제외", () => {
   assert.equal(core.isBuybackBuyTitle("주요사항보고서(자기주식취득결정)"), true);
   assert.equal(core.isBuybackBuyTitle("자기주식취득신탁계약체결결정"), true);

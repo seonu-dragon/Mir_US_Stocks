@@ -157,6 +157,11 @@
       "input": false
     },
     {
+      "workflow": "us-market-news.yml",
+      "cron": "25 21 * * *",
+      "input": false
+    },
+    {
       "workflow": "us-premarket-briefing.yml",
       "cron": "7 12 * * *",
       "input": false

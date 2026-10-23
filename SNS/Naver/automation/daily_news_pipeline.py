@@ -417,13 +417,13 @@ def load_previous_publication(daily_root: Path, date_str: str) -> dict | None:
     return None
 
 
-def adopt_remote_daily_if_present(date_str: str) -> bool:
+def adopt_remote_daily_if_present(date_str: str, marker_name: str = "02_gemini.done") -> bool:
     """Skip a second Gemini run when origin/main already has today's marker.
 
     Local fallback used to start before Actions finished pushing, then spend
     another Gemini call and collide on commit. Fetch failure must not block collection.
     """
-    marker = f"SNS/Naver/02_daily_work/{date_str}/status/02_gemini.done"
+    marker = f"SNS/Naver/02_daily_work/{date_str}/status/{marker_name}"
     try:
         fetch = subprocess.run(
             ["git", "fetch", "--depth", "1", "origin", "main"],
@@ -483,6 +483,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="origin/main에 오늘 Gemini 결과가 있어도 다시 수집한다",
     )
+    parser.add_argument(
+        "--collect-only",
+        action="store_true",
+        help="기사만 수집하고 Gemini Top 5는 만들지 않는다 (Top 5 선정·검증은 Claude 예약 작업이 한다)",
+    )
     return parser.parse_args()
 
 
@@ -490,7 +495,9 @@ def main() -> int:
     args = parse_args()
     load_env_file(PROJECT_ROOT / ".env")
     date_str = args.date or datetime.now(KST).strftime("%Y-%m-%d")
-    if not args.force and not args.work_dir and adopt_remote_daily_if_present(date_str):
+    # collect-only: today's collection on origin is enough (there is no Gemini marker any more)
+    marker = "01_collection.done" if args.collect_only else "02_gemini.done"
+    if not args.force and not args.work_dir and adopt_remote_daily_if_present(date_str, marker):
         return 0
     daily_dir = args.work_dir.resolve() if args.work_dir else (
         PROJECT_ROOT / "SNS" / "Naver" / "02_daily_work" / date_str
@@ -524,6 +531,12 @@ def main() -> int:
         "collection",
         {"article_count": collection["article_count"], "input": str(news_json.relative_to(PROJECT_ROOT))},
     )
+
+    if args.collect_only:
+        print(f"수집 JSON: {news_json}")
+        print(f"수집 Markdown: {news_markdown}")
+        print("[collect-only] Gemini Top 5는 만들지 않는다 — 선정·검증은 Claude 예약 작업.")
+        return 0
 
     previous = load_previous_publication(daily_dir.parent, date_str)
     if previous:

@@ -13,6 +13,10 @@
   bpi / bpiIdx       : 강세 비율 지수(Bullish Percent Index) — 포인트앤피겨(P&F) 최근 신호가 매수인 종목 비율(%).
                        bpi 는 보통주 전체, bpiIdx 는 지수 구성(미국 S&P 500 · 국내 코스피 200, 스냅샷 groups 기준)
 
+같은 1회 순회에서 **종목별** 기술적 파생값도 함께 내 별 파일로 쓴다(data/tech_signals.json/.js,
+window.TECH_SIGNALS): RS 등급(1~99)·RS선 52주 신고가·전일 종가/SMA/RSI·이동평균·MACD 교차가 며칠
+전이었나. 계산 규칙과 가중치는 scripts/tech_signals_core.py 한 곳에 있다(pytest 있음).
+
 추가 블록(같은 파일, 같은 1회 순회):
   sectors : 섹터별 50·200일선 위 비율 추이(rows 날짜와 같은 길이) + 최신 BPI
   groups  : 업종(industry)별 종목 수, 시총 가중·동일 가중 1일·1주·1개월·3개월 수익률(종가 기준), 1주(5거래일) 전
@@ -46,6 +50,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import sec_client as sec  # noqa: E402
+import tech_signals_core as ts  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 WINDOW = 252          # 내보내는 거래일 수(약 1년)
@@ -55,9 +60,16 @@ STALE_DAYS = 7
 REAL_SOURCES = {"yahoo", "yahoo-cache"}
 MARKETS = {
     "us": {"snapshot": ROOT / "data" / "market_snapshot.json", "details": ROOT / "data" / "details",
-           "out": (ROOT / "data" / "market_breadth.json", ROOT / "data" / "market_breadth.js")},
+           "out": (ROOT / "data" / "market_breadth.json", ROOT / "data" / "market_breadth.js"),
+           "tech": (ROOT / "data" / "tech_signals.json", ROOT / "data" / "tech_signals.js")},
     "kr": {"snapshot": ROOT / "data" / "korea" / "market_snapshot.json", "details": ROOT / "data" / "korea" / "details",
-           "out": (ROOT / "data" / "korea" / "market_breadth.json", ROOT / "data" / "korea" / "market_breadth.js")},
+           "out": (ROOT / "data" / "korea" / "market_breadth.json", ROOT / "data" / "korea" / "market_breadth.js"),
+           "tech": (ROOT / "data" / "korea" / "tech_signals.json", ROOT / "data" / "korea" / "tech_signals.js")},
+}
+# RS선(종가 ÷ 벤치마크) 의 벤치마크. 신호 성적표(build_signal_ledger.mjs BENCH)와 같은 종목을 쓴다.
+RS_BENCH = {
+    "us": {"ticker": "SPY", "label": "S&P 500 ETF (SPY)"},
+    "kr": {"ticker": "069500", "label": "KODEX 200"},
 }
 
 
@@ -375,7 +387,47 @@ def industry_groups(dates: list[str], members: list[dict], min_n: int = GROUP_MI
     return out
 
 
-def build_market(market: str, limit: int | None = None) -> dict:
+def load_bench_closes(market: str) -> dict[str, float]:
+    """RS선 벤치마크(SPY · KODEX 200)의 날짜 → 종가. 상세 파일이 없으면 빈 사전(RS선 판정은 생략된다)."""
+    path = MARKETS[market]["details"] / f"{RS_BENCH[market]['ticker']}.json"
+    if not path.exists():
+        return {}
+    try:
+        detail = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+    return dict(closes_of(detail)[-(WINDOW + WARMUP):])
+
+
+def tech_payload(market: str, series: list, infos: list[dict], base_date: str | None) -> dict:
+    """종목별 기술적 파생값 묶음. 값이 하나도 없는 종목은 넣지 않는다(결측을 0 으로 채우지 않는다)."""
+    bench = load_bench_closes(market)
+    rows, scores, tickers = [], [], []
+    for closes, info in zip(series, infos):
+        d = ts.derived_row(closes, bench)
+        rows.append(d["row"])
+        scores.append(d["score"])
+        tickers.append(info["ticker"])
+    packed = ts.pack(rows, scores)
+    out = {}
+    for ticker, arr in zip(tickers, packed):
+        if any(v is not None for v in arr):
+            out[ticker] = arr
+    rs_n = sum(1 for a in out.values() if a[0] is not None)
+    nh_n = sum(1 for a in out.values() if a[1] == 1)
+    return {
+        "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
+        "market": market, "baseDate": base_date, "cols": list(ts.COLS),
+        "count": len(out), "rsCount": rs_n, "rsNewHighCount": nh_n,
+        "benchmark": {**RS_BENCH[market], "bars": len(bench)},
+        "tickers": out,
+        "method": "RS 등급 = 가중 12개월 성과(최근 3개월 40% + 직전 세 분기 각 20%)의 시장 내 백분위 1~99 · "
+                  "RS선 = 종가 ÷ 벤치마크 종가, 직전 252봉 최고를 넘으면 신고가 · "
+                  "교차·신고가는 '며칠 전'(0 = 당일, 10봉 안에 없으면 없음)",
+    }
+
+
+def build_market(market: str, limit: int | None = None) -> tuple[dict, dict]:
     cfg = MARKETS[market]
     snap = json.loads(cfg["snapshot"].read_text(encoding="utf-8"))
     idx_group, idx_label = INDEX_GROUP[market]
@@ -417,6 +469,8 @@ def build_market(market: str, limit: int | None = None) -> dict:
     # 업종 수익률은 최근 63+5 거래일만 보면 된다 — 종가 사전은 끝 90봉만 둬 메모리를 아낀다.
     members = [{**x, "px": dict(c[-90:]), "flags": f} for x, c, f in zip(infos, series, flags)]
     groups = industry_groups(dates, members)
+    del members
+    tech = tech_payload(market, series, infos, dates[-1] if dates else None)
     return {
         "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
         "market": market, "universe": len(series), "count": len(rows), "rows": rows,
@@ -426,7 +480,7 @@ def build_market(market: str, limit: int | None = None) -> dict:
         "groupsPrevAsOf": dates[-1 - PREV_LAG] if len(dates) > PREV_LAG else None,
         "method": "종목별 실측 일봉 종가 기준 · 보통주만 · 이평·52주는 각 종목 자신의 봉 · "
                   "BPI 는 3박스 반전 P&F(미국 전통 박스표, 국내 2% 박스) 최근 신호",
-    }
+    }, tech
 
 
 def main() -> int:
@@ -438,7 +492,7 @@ def main() -> int:
     markets = ["us", "kr"] if args.market == "all" else [args.market]
     written = []
     for m in markets:
-        payload = build_market(m, args.limit)
+        payload, tech = build_market(m, args.limit)
         if payload["count"] < 60:
             print(f"[breadth] {m}: 날짜 {payload['count']}개 — 너무 적어 기존 파일 유지")
             return 1
@@ -447,11 +501,16 @@ def main() -> int:
               f"50일선 위 {last['above50']}% · 200일선 위 {last['above200']}% · 맥클렐런 {last['mcclellan']} · 신고 {last['nh']}/신저 {last['nl']}"
               f" · BPI {last.get('bpi')}% · {payload['indexLabel']} BPI {last.get('bpiIdx')}% ({payload['indexUniverse']}종목)"
               f" · 섹터 {len(payload['sectors'])} · 업종 {len(payload['groups'])}")
+        print(f"[tech] {m}: 종목 {tech['count']} · RS 등급 {tech['rsCount']} · RS선 신고가 {tech['rsNewHighCount']} "
+              f"· 벤치마크 {tech['benchmark']['ticker']} {tech['benchmark']['bars']}봉 · 기준 {tech['baseDate']}")
         if args.limit:
             continue
         out_json, out_js = MARKETS[m]["out"]
         sec.write_data(out_json, out_js, "MARKET_BREADTH", payload, indent=None, min_ratio=0.5)
         written += [str(out_json.relative_to(ROOT)), str(out_js.relative_to(ROOT))]
+        tech_json, tech_js = MARKETS[m]["tech"]
+        sec.write_data(tech_json, tech_js, "TECH_SIGNALS", tech, indent=None, min_ratio=0.5)
+        written += [str(tech_json.relative_to(ROOT)), str(tech_js.relative_to(ROOT))]
     if args.push and not sec.git_publish(written, f"Auto-update market breadth ({args.market})"):
         return 1
     return 0

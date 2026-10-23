@@ -217,6 +217,10 @@ const FEATURE_DATA = {
   // 은행 건전성(FDIC 콜 리포트, build_fdic_banks.py, 은행 28곳 × 12분기 ~25KB). 은행주를 열 때만(fdic-banks.js).
   fdicBanks: { global: "FDIC_BANKS", path: "data/fdic_banks.js", feature: "fdicBanks", usOnly: true, lazy: true },
   marketBreadth: { global: "MARKET_BREADTH", path: "data/market_breadth.js", feature: "marketBreadth", marketSpecific: true, lazy: true },
+  // 종목별 기술적 신호(build_market_breadth.py 가 시장 폭과 같은 순회에서 함께 낸다 — RS 등급 1~99 ·
+  // RS선 52주 신고가 · 전일 종가/SMA/RSI · 이평·MACD 교차가 며칠 전인지). 종목당 ~94B 라 전 종목이면
+  // US ~0.5MB · KR ~0.35MB — 부팅에서 받지 않고 수식 스크리너 조건에 쓰일 때와 종목 상세를 열 때만 받는다.
+  techSignals: { global: "TECH_SIGNALS", path: "data/tech_signals.js", feature: "techSignals", marketSpecific: true, lazy: true },
   usInstHolders: { global: "US_INST_HOLDERS_INDEX", path: "data/institutional_holders/index.js", feature: "instHolders", usOnly: true, lazy: true },
   // 국내↔미국 연관 종목(build_cross_market_links.py) — 관계 사전 + 최근 1년 수익률 상관(~30KB, 두 시장 한 파일).
   // 오늘 탭 '간밤 미국 연관주'(KR)·'국내 장 연관주'(US) 카드가 첫 화면이라 첫 단계에서 받는다. 종목 상세 카드도 같은 파일.

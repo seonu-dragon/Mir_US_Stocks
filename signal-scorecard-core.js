@@ -39,6 +39,10 @@
       desc: "S&P 500 중 52주 고점과 가장 가까운 상위 24(스캐너 순위 기준)." },
     { m: "us", k: "momentum_top", label: "모멘텀 점수 상위", group: "팩터", cooldownDays: 28, control: true,
       desc: "S&P 500 모멘텀 점수(1개월 기준) 상위 24. 과거 5년 검증에서 예측력이 없던 점수라 대조군으로 함께 센다." },
+    { m: "us", k: "rs_top", label: "RS 등급 상위", group: "팩터", cooldownDays: 28,
+      desc: "S&P 500 중 RS 등급(가중 12개월 성과의 시장 내 백분위 1~99) 상위 24. 가중 12개월 모멘텀이라 5년 검증은 가장 가까운 mom_12_1 팩터 결과를 함께 적는다." },
+    { m: "us", k: "rs_line_high", label: "RS선 52주 신고가", group: "가격", cooldownDays: 28,
+      desc: "RS선(종가 ÷ SPY)이 직전 252봉 최고를 넘긴 종목 중 시총 상위 8. 주가보다 RS선이 먼저 신고가면 x.before = 1." },
     { m: "us", k: "movers_up", label: "오늘의 특징주 · 상승", group: "특징주", keyed: true,
       desc: "장 마감 기준 크게 오른 종목(오늘의 특징주 상승 탭)." },
     { m: "us", k: "movers_down", label: "오늘의 특징주 · 하락", group: "특징주", keyed: true,
@@ -52,6 +56,10 @@
       desc: "코스피(ETF 제외) 중 52주 고점과 가장 가까운 상위 24(스캐너 순위 기준)." },
     { m: "kr", k: "momentum_top", label: "모멘텀 점수 상위", group: "팩터", cooldownDays: 28, control: true,
       desc: "코스피 모멘텀 점수(1개월 기준) 상위 24. 과거 검증에서 예측력이 없던 점수라 대조군으로 함께 센다." },
+    { m: "kr", k: "rs_top", label: "RS 등급 상위", group: "팩터", cooldownDays: 28,
+      desc: "코스피(ETF 제외) 중 RS 등급(가중 12개월 성과의 시장 내 백분위 1~99) 상위 24. 가중 12개월 모멘텀이라 5년 검증은 가장 가까운 mom_12_1 팩터 결과를 함께 적는다." },
+    { m: "kr", k: "rs_line_high", label: "RS선 52주 신고가", group: "가격", cooldownDays: 28,
+      desc: "RS선(종가 ÷ KODEX 200)이 직전 252봉 최고를 넘긴 종목 중 시총 상위 8. 주가보다 RS선이 먼저 신고가면 x.before = 1." },
     { m: "kr", k: "movers_up", label: "오늘의 특징주 · 상승", group: "특징주", keyed: true,
       desc: "장 마감 기준 크게 오른 종목(오늘의 특징주 상승 탭)." },
     { m: "kr", k: "movers_down", label: "오늘의 특징주 · 하락", group: "특징주", keyed: true,
@@ -322,6 +330,33 @@
       }
       topBy(uni, (s) => scanQuickProb(s, 20).up, 24)
         .forEach(({ s, v }, i) => add("momentum_top", s.ticker, { x: { rank: i + 1, score: round(v, 1) } }));
+    }
+
+    // --- RS 등급 · RS선 신고가(data/tech_signals.json, build_market_breadth.py) ---
+    // 이 파일은 스냅샷과 **다른 스텝**에서 쓰이므로 기준일이 어긋나면 아예 적지 않는다(묵은 값을
+    // 오늘 신호로 동결하지 않는다). 기준일을 알 수 있으면 같은 날만, 모르면 기록일에서 4일 안만 쓴다
+    // (check_data_freshness.py 의 허용 나이와 같다). 실제로 쓴 기준일은 x.asOf 로 원장에 남는다.
+    const tech = inp.tech && inp.tech.tickers && Array.isArray(inp.tech.cols) ? inp.tech : null;
+    const techBase = tech ? isoDay(tech.baseDate) : "";
+    const techFresh = !!techBase && (marketBase
+      ? techBase === marketBase
+      : (!inp.recordDate || daysBetween(techBase, isoDay(inp.recordDate)) <= 4));
+    if (tech && techFresh) {
+      const ci = {};
+      tech.cols.forEach((c, i) => { ci[c] = i; });
+      const cell = (t, c) => {
+        const row = tech.tickers[String(t)] || tech.tickers[String(t).toUpperCase()];
+        return row && ci[c] != null ? num(row[ci[c]]) : null;
+      };
+      // RS 등급은 가중 12개월 성과의 백분위라, 5년 검증은 가장 가까운 mom_12_1 팩터 결과를 붙인다.
+      const rsFlags = validationFlags(fv, market, "mom_12_1");
+      if (uni.length) {
+        topBy(uni, (s) => cell(s.ticker, "rs"), 24)
+          .forEach(({ s, v }, i) => add("rs_top", s.ticker, { x: { rank: i + 1, rs: v, asOf: techBase, ...(rsFlags ? { val: rsFlags } : {}) } }));
+      }
+      stocks.filter((s) => s && !(kr ? isKrEtfLike(s) : isUsEtf(s)) && !isSynthetic(s) && cell(s.ticker, "rsnh") === 1)
+        .sort((a, b) => (b.marketCapB || 0) - (a.marketCapB || 0)).slice(0, 8)
+        .forEach((s) => add("rs_line_high", s.ticker, { x: { rs: cell(s.ticker, "rs"), before: cell(s.ticker, "rsnhb"), asOf: techBase } }));
     }
 
     // --- 오늘의 특징주(movers.js) ---

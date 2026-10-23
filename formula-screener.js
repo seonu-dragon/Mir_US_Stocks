@@ -161,6 +161,58 @@ const XM_METRICS = [
   { key: "optPcr", label: "옵션 풋/콜 미결제약정 비율(최근 만기)", short: "풋/콜", data: ["optionsStats"], get: (it) => { const o = xmOpt(it); return o && o.putCallOI != null ? fxNum(o.putCallOI) : null; } },
   { key: "optMove", label: "옵션 예상 변동폭(%, 최근 만기)", short: "예상 변동폭", data: ["optionsStats"], pct: true, get: (it) => { const o = xmOpt(it); return o && o.expectedMovePct != null ? fxNum(o.expectedMovePct) : null; } },
 ];
+// ---------- 기술적 신호 필드(US·KR, data/tech_signals.js — lazy) ----------
+// 스냅샷 필드는 '지금 값'뿐이라 '어제'·'N일 전'·교차 조건을 쓸 수 없었다. 빌더
+// (build_market_breadth.py + scripts/tech_signals_core.py)가 종목 일봉으로 미리 계산해 둔 값을 읽어
+// 전일값(close_1d·sma20_1d·rsi_1d)과 교차 파생(crossUpSma20Within5 등)을 필드로 낸다.
+// 파서에 `rsi[1]` 같은 오프셋 문법을 넣지 않았다 — formula-core.js 의 토크나이저·타입 검사기는
+// '필드 = 한 값'을 전제로 돌고, 스냅샷에는 과거 시점 값 자체가 없다. 시점이 있는 값만 빌더에서
+// 이름 있는 필드로 내는 쪽이 파서를 건드리지 않고 '없는 값을 만들지 않는다'도 지킨다.
+// 불리언 필드는 1 = 참 · 0 = 아님 숫자다(파서 필드 타입은 전부 숫자) → `crossUpSma20Within5 == 1`.
+// 교차가 관측 창(10봉) 밖이면 `...Bars` 는 결측이고 `...Within5` 는 0(= 거짓)이다.
+let tsRowMemo = { src: null, rows: new Map() };
+function tsField(key) {
+  return (it) => {
+    const core = window.MirTechCore;
+    const p = window.TECH_SIGNALS;
+    if (!core || !p) return null;
+    if (tsRowMemo.src !== p) tsRowMemo = { src: p, rows: new Map() };
+    const t = xmTicker(it);
+    if (!tsRowMemo.rows.has(t)) tsRowMemo.rows.set(t, core.rowFields(p, t));
+    const row = tsRowMemo.rows.get(t);
+    return row && row[key] != null ? fxNum(row[key]) : null;
+  };
+}
+const TS_GROUP = "기술 신호(RS·전일·교차)";
+const TS_METRICS = [
+  { key: "rsRating", label: "RS 등급(1~99, 가중 12개월 성과의 시장 내 백분위)", short: "RS 등급" },
+  { key: "rsNewHigh", label: "RS선 52주 신고가(1 = 예)", short: "RS선 신고가" },
+  { key: "rsNewHighBeforePrice", label: "RS선만 신고가(주가는 아직, 1 = 예)", short: "RS선 선행" },
+  { key: "close_1d", label: "전일 종가" },
+  { key: "sma20", label: "20일 이동평균" },
+  { key: "sma20_1d", label: "전일 20일 이동평균" },
+  { key: "sma50", label: "50일 이동평균" },
+  { key: "sma50_1d", label: "전일 50일 이동평균" },
+  { key: "rsi_1d", label: "전일 RSI(14)" },
+  { key: "rsiChg1d", label: "RSI(14) 전일 대비 변화" },
+  { key: "crossUpSma20Bars", label: "20일선 상향 교차가 며칠 전(0 = 당일)" },
+  { key: "crossDownSma20Bars", label: "20일선 하향 교차가 며칠 전(0 = 당일)" },
+  { key: "crossUpSma50Bars", label: "50일선 상향 교차가 며칠 전(0 = 당일)" },
+  { key: "crossDownSma50Bars", label: "50일선 하향 교차가 며칠 전(0 = 당일)" },
+  { key: "newHigh20Bars", label: "20일 신고가가 며칠 전(0 = 당일)" },
+  { key: "macdCrossUpBars", label: "MACD 상향 교차가 며칠 전(0 = 당일)" },
+  { key: "macdCrossDownBars", label: "MACD 하향 교차가 며칠 전(0 = 당일)" },
+  { key: "crossUpSma20Within5", label: "5일 안 20일선 상향 교차(1 = 예)" },
+  { key: "crossDownSma20Within5", label: "5일 안 20일선 하향 교차(1 = 예)" },
+  { key: "crossUpSma50Within5", label: "5일 안 50일선 상향 교차(1 = 예)" },
+  { key: "crossDownSma50Within5", label: "5일 안 50일선 하향 교차(1 = 예)" },
+  { key: "newHigh20Within5", label: "5일 안 20일 신고가(1 = 예)" },
+  { key: "macdCrossUpWithin3", label: "3일 안 MACD 상향 교차(1 = 예)" },
+  { key: "macdCrossDownWithin3", label: "3일 안 MACD 하향 교차(1 = 예)" },
+];
+TS_METRICS.forEach((m) => {
+  XM_METRICS.push({ key: m.key, label: m.label, short: m.short || m.label, group: TS_GROUP, data: ["techSignals"], get: tsField(m.key) });
+});
 const XM_BY_KEY = Object.fromEntries(XM_METRICS.map((m) => [m.key, m]));
 // 이 시장에서 그 데이터셋을 쓸 수 있는지. usOnly/krOnly 와 market_config features `=== false` 를 둘 다 본다
 // (featureDataEnabled 는 usOnly 면 features 를 보지 않는다).
@@ -213,7 +265,7 @@ function xmLoadState() {
 }
 // 클래식 스크리너(찾기 › 상위 종목 #topMetric · 고급 스크리너 #scrMetric) 정렬 지표로 내는 필드와 프리셋.
 // 국내처럼 데이터가 꺼진 시장에서는 옵션 자체를 넣지 않는다(xmSyncSelectOptions — 시장을 바꿀 때마다 다시).
-const XM_SORT_KEYS = ["epsRev7", "epsRev30", "epsRev90", "epsUp30", "ratingUp30", "ratingDown30", "targetChg30", "divGrowthYears", "divCagr5", "optPcr", "optMove"];
+const XM_SORT_KEYS = ["epsRev7", "epsRev30", "epsRev90", "epsUp30", "ratingUp30", "ratingDown30", "targetChg30", "divGrowthYears", "divCagr5", "optPcr", "optMove", "rsRating"];
 const XM_PRESETS = {
   estUpDiv10: { label: "추정치 상향 + 배당 성장 10년+", fields: ["epsRev30", "divGrowthYears"],
     test: (it) => { const a = extraMetricValue(it, "epsRev30"); const b = extraMetricValue(it, "divGrowthYears"); return a != null && a > 0 && b != null && b >= 10; } },
@@ -273,7 +325,7 @@ function xmMetricClass(value, metric) {
   const r = Number(Number(value).toFixed(1));
   return m && m.pct && metric !== "optMove" && typeof cls === "function" && r !== 0 ? cls(r) : "";
 }
-XM_METRICS.forEach((m) => FX_FIELDS.push({ key: m.key, label: m.label, group: "추정치·의견·배당·옵션", src: "lazy", lazy: true, get: m.get }));
+XM_METRICS.forEach((m) => FX_FIELDS.push({ key: m.key, label: m.label, group: m.group || "추정치·의견·배당·옵션", src: "lazy", lazy: true, get: m.get }));
 const FX_FIELD_BY_KEY = Object.fromEntries(FX_FIELDS.map((f) => [f.key, f]));
 const FX_ALIASES = {
   per: "pe", pbr: "pb", psr: "ps", rsi: "rsi14", eps: "epsTtm", cap: "marketCap", mktcap: "marketCap",
@@ -327,6 +379,9 @@ function fxExamples() {
     "sectorPct(roe) >= 80 and sectorPct(pb) <= 30",
     "threeMonthChangePct > 20 and newHighDistancePct < 5",
     "rank(marketCap) <= 50 and divYield > 2",
+    // 전일값·교차 필드(tech_signals) — '어제보다' · '5일 안에 교차' 조건
+    "rsRating >= 90 and crossUpSma20Within5 == 1",
+    "price > close_1d and sma20 > sma20_1d and rsi_1d < 50",
   ];
   if (isKrMarket()) base.push("debtRatio < 100 and revenueGrowth > 10 and pe > 0 and pe < 15");
   else base.push("epsGrowthEst > 20 and forwardPE < industryMedian(forwardPE)");

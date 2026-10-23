@@ -171,6 +171,8 @@ function currentInputs(m) {
       activist: readJson("data/activist_stakes.json"),
       movers: readJson("data/movers_reasons.json"),
       factorValidation: readJson("data/factor_validation.json"),
+      // RS 등급·RS선 신고가(build_market_breadth.py). 기준일이 스냅샷과 어긋나면 extractSignals 가 건너뛴다.
+      tech: readJson("data/tech_signals.json"),
     };
   }
   const inp = {
@@ -180,6 +182,7 @@ function currentInputs(m) {
     krAlerts: readJson("data/korea/market_alerts.json"),
     krDisclosures: readJson("data/kr_disclosures.json"),
     krContracts: readJson("data/korea/contracts.json"),
+    tech: readJson("data/korea/tech_signals.json"),
   };
   // KR 스냅샷에는 가격 기준일 필드가 없다 — KODEX 200 일봉의 마지막 날짜를 기준 거래일로 쓴다.
   const bench = readJson(BENCH.kr.file);
@@ -249,9 +252,11 @@ function backfill(m, fromIso, toIso, existingRows) {
   if (liveInRange.length) throw new Error(`${m}: ${toIso} 이전 실시간 줄이 이미 있다 — 소급 복원은 실시간 기록 전에만`);
   const paths = m === "us"
     ? { snapshot: "data/market_snapshot.json", insider: "data/insider_trades.json", events: "data/material_events.json",
-      activist: "data/activist_stakes.json", movers: "data/movers_reasons.json", factorValidation: "data/factor_validation.json" }
+      activist: "data/activist_stakes.json", movers: "data/movers_reasons.json", factorValidation: "data/factor_validation.json",
+      tech: "data/tech_signals.json" }
     : { snapshot: "data/korea/market_snapshot.json", movers: "data/korea/movers_reasons.json", factorValidation: "data/factor_validation.json",
-      krAlerts: "data/korea/market_alerts.json", krDisclosures: "data/kr_disclosures.json", krContracts: "data/korea/contracts.json" };
+      krAlerts: "data/korea/market_alerts.json", krDisclosures: "data/kr_disclosures.json", krContracts: "data/korea/contracts.json",
+      tech: "data/korea/tech_signals.json" };
   const all = existingRows.slice();
   const added = [];
   for (let d = fromIso; d <= toIso; d = core.addDays(d, 1)) {

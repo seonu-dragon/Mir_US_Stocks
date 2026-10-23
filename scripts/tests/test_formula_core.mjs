@@ -276,6 +276,47 @@ test("encodeState/decodeState 왕복(한글 열 이름 포함)", () => {
   assert.equal(core.decodeState(""), null);
 });
 
+// ---------- 전일값·교차 필드(formula-screener.js TS_METRICS) ----------
+// 빌더가 미리 계산해 둔 시점 있는 값들이다. 파서에 오프셋 문법을 넣지 않고 이름 있는 필드로 쓴다.
+const TS_FIELDS = ["price", "rsi14", "close_1d", "sma20", "sma20_1d", "sma50_1d", "rsi_1d", "rsiChg1d",
+  "rsRating", "crossUpSma20Within5", "crossDownSma50Within5", "newHigh20Within5", "macdCrossUpWithin3",
+  "crossUpSma20Bars"];
+const tsOpts = (extra = {}) => ({ fields: TS_FIELDS, aliases: {}, ...extra });
+
+test("전일값 필드 이름(밑줄·숫자 포함)이 그대로 토큰이 된다", () => {
+  const c = core.compile("price > close_1d and sma20 > sma20_1d", tsOpts({ expect: "bool" }));
+  assert.ok(c.ok, c.error);
+  assert.deepEqual(c.fields.sort(), ["close_1d", "price", "sma20", "sma20_1d"]);
+  const rows = [{ price: 11, close_1d: 10, sma20: 9.5, sma20_1d: 9.4 }, { price: 9, close_1d: 10, sma20: 9.5, sma20_1d: 9.6 }];
+  assert.deepEqual(core.evaluate(c, rows, {}), [true, false]);
+});
+
+test("불리언 교차 필드는 1/0 숫자라 == 1 로 쓴다", () => {
+  const c = core.compile("rsRating >= 90 and crossUpSma20Within5 == 1", tsOpts({ expect: "bool" }));
+  assert.ok(c.ok, c.error);
+  const rows = [{ rsRating: 95, crossUpSma20Within5: 1 }, { rsRating: 95, crossUpSma20Within5: 0 }, { rsRating: 40, crossUpSma20Within5: 1 }];
+  assert.deepEqual(core.evaluate(c, rows, {}), [true, false, false]);
+});
+
+test("교차 '며칠 전' 필드는 숫자 비교로 쓴다(결측이면 조건 불충족)", () => {
+  const c = core.compile("crossUpSma20Bars <= 5", tsOpts({ expect: "bool" }));
+  assert.ok(c.ok, c.error);
+  assert.deepEqual(core.evaluate(c, [{ crossUpSma20Bars: 0 }, { crossUpSma20Bars: 7 }, {}], {}), [true, false, null]);
+  assert.deepEqual(core.filterIndices(c, [{ crossUpSma20Bars: 0 }, { crossUpSma20Bars: 7 }, {}], {}), [0]);
+});
+
+test("RSI 전일 대비는 빌더가 낸 필드를 쓴다 — 스냅샷 rsi14 와 섞어 빼지 않는다", () => {
+  const c = core.compile("rsiChg1d > 0 and rsi_1d < 50", tsOpts({ expect: "bool" }));
+  assert.ok(c.ok, c.error);
+  assert.deepEqual(core.evaluate(c, [{ rsiChg1d: 6.25, rsi_1d: 44 }, { rsiChg1d: -1, rsi_1d: 44 }], {}), [true, false]);
+});
+
+test("오프셋 문법 rsi[1] 은 쓰지 않는다 — 글자 단계에서 막힌다", () => {
+  const c = core.compile("rsi14[1] > 50", tsOpts({ expect: "bool" }));
+  assert.equal(c.ok, false);
+  assert.match(c.error, /알 수 없는 문자/);
+});
+
 test("completionPrefix: 커서 앞 단어", () => {
   assert.deepEqual(core.completionPrefix("roe > 15 and se", 15), { prefix: "se", start: 13 });
   assert.deepEqual(core.completionPrefix("roe > ", 6), { prefix: "", start: 6 });

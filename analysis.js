@@ -2249,7 +2249,7 @@ async function loadPatternStats() {
 }
 
 async function loadBreakoutStats() {
-  // 돌파/되돌림 통계는 US 만 만들어 둔다(build_breakout_retest.py).
+  // 돌파/되돌림 통계는 시장별로 만든다(build_breakout_retest.py --market us|kr). 꺼 둔 시장은 요청하지 않는다.
   // 없는 걸 알면서 요청하면 콘솔에 404 가 남는데, 그 노이즈가 진짜 404 를 가린다
   // — 실제로 KR 실적 캘린더가 존재하지 않는 파일을 계속 부르던 걸 한동안 놓쳤다.
   // fetch 는 실패해도 아래에서 조용히 넘어가므로 기능상 차이는 없다.

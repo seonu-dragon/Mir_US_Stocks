@@ -101,6 +101,9 @@ CHECKS = {
         ("data/korea/market_issues.json", 4, False),
         ("data/kr_disclosures.json", 4, False),
         ("data/korea/pattern_stats.json", 10, False),
+        # 돌파 연속성/되돌림 통계(build_breakout_retest.py --market kr, korea-close-briefing 의 continue-on-error 스텝).
+        # 커밋된 국내 일봉만 읽어 매 실행 다시 쓴다 — 매일 도는 잡이라 4일 = 연속 실패. 표본 수는 MIN_CHECKS 가 본다.
+        ("data/korea/breakout_retest_stats.json", 4, False),
         ("data/korea/investor_flow.json", 5, False),
         # 증시자금·시장 투자자별(build_kr_market_funds.py). 실행마다 updatedAtKst 를 새로 쓴다
         # (소스가 둘 다 죽으면 안 씀). 연휴 감안 6일. 0건(count=증시자금 일수)도 잡는다.
@@ -380,6 +383,14 @@ MIN_CHECKS = {
             ("universeCount",),
             3000,
             "국내 상장 유니버스 종목 수",
+        ),
+        # 돌파 통계에 쓰인 종목 수(2026-10-23 첫 산출 3,137). 네이버 봉이 대량으로 야후 폴백되거나
+        # 일봉이 잘리면 표본이 조용히 줄어 화면의 '과거 N건'이 얇아진다.
+        (
+            "data/korea/breakout_retest_stats.json",
+            ("tickers_scanned",),
+            1500,
+            "돌파 통계 표본 종목 수",
         ),
     ],
 }

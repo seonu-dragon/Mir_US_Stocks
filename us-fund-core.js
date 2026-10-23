@@ -150,7 +150,11 @@
     const tax = fin ? fin.effectiveTaxRate(row) : null;
     const rf = num(o.rfPct) !== null ? o.rfPct / 100 : null;
     const erp = num(o.erp) !== null ? o.erp : DEFAULT_ERP;
-    const beta = num(o.beta);
+    // 자기자본비용엔 블룸버그식 조정 베타(0.67 × 원시 + 0.33)를 쓴다 — 원시 2년 주간 베타는 표본 기간의 우연에
+    // 크게 흔들린다(2026-10 실측 KO 0.09·XOM −0.04·T 0.03 → 자기자본비용이 무위험 금리와 거의 같아진다).
+    // 원시 값(rawBeta)도 함께 돌려 화면에 둘 다 보인다.
+    const rawBeta = num(o.beta);
+    const beta = rawBeta !== null ? 0.67 * rawBeta + 0.33 : null;
     const E = num(o.marketCap) !== null && o.marketCap > 0 ? o.marketCap : null;
     const D = num(row.debt) !== null && row.debt >= 0 ? row.debt : null;
     const noDebt = D === 0;
@@ -168,7 +172,7 @@
     const spread = roic !== null && wacc !== null ? roic - wacc : null;
     return {
       fy: row.fy, end: row.end || null,
-      roic, tax, rf, erp, beta, ke, kd, kdAfterTax: kd !== null && tax !== null ? kd * (1 - tax) : null,
+      roic, tax, rf, erp, beta, rawBeta, ke, kd, kdAfterTax: kd !== null && tax !== null ? kd * (1 - tax) : null,
       E, D, wE, wD, noDebt, wacc, spread,
       op: num(row.op), interest: num(row.interest),
     };

@@ -167,7 +167,7 @@ function ufWaccBody(w, ctx) {
   const kdNote = w.noDebt ? "무차입" : "이자비용 ÷ 평균 총차입금";
   const rows = [
     row("무위험금리", rf ? `${rf.pct.toFixed(2)}%` : "—", rf ? `미 국채 10년 ${escapeHtml(rf.asOf)}` : ""),
-    row("베타", w.beta !== null ? w.beta.toFixed(2) : "—", b ? `SPY 대비 주간 ${b.n}주 · R² ${b.r2.toFixed(2)} · ${escapeHtml(b.from)}~${escapeHtml(b.to)}` : ctx.betaPending ? "일봉 불러오는 중" : "주간 수익률 78주 미만"),
+    row("베타(조정)", w.beta !== null ? w.beta.toFixed(2) : "—", b ? `원시 ${w.rawBeta.toFixed(2)} → 0.67×원시+0.33 · SPY 대비 주간 ${b.n}주 · R² ${b.r2.toFixed(2)} · ${escapeHtml(b.from)}~${escapeHtml(b.to)}` : ctx.betaPending ? "일봉 불러오는 중" : "주간 수익률 78주 미만"),
     row("주식위험프리미엄", ufPct(w.erp, 2), Math.abs(w.erp - ctx.erpDefault) < 1e-9 ? escapeHtml(ctx.erpLabel)
       : `직접 입력 · 기본 ${ufPct(ctx.erpDefault, 2)}(${escapeHtml(ctx.erpLabel)})`),
     row("자기자본비용", ufPct(w.ke, 2), "무위험금리 + 베타 × ERP"),

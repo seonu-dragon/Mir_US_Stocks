@@ -350,11 +350,27 @@ function renderDividendPlanner() {
   if (core) {
     const today = kstTodayIso();
     const year = Number(today.slice(0, 4));
-    const y = core.dividendYear(detailed.map((row) => ({ annualCash: row.annualCash, frequency: row.setting.frequency, exDate: row.setting.exDate, taxFree: !!row.setting.taxFree })),
-      year, today, DIVIDEND_PAYMENT_LAG_MONTHS);
     const market = isKrMarket() ? "kr" : "us";
+    const items = detailed.map((row) => ({ ticker: row.ticker, annualCash: row.annualCash, frequency: row.setting.frequency, exDate: row.setting.exDate, taxFree: !!row.setting.taxFree }));
+    // 거래 기록에 올해 배당(입금)이 있는 종목은 '지급'을 기록 세전 합계로 바꾸고, 남은 달만 추정(예정)으로 둔다.
+    // 기록이 없는 종목·시장은 예전 추정 그대로(거래 원장 2단계). 비과세 계좌 표시 종목의 기록은 빼고 센다.
+    let rec = null;
+    try { rec = window.MirLedger && typeof window.MirLedger.dividendRecords === "function" ? window.MirLedger.dividendRecords(market, year) : null; } catch (_) { rec = null; }
+    const recTickers = rec && rec.count ? Object.keys(rec.byTicker).filter((t) => !(dividendPlan[t] && dividendPlan[t].taxFree)) : [];
+    let y;
+    if (recTickers.length) {
+      const recSet = new Set(recTickers);
+      const yEst = core.dividendYear(items.filter((it) => !recSet.has(it.ticker)), year, today, DIVIDEND_PAYMENT_LAG_MONTHS);
+      const yRec = core.dividendYear(items.filter((it) => recSet.has(it.ticker)), year, today, DIVIDEND_PAYMENT_LAG_MONTHS);
+      const recorded = recTickers.reduce((s, t) => s + rec.byTicker[t].gross, 0);
+      const recordedCount = recTickers.reduce((s, t) => s + rec.byTicker[t].count, 0);
+      const upcoming = yEst.upcoming + yRec.upcoming;
+      y = { paid: yEst.paid + recorded, upcoming, total: yEst.paid + recorded + upcoming, recorded, recordedCount };
+    } else {
+      y = core.dividendYear(items, year, today, DIVIDEND_PAYMENT_LAG_MONTHS);
+    }
     if (dividendSourceReady()) {
-      window.safeStorage.setJSON(DIVIDEND_YEAR_KEY(market), { year, paid: y.paid, total: y.total, currency: isKrMarket() ? "KRW" : "USD", at: today });
+      window.safeStorage.setJSON(DIVIDEND_YEAR_KEY(market), { year, paid: y.paid, total: y.total, recorded: y.recorded || 0, currency: isKrMarket() ? "KRW" : "USD", at: today });
     }
     renderDividendFinGauge({ market, year, y });
   }
@@ -402,15 +418,16 @@ function renderDividendFinGauge(cur) {
   const fx = currentUsdKrw();
   const other = cur.market === "kr" ? "us" : "kr";
   const saved = window.safeStorage.getJSON(DIVIDEND_YEAR_KEY(other), null);
-  const parts = [{ market: cur.market, paid: cur.y.paid, total: cur.y.total, currency: cur.market === "kr" ? "KRW" : "USD", at: "" }];
+  const parts = [{ market: cur.market, paid: cur.y.paid, total: cur.y.total, recorded: cur.y.recorded || 0, recordedCount: cur.y.recordedCount || 0, currency: cur.market === "kr" ? "KRW" : "USD", at: "" }];
   if (saved && Number(saved.year) === cur.year && Number(saved.total) > 0) {
-    parts.push({ market: other, paid: Number(saved.paid) || 0, total: Number(saved.total), currency: saved.currency === "USD" ? "USD" : "KRW", at: String(saved.at || "") });
+    parts.push({ market: other, paid: Number(saved.paid) || 0, total: Number(saved.total), recorded: Number(saved.recorded) || 0, currency: saved.currency === "USD" ? "USD" : "KRW", at: String(saved.at || "") });
   }
   const needFx = parts.some((p) => p.currency === "USD" && p.total > 0);
   if (needFx && !fx) { host.hidden = false; host.innerHTML = `<p class="muted">${marketHeader.fxStatus === "error" ? "USD/KRW 환율이 없어 원화 합계를 낼 수 없습니다." : "USD/KRW 환율을 불러오는 중…"}</p>`; return; }
   const krw = (v, c) => (c === "USD" ? v * fx : v);
   const total = parts.reduce((s, p) => s + krw(p.total, p.currency), 0);
   const paid = parts.reduce((s, p) => s + krw(p.paid, p.currency), 0);
+  const recorded = parts.reduce((s, p) => s + krw(p.recorded || 0, p.currency), 0);
   if (!(total > 0)) { host.hidden = true; host.innerHTML = ""; return; }
   const g = core.finIncomeGauge(total);
   const won = (v) => `${Math.round(v / 10000).toLocaleString("ko-KR")}만 원`;
@@ -421,8 +438,8 @@ function renderDividendFinGauge(cur) {
   host.hidden = false;
   host.innerHTML = `<div class="fin-gauge-head"><span>올해 배당 · 금융소득 2,000만 원 기준</span><strong>${won(total)} <small>/ 2,000만 원 · ${g.pct.toFixed(0)}%</small></strong></div>
     <div class="fin-bar" role="img" aria-label="올해 배당 합계 ${won(total)}, 기준의 ${g.pct.toFixed(0)}%"><i class="is-paid" style="width:${paidPct.toFixed(2)}%"></i><i class="is-rest" style="width:${restPct.toFixed(2)}%"></i></div>
-    <p class="fin-note"><span><i class="is-paid"></i>지급(추정) ${won(paid)}</span><span><i class="is-rest"></i>예정 ${won(total - paid)}</span>${g.over ? `<span class="fin-over">기준 초과 ${won(total - g.threshold)}</span>` : `<span>기준까지 ${won(g.remaining)}</span>`}</p>
-    <p class="muted fin-basis">세전 · 현재 보유 수량 기준 · 비과세 계좌·이자 제외${needFx ? ` · USD/KRW ${fx.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : ""}${otherNote}</p>`;
+    <p class="fin-note"><span><i class="is-paid"></i>${recorded > 0 ? (paid - recorded > 0.5 ? `지급 기록 ${won(recorded)} + 추정 ${won(paid - recorded)}` : `지급(기록) ${won(paid)}`) : `지급(추정) ${won(paid)}`}</span><span><i class="is-rest"></i>예정 ${won(total - paid)}</span>${g.over ? `<span class="fin-over">기준 초과 ${won(total - g.threshold)}</span>` : `<span>기준까지 ${won(g.remaining)}</span>`}</p>
+    <p class="muted fin-basis">세전 · ${recorded > 0 ? `받은 배당은 기록 기준${cur.y.recordedCount ? `(${cur.y.recordedCount}건)` : ""}, 나머지는 현재 보유 수량 기준` : "현재 보유 수량 기준"} · 비과세 계좌·이자 제외${needFx ? ` · USD/KRW ${fx.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : ""}${otherNote}</p>`;
 }
 
 function renderRebalanceCalculator() {

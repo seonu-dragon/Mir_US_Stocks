@@ -110,6 +110,13 @@ jobs:
       - name: Market ticker detection tests
         run: node scripts/tests/test_market_ticker.mjs
 
+      # AI 답변 출처 각주·후속 칩(ai-cite-core.js) · 찾기 미니 차트(mini-chart-core.js) · 피어 산점도(peer-scatter-core.js).
+      - name: AI cite / mini chart / peer scatter tests
+        run: |
+          node scripts/tests/test_ai_cite_core.mjs
+          node scripts/tests/test_mini_chart_core.mjs
+          node scripts/tests/test_peer_scatter_core.mjs
+
       # 적립식 시뮬레이터 순수 계산(dca-core.js): XIRR 알려진 값·휴장일 이월·정수 매수 이월·배당.
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs

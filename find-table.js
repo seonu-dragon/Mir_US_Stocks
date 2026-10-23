@@ -3,7 +3,7 @@
 // 클래식 스크립트(모듈 아님). 전역 이름은 ft 접두사. 열 목록·설정 로직은 find-table-core.js.
 // 필터·정렬·개수 계산은 그대로 app.js renderTopStocks 가 하고, 끝에서 renderFindTable(rows, metric) 을
 // 부른다. 여기서는 같은 결과를 표로 그리고, 카드(기존 #topStocks)와 표 중 무엇을 보일지만 정한다.
-//   · 기본 보기 = 표. [표|카드] 토글은 브라우저에 기억(mir.find.view).
+//   · 기본 보기 = 표. [표|카드|차트] 토글은 브라우저에 기억(mir.find.view). 차트 = mini-chart-gallery.js.
 //   · 열 설정: 보이는 열 켜기/끄기·순서(시장별로 mir.find.cols.<us|kr>). 값이 없는 칸은 "—".
 //   · 칩 줄: #topBucket(지수/그룹)·#topMetric(정렬 지표) 셀렉트를 칩으로 비춘다 — 칩을 누르면 셀렉트 값을
 //     바꾸고 change 이벤트를 보내 기존 핸들러가 다시 그린다(셀렉트는 고급 필터 안에 그대로 있다).
@@ -69,7 +69,10 @@ function ftMarket() { return typeof isKrMarket === "function" && isKrMarket() ? 
 function ftGet(k) { try { return window.localStorage.getItem(k); } catch (_) { return null; } }
 function ftSet(k, v) { try { window.localStorage.setItem(k, v); } catch (_) { /* 차단 환경 */ } }
 
-function ftView() { return ftGet(FT_VIEW_KEY) === "card" ? "card" : "table"; }
+function ftView() {
+  const v = ftGet(FT_VIEW_KEY);
+  return v === "card" || v === "chart" ? v : "table";
+}
 
 // lazy 열(추정치·의견·배당 성장·옵션)은 그 데이터가 이 시장에서 꺼져 있으면(features === false) 쓰지 않는다.
 function ftColAllowed(c) {
@@ -164,6 +167,10 @@ function ftApplyView() {
   const cards = byId("topStocks");
   if (table) table.hidden = view !== "table";
   if (cards) cards.hidden = view !== "card";
+  // [차트] 보기: 결과 종목의 미니 차트 격자(mini-chart-gallery.js). 보이는 카드만 일봉을 받는다.
+  const charts = byId("topStocksChartWrap");
+  if (charts) charts.hidden = view !== "chart";
+  if (view === "chart" && typeof renderFindChartGallery === "function") renderFindChartGallery(ftLast.rows);
   const seg = byId("findViewSeg");
   if (seg) seg.hidden = Boolean(ftList);
   const bucketChips = byId("findChipsBucket");

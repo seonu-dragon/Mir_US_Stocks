@@ -514,6 +514,55 @@ function renderAiReplyMeta(msgEl, meta) {
   msgEl.appendChild(note);
 }
 
+// 답변 본문 + 문장별 출처 각주(ai-cite-core.js). 실제로 보낸 출처([S#] 종목 데이터 · [N#] 워커 뉴스)에
+// 있는 ID 만 위첨자 번호로 남기고 모르는 ID 는 지운다. 인용이 없으면(옛 워커·모델이 안 달았을 때) 오늘과 같다.
+let aiCiteSeq = 0;
+function renderAiCitedReply(msgEl, reply, dataSources, meta, broken) {
+  const bubble = msgEl && msgEl.querySelector(".msg-bubble");
+  if (!bubble) return;
+  msgEl.querySelectorAll(".ai-cite-notes").forEach((el) => el.remove());
+  const cite = window.MirAiCite;
+  if (!cite || broken) { setAiBubbleMarkdown(bubble, cite ? cite.stripCitations(reply) : reply); return; }
+  const sources = (dataSources || []).concat(cite.newsSources(meta && meta.rag));
+  const applied = cite.applyCitations(stripEmoji(String(reply || "")), sources);
+  setAiBubbleMarkdown(bubble, applied.text);
+  if (!applied.notes.length) return;
+  const prefix = `aicite${++aiCiteSeq}`;
+  const body = aiBubbleBody(bubble);
+  if (body) body.innerHTML = cite.citationHtml(body.innerHTML, prefix);
+  bubble.insertAdjacentHTML("afterend", cite.notesHtml(applied.notes, prefix));
+}
+
+// 위첨자 클릭 = 해시 이동 대신 같은 답변의 각주로 스크롤·강조(주소창 해시 라우팅을 건드리지 않는다).
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest(".ai-cite a[data-cite]");
+  if (!a) return;
+  e.preventDefault();
+  const id = (a.getAttribute("href") || "").slice(1);
+  const li = id ? document.getElementById(id) : null;
+  if (!li) return;
+  li.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  li.classList.remove("is-flash"); void li.offsetWidth; li.classList.add("is-flash");
+});
+
+function renderAiFollowups(msgEl, list) {
+  if (!msgEl || !Array.isArray(list) || !list.length) return;
+  msgEl.querySelectorAll(".ai-followups").forEach((el) => el.remove());
+  const box = document.createElement("div");
+  box.className = "ai-followups";
+  box.setAttribute("aria-label", "이어서 묻기");
+  list.forEach((f) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ai-followup-chip";
+    btn.textContent = f.label;
+    btn.title = f.question;
+    btn.addEventListener("click", () => { if (!aiChatBusy) sendAiChat(f.question); });
+    box.appendChild(btn);
+  });
+  msgEl.appendChild(box);
+}
+
 // /chat 호출 공용 헬퍼. stream:true 를 요청하되, 응답이 JSON 이면(구 워커) 그대로
 // 파싱해 비스트리밍으로 처리한다. 중단(abort) 시에도 지금까지 받은 부분 텍스트를 돌려준다.
 async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
@@ -536,7 +585,7 @@ async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
   const ctype = (res.headers.get("Content-Type") || "").toLowerCase();
   if (!ctype.includes("text/event-stream")) {
     const data = await res.json();
-    return { reply: (data && data.reply) || "", streamed: false, aborted: false, meta: data ? { model: data.model || "", ragCount: Number((data.rag && data.rag.newsCount) || 0) } : null };
+    return { reply: (data && data.reply) || "", streamed: false, aborted: false, meta: data ? { model: data.model || "", ragCount: Number((data.rag && data.rag.newsCount) || 0), rag: data.rag && typeof data.rag === "object" ? data.rag : null } : null };
   }
 
   const reader = res.body.getReader();
@@ -563,6 +612,7 @@ async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
             model: typeof parsed.model === "string" ? parsed.model : "",
             ragCount: Number((parsed.rag && parsed.rag.newsCount) || 0),
             ragSources: Array.isArray(parsed.rag && parsed.rag.sources) ? parsed.rag.sources : [],
+            rag: parsed.rag && typeof parsed.rag === "object" ? parsed.rag : null,
           };
         }
       } catch (_) { /* 불완전 청크는 무시 */ }
@@ -664,8 +714,13 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
   try {
     if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
 
-    const stockContext = matchedTicker ? await buildStockChatContext(matchedTicker) : "";
+    const rawStockContext = matchedTicker ? await buildStockChatContext(matchedTicker) : "";
+    // 컨텍스트 줄에 [S1]·[S2] 출처 ID 를 붙여 보낸다(ai-cite-core.js). 모델이 단 ID 중 실제로 보낸 것만 각주가 된다.
+    const cite = window.MirAiCite || null;
+    const numbered = cite ? cite.numberContext(rawStockContext) : { text: rawStockContext, sources: [] };
+    const stockContext = numbered.text;
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
+    const plain = (t) => (cite ? cite.stripCitations(t) : String(t || ""));
 
     // 답변 확정(스트리밍/타이핑 종료) 시 공통 마무리: 이력 저장 + 배지 부착
     const finalizeReply = (replyText, abortedMark, { store = true } = {}) => {
@@ -697,7 +752,7 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
     const paintStream = () => {
       pendingPaintRaf = 0;
       if (!bubbleDiv || !bubbleDiv.isConnected) return;
-      setAiBubbleMarkdown(bubbleDiv, latestFull, { copyButton: false });
+      setAiBubbleMarkdown(bubbleDiv, plain(latestFull), { copyButton: false });
       if (log) log.scrollTop = log.scrollHeight;
     };
     const onDelta = (_delta, full) => {
@@ -728,18 +783,30 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
     if (result.streamed) {
       const reply = result.reply || (result.aborted ? "" : "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       if (bubbleDiv) {
-        if (reply) setAiBubbleMarkdown(bubbleDiv, reply);
+        if (reply) renderAiCitedReply(typingBubble, reply, numbered.sources, result.meta, broken);
         else aiBubbleBody(bubbleDiv).innerHTML = `<span class="muted">답변이 중단되었습니다.</span>`;
       }
-      if (reply) finalizeReply(reply, result.aborted, { store: !broken });
+      if (reply) finalizeReply(plain(reply), result.aborted, { store: !broken });
       else if (result.aborted && bubbleDiv) aiBubbleBody(bubbleDiv)?.insertAdjacentHTML("beforeend", ` <span class="ai-abort-note muted">(중단됨)</span>`);
     } else {
       // 구 워커(JSON) 폴백 — 오늘과 동일한 타이핑 라이터 렌더 유지
       const reply = result.reply || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-      typeWriterMarkdown(bubbleDiv, reply, () => finalizeReply(reply, false, { store: !broken }));
+      typeWriterMarkdown(bubbleDiv, plain(reply), () => {
+        if (result.reply) renderAiCitedReply(typingBubble, reply, numbered.sources, result.meta, broken);
+        finalizeReply(plain(reply), false, { store: !broken });
+      });
     }
     // SSE done 프레임이 준 모델·RAG 출처 수를 답변 아래에 남긴다(무엇을 근거로 답했는지).
     renderAiReplyMeta(typingBubble, result.meta);
+    // 후속 질문 칩 — 추가 LLM 호출 없이 이 종목 컨텍스트에 있는 데이터로만 고른다.
+    if (matchedTicker && result.reply && !broken && !result.aborted) {
+      renderAiFollowups(typingBubble, cite ? cite.followupQuestions({
+        name: matchedStock.company || matchedTicker,
+        context: rawStockContext,
+        userText: text,
+        hasNews: Number(result.meta && result.meta.ragCount) > 0,
+      }) : []);
+    }
   } catch (err) {
     cancelPendingPaint();
     typingBubble.classList.remove("typing", "is-streaming");
@@ -2009,13 +2076,18 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     // 참고 레이아웃(1.png)의 AI 의견 카드: 요약 + 포인트/리스크 불릿.
     // 단, 사이트 정책상 매수/매도/목표가 추천은 절대 하지 않는다.
     const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 아래 형식의 한국어 요약 의견을 작성해줘.\n형식:\n(2문장 이내의 종합 요약)\n**관찰 포인트**\n- (2~3개, 각 1줄)\n**리스크**\n- (2~3개, 각 1줄)\n규칙: 매수/매도/목표가 추천·단정 금지, 제공된 데이터에 있는 사실만 사용, 형식 외 다른 머리말 금지.`;
-    const stockContext = await buildStockChatContext(item.ticker);
+    const rawStockContext = await buildStockChatContext(item.ticker);
     if (seq !== aiDashSeq) return; // 사용자가 다른 종목으로 이동함
+    // 문장별 출처 각주(ai-cite-core.js) — 채팅과 같은 방식. 스트리밍 중엔 표기를 숨긴다.
+    const cite = window.MirAiCite || null;
+    const numbered = cite ? cite.numberContext(rawStockContext) : { text: rawStockContext, sources: [] };
+    const stockContext = numbered.text;
+    const plain = (t) => (cite ? cite.stripCitations(t) : String(t || ""));
 
     const paint = (text, loading) => {
       const cur = byId("aiDashLlm");
       if (!cur || seq !== aiDashSeq) return;
-      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body${loading ? " is-streaming" : ""}">${formatMarkdownToHtml(stripEmoji(text))}</div>`;
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body${loading ? " is-streaming" : ""}">${formatMarkdownToHtml(stripEmoji(plain(text)))}</div>`;
     };
     let latestFull = "";
     const onDelta = (_d, full) => {
@@ -2038,8 +2110,19 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     const cur = byId("aiDashLlm");
     if (!cur) return;
     if (reply) {
-      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${formatMarkdownToHtml(stripEmoji(reply))}${result.aborted ? ` <span class="ai-abort-note muted">(중단됨)</span>` : ""}</div>`;
-      if (!custom && !result.aborted) aiDashLlmCacheSet(cacheKey, reply);
+      let bodyHtml = formatMarkdownToHtml(stripEmoji(plain(reply)));
+      let notes = "";
+      if (cite) {
+        const applied = cite.applyCitations(stripEmoji(reply), numbered.sources.concat(cite.newsSources(result.meta && result.meta.rag)));
+        if (applied.notes.length) {
+          const prefix = `aicite${++aiCiteSeq}`;
+          bodyHtml = cite.citationHtml(formatMarkdownToHtml(applied.text), prefix);
+          notes = cite.notesHtml(applied.notes, prefix);
+        }
+      }
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${bodyHtml}${result.aborted ? ` <span class="ai-abort-note muted">(중단됨)</span>` : ""}</div>${notes}`;
+      // 캐시엔 표기를 걷어낸 본문만(다음에 열 때 출처 번호가 그때 컨텍스트와 어긋나지 않게).
+      if (!custom && !result.aborted) aiDashLlmCacheSet(cacheKey, plain(reply));
     } else if (result.aborted) {
       cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">(중단됨)</p>`;
     } else {

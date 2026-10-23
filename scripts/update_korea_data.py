@@ -28,7 +28,7 @@ import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time as dtime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -1605,6 +1605,223 @@ def _note_history_mode(mode: str):
 _NO_SOURCE_THIS_RUN: set[str] = set()
 
 
+def fetch_naver_real_history(meta: dict, symbol: str, ysym: str, cached, cached_source: str | None, *,
+                             force_full: bool = False):
+    """네이버 일봉 + 야후 이벤트·KRX 덮어쓰기 — preferHistory 의 정상 경로. 반환 (rows, dividends, mode).
+
+    meta 에 barsSource·splits·krxSpliceSince 를 적는다. 네이버가 실패하면 예외를 그대로 올린다(호출부가 폴백을 정한다).
+    """
+    # NXT 대상(주식)만 통합 종가 문제가 있다 — ETF 는 네이버(분배금 소급 수정주가) 그대로.
+    since = NAVER_INTEGRATED_SINCE if meta.get("market") != "etf" else None
+    rows, mode = fetch_naver_history_smart(symbol, cached, cached_source, force_full=force_full,
+                                           integrated_since=since)
+    meta["barsSource"] = BARS_SOURCE_NAVER
+    _note_bars_source(BARS_SOURCE_NAVER)
+    dividends, splits, yahoo_rows = refresh_kr_events(ysym, symbol, cached, need_since=since)
+    if since:
+        spliced = splice_krx_bars(rows, yahoo_rows, since)
+        with _history_stats_lock:
+            _krx_splice_stats["stocks"] += 1
+            _krx_splice_stats["bars"] += spliced
+            _krx_splice_stats["noYahoo"] += 0 if yahoo_rows else 1
+        if spliced:
+            meta["krxSpliceSince"] = since
+    if splits is not None:
+        meta["splits"] = splits
+    if dividends:
+        dividends = [d for d in dividends if d[0] >= rows[0]["date"]]
+    return rows, dividends, mode
+
+
+# ===================== 이월 종목 최근 봉 보충 (2026-10-23) =====================
+# preferHistory 가 아닌 종목(상위 600·공시·백필·묵은 캐시 밖, 2026-10-23 실측 1,171개)은 직전 detail 의 chartSeries 를
+# 그대로 이월(yahoo-cache)해서 오늘 봉이 없었다. build_kr_market_alerts 일봉 스캔이 "2581종목 중 기준일 봉 1347종목"
+# — 신고가·신저가·거래대금 급증 보드와 종목 차트가 유니버스 절반에서 하루 이상 늦었다(895개는 7일↑).
+# 스냅샷 시세에는 OHLC 가 없어 봉을 만들 수 없다 → 같은 원천(네이버 일봉 API)에서 **빠진 날짜만** 받아 꼬리에 붙인다.
+#
+# 규칙
+#   - 붙이기만 한다: 캐시 마지막 봉 날짜보다 뒤, 보충 상한일(topup_through_date) 이하 봉만. 기존 봉은 덮지 않는다.
+#   - 요청은 증분 경로와 같은 구간 한 번(캐시 마지막 봉 −21일, 주식은 NAVER_INTEGRATED_SINCE −21일까지 앞당김).
+#     5년치도 0.2초라 구간 길이는 지연에 거의 영향이 없고, 통합 종가 이전(네이버 원값) 겹침으로 수정주가 변경을 본다.
+#   - 겹침 종가가 하나라도 다르면(권리락·분할 소급) 또는 캐시 마지막 봉 날짜가 네이버에 없으면 기준이 섞이므로
+#     붙이지 않고 그 종목만 전체 재수집(fetch_naver_real_history = preferHistory 와 같은 경로)한다. 캐시가 야후
+#     봉(barsSource=yahoo)이어도 원천을 섞지 않으려고 전체 재수집이다.
+#   - 주식의 새 봉은 전체 경로처럼 야후(KRX) 봉으로 덮는다(splice_krx_bars, 15% 가드 포함). 야후가 그 날짜를 안
+#     주면 네이버 봉 그대로(전체 경로와 같은 정책).
+#   - historySource: 붙이기만 한 종목은 **yahoo-cache 유지**(본문은 이월 — 의미 불변, 정직성 게이트·묵은 캐시
+#     선정도 그대로). 전체 재수집에 성공한 종목만 "yahoo"(= 오늘 받은 실측). barsSource 는 원천 그대로(naver).
+#   - 실패(네이버 오류)는 이월 그대로 두고 센다. 봉을 지어내지 않는다.
+# 예산(2026-10-23 실측 30종목): 네이버 일봉 1회 중앙 0.05초(p90 0.06, 최대 0.22) + 전역 스로틀 0.1초,
+# 야후 3mo 중앙 0.37초(p90 0.98, 간헐 7.6초). 종목당 스레드-초 ≈ 0.5~2초(스로틀 대기 포함) × 1,171 ≈ 600~2,300초,
+# 10 워커라 벽시계 1~4분이다(스냅샷 단계 ~65분 / 잡 240분). 누적 스레드-초가 TOPUP_TIME_BUDGET_S 를 넘으면 나머지는
+# 이월만 한다(실행이 늘어지지 않게). 대상은 시총 순 TOPUP_MAX_PER_RUN 개(build_snapshot 이 topUpEligible 로 표시).
+TOPUP_MAX_PER_RUN = int(os.environ.get("KR_HISTORY_TOPUP", "2000") or 0)
+TOPUP_TIME_BUDGET_S = float(os.environ.get("KR_HISTORY_TOPUP_SECONDS", "2400") or 0)
+TOPUP_YAHOO_RANGE = "3mo"   # fetch_yahoo_history_kr 는 30봉 미만이면 실패로 본다 — 1mo(≈21봉)는 못 쓴다
+KR_SESSION_DONE = dtime(15, 40)   # kr_price_session.SESSION_DONE 과 같다(정규장 마감 + 동시호가 여유)
+_topup_stats = {"appended": 0, "bars": 0, "nothingNew": 0, "current": 0, "failed": 0, "full": 0,
+                "fullFailed": 0, "budget": 0}
+_topup_used = {"seconds": 0.0, "calls": 0}
+_topup_samples: list[str] = []
+
+
+def _note_topup(kind: str, n_bars: int = 0, sample: str | None = None):
+    with _history_stats_lock:
+        _topup_stats[kind] = _topup_stats.get(kind, 0) + 1
+        _topup_stats["bars"] += n_bars
+        if sample and len(_topup_samples) < 5:
+            _topup_samples.append(sample[:160])
+
+
+def topup_summary() -> str:
+    with _history_stats_lock:
+        s = dict(_topup_stats)
+        used = dict(_topup_used)
+        samples = list(_topup_samples)
+    line = (f"[보충] 최근 봉 {s['appended']}종목(+{s['bars']}봉) · 실패 {s['failed'] + s['fullFailed']}"
+            f" · 전체 재수집 {s['full']} · 이미 최신 {s['current']} · 새 봉 없음 {s['nothingNew']}"
+            f" · 예산 밖 {s['budget']} (누적 {used['seconds']:.0f}/{TOPUP_TIME_BUDGET_S:.0f}스레드초)")
+    return line + (f" (예: {' | '.join(samples)})" if samples else "")
+
+
+def _topup_reserve() -> bool:
+    with _history_stats_lock:
+        if _topup_used["seconds"] >= TOPUP_TIME_BUDGET_S:
+            return False
+        _topup_used["calls"] += 1
+        return True
+
+
+def _topup_spend(seconds: float):
+    with _history_stats_lock:
+        _topup_used["seconds"] += max(0.0, seconds)
+
+
+def topup_through_date(quote_date: str | None, now: datetime | None = None) -> str | None:
+    """보충할 마지막 날짜 = 시세 기준일(최근 KRX 거래일). 기준일이 오늘인데 정규장이 아직 안 끝났으면 전날까지만.
+
+    붙인 봉은 다시 덮지 않으므로(append-only) 장중 미확정 봉을 붙이면 영영 고쳐지지 않는다.
+    """
+    if not quote_date:
+        return None
+    kst = ZoneInfo("Asia/Seoul")
+    now = now.astimezone(kst) if now else datetime.now(kst)
+    if quote_date >= now.date().isoformat() and now.time() < KR_SESSION_DONE:
+        return (date.fromisoformat(quote_date) - timedelta(days=1)).isoformat()
+    return quote_date
+
+
+def topup_merge(cached_rows: list, fresh_rows: list, through: str, integrated_since: str | None = None):
+    """(merged, new_rows) 또는 None(= 기준이 다르다 → 전체 재수집). cached_rows 는 바꾸지 않는다.
+
+    - 겹침 비교는 naver_overlap_ok(캐시 마지막 봉 제외, 주식은 통합 종가 이전 날짜만).
+    - 캐시 마지막 봉 날짜가 네이버 응답 구간 안인데 그 날짜가 없으면 날짜 기준이 어긋난 것 → None.
+    - new_rows = 캐시 마지막 날짜 < date <= through 인 네이버 봉(오름차순·중복 없음). 휴장일은 네이버가 봉을 주지 않으니
+      달력을 따로 볼 필요가 없다 — 받은 거래일만 붙는다.
+    """
+    if not cached_rows or not fresh_rows:
+        return None
+    last = str(cached_rows[-1]["date"])
+    fresh_dates = {row["date"] for row in fresh_rows}
+    if fresh_rows[0]["date"] <= last and last not in fresh_dates:
+        return None
+    if not naver_overlap_ok(cached_rows, fresh_rows, before=integrated_since):
+        return None
+    by_date: dict[str, dict] = {}
+    for row in fresh_rows:
+        d = row["date"]
+        if last < d <= through:
+            by_date[d] = dict(row)
+    new_rows = [by_date[d] for d in sorted(by_date)]
+    merged = (list(cached_rows) + new_rows)[-UD.HISTORY_BAR_CAP:]
+    return merged, new_rows
+
+
+def topup_carried_history(meta: dict, symbol: str, ysym: str, rows: list, *, now: datetime | None = None,
+                          fetch_fn=None, yahoo_fn=None, full_fn=None):
+    """이월(yahoo-cache) 종목의 빠진 최근 봉 보충. 반환 (rows, status). 예외를 올리지 않는다.
+
+    status ∈ current | budget | appended | nothing-new | failed | full | full-mismatch | full-failed.
+    full / full-mismatch 면 meta 의 historySource 를 "yahoo" 로, barsSource·dividends·splits 를 전체 경로 값으로 바꾼다.
+    fetch_fn(code, start, end) · yahoo_fn(ysym) · full_fn(meta, symbol, ysym, cached, cached_source, force_full=) 는
+    테스트 주입점.
+    """
+    fetch = fetch_fn or fetch_naver_daily
+    yahoo = yahoo_fn or (lambda ys: fetch_yahoo_history_kr(ys, range_=TOPUP_YAHOO_RANGE))
+    full = full_fn or fetch_naver_real_history
+    if not rows:
+        return rows, "current"
+    through = topup_through_date(meta.get("quoteDate"), now)
+    last = str(rows[-1].get("date") or "")
+    if not through or not last or last >= through:
+        _note_topup("current")
+        return rows, "current"
+    if not _topup_reserve():
+        _note_topup("budget")
+        return rows, "budget"
+    started = time.monotonic()
+    try:
+        since = NAVER_INTEGRATED_SINCE if meta.get("market") != "etf" else None
+        cached_source = _CACHED_BARS_SOURCE.get(str(symbol), BARS_SOURCE_YAHOO)
+        merged = None
+        reason = "full"
+        if cached_source == BARS_SOURCE_NAVER:
+            kst = ZoneInfo("Asia/Seoul")
+            today = (now.astimezone(kst) if now else datetime.now(kst)).date()
+            start = date.fromisoformat(last[:10]) - timedelta(days=NAVER_INCREMENTAL_OVERLAP_DAYS)
+            if since:
+                start = min(start, date.fromisoformat(since) - timedelta(days=NAVER_INCREMENTAL_OVERLAP_DAYS))
+            try:
+                fresh = fetch(symbol, start, today)
+            except Exception as exc:
+                _note_topup("failed", sample=f"{symbol}: {exc}")
+                return rows, "failed"
+            if not fresh:
+                _note_topup("failed", sample=f"{symbol}: empty naver response")
+                return rows, "failed"
+            merged = topup_merge(rows, fresh, through, integrated_since=since)
+            reason = "full-mismatch"
+        if merged is None:
+            # 수정주가 기준이 바뀌었거나(겹침 불일치) 캐시가 야후 봉 — 이어 붙이지 않고 전체를 다시 받는다.
+            cached = (rows, meta.get("dividends"))
+            try:
+                full_rows, dividends, _mode = full(meta, symbol, ysym, cached, None, force_full=True)
+            except Exception as exc:
+                _note_topup("fullFailed", sample=f"{symbol}: full {exc}")
+                return rows, "full-failed"
+            meta["historySource"] = "yahoo"   # 전체를 오늘 받았다 = '오늘 받은 실측'(preferHistory 와 같은 의미)
+            meta.pop("dividends", None)
+            if dividends:
+                meta["dividends"] = dividends
+            _note_topup("full", sample=f"{symbol}: {reason}")
+            return full_rows, reason
+        merged_rows, new_rows = merged
+        if not new_rows:
+            _note_topup("nothingNew")   # 거래정지 등 — 네이버에도 새 봉이 없다
+            return rows, "nothing-new"
+        if since:
+            try:
+                yrows, ydivs = yahoo(ysym)
+            except Exception:
+                yrows, ydivs = [], None
+                UD._FRESH_SPLITS.pop(str(ysym), None)
+            spliced = splice_krx_bars(new_rows, yrows, since)   # new_rows 만 — 기존 봉은 건드리지 않는다
+            with _history_stats_lock:
+                _krx_splice_stats["bars"] += spliced
+            if spliced:
+                meta["krxSpliceSince"] = since
+            if ydivs:
+                meta["dividends"] = UD.merge_dividend_events(meta.get("dividends"), ydivs)
+            merged_rows = merged_rows[: len(merged_rows) - len(new_rows)] + new_rows
+        _note_topup("appended", len(new_rows))
+        return merged_rows, "appended"
+    except Exception as exc:  # 방어: 보충 실패가 종목 빌드를 깨면 안 된다
+        _note_topup("failed", sample=f"{symbol}: {exc}")
+        return rows, "failed"
+    finally:
+        _topup_spend(time.monotonic() - started)
+
+
 def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
@@ -1616,29 +1833,11 @@ def build_one(meta: dict):
             # 일봉 원천은 네이버(위 '일봉 원천' 절). 실패한 종목만 야후로 받는다.
             cached = load_cached_history(symbol)
             cached_source = _CACHED_BARS_SOURCE.get(str(symbol)) if cached else None
-            # NXT 대상(주식)만 통합 종가 문제가 있다 — ETF 는 네이버(분배금 소급 수정주가) 그대로.
-            stock_like = meta.get("market") != "etf"
-            since = NAVER_INTEGRATED_SINCE if stock_like else None
             try:
-                rows, mode = fetch_naver_history_smart(
-                    symbol, cached, cached_source, force_full=FORCE_FULL_HISTORY, integrated_since=since,
+                rows, dividends, mode = fetch_naver_real_history(
+                    meta, symbol, ysym, cached, cached_source, force_full=FORCE_FULL_HISTORY,
                 )
-                meta["barsSource"] = BARS_SOURCE_NAVER
-                _note_bars_source(BARS_SOURCE_NAVER)
-                dividends, splits, yahoo_rows = refresh_kr_events(ysym, symbol, cached, need_since=since)
                 events_done = True
-                if since:
-                    spliced = splice_krx_bars(rows, yahoo_rows, since)
-                    with _history_stats_lock:
-                        _krx_splice_stats["stocks"] += 1
-                        _krx_splice_stats["bars"] += spliced
-                        _krx_splice_stats["noYahoo"] += 0 if yahoo_rows else 1
-                    if spliced:
-                        meta["krxSpliceSince"] = since
-                if splits is not None:
-                    meta["splits"] = splits
-                if dividends:
-                    dividends = [d for d in dividends if d[0] >= rows[0]["date"]]
             except Exception as naver_exc:
                 # 캐시가 네이버 봉이면 야후 1년치를 그 꼬리에 잇지 않는다(원천이 섞인 시계열 금지) → 야후 전체.
                 rows, dividends, mode = UD.fetch_history_smart(
@@ -1656,6 +1855,12 @@ def build_one(meta: dict):
         else:
             # 공시 7일 창에서 내려간 종목도 직전 실측이 있으면 합성으로 덮지 않는다.
             rows = UD.history_from_cache_or_synthetic(symbol, meta, load_cached_history)
+            if meta.get("historySource") == "yahoo-cache" and meta.get("topUpEligible"):
+                # 이월 종목의 빠진 최근 봉만 네이버에서 보충한다(위 '이월 종목 최근 봉 보충' 절).
+                rows, topped = topup_carried_history(meta, symbol, ysym, rows)
+                if topped.startswith("full") and topped != "full-failed":
+                    events_done = True
+                    mode = topped
     except Exception as exc:
         # 실측 fetch 실패 시 합성 대신 직전 실측 이력을 재사용한다(데이터 정직성).
         rows = UD.history_from_cache_or_synthetic(symbol, meta, load_cached_history)
@@ -2443,6 +2648,11 @@ def build_snapshot(limit: int | None = None) -> dict:
         )
         if meta.get("sector") == "MISC" and meta["symbol"] in fund_symbols:
             enrich_sector(meta)
+    # 이월 종목 최근 봉 보충 대상 — preferHistory 밖을 시총 순으로 TOPUP_MAX_PER_RUN 개('이월 종목 최근 봉 보충' 절).
+    carried_by_cap = sorted((m for m in metas if not m.get("preferHistory")),
+                            key=lambda m: m.get("marketCapT") or 0, reverse=True)
+    for meta in carried_by_cap[:max(0, TOPUP_MAX_PER_RUN)]:
+        meta["topUpEligible"] = True
 
     stocks = []
     errors = []
@@ -2468,6 +2678,7 @@ def build_snapshot(limit: int | None = None) -> dict:
     honesty = UD.enforce_history_honesty_gate(stocks, prefer_tickers, prev_stocks)
     print(UD.history_fetch_summary(_history_stats, _history_stats_lock))
     print(bars_source_summary())
+    print(topup_summary())
     cached_count = honesty["cached_count"]
     fabricated = honesty["fabricated"]
 

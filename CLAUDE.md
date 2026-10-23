@@ -94,6 +94,10 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 - 캐시 마지막 봉 종가가 그 봉 고가·저가 밖이면 US·KR `load_cached_history` 가 그 봉을 버린다
   (`UD.drop_corrupted_last_bar`, 메우지 않음). KR 은 yahoo-cache 로 이월만 되던 묵은 캐시(마지막 봉 5일↑)를
   실행당 `KR_HISTORY_STALE_REFRESH`(기본 400 — 2026-10-22 #388 에서 200→400)개씩 오래된 순으로 다시 받는다(2026-10-21).
+- KR preferHistory 밖 이월(yahoo-cache) 종목은 `topup_carried_history` 가 네이버 일봉에서 **빠진 날짜만 꼬리에
+  붙인다**(2026-10-23, append-only, 주식 새 봉은 야후 KRX 로 splice). 겹침 종가가 다르면(수정주가 소급)·캐시가 야후 봉이면
+  그 종목만 전체 재수집(`historySource=yahoo`). 붙이기만 한 종목은 `historySource=yahoo-cache` 유지. 시총 순
+  `KR_HISTORY_TOPUP`(기본 2000)개 · 누적 `KR_HISTORY_TOPUP_SECONDS`(기본 2400 스레드초). 로그 `[보충]`.
 - US 스냅샷의 `changePctSuspect`("split"|"noVolume"): |당일 등락률| > 300% 인데 거래량 근거가 없거나 최근 분할이
   있으면 붙는다(`update_data.flag_implausible_change`, AMTD +4,875%). 값은 그대로 두고 섹터 평균·시장 폭·요약
   집계에서만 뺀다. 프론트 섹터 등락률은 시총가중(`signals.js capWeightedChange`)이다.

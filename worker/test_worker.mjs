@@ -76,6 +76,7 @@ import {
   resolveChatMarket,
   formatChatNewsRagBlock,
   chatRagMeta,
+  chatEntityRelevance,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1979,6 +1980,15 @@ await test("오늘 움직임과 반대 방향 이유는 버린다", () => {
     { claim: "솔리다임 상장 기대가 커졌다", social: ["S2"], news: [] },
   ] }, [{ text: "나스닥 하락 무섭다", source: "n" }, { text: "솔리다임 상장 기대", source: "n" }], [], ["SK하이닉스"], 5.81);
   eq(out.socialOnly.map((x) => x.claim).join("|"), "솔리다임 상장 기대가 커졌다", "반대 방향 제거");
+});
+
+await test("채팅 뉴스: 질문 종목이 제목에 있는 기사를 앞으로", () => {
+  const ents = [{ ticker: "NVDA", company: "NVIDIA Corporation" }];
+  eq(chatEntityRelevance({ title: "Nvidia launches Minerva AIOps platform", summary: "" }, ents), 3, "제목");
+  eq(chatEntityRelevance({ title: "Could Intel be the next trillion-dollar company?", summary: "Nvidia, Broadcom and AMD" }, ents), 1, "요약에만");
+  eq(chatEntityRelevance({ title: "Oil prices rise", summary: "" }, ents), -2, "무관");
+  eq(chatEntityRelevance({ title: "삼성전자 0.47% 상승 마감", summary: "" }, [{ ticker: "005930.KS", company: "삼성전자" }]), 3, "국내");
+  eq(chatEntityRelevance({ title: "x" }, []), 0, "종목 없음");
 });
 
 await test("move_reasons — Origin 게이트, 옛 워커 감지용 경로", async () => {

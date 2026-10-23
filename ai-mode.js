@@ -720,7 +720,10 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
     const numbered = cite ? cite.numberContext(rawStockContext) : { text: rawStockContext, sources: [] };
     const stockContext = numbered.text;
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
-    const plain = (t) => (cite ? cite.stripCitations(t) : String(t || ""));
+    // 뉴스에서 옮긴 증권사 투자의견·목표가 문장은 채팅에서도 '원문 평가 · ' 로 표시하고 첫 문장에서 내린다(2026-10-23
+    // 라이브: '니드햄은 매수를 재확인하며 300달러 목표가를 유지했습니다 [N5]'가 일반 문장으로 나왔다).
+    const rated = (t) => (cite && typeof cite.labelAnalystRatings === "function" ? cite.labelAnalystRatings(t) : String(t || ""));
+    const plain = (t) => (cite ? cite.stripCitations(rated(t)) : rated(t));
 
     // 답변 확정(스트리밍/타이핑 종료) 시 공통 마무리: 이력 저장 + 배지 부착
     const finalizeReply = (replyText, abortedMark, { store = true } = {}) => {
@@ -783,7 +786,7 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
     if (result.streamed) {
       const reply = result.reply || (result.aborted ? "" : "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       if (bubbleDiv) {
-        if (reply) renderAiCitedReply(typingBubble, reply, numbered.sources, result.meta, broken);
+        if (reply) renderAiCitedReply(typingBubble, rated(reply), numbered.sources, result.meta, broken);
         else aiBubbleBody(bubbleDiv).innerHTML = `<span class="muted">답변이 중단되었습니다.</span>`;
       }
       if (reply) finalizeReply(plain(reply), result.aborted, { store: !broken });
@@ -792,7 +795,7 @@ async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
       // 구 워커(JSON) 폴백 — 오늘과 동일한 타이핑 라이터 렌더 유지
       const reply = result.reply || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
       typeWriterMarkdown(bubbleDiv, plain(reply), () => {
-        if (result.reply) renderAiCitedReply(typingBubble, reply, numbered.sources, result.meta, broken);
+        if (result.reply) renderAiCitedReply(typingBubble, rated(reply), numbered.sources, result.meta, broken);
         finalizeReply(plain(reply), false, { store: !broken });
       });
     }

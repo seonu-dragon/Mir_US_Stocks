@@ -4085,6 +4085,32 @@ async function fetchGoogleNewsRecent(query, isKr = true) {
   }
 }
 
+export function chatEntityKeys(entities) {
+  const keys = [];
+  for (const ent of entities || []) {
+    const tk = String(ent.ticker || "").replace(/\.(KS|KQ)$/i, "").trim();
+    if (tk.length >= 2) keys.push(tk.toLowerCase());
+    const company = String(ent.company || "").replace(/(?:,\s*|\s+)(inc\.?|corp(oration)?\.?|co\.?|ltd\.?|plc|holdings?|company|class [a-z])(?![a-z])/gi, "").trim();
+    const first = company.split(/\s+/)[0] || "";
+    if (company.length >= 2) keys.push(company.toLowerCase());
+    if (first.length >= 3 && first.toLowerCase() !== company.toLowerCase()) keys.push(first.toLowerCase());
+  }
+  return [...new Set(keys)];
+}
+
+// 제목에 종목명·티커 → +3, 요약에만 → +1, 어디에도 없음 → −2. 종목이 없으면 0.
+export function chatEntityRelevance(item, entities) {
+  const keys = chatEntityKeys(entities);
+  if (!keys.length) return 0;
+  const has = (text) => {
+    const low = String(text || "").toLowerCase();
+    return keys.some((k) => (/^[a-z0-9]{2,5}$/.test(k) ? new RegExp(`(^|[^a-z0-9])${k}([^a-z0-9]|$)`).test(low) : low.includes(k)));
+  };
+  if (has(item && item.title)) return 3;
+  if (has(item && item.summary)) return 1;
+  return -2;
+}
+
 function scoreChatNewsItem(item, query, userText) {
   const blob = `${item.title} ${item.summary}`.toLowerCase();
   const terms = new Set(
@@ -4149,6 +4175,9 @@ async function retrieveChatNewsRag(userText, entities, env, market, stat = null)
     });
   }
 
+  // 질문 종목이 제목에 나오는 기사를 앞으로, 본문 어디에도 없는 기사는 뒤로(2026-10-23 라이브: 엔비디아 질문의 첫 근거가
+  // 'Could Intel be the next trillion-dollar company?' 였다 — 종목 뉴스 피드에 섞인 다른 회사 기사).
+  pool.forEach((item) => { item._score = (item._score || 0) + chatEntityRelevance(item, entities); });
   return dedupeChatNews(pool)
     .sort((a, b) => (b._score || 0) - (a._score || 0))
     .slice(0, 6)

@@ -1,11 +1,203 @@
 {
-  "updatedAtKst": "2026-10-23 13:34 KST",
-  "lastFileDate": "2026-10-22",
+  "updatedAtKst": "2026-10-24 13:33 KST",
+  "lastFileDate": "2026-10-23",
   "partialFetch": false,
-  "count": 567,
+  "count": 569,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Canary Staked INJ ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001999371-26-023446:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2073616/000199937126023446/inj-s1a_102326.htm"
+    },
+    {
+      "company": "Canary Staked INJ ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001999371-26-023446:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2073616/000199937126023446/inj-s1a_102326.htm"
+    },
+    {
+      "company": "Evernorth Holdings Inc.  (XRPN, XRPNW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-23",
+      "accession": "0001628280-26-067081:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2092592/000162828026067081/xrpn-20261023.htm"
+    },
+    {
+      "company": "Lycia Therapeutics, Inc.",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-23",
+      "accession": "0001628280-26-067048:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1806540/000162828026067048/lyciatherapeutics-424b4.htm",
+      "offerPrice": 18.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "AEI CapForce II Investment Corp",
+      "ticker": "AEIB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001493152-26-048203:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1875655/000149315226048203/forms-1a.htm"
+    },
+    {
+      "company": "AEI CapForce II Investment Corp",
+      "ticker": "AEIB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001493152-26-048203:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1875655/000149315226048203/forms-1a.htm"
+    },
+    {
+      "company": "Onfolio Holdings, Inc  (ONFO, ONFOP, ONFOW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-112189:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1825452/000121390026112189/ea0309406-s1_onfolio.htm"
+    },
+    {
+      "company": "BHAV Acquisition Corp II",
+      "ticker": "BHAI",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-112173:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142627/000121390026112173/ea0298196-04.htm"
+    },
+    {
+      "company": "BHAV Acquisition Corp II",
+      "ticker": "BHAI",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-112173:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142627/000121390026112173/ea0298196-04.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-112016:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026112016/ea0309477-s1a6_cryptex.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-112016:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026112016/ea0309477-s1a6_cryptex.htm"
+    },
+    {
+      "company": "Boxlight Corp",
+      "ticker": "BOXL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-111803:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1624512/000121390026111803/ea0307649-s1a1_boxlight.htm"
+    },
+    {
+      "company": "Boxlight Corp",
+      "ticker": "BOXL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001213900-26-111803:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1624512/000121390026111803/ea0307649-s1a1_boxlight.htm"
+    },
+    {
+      "company": "Grayscale Bittensor Trust (TAO)",
+      "ticker": "GTAO",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001193125-26-430543:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2029297/000119312526430543/gtao_s-1_amendment_2.htm"
+    },
+    {
+      "company": "Grayscale Bittensor Trust (TAO)",
+      "ticker": "GTAO",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001193125-26-430543:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2029297/000119312526430543/gtao_s-1_amendment_2.htm"
+    },
+    {
+      "company": "Hometown Financial Group, Inc./MD",
+      "ticker": "HFG",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001193125-26-430519:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152644/000119312526430519/hfg-20261023.htm"
+    },
+    {
+      "company": "Hometown Financial Group, Inc./MD",
+      "ticker": "HFG",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001193125-26-430519:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152644/000119312526430519/hfg-20261023.htm"
+    },
+    {
+      "company": "MFB Bancorp, Inc.",
+      "ticker": "MFDB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001104659-26-118481:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152813/000110465926118481/tm2624212-10_s1a.htm"
+    },
+    {
+      "company": "MFB Bancorp, Inc.",
+      "ticker": "MFDB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-23",
+      "accession": "0001104659-26-118481:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152813/000110465926118481/tm2624212-10_s1a.htm"
+    },
     {
       "company": "CitroTech Inc.",
       "ticker": "CITR",
@@ -5614,179 +5806,6 @@
       "fileDate": "2026-08-25",
       "accession": "0001193125-26-363922:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2111838/000119312526363922/d86766ds1.htm"
-    },
-    {
-      "company": "Polar Power, Inc.",
-      "ticker": "POLA",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-24",
-      "accession": "0001493152-26-039916:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1622345/000149315226039916/forms-1.htm"
-    },
-    {
-      "company": "Serina Therapeutics, Inc.",
-      "ticker": "SER",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-24",
-      "accession": "0001493152-26-039910:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1708599/000149315226039910/forms-1.htm"
-    },
-    {
-      "company": "NEXTNRG, INC.",
-      "ticker": "NXXT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-24",
-      "accession": "0001493152-26-039888:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1817004/000149315226039888/forms-1.htm"
-    },
-    {
-      "company": "Live Oak Acquisition Corp. VI",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-24",
-      "accession": "0001213900-26-093129:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2115191/000121390026093129/ea0281091-02.htm"
-    },
-    {
-      "company": "Inflection Point Acquisition Corp. VIII",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001213900-26-093109:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2146310/000121390026093109/ea0300623-02.htm"
-    },
-    {
-      "company": "Inflection Point Acquisition Corp. VIII",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001213900-26-093109:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2146310/000121390026093109/ea0300623-02.htm"
-    },
-    {
-      "company": "NFT Ltd",
-      "ticker": "MI",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-08-24",
-      "accession": "0001213900-26-092917:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1958713/000121390026092917/ea0303127-424b4_nftlimited.htm",
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Cryptex Digital Market Cap ETF",
-      "ticker": "BAGZ",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001213900-26-092828:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026092828/ea0302622-s1a3_cryptex.htm"
-    },
-    {
-      "company": "Cryptex Digital Market Cap ETF",
-      "ticker": "BAGZ",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001213900-26-092828:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026092828/ea0302622-s1a3_cryptex.htm"
-    },
-    {
-      "company": "Aveanna Healthcare Holdings, Inc.",
-      "ticker": "AVAH",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-08-24",
-      "accession": "0001193125-26-361708:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1832332/000119312526361708/d321536d424b4.htm",
-      "offerPrice": 11.75,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Holtec Nuclear Corp",
-      "ticker": "HNUC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001193125-26-361496:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2104277/000119312526361496/d40440ds1a.htm"
-    },
-    {
-      "company": "Holtec Nuclear Corp",
-      "ticker": "HNUC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001193125-26-361496:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2104277/000119312526361496/d40440ds1a.htm"
-    },
-    {
-      "company": "Essential Minerals Acquisition Corp",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-24",
-      "accession": "0001185185-26-003690:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2143060/000118518526003690/essens1082126.htm"
-    },
-    {
-      "company": "GridAI Technologies Corp.",
-      "ticker": "GRDX",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001104659-26-100274:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1604191/000110465926100274/tm2615795d8_s1a.htm"
-    },
-    {
-      "company": "GridAI Technologies Corp.",
-      "ticker": "GRDX",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001104659-26-100274:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1604191/000110465926100274/tm2615795d8_s1a.htm"
-    },
-    {
-      "company": "Rainier Acquisition Corp",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001104659-26-099825:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2147219/000110465926099825/tmb-20260821xs1a.htm"
-    },
-    {
-      "company": "Rainier Acquisition Corp",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-24",
-      "accession": "0001104659-26-099825:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2147219/000110465926099825/tmb-20260821xs1a.htm"
     }
   ]
 }

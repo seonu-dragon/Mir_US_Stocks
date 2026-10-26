@@ -1,210 +1,122 @@
 {
   "market": "kr",
-  "tradeDate": "2026-10-23",
-  "updatedAtKst": "2026-10-23 17:09 KST",
+  "tradeDate": "2026-10-26",
+  "updatedAtKst": "2026-10-26 17:34 KST",
   "status": "ok",
   "attempt": 1,
-  "count": 72,
+  "count": 58,
   "criteria": "시총 2,000억 원 이상 · 거래대금 50억 원 이상 · ETF·스팩 제외 · 등락률 ±3% 이상 · 방향별 최대 10종목",
   "source": "DART · 네이버 뉴스/Google News · 시장 스냅샷",
   "note": "공시·뉴스 헤드라인·업종 평균만을 근거로 한 자동 요약이라 틀릴 수 있다. 근거가 없으면 '뚜렷한 재료 확인 안 됨', 요약이 검증을 통과하지 못하면 '요약 실패'. 매매 신호가 아니다.",
   "llm": {
     "llmCalls": 2,
-    "llmStocks": 50,
+    "llmStocks": 46,
     "reused": 0,
-    "asked": 50,
+    "asked": 46,
     "models": [
       "gemini-2.5-flash-lite"
     ],
     "errors": [],
-    "callDate": "2026-10-23",
+    "callDate": "2026-10-26",
     "callsToday": 2
   },
   "indexMoves": [
     {
       "name": "코스피",
-      "changePct": 0.3
+      "changePct": -1.46
     },
     {
       "name": "코스닥",
-      "changePct": -1.62
+      "changePct": -3.26
     }
   ],
   "up": [
     {
-      "ticker": "220100",
-      "company": "퓨쳐켐",
+      "ticker": "328130",
+      "company": "루닛",
       "sector": "헬스케어",
-      "industry": "제약",
-      "changePct": 29.91,
-      "close": 8990.0,
-      "tradingValue": 18168187670,
+      "industry": "의료 IT",
+      "changePct": 30.0,
+      "close": 14690.0,
+      "tradingValue": 154663914730,
       "priceSource": "naver",
-      "marketCapB": 0.279,
-      "reason": "전이성 거세저항성 전립선암 환자 대상 임상시험 결과 수령",
+      "marketCapB": 1.094,
+      "reason": "미국 바이오 기업과 면역항암제 개발 AI 바이오마커 연구 협력",
       "reasonStatus": "ok",
-      "sectorNote": "",
+      "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +10.8%)",
       "tags": [
-        "공시",
+        "섹터동조",
         "뉴스"
       ],
       "evidence": [
         {
-          "type": "disclosure",
-          "title": "DART: 투자판단관련주요경영사항(임상시험결과)              (전이성 거세저항성 전립선암 환자에 대한 [177Lu]루도타다이펩의 안전성 및 유효성 평가; 미국 제2a상 Topline data 수령 )",
-          "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023900540",
-          "source": "DART",
-          "date": "2026-10-23"
-        },
-        {
           "type": "news",
-          "title": "퓨쳐켐 'FC705', 美 임상 2a상서 객관적반응률 38.9% 확인",
-          "link": "https://www.mdtoday.co.kr/news/articleView.html?idxno=620581",
-          "source": "mdtoday.co.kr",
-          "date": "2026-10-23"
-        },
-        {
-          "type": "news",
-          "title": "[주식] 퓨쳐켐 , 미국 임상 2a 탑라인 발표에 27% ↑",
-          "link": "https://www.hitnews.co.kr/news/articleView.html?idxno=80148",
-          "source": "hitnews.co.kr",
-          "date": "2026-10-23"
+          "title": "루닛 , 美 서밋과 이보네시맙 AI 바이오마커 연구 계약",
+          "link": "http://digitalchosun.dizzo.com/site/data/html_dir/2026/10/26/2026102680188.html",
+          "source": "digitalchosun.dizzo.com",
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "제약",
-        "avgPct": -0.21,
-        "n": 119,
+        "name": "의료 IT",
+        "avgPct": 10.8,
+        "n": 11,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "456160",
-      "company": "지투지바이오",
+      "ticker": "458870",
+      "company": "씨어스",
       "sector": "헬스케어",
-      "industry": "제약",
-      "changePct": 21.0,
-      "close": 49850.0,
-      "tradingValue": 146178794050,
+      "industry": "의료 IT",
+      "changePct": 17.93,
+      "close": 27950.0,
+      "tradingValue": 52753864150,
       "priceSource": "naver",
-      "marketCapB": 0.826,
-      "reason": "월 1회 주사 장기지속형 플랫폼 성과 관심",
+      "marketCapB": 1.068,
+      "reason": "아주대병원 342병상에 AI 모니터링 시스템 도입",
       "reasonStatus": "ok",
-      "sectorNote": "",
+      "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +16.4%)",
       "tags": [
+        "섹터동조",
         "뉴스"
       ],
       "evidence": [
         {
           "type": "news",
-          "title": "지투지바이오 12.26% 상승…장기지속형 플랫폼 성과 관심",
-          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234152",
-          "source": "job-post.co.kr",
-          "date": "2026-10-23"
+          "title": "[특징주] 씨어스 테크놀로지, 아주대병원 342병상 '씽크' 도입에 13.92% 뛰...",
+          "link": "https://www.namdonews.com/news/articleView.html?idxno=927240",
+          "source": "namdonews.com",
+          "date": "2026-10-26"
         },
         {
           "type": "news",
-          "title": "지투지바이오, '월 1회 주사' 중국도 관심…빅파마 \"러브콜\"",
-          "link": "https://n.news.naver.com/mnews/article/008/0005430071",
-          "source": "머니투데이",
-          "date": "2026-10-22"
+          "title": "대웅제약, 아주대병원 342병상에 씨어스 AI 모니터링 '씽크' 공급",
+          "link": "https://n.news.naver.com/mnews/article/008/0005431413?sid=101",
+          "source": "mt.co.kr",
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "제약",
-        "avgPct": -0.35,
-        "n": 119,
+        "name": "의료 IT",
+        "avgPct": 16.39,
+        "n": 11,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "425420",
-      "company": "티에프이",
+      "ticker": "108490",
+      "company": "로보티즈",
       "sector": "기술",
-      "industry": "반도체",
-      "changePct": 7.33,
-      "close": 64400.0,
-      "tradingValue": 19136331200,
+      "industry": "로보틱스",
+      "changePct": 9.11,
+      "close": 245500.0,
+      "tradingValue": 268964890000,
       "priceSource": "naver",
-      "marketCapB": 0.803,
-      "reason": "반도체 업종 동반 상승(한양디지텍·엑시콘 등)",
-      "reasonStatus": "sector",
-      "sectorNote": "반도체 업종 동반 상승(한양디지텍·엑시콘 등)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "반도체",
-        "avgPct": 2.0,
-        "n": 140,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "078350",
-      "company": "한양디지텍",
-      "sector": "기술",
-      "industry": "반도체",
-      "changePct": 7.89,
-      "close": 34850.0,
-      "tradingValue": 27260715500,
-      "priceSource": "naver",
-      "marketCapB": 0.533,
-      "reason": "반도체 업종 동반 상승(티에프이·엑시콘 등)",
-      "reasonStatus": "sector",
-      "sectorNote": "반도체 업종 동반 상승(티에프이·엑시콘 등)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "반도체",
-        "avgPct": 2.0,
-        "n": 140,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "207940",
-      "company": "삼성바이오로직스",
-      "sector": "헬스케어",
-      "industry": "바이오",
-      "changePct": 7.13,
-      "close": 1458000.0,
-      "tradingValue": 202836960000,
-      "priceSource": "naver",
-      "marketCapB": 67.863,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
-      "tags": [
-        "불명"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "바이오",
-        "avgPct": -0.59,
-        "n": 42,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "293490",
-      "company": "카카오게임즈",
-      "sector": "커뮤니케이션",
-      "industry": "게임",
-      "changePct": 6.62,
-      "close": 11600.0,
-      "tradingValue": 22150687200,
-      "priceSource": "naver",
-      "marketCapB": 1.233,
-      "reason": "신작 성과와 비용 구조 관심",
+      "marketCapB": 3.616,
+      "reason": "젠슨 황 시연 로봇에 액추에이터 공급 확대",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -213,96 +125,38 @@
       "evidence": [
         {
           "type": "news",
-          "title": "카카오게임즈 6.53% 상승…신작 성과와 비용 구조 관심",
-          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234217",
-          "source": "job-post.co.kr",
-          "date": "2026-10-23"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "게임",
-        "avgPct": -2.29,
-        "n": 22,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "001510",
-      "company": "SK증권",
-      "sector": "금융",
-      "industry": "증권",
-      "changePct": 4.88,
-      "close": 2085.0,
-      "tradingValue": 25121358105,
-      "priceSource": "naver",
-      "marketCapB": 0.486,
-      "reason": "셀트리온 목표주가 상향, 고수익 신제품 성장",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "SK증권 \"셀트리온 목표주가 상향, 고수익 신제품 성장 가속화 예상\"",
-          "link": "https://www.businesspost.co.kr/BP?command=article_view&num=450121",
-          "source": "businesspost.co.kr",
-          "date": "2026-10-23"
+          "title": "로보티즈 , 젠슨 황 홀린 ‘오리로봇’에 액추에이터 공급한다",
+          "link": "https://n.news.naver.com/mnews/article/011/0004675272?sid=101",
+          "source": "sedaily.com",
+          "date": "2026-10-26"
         },
         {
           "type": "news",
-          "title": "셀트리온, 바이오시밀러 3대 시장 선점…목표가 상향 [ SK증권 ]",
-          "link": "https://www.ekn.kr/web/view.php?key=20261023027500215",
-          "source": "ekn.kr",
-          "date": "2026-10-23"
+          "title": "로보티즈 , 젠슨 황이 시연한 '오리 로봇' 부품 공급 확대…내년 100만대...",
+          "link": "https://news.mtn.co.kr/article/2026102611015939466",
+          "source": "news.mtn.co.kr",
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "증권",
-        "avgPct": -1.33,
-        "n": 22,
+        "name": "로보틱스",
+        "avgPct": -0.67,
+        "n": 27,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "092870",
-      "company": "엑시콘",
-      "sector": "기술",
-      "industry": "반도체",
-      "changePct": 4.8,
-      "close": 51300.0,
-      "tradingValue": 18213090300,
+      "ticker": "437730",
+      "company": "삼현",
+      "sector": "경기소비재",
+      "industry": "자동차부품",
+      "changePct": 6.77,
+      "close": 47300.0,
+      "tradingValue": 95167458100,
       "priceSource": "naver",
-      "marketCapB": 0.67,
-      "reason": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-      "reasonStatus": "sector",
-      "sectorNote": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "반도체",
-        "avgPct": 2.0,
-        "n": 140,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "171090",
-      "company": "선익시스템",
-      "sector": "기술",
-      "industry": "디스플레이장비",
-      "changePct": 4.31,
-      "close": 84700.0,
-      "tradingValue": 14518172900,
-      "priceSource": "naver",
-      "marketCapB": 0.861,
-      "reason": "OLED 증착장비 수주 관심",
+      "marketCapB": 1.508,
+      "reason": "휴머노이드 기대감 및 양산 수주 기대",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -311,17 +165,17 @@
       "evidence": [
         {
           "type": "news",
-          "title": "선익시스템 4.68% 상승…OLED 증착장비 수주 관심",
-          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234232",
+          "title": "삼현 9.14% 상승…휴머노이드 기대, 양산 수주가 다음 관문",
+          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234476",
           "source": "job-post.co.kr",
-          "date": "2026-10-23"
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "디스플레이장비",
-        "avgPct": 0.02,
-        "n": 34,
+        "name": "자동차부품",
+        "avgPct": -1.5,
+        "n": 84,
         "weighting": "시총가중"
       }
     },
@@ -330,38 +184,11 @@
       "company": "인제니아테라퓨틱스(Reg.S)",
       "sector": "헬스케어",
       "industry": "바이오",
-      "changePct": 4.35,
-      "close": 21600.0,
-      "tradingValue": 6000588000,
+      "changePct": 7.62,
+      "close": 23300.0,
+      "tradingValue": 7971908600,
       "priceSource": "naver",
-      "marketCapB": 1.07,
-      "reason": "바이오 업종 동반 상승(시총가중 평균 +3.0%)",
-      "reasonStatus": "sector",
-      "sectorNote": "바이오 업종 동반 상승(시총가중 평균 +3.0%)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "바이오",
-        "avgPct": 2.96,
-        "n": 42,
-        "weighting": "시총가중"
-      }
-    }
-  ],
-  "down": [
-    {
-      "ticker": "317400",
-      "company": "자이에스앤디",
-      "sector": "산업재",
-      "industry": "건설",
-      "changePct": -12.71,
-      "close": 7970.0,
-      "tradingValue": 13167077600,
-      "priceSource": "naver",
-      "marketCapB": 0.309,
+      "marketCapB": 1.147,
       "reason": "뚜렷한 재료 확인 안 됨",
       "reasonStatus": "none",
       "sectorNote": "",
@@ -371,23 +198,23 @@
       "evidence": [],
       "sectorMove": {
         "level": "업종",
-        "name": "건설",
-        "avgPct": 2.17,
-        "n": 50,
+        "name": "바이오",
+        "avgPct": -1.94,
+        "n": 42,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "272210",
-      "company": "한화시스템",
-      "sector": "산업재",
-      "industry": "방산/우주항공",
-      "changePct": -10.15,
-      "close": 66400.0,
-      "tradingValue": 93572672800,
+      "ticker": "468530",
+      "company": "프로티나",
+      "sector": "헬스케어",
+      "industry": "바이오",
+      "changePct": 7.83,
+      "close": 46850.0,
+      "tradingValue": 23087445750,
       "priceSource": "naver",
-      "marketCapB": 12.525,
-      "reason": "방산전자·위성 사업 점검",
+      "marketCapB": 0.517,
+      "reason": "장중 13%대 상승",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -396,83 +223,115 @@
       "evidence": [
         {
           "type": "news",
-          "title": "한화시스템 9.74% 내려…방산전자·위성 사업 점검",
-          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234171",
-          "source": "job-post.co.kr",
-          "date": "2026-10-23"
+          "title": "프로티나 , 장중 13%대 상승해 4만9000원대",
+          "link": "https://www.vegannews.co.kr/news/article.html?no=397271",
+          "source": "vegannews.co.kr",
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "방산/우주항공",
-        "avgPct": -1.96,
-        "n": 25,
+        "name": "바이오",
+        "avgPct": -1.91,
+        "n": 42,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "031430",
-      "company": "신세계인터내셔날",
-      "sector": "경기소비재",
-      "industry": "의류/패션",
-      "changePct": -10.18,
-      "close": 10060.0,
-      "tradingValue": 5555484100,
+      "ticker": "030530",
+      "company": "원익홀딩스",
+      "sector": "산업재",
+      "industry": "지주회사",
+      "changePct": 5.18,
+      "close": 23350.0,
+      "tradingValue": 46290534400,
       "priceSource": "naver",
-      "marketCapB": 0.355,
-      "reason": "의류/패션 업종 동반 하락(형지I&C·형지엘리트 등)",
-      "reasonStatus": "sector",
-      "sectorNote": "의류/패션 업종 동반 하락(형지I&C·형지엘리트 등)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "의류/패션",
-        "avgPct": -2.28,
-        "n": 39,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "046970",
-      "company": "우리로",
-      "sector": "기술",
-      "industry": "IT 장비",
-      "changePct": -9.27,
-      "close": 7540.0,
-      "tradingValue": 17044818440,
-      "priceSource": "naver",
-      "marketCapB": 0.332,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
+      "marketCapB": 1.819,
+      "reason": "기관 순매수 속 기관 투자자 매수세 유입",
+      "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
-        "불명"
+        "뉴스"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "[특징주] 원익홀딩스 , 기관 순매수 속 6.08% 오른채 장 마감…장중 정적...",
+          "link": "https://www.namdonews.com/news/articleView.html?idxno=927274",
+          "source": "namdonews.com",
+          "date": "2026-10-26"
+        }
+      ],
       "sectorMove": {
         "level": "업종",
-        "name": "IT 장비",
-        "avgPct": -1.06,
-        "n": 6,
+        "name": "지주회사",
+        "avgPct": -1.48,
+        "n": 84,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "005090",
-      "company": "SGC에너지",
-      "sector": "소재",
-      "industry": "에너지소재",
-      "changePct": -8.45,
-      "close": 34650.0,
-      "tradingValue": 9967765500,
+      "ticker": "033790",
+      "company": "피노",
+      "sector": "산업재",
+      "industry": "전기제품",
+      "changePct": 4.07,
+      "close": 7160.0,
+      "tradingValue": 9700618600,
       "priceSource": "naver",
-      "marketCapB": 0.497,
-      "reason": "3분기 영업이익 399억원, 전년比 56.8% 증가",
+      "marketCapB": 0.618,
+      "reason": "신한금융·서울시, 혁신 챌린지 우수기업 선정",
       "reasonStatus": "ok",
-      "sectorNote": "에너지소재 업종 동반 하락(시총가중 평균 -2.9%)",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "신한금융·서울시, 피노 베이션 챌린지 우수기업 3곳 선정…금융 혁신 성...",
+          "link": "https://www.mediafine.co.kr/news/articleView.html?idxno=93769",
+          "source": "mediafine.co.kr",
+          "date": "2026-10-26"
+        },
+        {
+          "type": "news",
+          "title": "신한금융·서울시, 피노 베이션 챌린지 우수기업 시상",
+          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234487",
+          "source": "job-post.co.kr",
+          "date": "2026-10-26"
+        },
+        {
+          "type": "news",
+          "title": "신한금융, 서울시와 ' 피노 베이션 챌린지' 우수기업 선정",
+          "link": "https://n.news.naver.com/mnews/article/001/0016400843?sid=101",
+          "source": "yna.co.kr",
+          "date": "2026-10-26"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "전기제품",
+        "avgPct": -1.85,
+        "n": 40,
+        "weighting": "시총가중"
+      }
+    }
+  ],
+  "down": [
+    {
+      "ticker": "089890",
+      "company": "코세스",
+      "sector": "기술",
+      "industry": "반도체",
+      "changePct": -18.8,
+      "close": 32400.0,
+      "tradingValue": 26488263600,
+      "priceSource": "naver",
+      "marketCapB": 0.542,
+      "reason": "장중 주가 하락",
+      "reasonStatus": "ok",
+      "sectorNote": "반도체 업종 동반 하락(한솔아이원스·에스티아이 등)",
       "tags": [
         "섹터동조",
         "뉴스"
@@ -480,24 +339,42 @@
       "evidence": [
         {
           "type": "news",
-          "title": "SGC에너지 3분기 영업이익 399억원…전년보다 56.8% 증가",
-          "link": "https://www.vegannews.co.kr/news/article.html?no=395607",
+          "title": "코세스 주가 장중 3만6000원 밑돌아",
+          "link": "https://www.vegannews.co.kr/news/article.html?no=397253",
           "source": "vegannews.co.kr",
-          "date": "2026-10-22"
-        },
-        {
-          "type": "news",
-          "title": "SGC에너지 , 3분기 영업익 399억원...전년比 57.1%↑",
-          "link": "https://weekly.hankooki.com/news/articleView.html?idxno=7190293",
-          "source": "weekly.hankooki.com",
-          "date": "2026-10-22"
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "에너지소재",
-        "avgPct": -2.85,
-        "n": 18,
+        "name": "반도체",
+        "avgPct": -0.98,
+        "n": 140,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "452280",
+      "company": "한선엔지니어링",
+      "sector": "산업재",
+      "industry": "기계",
+      "changePct": -16.27,
+      "close": 12710.0,
+      "tradingValue": 12343049590,
+      "priceSource": "naver",
+      "marketCapB": 0.246,
+      "reason": "기계 업종 동반 하락(스페코·혜인 등)",
+      "reasonStatus": "sector",
+      "sectorNote": "기계 업종 동반 하락(스페코·혜인 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "기계",
+        "avgPct": -3.29,
+        "n": 63,
         "weighting": "시총가중"
       }
     },
@@ -506,145 +383,282 @@
       "company": "삼아알미늄",
       "sector": "소재",
       "industry": "비철금속",
-      "changePct": -8.15,
-      "close": 67600.0,
-      "tradingValue": 19147902800,
+      "changePct": -14.67,
+      "close": 57600.0,
+      "tradingValue": 40287456000,
       "priceSource": "naver",
-      "marketCapB": 1.021,
-      "reason": "비철금속 업종 동반 하락(시총가중 평균 -3.7%)",
-      "reasonStatus": "sector",
-      "sectorNote": "비철금속 업종 동반 하락(시총가중 평균 -3.7%)",
+      "marketCapB": 0.864,
+      "reason": "뚜렷한 재료 확인 안 됨",
+      "reasonStatus": "none",
+      "sectorNote": "",
       "tags": [
-        "섹터동조"
+        "불명"
       ],
       "evidence": [],
       "sectorMove": {
         "level": "업종",
         "name": "비철금속",
-        "avgPct": -3.66,
+        "avgPct": -1.57,
         "n": 25,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "009900",
-      "company": "명신산업",
-      "sector": "경기소비재",
-      "industry": "자동차부품",
-      "changePct": -8.29,
-      "close": 9070.0,
-      "tradingValue": 24172756310,
+      "ticker": "138930",
+      "company": "BNK금융지주",
+      "sector": "산업재",
+      "industry": "지주회사",
+      "changePct": -13.53,
+      "close": 11820.0,
+      "tradingValue": 37234796640,
       "priceSource": "naver",
-      "marketCapB": 0.477,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
-      "tags": [
-        "불명"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "자동차부품",
-        "avgPct": -2.01,
-        "n": 86,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "181710",
-      "company": "NHN",
-      "sector": "기술",
-      "industry": "IT 서비스",
-      "changePct": -8.08,
-      "close": 51200.0,
-      "tradingValue": 6944460800,
-      "priceSource": "naver",
-      "marketCapB": 1.658,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
-      "tags": [
-        "불명"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "IT 서비스",
-        "avgPct": 0.22,
-        "n": 64,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "457190",
-      "company": "이수스페셜티케미컬",
-      "sector": "소재",
-      "industry": "화학",
-      "changePct": -8.57,
-      "close": 71500.0,
-      "tradingValue": 39253786000,
-      "priceSource": "naver",
-      "marketCapB": 2.179,
-      "reason": "전고체 소재 사업 점검",
+      "marketCapB": 3.615,
+      "reason": "3분기 순이익 전년 대비 감소",
       "reasonStatus": "ok",
-      "sectorNote": "",
+      "sectorNote": "지주회사 업종 동반 하락(피에스케이홀딩스·GS 등)",
       "tags": [
+        "섹터동조",
         "뉴스"
       ],
       "evidence": [
         {
           "type": "news",
-          "title": "이수스페셜티케미컬 7.80% 하락…전고체 소재 사업 점검",
-          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234229",
-          "source": "job-post.co.kr",
-          "date": "2026-10-23"
-        },
-        {
-          "type": "news",
-          "title": "이수페타시스 6%대 급락· 이수스페셜티케미컬 4%대 하락…이수화학은 상...",
-          "link": "https://www.cbci.co.kr/news/articleView.html?idxno=618530",
-          "source": "cbci.co.kr",
-          "date": "2026-10-23"
-        },
-        {
-          "type": "news",
-          "title": "이수스페셜티케미컬 7.23% 하락…전고체 소재 일정 점검",
-          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=233976",
-          "source": "job-post.co.kr",
-          "date": "2026-10-22"
+          "title": "BNK금융지주 3분기 순익 2105억원…전년比 28.5%↓",
+          "link": "https://n.news.naver.com/mnews/article/029/0003055283?sid=101",
+          "source": "dt.co.kr",
+          "date": "2026-10-26"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "화학",
-        "avgPct": -2.41,
-        "n": 72,
+        "name": "지주회사",
+        "avgPct": -1.3,
+        "n": 84,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "483650",
-      "company": "달바글로벌",
-      "sector": "필수소비재",
-      "industry": "화장품",
-      "changePct": -6.89,
-      "close": 152700.0,
-      "tradingValue": 19970564100,
+      "ticker": "126340",
+      "company": "비나텍",
+      "sector": "산업재",
+      "industry": "전기장비",
+      "changePct": -13.22,
+      "close": 103700.0,
+      "tradingValue": 44828161900,
       "priceSource": "naver",
-      "marketCapB": 1.899,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
+      "marketCapB": 0.741,
+      "reason": "공급 계약 및 CB 공시 후 자금조달 부담",
+      "reasonStatus": "ok",
+      "sectorNote": "전기장비 업종 동반 하락(지엔씨에너지·한중엔시에스 등)",
       "tags": [
-        "불명"
+        "섹터동조",
+        "뉴스"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "비나텍 13.64% 급락…공급계약·CB 공시 뒤 자금조달 부담",
+          "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234560",
+          "source": "job-post.co.kr",
+          "date": "2026-10-26"
+        },
+        {
+          "type": "news",
+          "title": "비나텍 , 산미나와 인도 데이터센터 부품 1195억원 계약",
+          "link": "https://www.vegannews.co.kr/news/article.html?no=396699",
+          "source": "vegannews.co.kr",
+          "date": "2026-10-25"
+        }
+      ],
       "sectorMove": {
         "level": "업종",
-        "name": "화장품",
-        "avgPct": -1.84,
-        "n": 35,
+        "name": "전기장비",
+        "avgPct": -2.63,
+        "n": 22,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "114810",
+      "company": "한솔아이원스",
+      "sector": "기술",
+      "industry": "반도체",
+      "changePct": -14.49,
+      "close": 10090.0,
+      "tradingValue": 5348991520,
+      "priceSource": "naver",
+      "marketCapB": 0.287,
+      "reason": "충청북도와 1560억원 규모 투자협약 체결",
+      "reasonStatus": "ok",
+      "sectorNote": "반도체 업종 동반 하락(코세스·에스티아이 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "충청북도, 한솔아이원스 와 1560억 원 규모 투자협약",
+          "link": "https://n.news.naver.com/mnews/article/057/0001975134?sid=004",
+          "source": "mbn.co.kr",
+          "date": "2026-10-26"
+        },
+        {
+          "type": "news",
+          "title": "한솔아이원스 , 청주 오창에 1560억원 투자…반도체 부품 공장 신설",
+          "link": "https://www.dynews.co.kr/news/articleView.html?idxno=870859",
+          "source": "dynews.co.kr",
+          "date": "2026-10-25"
+        },
+        {
+          "type": "news",
+          "title": "충북도·청주시· 한솔아이원스 ㈜ 투자협약 체결",
+          "link": "https://www.ggilbo.com/news/articleView.html?idxno=1188781",
+          "source": "ggilbo.com",
+          "date": "2026-10-25"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "반도체",
+        "avgPct": -0.98,
+        "n": 140,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "039440",
+      "company": "에스티아이",
+      "sector": "기술",
+      "industry": "반도체",
+      "changePct": -13.33,
+      "close": 23400.0,
+      "tradingValue": 15293046600,
+      "priceSource": "naver",
+      "marketCapB": 0.366,
+      "reason": "장중 급락",
+      "reasonStatus": "ok",
+      "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "[특징주] 에스티아이 장중 11% 급락…2만4000원",
+          "link": "https://www.vegannews.co.kr/news/article.html?no=397275",
+          "source": "vegannews.co.kr",
+          "date": "2026-10-26"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "반도체",
+        "avgPct": -0.98,
+        "n": 140,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "004710",
+      "company": "한솔테크닉스",
+      "sector": "기술",
+      "industry": "전자장비",
+      "changePct": -12.29,
+      "close": 7280.0,
+      "tradingValue": 8632820560,
+      "priceSource": "naver",
+      "marketCapB": 0.389,
+      "reason": "3분기 영업이익 감소",
+      "reasonStatus": "ok",
+      "sectorNote": "전자장비 업종 동반 하락(시총가중 평균 -4.1%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "한솔테크닉스 3분기 매출 늘고 영업이익 16% 감소",
+          "link": "https://www.vegannews.co.kr/news/article.html?no=396049",
+          "source": "vegannews.co.kr",
+          "date": "2026-10-23"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "전자장비",
+        "avgPct": -4.11,
+        "n": 53,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "119850",
+      "company": "지엔씨에너지",
+      "sector": "산업재",
+      "industry": "전기장비",
+      "changePct": -11.71,
+      "close": 35800.0,
+      "tradingValue": 24791893800,
+      "priceSource": "naver",
+      "marketCapB": 0.595,
+      "reason": "발전기 계약 상대 변경",
+      "reasonStatus": "ok",
+      "sectorNote": "전기장비 업종 동반 하락(비나텍·한중엔시에스 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "지엔씨에너지 , 328억 발전기 계약 상대 변경",
+          "link": "https://www.vegannews.co.kr/news/article.html?no=396688",
+          "source": "vegannews.co.kr",
+          "date": "2026-10-25"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "전기장비",
+        "avgPct": -2.7,
+        "n": 22,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "005090",
+      "company": "SGC에너지",
+      "sector": "소재",
+      "industry": "에너지소재",
+      "changePct": -10.29,
+      "close": 30950.0,
+      "tradingValue": 9419199200,
+      "priceSource": "naver",
+      "marketCapB": 0.447,
+      "reason": "전력 가격 하락 및 4분기 눈높이 하향",
+      "reasonStatus": "ok",
+      "sectorNote": "에너지소재 업종 동반 하락(시총가중 평균 -5.0%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "전력가격 하락에 4분기 눈높이 낮아져… SGC에너지 , 12월 회복 기대",
+          "link": "https://www.pinpointnews.co.kr/news/articleView.html?idxno=498115",
+          "source": "pinpointnews.co.kr",
+          "date": "2026-10-24"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "에너지소재",
+        "avgPct": -5.02,
+        "n": 18,
         "weighting": "시총가중"
       }
     }
@@ -654,50 +668,748 @@
       "criteria": "시총 2,000억 원 이상 · 거래대금 50억 원 이상 · ETF·스팩 제외 · 등락률 ±3% 이상 · 방향별 최대 20종목",
       "up": [
         {
-          "ticker": "220100",
-          "company": "퓨쳐켐",
+          "ticker": "328130",
+          "company": "루닛",
           "sector": "헬스케어",
-          "industry": "제약",
-          "changePct": 29.91,
-          "close": 8990.0,
-          "tradingValue": 18168187670,
+          "industry": "의료 IT",
+          "changePct": 30.0,
+          "close": 14690.0,
+          "tradingValue": 154663914730,
           "priceSource": "naver",
-          "marketCapB": 0.279,
-          "reason": "전이성 거세저항성 전립선암 환자 대상 임상시험 결과 수령",
+          "marketCapB": 1.094,
+          "reason": "미국 바이오 기업과 면역항암제 개발 AI 바이오마커 연구 협력",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +10.8%)",
           "tags": [
-            "공시",
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
-              "type": "disclosure",
-              "title": "DART: 투자판단관련주요경영사항(임상시험결과)              (전이성 거세저항성 전립선암 환자에 대한 [177Lu]루도타다이펩의 안전성 및 유효성 평가; 미국 제2a상 Topline data 수령 )",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023900540",
-              "source": "DART",
-              "date": "2026-10-23"
+              "type": "news",
+              "title": "루닛 , 美 서밋과 이보네시맙 AI 바이오마커 연구 계약",
+              "link": "http://digitalchosun.dizzo.com/site/data/html_dir/2026/10/26/2026102680188.html",
+              "source": "digitalchosun.dizzo.com",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 10.8,
+            "n": 11,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "458870",
+          "company": "씨어스",
+          "sector": "헬스케어",
+          "industry": "의료 IT",
+          "changePct": 17.93,
+          "close": 27950.0,
+          "tradingValue": 52753864150,
+          "priceSource": "naver",
+          "marketCapB": 1.068,
+          "reason": "아주대병원 342병상에 AI 모니터링 시스템 도입",
+          "reasonStatus": "ok",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +16.4%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[특징주] 씨어스 테크놀로지, 아주대병원 342병상 '씽크' 도입에 13.92% 뛰...",
+              "link": "https://www.namdonews.com/news/articleView.html?idxno=927240",
+              "source": "namdonews.com",
+              "date": "2026-10-26"
             },
             {
               "type": "news",
-              "title": "퓨쳐켐 'FC705', 美 임상 2a상서 객관적반응률 38.9% 확인",
-              "link": "https://www.mdtoday.co.kr/news/articleView.html?idxno=620581",
-              "source": "mdtoday.co.kr",
-              "date": "2026-10-23"
+              "title": "대웅제약, 아주대병원 342병상에 씨어스 AI 모니터링 '씽크' 공급",
+              "link": "https://n.news.naver.com/mnews/article/008/0005431413?sid=101",
+              "source": "mt.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 16.39,
+            "n": 11,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "108490",
+          "company": "로보티즈",
+          "sector": "기술",
+          "industry": "로보틱스",
+          "changePct": 9.11,
+          "close": 245500.0,
+          "tradingValue": 268964890000,
+          "priceSource": "naver",
+          "marketCapB": 3.616,
+          "reason": "젠슨 황 시연 로봇에 액추에이터 공급 확대",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "로보티즈 , 젠슨 황 홀린 ‘오리로봇’에 액추에이터 공급한다",
+              "link": "https://n.news.naver.com/mnews/article/011/0004675272?sid=101",
+              "source": "sedaily.com",
+              "date": "2026-10-26"
             },
             {
               "type": "news",
-              "title": "[주식] 퓨쳐켐 , 미국 임상 2a 탑라인 발표에 27% ↑",
-              "link": "https://www.hitnews.co.kr/news/articleView.html?idxno=80148",
-              "source": "hitnews.co.kr",
+              "title": "로보티즈 , 젠슨 황이 시연한 '오리 로봇' 부품 공급 확대…내년 100만대...",
+              "link": "https://news.mtn.co.kr/article/2026102611015939466",
+              "source": "news.mtn.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "로보틱스",
+            "avgPct": -0.67,
+            "n": 27,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "437730",
+          "company": "삼현",
+          "sector": "경기소비재",
+          "industry": "자동차부품",
+          "changePct": 6.77,
+          "close": 47300.0,
+          "tradingValue": 95167458100,
+          "priceSource": "naver",
+          "marketCapB": 1.508,
+          "reason": "휴머노이드 기대감 및 양산 수주 기대",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "삼현 9.14% 상승…휴머노이드 기대, 양산 수주가 다음 관문",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234476",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "자동차부품",
+            "avgPct": -1.5,
+            "n": 84,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "950260",
+          "company": "인제니아테라퓨틱스(Reg.S)",
+          "sector": "헬스케어",
+          "industry": "바이오",
+          "changePct": 7.62,
+          "close": 23300.0,
+          "tradingValue": 7971908600,
+          "priceSource": "naver",
+          "marketCapB": 1.147,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "바이오",
+            "avgPct": -1.94,
+            "n": 42,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "468530",
+          "company": "프로티나",
+          "sector": "헬스케어",
+          "industry": "바이오",
+          "changePct": 7.83,
+          "close": 46850.0,
+          "tradingValue": 23087445750,
+          "priceSource": "naver",
+          "marketCapB": 0.517,
+          "reason": "장중 13%대 상승",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "프로티나 , 장중 13%대 상승해 4만9000원대",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397271",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "바이오",
+            "avgPct": -1.91,
+            "n": 42,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "030530",
+          "company": "원익홀딩스",
+          "sector": "산업재",
+          "industry": "지주회사",
+          "changePct": 5.18,
+          "close": 23350.0,
+          "tradingValue": 46290534400,
+          "priceSource": "naver",
+          "marketCapB": 1.819,
+          "reason": "기관 순매수 속 기관 투자자 매수세 유입",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[특징주] 원익홀딩스 , 기관 순매수 속 6.08% 오른채 장 마감…장중 정적...",
+              "link": "https://www.namdonews.com/news/articleView.html?idxno=927274",
+              "source": "namdonews.com",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "지주회사",
+            "avgPct": -1.48,
+            "n": 84,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "033790",
+          "company": "피노",
+          "sector": "산업재",
+          "industry": "전기제품",
+          "changePct": 4.07,
+          "close": 7160.0,
+          "tradingValue": 9700618600,
+          "priceSource": "naver",
+          "marketCapB": 0.618,
+          "reason": "신한금융·서울시, 혁신 챌린지 우수기업 선정",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "신한금융·서울시, 피노 베이션 챌린지 우수기업 3곳 선정…금융 혁신 성...",
+              "link": "https://www.mediafine.co.kr/news/articleView.html?idxno=93769",
+              "source": "mediafine.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "신한금융·서울시, 피노 베이션 챌린지 우수기업 시상",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234487",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "신한금융, 서울시와 ' 피노 베이션 챌린지' 우수기업 선정",
+              "link": "https://n.news.naver.com/mnews/article/001/0016400843?sid=101",
+              "source": "yna.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "전기제품",
+            "avgPct": -1.85,
+            "n": 40,
+            "weighting": "시총가중"
+          }
+        }
+      ],
+      "down": [
+        {
+          "ticker": "089890",
+          "company": "코세스",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -18.8,
+          "close": 32400.0,
+          "tradingValue": 26488263600,
+          "priceSource": "naver",
+          "marketCapB": 0.542,
+          "reason": "장중 주가 하락",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(한솔아이원스·에스티아이 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "코세스 주가 장중 3만6000원 밑돌아",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397253",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "452280",
+          "company": "한선엔지니어링",
+          "sector": "산업재",
+          "industry": "기계",
+          "changePct": -16.27,
+          "close": 12710.0,
+          "tradingValue": 12343049590,
+          "priceSource": "naver",
+          "marketCapB": 0.246,
+          "reason": "기계 업종 동반 하락(스페코·혜인 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "기계 업종 동반 하락(스페코·혜인 등)",
+          "tags": [
+            "섹터동조"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "기계",
+            "avgPct": -3.29,
+            "n": 63,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "006110",
+          "company": "삼아알미늄",
+          "sector": "소재",
+          "industry": "비철금속",
+          "changePct": -14.67,
+          "close": 57600.0,
+          "tradingValue": 40287456000,
+          "priceSource": "naver",
+          "marketCapB": 0.864,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "비철금속",
+            "avgPct": -1.57,
+            "n": 25,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "138930",
+          "company": "BNK금융지주",
+          "sector": "산업재",
+          "industry": "지주회사",
+          "changePct": -13.53,
+          "close": 11820.0,
+          "tradingValue": 37234796640,
+          "priceSource": "naver",
+          "marketCapB": 3.615,
+          "reason": "3분기 순이익 전년 대비 감소",
+          "reasonStatus": "ok",
+          "sectorNote": "지주회사 업종 동반 하락(피에스케이홀딩스·GS 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "BNK금융지주 3분기 순익 2105억원…전년比 28.5%↓",
+              "link": "https://n.news.naver.com/mnews/article/029/0003055283?sid=101",
+              "source": "dt.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "지주회사",
+            "avgPct": -1.3,
+            "n": 84,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "126340",
+          "company": "비나텍",
+          "sector": "산업재",
+          "industry": "전기장비",
+          "changePct": -13.22,
+          "close": 103700.0,
+          "tradingValue": 44828161900,
+          "priceSource": "naver",
+          "marketCapB": 0.741,
+          "reason": "공급 계약 및 CB 공시 후 자금조달 부담",
+          "reasonStatus": "ok",
+          "sectorNote": "전기장비 업종 동반 하락(지엔씨에너지·한중엔시에스 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "비나텍 13.64% 급락…공급계약·CB 공시 뒤 자금조달 부담",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234560",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "비나텍 , 산미나와 인도 데이터센터 부품 1195억원 계약",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396699",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "전기장비",
+            "avgPct": -2.63,
+            "n": 22,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "114810",
+          "company": "한솔아이원스",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -14.49,
+          "close": 10090.0,
+          "tradingValue": 5348991520,
+          "priceSource": "naver",
+          "marketCapB": 0.287,
+          "reason": "충청북도와 1560억원 규모 투자협약 체결",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(코세스·에스티아이 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "충청북도, 한솔아이원스 와 1560억 원 규모 투자협약",
+              "link": "https://n.news.naver.com/mnews/article/057/0001975134?sid=004",
+              "source": "mbn.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "한솔아이원스 , 청주 오창에 1560억원 투자…반도체 부품 공장 신설",
+              "link": "https://www.dynews.co.kr/news/articleView.html?idxno=870859",
+              "source": "dynews.co.kr",
+              "date": "2026-10-25"
+            },
+            {
+              "type": "news",
+              "title": "충북도·청주시· 한솔아이원스 ㈜ 투자협약 체결",
+              "link": "https://www.ggilbo.com/news/articleView.html?idxno=1188781",
+              "source": "ggilbo.com",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "039440",
+          "company": "에스티아이",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -13.33,
+          "close": 23400.0,
+          "tradingValue": 15293046600,
+          "priceSource": "naver",
+          "marketCapB": 0.366,
+          "reason": "장중 급락",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[특징주] 에스티아이 장중 11% 급락…2만4000원",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397275",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "004710",
+          "company": "한솔테크닉스",
+          "sector": "기술",
+          "industry": "전자장비",
+          "changePct": -12.29,
+          "close": 7280.0,
+          "tradingValue": 8632820560,
+          "priceSource": "naver",
+          "marketCapB": 0.389,
+          "reason": "3분기 영업이익 감소",
+          "reasonStatus": "ok",
+          "sectorNote": "전자장비 업종 동반 하락(시총가중 평균 -4.1%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "한솔테크닉스 3분기 매출 늘고 영업이익 16% 감소",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396049",
+              "source": "vegannews.co.kr",
               "date": "2026-10-23"
             }
           ],
           "sectorMove": {
             "level": "업종",
-            "name": "제약",
-            "avgPct": -0.21,
-            "n": 119,
+            "name": "전자장비",
+            "avgPct": -4.11,
+            "n": 53,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "119850",
+          "company": "지엔씨에너지",
+          "sector": "산업재",
+          "industry": "전기장비",
+          "changePct": -11.71,
+          "close": 35800.0,
+          "tradingValue": 24791893800,
+          "priceSource": "naver",
+          "marketCapB": 0.595,
+          "reason": "발전기 계약 상대 변경",
+          "reasonStatus": "ok",
+          "sectorNote": "전기장비 업종 동반 하락(비나텍·한중엔시에스 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "지엔씨에너지 , 328억 발전기 계약 상대 변경",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396688",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "전기장비",
+            "avgPct": -2.7,
+            "n": 22,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "005090",
+          "company": "SGC에너지",
+          "sector": "소재",
+          "industry": "에너지소재",
+          "changePct": -10.29,
+          "close": 30950.0,
+          "tradingValue": 9419199200,
+          "priceSource": "naver",
+          "marketCapB": 0.447,
+          "reason": "전력 가격 하락 및 4분기 눈높이 하향",
+          "reasonStatus": "ok",
+          "sectorNote": "에너지소재 업종 동반 하락(시총가중 평균 -5.0%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "전력가격 하락에 4분기 눈높이 낮아져… SGC에너지 , 12월 회복 기대",
+              "link": "https://www.pinpointnews.co.kr/news/articleView.html?idxno=498115",
+              "source": "pinpointnews.co.kr",
+              "date": "2026-10-24"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "에너지소재",
+            "avgPct": -5.02,
+            "n": 18,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "059090",
+          "company": "미코",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -10.71,
+          "close": 20000.0,
+          "tradingValue": 12571500000,
+          "priceSource": "naver",
+          "marketCapB": 0.675,
+          "reason": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "tags": [
+            "섹터동조"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "107640",
+          "company": "한중엔시에스",
+          "sector": "산업재",
+          "industry": "전기장비",
+          "changePct": -10.57,
+          "close": 41050.0,
+          "tradingValue": 9712224750,
+          "priceSource": "naver",
+          "marketCapB": 0.377,
+          "reason": "전기장비 업종 동반 하락(비나텍·지엔씨에너지 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "전기장비 업종 동반 하락(비나텍·지엔씨에너지 등)",
+          "tags": [
+            "섹터동조"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "전기장비",
+            "avgPct": -2.75,
+            "n": 22,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "122640",
+          "company": "예스티",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -10.04,
+          "close": 25550.0,
+          "tradingValue": 5524778700,
+          "priceSource": "naver",
+          "marketCapB": 0.556,
+          "reason": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "tags": [
+            "섹터동조"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "267270",
+          "company": "HD건설기계",
+          "sector": "산업재",
+          "industry": "기계",
+          "changePct": -9.52,
+          "close": 80800.0,
+          "tradingValue": 44966816000,
+          "priceSource": "naver",
+          "marketCapB": 3.847,
+          "reason": "3분기 영업이익 증가에도 환율 영향",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "HD건설기계 , 3Q 영업익 1577억…전년비 23.9%↑",
+              "link": "https://www.fetv.co.kr/news/articleView.html?idxno=312449",
+              "source": "fetv.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "HD건설기계 , 잘 나가던 실적에 환율이 '찬물'",
+              "link": "https://n.news.naver.com/mnews/article/648/0000051950?sid=101",
+              "source": "news.bizwatch.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "기계",
+            "avgPct": -2.63,
+            "n": 63,
             "weighting": "시총가중"
           }
         },
@@ -706,62 +1418,131 @@
           "company": "지투지바이오",
           "sector": "헬스케어",
           "industry": "제약",
-          "changePct": 21.0,
-          "close": 49850.0,
-          "tradingValue": 146178794050,
+          "changePct": -9.56,
+          "close": 44950.0,
+          "tradingValue": 62361157750,
           "priceSource": "naver",
-          "marketCapB": 0.826,
-          "reason": "월 1회 주사 장기지속형 플랫폼 성과 관심",
+          "marketCapB": 0.752,
+          "reason": "약효지속 플랫폼 임상 일정 확인 및 주가 하락 전환",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "제약 업종 동반 하락(시총가중 평균 -2.9%)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "지투지바이오 12.26% 상승…장기지속형 플랫폼 성과 관심",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234152",
+              "title": "지투지바이오 9.05% 하락…약효지속 플랫폼 임상 일정 확인",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234551",
               "source": "job-post.co.kr",
-              "date": "2026-10-23"
+              "date": "2026-10-26"
             },
             {
               "type": "news",
-              "title": "지투지바이오, '월 1회 주사' 중국도 관심…빅파마 \"러브콜\"",
-              "link": "https://n.news.naver.com/mnews/article/008/0005430071",
-              "source": "머니투데이",
-              "date": "2026-10-22"
+              "title": "지투지바이오 , 장중 5만2200원서 하락 전환",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397182",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
             }
           ],
           "sectorMove": {
             "level": "업종",
             "name": "제약",
-            "avgPct": -0.35,
-            "n": 119,
+            "avgPct": -2.87,
+            "n": 118,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "425420",
-          "company": "티에프이",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 7.33,
-          "close": 64400.0,
-          "tradingValue": 19136331200,
+          "ticker": "031980",
+          "company": "피에스케이홀딩스",
+          "sector": "산업재",
+          "industry": "지주회사",
+          "changePct": -9.98,
+          "close": 156000.0,
+          "tradingValue": 29732664000,
           "priceSource": "naver",
-          "marketCapB": 0.803,
-          "reason": "반도체 업종 동반 상승(한양디지텍·엑시콘 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(한양디지텍·엑시콘 등)",
+          "marketCapB": 3.4,
+          "reason": "장중 하락",
+          "reasonStatus": "ok",
+          "sectorNote": "지주회사 업종 동반 하락(BNK금융지주·GS 등)",
           "tags": [
-            "섹터동조"
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "피에스케이홀딩스 장중 6.5% 하락…16만원대",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397277",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "지주회사",
+            "avgPct": -1.36,
+            "n": 84,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "003230",
+          "company": "삼양식품",
+          "sector": "필수소비재",
+          "industry": "식품",
+          "changePct": -8.41,
+          "close": 1122000.0,
+          "tradingValue": 66546942000,
+          "priceSource": "naver",
+          "marketCapB": 8.407,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
           ],
           "evidence": [],
           "sectorMove": {
             "level": "업종",
+            "name": "식품",
+            "avgPct": -1.49,
+            "n": 49,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "281820",
+          "company": "케이씨텍",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -9.41,
+          "close": 85700.0,
+          "tradingValue": 16847677300,
+          "priceSource": "naver",
+          "marketCapB": 1.711,
+          "reason": "장중 하락",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "케이씨텍 , 26일 장중 7%대 하락",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397222",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
             "name": "반도체",
-            "avgPct": 2.0,
+            "avgPct": -0.98,
             "n": 140,
             "weighting": "시총가중"
           }
@@ -771,14 +1552,14 @@
           "company": "한양디지텍",
           "sector": "기술",
           "industry": "반도체",
-          "changePct": 7.89,
-          "close": 34850.0,
-          "tradingValue": 27260715500,
+          "changePct": -9.3,
+          "close": 31700.0,
+          "tradingValue": 14870977200,
           "priceSource": "naver",
-          "marketCapB": 0.533,
-          "reason": "반도체 업종 동반 상승(티에프이·엑시콘 등)",
+          "marketCapB": 0.488,
+          "reason": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
           "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(티에프이·엑시콘 등)",
+          "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
           "tags": [
             "섹터동조"
           ],
@@ -786,1097 +1567,33 @@
           "sectorMove": {
             "level": "업종",
             "name": "반도체",
-            "avgPct": 2.0,
+            "avgPct": -0.98,
             "n": 140,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "207940",
-          "company": "삼성바이오로직스",
-          "sector": "헬스케어",
-          "industry": "바이오",
-          "changePct": 7.13,
-          "close": 1458000.0,
-          "tradingValue": 202836960000,
-          "priceSource": "naver",
-          "marketCapB": 67.863,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "바이오",
-            "avgPct": -0.59,
-            "n": 42,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "293490",
-          "company": "카카오게임즈",
-          "sector": "커뮤니케이션",
-          "industry": "게임",
-          "changePct": 6.62,
-          "close": 11600.0,
-          "tradingValue": 22150687200,
-          "priceSource": "naver",
-          "marketCapB": 1.233,
-          "reason": "신작 성과와 비용 구조 관심",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "카카오게임즈 6.53% 상승…신작 성과와 비용 구조 관심",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234217",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "게임",
-            "avgPct": -2.29,
-            "n": 22,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "001510",
-          "company": "SK증권",
-          "sector": "금융",
-          "industry": "증권",
-          "changePct": 4.88,
-          "close": 2085.0,
-          "tradingValue": 25121358105,
-          "priceSource": "naver",
-          "marketCapB": 0.486,
-          "reason": "셀트리온 목표주가 상향, 고수익 신제품 성장",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "SK증권 \"셀트리온 목표주가 상향, 고수익 신제품 성장 가속화 예상\"",
-              "link": "https://www.businesspost.co.kr/BP?command=article_view&num=450121",
-              "source": "businesspost.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "셀트리온, 바이오시밀러 3대 시장 선점…목표가 상향 [ SK증권 ]",
-              "link": "https://www.ekn.kr/web/view.php?key=20261023027500215",
-              "source": "ekn.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "증권",
-            "avgPct": -1.33,
-            "n": 22,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "092870",
-          "company": "엑시콘",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 4.8,
-          "close": 51300.0,
-          "tradingValue": 18213090300,
-          "priceSource": "naver",
-          "marketCapB": 0.67,
-          "reason": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.0,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "171090",
-          "company": "선익시스템",
-          "sector": "기술",
-          "industry": "디스플레이장비",
-          "changePct": 4.31,
-          "close": 84700.0,
-          "tradingValue": 14518172900,
-          "priceSource": "naver",
-          "marketCapB": 0.861,
-          "reason": "OLED 증착장비 수주 관심",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "선익시스템 4.68% 상승…OLED 증착장비 수주 관심",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234232",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "디스플레이장비",
-            "avgPct": 0.02,
-            "n": 34,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "950260",
-          "company": "인제니아테라퓨틱스(Reg.S)",
-          "sector": "헬스케어",
-          "industry": "바이오",
-          "changePct": 4.35,
-          "close": 21600.0,
-          "tradingValue": 6000588000,
-          "priceSource": "naver",
-          "marketCapB": 1.07,
-          "reason": "바이오 업종 동반 상승(시총가중 평균 +3.0%)",
-          "reasonStatus": "sector",
-          "sectorNote": "바이오 업종 동반 상승(시총가중 평균 +3.0%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "바이오",
-            "avgPct": 2.96,
-            "n": 42,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "089890",
-          "company": "코세스",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 3.8,
-          "close": 39600.0,
-          "tradingValue": 50987534400,
-          "priceSource": "naver",
-          "marketCapB": 0.662,
-          "reason": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.0,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "000660",
-          "company": "SK하이닉스",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 4.09,
-          "close": 1273000.0,
-          "tradingValue": 6940768989000,
-          "priceSource": "naver",
-          "marketCapB": 932.839,
-          "reason": "솔리다임 IPO 철회, 막강한 현금 창출력",
-          "reasonStatus": "ok",
-          "sectorNote": "반도체 업종 동반 상승(티에프이·한양디지텍 등)",
-          "tags": [
-            "섹터동조",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "솔리다임 IPO 철회한 SK하이닉스 ...메리츠證 \"막강한 현금 창출력으로 주...",
-              "link": "http://www.lkp.news/news/articleView.html?idxno=85366",
-              "source": "lkp.news",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 0.38,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "098120",
-          "company": "마이크로컨텍솔",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 4.8,
-          "close": 43700.0,
-          "tradingValue": 12116262000,
-          "priceSource": "naver",
-          "marketCapB": 0.362,
-          "reason": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.0,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "159010",
-          "company": "아스플로",
-          "sector": "산업재",
-          "industry": "기계",
-          "changePct": 3.61,
-          "close": 31600.0,
-          "tradingValue": 5874787600,
-          "priceSource": "naver",
-          "marketCapB": 0.423,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "기계",
-            "avgPct": -2.87,
-            "n": 63,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "003160",
-          "company": "디아이",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 3.06,
-          "close": 37000.0,
-          "tradingValue": 42762158000,
-          "priceSource": "naver",
-          "marketCapB": 1.057,
-          "reason": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(시총가중 평균 +2.0%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.0,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "085910",
-          "company": "네오티스",
-          "sector": "경기소비재",
-          "industry": "자동차부품",
-          "changePct": 4.0,
-          "close": 20300.0,
-          "tradingValue": 6219960600,
-          "priceSource": "naver",
-          "marketCapB": 0.28,
-          "reason": "외형 성장 이룬 2세 경영",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "[더벨][ 네오티스 퀀텀점프] 외형성장 이룬 2세 경영, 권상훈 책임경영 ...",
-              "link": "https://www.thebell.co.kr/free/content/ArticleView.asp?key=202610211734372040103737",
-              "source": "thebell.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "자동차부품",
-            "avgPct": -2.07,
-            "n": 86,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "000650",
-          "company": "천일고속",
-          "sector": "산업재",
-          "industry": "육상운송",
-          "changePct": 3.45,
-          "close": 210000.0,
-          "tradingValue": 17498460000,
-          "priceSource": "naver",
-          "marketCapB": 0.3,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "육상운송",
-            "avgPct": 1.41,
-            "n": 7,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "402340",
-          "company": "SK스퀘어",
+          "ticker": "078930",
+          "company": "GS",
           "sector": "산업재",
           "industry": "지주회사",
-          "changePct": 2.4,
-          "close": 769000.0,
-          "tradingValue": 655204918000,
+          "changePct": -7.59,
+          "close": 79100.0,
+          "tradingValue": 54462090200,
           "priceSource": "naver",
-          "marketCapB": 102.241,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
+          "marketCapB": 7.311,
+          "reason": "지주회사 업종 동반 하락(BNK금융지주·피에스케이홀딩스 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "지주회사 업종 동반 하락(BNK금융지주·피에스케이홀딩스 등)",
           "tags": [
-            "불명"
+            "섹터동조"
           ],
           "evidence": [],
           "sectorMove": {
             "level": "업종",
             "name": "지주회사",
-            "avgPct": -1.51,
+            "avgPct": -1.29,
             "n": 84,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "018260",
-          "company": "삼성에스디에스",
-          "sector": "기술",
-          "industry": "IT 서비스",
-          "changePct": 2.17,
-          "close": 211500.0,
-          "tradingValue": 96421369500,
-          "priceSource": "naver",
-          "marketCapB": 16.52,
-          "reason": "29일 실적발표 주목",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "삼성에스디에스 3.38% 상승…29일 실적발표 주목",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234187",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "IT 서비스",
-            "avgPct": -1.5,
-            "n": 64,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "458870",
-          "company": "씨어스",
-          "sector": "헬스케어",
-          "industry": "의료 IT",
-          "changePct": 2.83,
-          "close": 23650.0,
-          "tradingValue": 7031476100,
-          "priceSource": "naver",
-          "marketCapB": 0.909,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의료 IT",
-            "avgPct": -0.87,
-            "n": 11,
-            "weighting": "시총가중"
-          }
-        }
-      ],
-      "down": [
-        {
-          "ticker": "317400",
-          "company": "자이에스앤디",
-          "sector": "산업재",
-          "industry": "건설",
-          "changePct": -12.71,
-          "close": 7970.0,
-          "tradingValue": 13167077600,
-          "priceSource": "naver",
-          "marketCapB": 0.309,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "건설",
-            "avgPct": 2.17,
-            "n": 50,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "272210",
-          "company": "한화시스템",
-          "sector": "산업재",
-          "industry": "방산/우주항공",
-          "changePct": -10.15,
-          "close": 66400.0,
-          "tradingValue": 93572672800,
-          "priceSource": "naver",
-          "marketCapB": 12.525,
-          "reason": "방산전자·위성 사업 점검",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "한화시스템 9.74% 내려…방산전자·위성 사업 점검",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234171",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "방산/우주항공",
-            "avgPct": -1.96,
-            "n": 25,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "031430",
-          "company": "신세계인터내셔날",
-          "sector": "경기소비재",
-          "industry": "의류/패션",
-          "changePct": -10.18,
-          "close": 10060.0,
-          "tradingValue": 5555484100,
-          "priceSource": "naver",
-          "marketCapB": 0.355,
-          "reason": "의류/패션 업종 동반 하락(형지I&C·형지엘리트 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "의류/패션 업종 동반 하락(형지I&C·형지엘리트 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의류/패션",
-            "avgPct": -2.28,
-            "n": 39,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "046970",
-          "company": "우리로",
-          "sector": "기술",
-          "industry": "IT 장비",
-          "changePct": -9.27,
-          "close": 7540.0,
-          "tradingValue": 17044818440,
-          "priceSource": "naver",
-          "marketCapB": 0.332,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "IT 장비",
-            "avgPct": -1.06,
-            "n": 6,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "005090",
-          "company": "SGC에너지",
-          "sector": "소재",
-          "industry": "에너지소재",
-          "changePct": -8.45,
-          "close": 34650.0,
-          "tradingValue": 9967765500,
-          "priceSource": "naver",
-          "marketCapB": 0.497,
-          "reason": "3분기 영업이익 399억원, 전년比 56.8% 증가",
-          "reasonStatus": "ok",
-          "sectorNote": "에너지소재 업종 동반 하락(시총가중 평균 -2.9%)",
-          "tags": [
-            "섹터동조",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "SGC에너지 3분기 영업이익 399억원…전년보다 56.8% 증가",
-              "link": "https://www.vegannews.co.kr/news/article.html?no=395607",
-              "source": "vegannews.co.kr",
-              "date": "2026-10-22"
-            },
-            {
-              "type": "news",
-              "title": "SGC에너지 , 3분기 영업익 399억원...전년比 57.1%↑",
-              "link": "https://weekly.hankooki.com/news/articleView.html?idxno=7190293",
-              "source": "weekly.hankooki.com",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "에너지소재",
-            "avgPct": -2.85,
-            "n": 18,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "006110",
-          "company": "삼아알미늄",
-          "sector": "소재",
-          "industry": "비철금속",
-          "changePct": -8.15,
-          "close": 67600.0,
-          "tradingValue": 19147902800,
-          "priceSource": "naver",
-          "marketCapB": 1.021,
-          "reason": "비철금속 업종 동반 하락(시총가중 평균 -3.7%)",
-          "reasonStatus": "sector",
-          "sectorNote": "비철금속 업종 동반 하락(시총가중 평균 -3.7%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "비철금속",
-            "avgPct": -3.66,
-            "n": 25,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "009900",
-          "company": "명신산업",
-          "sector": "경기소비재",
-          "industry": "자동차부품",
-          "changePct": -8.29,
-          "close": 9070.0,
-          "tradingValue": 24172756310,
-          "priceSource": "naver",
-          "marketCapB": 0.477,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "자동차부품",
-            "avgPct": -2.01,
-            "n": 86,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "181710",
-          "company": "NHN",
-          "sector": "기술",
-          "industry": "IT 서비스",
-          "changePct": -8.08,
-          "close": 51200.0,
-          "tradingValue": 6944460800,
-          "priceSource": "naver",
-          "marketCapB": 1.658,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "IT 서비스",
-            "avgPct": 0.22,
-            "n": 64,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "457190",
-          "company": "이수스페셜티케미컬",
-          "sector": "소재",
-          "industry": "화학",
-          "changePct": -8.57,
-          "close": 71500.0,
-          "tradingValue": 39253786000,
-          "priceSource": "naver",
-          "marketCapB": 2.179,
-          "reason": "전고체 소재 사업 점검",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "이수스페셜티케미컬 7.80% 하락…전고체 소재 사업 점검",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234229",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "이수페타시스 6%대 급락· 이수스페셜티케미컬 4%대 하락…이수화학은 상...",
-              "link": "https://www.cbci.co.kr/news/articleView.html?idxno=618530",
-              "source": "cbci.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "이수스페셜티케미컬 7.23% 하락…전고체 소재 일정 점검",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=233976",
-              "source": "job-post.co.kr",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "화학",
-            "avgPct": -2.41,
-            "n": 72,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "483650",
-          "company": "달바글로벌",
-          "sector": "필수소비재",
-          "industry": "화장품",
-          "changePct": -6.89,
-          "close": 152700.0,
-          "tradingValue": 19970564100,
-          "priceSource": "naver",
-          "marketCapB": 1.899,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "화장품",
-            "avgPct": -1.84,
-            "n": 35,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "327260",
-          "company": "RF머트리얼즈",
-          "sector": "산업재",
-          "industry": "방산/우주항공",
-          "changePct": -7.95,
-          "close": 39350.0,
-          "tradingValue": 51800025200,
-          "priceSource": "naver",
-          "marketCapB": 0.712,
-          "reason": "방산/우주항공 업종 동반 하락(시총가중 평균 -5.4%)",
-          "reasonStatus": "sector",
-          "sectorNote": "방산/우주항공 업종 동반 하락(시총가중 평균 -5.4%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "방산/우주항공",
-            "avgPct": -5.36,
-            "n": 25,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "107640",
-          "company": "한중엔시에스",
-          "sector": "산업재",
-          "industry": "전기장비",
-          "changePct": -7.89,
-          "close": 45550.0,
-          "tradingValue": 11849012600,
-          "priceSource": "naver",
-          "marketCapB": 0.416,
-          "reason": "전기장비 업종 동반 하락(시총가중 평균 -2.9%)",
-          "reasonStatus": "sector",
-          "sectorNote": "전기장비 업종 동반 하락(시총가중 평균 -2.9%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "전기장비",
-            "avgPct": -2.93,
-            "n": 22,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "417200",
-          "company": "LS머트리얼즈",
-          "sector": "산업재",
-          "industry": "전기제품",
-          "changePct": -8.04,
-          "close": 12810.0,
-          "tradingValue": 29565198180,
-          "priceSource": "naver",
-          "marketCapB": 0.875,
-          "reason": "블룸에너지 호실적 타고 퀀텀점프, AIDC 전력난 수혜",
-          "reasonStatus": "ok",
-          "sectorNote": "전기제품 업종 동반 하락(시총가중 평균 -2.7%)",
-          "tags": [
-            "섹터동조",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "LS머트리얼즈 , 블룸에너지 호실적 타고 퀀텀점프…AIDC 전력난 수혜",
-              "link": "https://n.news.naver.com/mnews/article/293/0000092027?sid=101",
-              "source": "bloter.net",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "전기제품",
-            "avgPct": -2.69,
-            "n": 40,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "161000",
-          "company": "애경케미칼",
-          "sector": "소재",
-          "industry": "화학",
-          "changePct": -7.26,
-          "close": 10340.0,
-          "tradingValue": 7625129600,
-          "priceSource": "naver",
-          "marketCapB": 0.505,
-          "reason": "화학 업종 동반 하락(시총가중 평균 -2.6%)",
-          "reasonStatus": "sector",
-          "sectorNote": "화학 업종 동반 하락(시총가중 평균 -2.6%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "화학",
-            "avgPct": -2.64,
-            "n": 72,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "376900",
-          "company": "로킷헬스케어",
-          "sector": "헬스케어",
-          "industry": "의료기기",
-          "changePct": -6.49,
-          "close": 16850.0,
-          "tradingValue": 15432257850,
-          "priceSource": "naver",
-          "marketCapB": 0.296,
-          "reason": "FDA '상처치료용 무허가 판매' 경고에 미국 유통사 교체 추진",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "FDA '상처치료용 무허가 판매' 경고에… 로킷헬스케어 , 美 유통사 교체 추...",
-              "link": "https://www.newsway.co.kr/news/view?ud=2026102313543371829",
-              "source": "newsway.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "로킷헬스케어 “美 유통사와 계약 해지 추진…제품 결함과 무관”",
-              "link": "https://n.news.naver.com/mnews/article/011/0004674202?sid=101",
-              "source": "sedaily.com",
-              "date": "2026-10-22"
-            },
-            {
-              "type": "news",
-              "title": "로킷헬스케어 , FDA 경고장 해명… “현지 파트너사 마케팅 문제”",
-              "link": "https://n.news.naver.com/mnews/article/346/0000117724?sid=103",
-              "source": "health.chosun.com",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의료기기",
-            "avgPct": -1.55,
-            "n": 58,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "214450",
-          "company": "파마리서치",
-          "sector": "헬스케어",
-          "industry": "의료기기",
-          "changePct": -6.67,
-          "close": 238000.0,
-          "tradingValue": 44012150000,
-          "priceSource": "naver",
-          "marketCapB": 2.488,
-          "reason": "리쥬란코스메틱, 미국 코스트코 25개 매장 입점",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "파마리서치 리쥬란코스메틱, 미국 코스트코 25개 매장서 뷰티 전용 진열...",
-              "link": "https://www.lawissue.co.kr/view.php?ud=20261023143225942204ead0791_12",
-              "source": "lawissue.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "파마리서치 리쥬란코스메틱, 美 코스트코 25개 매장 입점",
-              "link": "https://n.news.naver.com/mnews/article/366/0001199923?sid=101",
-              "source": "biz.chosun.com",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "파마리서치 '리쥬란코스메틱', 미국 코스트코 25개 매장 입점",
-              "link": "https://www.mdtoday.co.kr/news/articleView.html?idxno=620536",
-              "source": "mdtoday.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의료기기",
-            "avgPct": -0.88,
-            "n": 58,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "033790",
-          "company": "피노",
-          "sector": "산업재",
-          "industry": "전기제품",
-          "changePct": -6.14,
-          "close": 6880.0,
-          "tradingValue": 11637967200,
-          "priceSource": "naver",
-          "marketCapB": 0.592,
-          "reason": "독일 피노 아 컨센서스 서비스 원체인 밸리데이터 합류",
-          "reasonStatus": "ok",
-          "sectorNote": "전기제품 업종 동반 하락(시총가중 평균 -2.8%)",
-          "tags": [
-            "섹터동조",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "독일 ' 피노 아 컨센서스 서비스' 원체인 밸리데이터 합류",
-              "link": "https://n.news.naver.com/mnews/article/356/0000086911?sid=004",
-              "source": "gamemeca.com",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "넥써쓰 원체인, 獨 피노 아 FCS 밸리데이터 합류…유럽 기관 인프라 강화",
-              "link": "https://www.megaeconomy.co.kr/news/newsview.php?ncode=1065593211867765",
-              "source": "megaeconomy.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "넥써쓰, '원체인' 밸리데이터에 피노 아 자회사 FCS 합류",
-              "link": "https://n.news.naver.com/mnews/article/092/0002442183?sid=105",
-              "source": "zdnet.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "전기제품",
-            "avgPct": -2.82,
-            "n": 40,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "078600",
-          "company": "대주전자재료",
-          "sector": "기술",
-          "industry": "2차전지",
-          "changePct": -6.76,
-          "close": 95100.0,
-          "tradingValue": 42316171500,
-          "priceSource": "naver",
-          "marketCapB": 1.508,
-          "reason": "2차전지 업종 동반 하락(시총가중 평균 -3.0%)",
-          "reasonStatus": "sector",
-          "sectorNote": "2차전지 업종 동반 하락(시총가중 평균 -3.0%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "2차전지",
-            "avgPct": -3.01,
-            "n": 12,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "086520",
-          "company": "에코프로",
-          "sector": "기술",
-          "industry": "2차전지",
-          "changePct": -6.22,
-          "close": 72400.0,
-          "tradingValue": 94760378000,
-          "priceSource": "naver",
-          "marketCapB": 9.871,
-          "reason": "2차전지 업종 동반 하락(시총가중 평균 -2.9%)",
-          "reasonStatus": "sector",
-          "sectorNote": "2차전지 업종 동반 하락(시총가중 평균 -2.9%)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "2차전지",
-            "avgPct": -2.86,
-            "n": 12,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "066970",
-          "company": "엘앤에프",
-          "sector": "기술",
-          "industry": "2차전지",
-          "changePct": -5.92,
-          "close": 85800.0,
-          "tradingValue": 53653485600,
-          "priceSource": "naver",
-          "marketCapB": 3.495,
-          "reason": "하나증권, 3분기 적자 전환 전망",
-          "reasonStatus": "ok",
-          "sectorNote": "2차전지 업종 동반 하락(시총가중 평균 -3.0%)",
-          "tags": [
-            "섹터동조",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "하나증권, 엘앤에프 목표가↓…\"3분기 적자 전환했을 듯\"",
-              "link": "https://n.news.naver.com/mnews/article/001/0016395729?sid=101",
-              "source": "yna.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "2차전지",
-            "avgPct": -2.98,
-            "n": 12,
             "weighting": "시총가중"
           }
         }
@@ -1886,16 +1603,50 @@
       "criteria": "전체 시장(시총·거래대금 하한 없음) · ETF·스팩 제외 · 등락률 ±3% 이상 · 방향별 최대 20종목",
       "up": [
         {
-          "ticker": "013810",
-          "company": "스페코",
-          "sector": "산업재",
-          "industry": "기계",
-          "changePct": 29.98,
-          "close": 2055.0,
-          "tradingValue": 13771958565,
+          "ticker": "328130",
+          "company": "루닛",
+          "sector": "헬스케어",
+          "industry": "의료 IT",
+          "changePct": 30.0,
+          "close": 14690.0,
+          "tradingValue": 154663914730,
           "priceSource": "naver",
-          "marketCapB": 0.03,
-          "reason": "김정은 사망설 확산에 방산주 매수세 집중",
+          "marketCapB": 1.094,
+          "reason": "미국 바이오 기업과 면역항암제 개발 AI 바이오마커 연구 협력",
+          "reasonStatus": "ok",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +10.8%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "루닛 , 美 서밋과 이보네시맙 AI 바이오마커 연구 계약",
+              "link": "http://digitalchosun.dizzo.com/site/data/html_dir/2026/10/26/2026102680188.html",
+              "source": "digitalchosun.dizzo.com",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 10.8,
+            "n": 11,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "368600",
+          "company": "아이씨에이치",
+          "sector": "기술",
+          "industry": "전자장비",
+          "changePct": 29.98,
+          "close": 5550.0,
+          "tradingValue": 1957629300,
+          "priceSource": "naver",
+          "marketCapB": 0.029,
+          "reason": "삼성전자 1차 벤더 등록 및 거래 재개",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -1904,31 +1655,72 @@
           "evidence": [
             {
               "type": "news",
-              "title": "김정은 사망설 확산에 스페코 상한가…방산주 매수세 집중",
-              "link": "https://n.news.naver.com/mnews/article/629/0000545045?sid=101",
-              "source": "news.tf.co.kr",
-              "date": "2026-10-23"
+              "title": "아이씨에이치 , 삼성전자 1차 벤더 등록…주가 상한가 '급등'",
+              "link": "https://www.pinpointnews.co.kr/news/articleView.html?idxno=498530",
+              "source": "pinpointnews.co.kr",
+              "date": "2026-10-26"
             },
             {
               "type": "news",
-              "title": "[특징주] 스페코 , '김정은 사망설'에 장 초반 급등세",
-              "link": "https://www.widedaily.com/news/articleView.html?idxno=302261",
-              "source": "widedaily.com",
-              "date": "2026-10-23"
+              "title": "[오늘의 특징주] 루닛· 아이씨에이치 상한가, 항암제 AI 협력·삼성전자...",
+              "link": "https://www.ppss.kr/news/articleView.html?idxno=317364",
+              "source": "ppss.kr",
+              "date": "2026-10-26"
             },
             {
               "type": "news",
-              "title": "[특징주] 김정은 행방 논란에 방산株 급등… 스페코 상한가",
-              "link": "https://www.newspim.com/news/view/20261023000290",
-              "source": "newspim.com",
-              "date": "2026-10-23"
+              "title": "[더벨][i-point] 아이씨에이치 , 삼성전자 1차 벤더코드 취득",
+              "link": "https://www.thebell.co.kr/free/content/ArticleView.asp?key=202610261328022160109572",
+              "source": "thebell.co.kr",
+              "date": "2026-10-26"
             }
           ],
           "sectorMove": {
             "level": "업종",
-            "name": "기계",
-            "avgPct": -2.79,
-            "n": 64,
+            "name": "전자장비",
+            "avgPct": -4.24,
+            "n": 54,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "338220",
+          "company": "뷰노",
+          "sector": "헬스케어",
+          "industry": "의료 IT",
+          "changePct": 29.95,
+          "close": 7680.0,
+          "tradingValue": 37440752640,
+          "priceSource": "naver",
+          "marketCapB": 0.108,
+          "reason": "의료 AI 관련주 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +16.3%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[급등락주 짚어보기] 루닛· 뷰노 의료AI 동반 상한가…빅웨이브로보틱스...",
+              "link": "https://www.etoday.co.kr/news/view/2640209",
+              "source": "etoday.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "[특징주] 건강관리기술株 16.55% 급등…루닛· 뷰노 등 의료 AI주 강세",
+              "link": "https://www.moneystorm.kr/news/articleView.html?idxno=7674",
+              "source": "moneystorm.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 16.31,
+            "n": 11,
             "weighting": "시총가중"
           }
         },
@@ -1937,458 +1729,11 @@
           "company": "노을",
           "sector": "헬스케어",
           "industry": "의료기기",
-          "changePct": 29.96,
-          "close": 1670.0,
-          "tradingValue": 542107050,
+          "changePct": 29.94,
+          "close": 2170.0,
+          "tradingValue": 248671150,
           "priceSource": "naver",
-          "marketCapB": 0.017,
-          "reason": "지구홀딩스 최대주주 변경 앞두고 유상증자 결정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "공시",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "disclosure",
-              "title": "DART: 주요사항보고서(유상증자결정)",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023000005",
-              "source": "DART",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "노을 상한가…제3자배정 유상증자 결정",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234238",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "[공시해부] 노을 , 지구홀딩스에 27.5억 유증…최대주주 바뀐다",
-              "link": "https://www.greened.kr/news/articleView.html?idxno=352895",
-              "source": "greened.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의료기기",
-            "avgPct": -1.63,
-            "n": 59,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "335870",
-          "company": "윙스풋",
-          "sector": "경기소비재",
-          "industry": "의류/패션",
-          "changePct": 29.96,
-          "close": 4815.0,
-          "tradingValue": 1089090405,
-          "priceSource": "naver",
-          "marketCapB": 0.016,
-          "reason": "전환사채권 발행 결정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "공시"
-          ],
-          "evidence": [
-            {
-              "type": "disclosure",
-              "title": "DART: [기재정정]주요사항보고서(전환사채권발행결정)",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261022000396",
-              "source": "DART",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의류/패션",
-            "avgPct": -2.48,
-            "n": 40,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "220100",
-          "company": "퓨쳐켐",
-          "sector": "헬스케어",
-          "industry": "제약",
-          "changePct": 29.91,
-          "close": 8990.0,
-          "tradingValue": 18168187670,
-          "priceSource": "naver",
-          "marketCapB": 0.279,
-          "reason": "전이성 거세저항성 전립선암 환자 대상 임상시험 결과 수령",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "공시",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "disclosure",
-              "title": "DART: 투자판단관련주요경영사항(임상시험결과)              (전이성 거세저항성 전립선암 환자에 대한 [177Lu]루도타다이펩의 안전성 및 유효성 평가; 미국 제2a상 Topline data 수령 )",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023900540",
-              "source": "DART",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "퓨쳐켐 'FC705', 美 임상 2a상서 객관적반응률 38.9% 확인",
-              "link": "https://www.mdtoday.co.kr/news/articleView.html?idxno=620581",
-              "source": "mdtoday.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "[주식] 퓨쳐켐 , 미국 임상 2a 탑라인 발표에 27% ↑",
-              "link": "https://www.hitnews.co.kr/news/articleView.html?idxno=80148",
-              "source": "hitnews.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "제약",
-            "avgPct": -0.21,
-            "n": 119,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "114840",
-          "company": "아이패밀리에스씨",
-          "sector": "필수소비재",
-          "industry": "화장품",
-          "changePct": 29.93,
-          "close": 10940.0,
-          "tradingValue": 4721036660,
-          "priceSource": "naver",
-          "marketCapB": 0.182,
-          "reason": "日 마루베니 지분 공개매수 소식",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "공시",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "disclosure",
-              "title": "DART: 공개매수설명서",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023000002",
-              "source": "DART",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "disclosure",
-              "title": "DART: 공개매수신고서",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023000001",
-              "source": "DART",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "[특징주] 아이패밀리에스씨 , 日 기업 공개매수에 상한가",
-              "link": "https://n.news.naver.com/mnews/article/001/0016397158?sid=101",
-              "source": "yna.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "화장품",
-            "avgPct": -2.36,
-            "n": 35,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "451760",
-          "company": "컨텍",
-          "sector": "산업재",
-          "industry": "방산/우주항공",
-          "changePct": 29.87,
-          "close": 8130.0,
-          "tradingValue": 20115595590,
-          "priceSource": "naver",
-          "marketCapB": 0.134,
-          "reason": "국내 최초 우주 광통신 초고속 데이터 수신 실증 성공",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "컨텍 상한가 8130원…제주 우주 지상국 사업 관심",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234242",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "컨텍 장중 상한가…거래량 전일의 36배",
-              "link": "https://www.vegannews.co.kr/news/article.html?no=395908",
-              "source": "vegannews.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "제주창조경제혁신센터· 컨텍 , 우주산업 오픈이노베이션 추진…전국 스타...",
-              "link": "https://www.venturesquare.net/1122322/",
-              "source": "venturesquare.net",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "방산/우주항공",
-            "avgPct": -5.57,
-            "n": 25,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "060900",
-          "company": "에이전트AI",
-          "sector": "소재",
-          "industry": "에너지소재",
-          "changePct": 29.91,
-          "close": 2780.0,
-          "tradingValue": 1567077660,
-          "priceSource": "naver",
-          "marketCapB": 0.018,
-          "reason": "대표이사 변경",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "공시",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "disclosure",
-              "title": "DART: 대표이사변경",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023900627",
-              "source": "DART",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "에이전트AI 상한가 2780원…사업 재편 공시 확인 필요",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234241",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "에너지소재",
-            "avgPct": -3.13,
-            "n": 19,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "900100",
-          "company": "파이온엑스",
-          "sector": "경기소비재",
-          "industry": "의류/패션",
-          "changePct": 29.93,
-          "close": 1424.0,
-          "tradingValue": 279770432,
-          "priceSource": "naver",
-          "marketCapB": 0.008,
-          "reason": "파산 신청 기각 및 거래 재개",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "공시",
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "disclosure",
-              "title": "DART: 주권매매거래정지해제              (파산신청 사유 해소)",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261022900706",
-              "source": "DART",
-              "date": "2026-10-22"
-            },
-            {
-              "type": "disclosure",
-              "title": "DART: 파산신청기각",
-              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261022900319",
-              "source": "DART",
-              "date": "2026-10-22"
-            },
-            {
-              "type": "news",
-              "title": "파산신청 기각에 파이온엑스 23일 거래 재개",
-              "link": "https://www.vegannews.co.kr/news/article.html?no=395755",
-              "source": "vegannews.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의류/패션",
-            "avgPct": -2.48,
-            "n": 40,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "003780",
-          "company": "진양산업",
-          "sector": "소재",
-          "industry": "화학",
-          "changePct": 29.79,
-          "close": 5490.0,
-          "tradingValue": 25045467840,
-          "priceSource": "naver",
-          "marketCapB": 0.071,
-          "reason": "오세훈 2심 무죄에 정치 테마주 급등",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "오세훈 무죄에 테마주 급등…진양화학· 진양산업 상한가",
-              "link": "https://www.fntimes.com/html/view.php?ud=2026102316432495582a735e27af_18",
-              "source": "fntimes.com",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "[오늘의 특징주] 진양산업 ·진양화학 상한가…오세훈 2심 무죄에 정치테...",
-              "link": "https://www.ppss.kr/news/articleView.html?idxno=317093",
-              "source": "ppss.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "오세훈 2심 무죄에 진양산업 ·화학 상한가…정치 테마주 다시 ‘들썩’",
-              "link": "https://n.news.naver.com/mnews/article/138/0002245798?sid=101",
-              "source": "ddaily.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "화학",
-            "avgPct": -2.75,
-            "n": 72,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "051630",
-          "company": "진양화학",
-          "sector": "소재",
-          "industry": "화학",
-          "changePct": 29.81,
-          "close": 2360.0,
-          "tradingValue": 7990374720,
-          "priceSource": "naver",
-          "marketCapB": 0.05,
-          "reason": "오세훈 2심 무죄에 정치 테마주 급등",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "오세훈 무죄에 테마주 급등… 진양화학 ·진양산업 상한가",
-              "link": "https://www.fntimes.com/html/view.php?ud=2026102316432495582a735e27af_18",
-              "source": "fntimes.com",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "[오늘의 특징주] 진양산업· 진양화학 상한가…오세훈 2심 무죄에 정치테...",
-              "link": "https://www.ppss.kr/news/articleView.html?idxno=317093",
-              "source": "ppss.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "오세훈 항소심 무죄… 진양화학 등 테마주 무더기 '上'(종합)",
-              "link": "https://n.news.naver.com/mnews/article/003/0014274894?sid=101",
-              "source": "newsis.com",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "화학",
-            "avgPct": -2.73,
-            "n": 72,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "456160",
-          "company": "지투지바이오",
-          "sector": "헬스케어",
-          "industry": "제약",
-          "changePct": 21.0,
-          "close": 49850.0,
-          "tradingValue": 146178794050,
-          "priceSource": "naver",
-          "marketCapB": 0.826,
-          "reason": "월 1회 주사 장기지속형 플랫폼 성과 관심",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "지투지바이오 12.26% 상승…장기지속형 플랫폼 성과 관심",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234152",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "지투지바이오, '월 1회 주사' 중국도 관심…빅파마 \"러브콜\"",
-              "link": "https://n.news.naver.com/mnews/article/008/0005430071",
-              "source": "머니투데이",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "제약",
-            "avgPct": -0.35,
-            "n": 119,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "138360",
-          "company": "앤로보틱스",
-          "sector": "기술",
-          "industry": "로보틱스",
-          "changePct": 19.27,
-          "close": 1950.0,
-          "tradingValue": 92855911200,
-          "priceSource": "naver",
-          "marketCapB": 0.171,
+          "marketCapB": 0.022,
           "reason": "뚜렷한 재료 확인 안 됨",
           "reasonStatus": "none",
           "sectorNote": "",
@@ -2398,56 +1743,393 @@
           "evidence": [],
           "sectorMove": {
             "level": "업종",
+            "name": "의료기기",
+            "avgPct": -3.06,
+            "n": 60,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "009190",
+          "company": "대양금속",
+          "sector": "소재",
+          "industry": "철강",
+          "changePct": 18.62,
+          "close": 828.0,
+          "tradingValue": 11403402300,
+          "priceSource": "naver",
+          "marketCapB": 0.037,
+          "reason": "최대주주 변경 후 자금조달 점검",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "대양금속 840원 20.34% 상승…최대주주 변경 뒤 자금조달 점검",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234569",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "철강",
+            "avgPct": -2.27,
+            "n": 30,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "458870",
+          "company": "씨어스",
+          "sector": "헬스케어",
+          "industry": "의료 IT",
+          "changePct": 17.93,
+          "close": 27950.0,
+          "tradingValue": 52753864150,
+          "priceSource": "naver",
+          "marketCapB": 1.068,
+          "reason": "아주대병원 342병상에 AI 모니터링 시스템 도입",
+          "reasonStatus": "ok",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +16.4%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[특징주] 씨어스 테크놀로지, 아주대병원 342병상 '씽크' 도입에 13.92% 뛰...",
+              "link": "https://www.namdonews.com/news/articleView.html?idxno=927240",
+              "source": "namdonews.com",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "대웅제약, 아주대병원 342병상에 씨어스 AI 모니터링 '씽크' 공급",
+              "link": "https://n.news.naver.com/mnews/article/008/0005431413?sid=101",
+              "source": "mt.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 16.39,
+            "n": 11,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "357880",
+          "company": "SKAI",
+          "sector": "기술",
+          "industry": "IT 서비스",
+          "changePct": 17.0,
+          "close": 1968.0,
+          "tradingValue": 38984440656,
+          "priceSource": "naver",
+          "marketCapB": 0.109,
+          "reason": "자회사 지분 확대 및 피지컬 AI 사업 강화",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "SKAI , 스카이인텔리전스 지분 66.9%로 확대…253억 추가 투자",
+              "link": "https://www.greened.kr/news/articleView.html?idxno=353051",
+              "source": "greened.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "SKAI , 합성데이터 자회사 지분 66.9%로 확대…피지컬 AI 사업 강화",
+              "link": "http://www.thefirstmedia.net/news/articleView.html?idxno=211720",
+              "source": "thefirstmedia.net",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "SKAI , 스카이인텔리전스 지분 66.9%로 확대…피지컬AI·데이터 사업 집중",
+              "link": "https://n.news.naver.com/mnews/article/138/0002245971?sid=105",
+              "source": "ddaily.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "IT 서비스",
+            "avgPct": -1.63,
+            "n": 64,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "380550",
+          "company": "뉴로핏",
+          "sector": "헬스케어",
+          "industry": "의료 IT",
+          "changePct": 15.78,
+          "close": 6530.0,
+          "tradingValue": 26683140670,
+          "priceSource": "naver",
+          "marketCapB": 0.08,
+          "reason": "뇌영상 AI 공급 계약 체결 후 상용화 속도 관심",
+          "reasonStatus": "ok",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +16.7%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "뉴로핏 16.67% 상승…뇌영상 AI 공급계약 뒤 상용화 속도 관심",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234572",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 16.74,
+            "n": 11,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "394800",
+          "company": "쓰리빌리언",
+          "sector": "헬스케어",
+          "industry": "의료 IT",
+          "changePct": 12.6,
+          "close": 5630.0,
+          "tradingValue": 16244610580,
+          "priceSource": "naver",
+          "marketCapB": 0.18,
+          "reason": "장중 13%대 상승",
+          "reasonStatus": "ok",
+          "sectorNote": "의료 IT 업종 동반 상승(시총가중 평균 +16.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "쓰리빌리언 , 장중 13%대 상승…5690원",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397265",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료 IT",
+            "avgPct": 16.92,
+            "n": 11,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "365660",
+          "company": "레몬헬스케어",
+          "sector": "헬스케어",
+          "industry": "의료서비스",
+          "changePct": 12.26,
+          "close": 4030.0,
+          "tradingValue": 65225271930,
+          "priceSource": "naver",
+          "marketCapB": 0.054,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의료서비스",
+            "avgPct": -4.09,
+            "n": 16,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "179900",
+          "company": "유티아이",
+          "sector": "기술",
+          "industry": "모바일 부품",
+          "changePct": 12.45,
+          "close": 2050.0,
+          "tradingValue": 1266471550,
+          "priceSource": "naver",
+          "marketCapB": 0.044,
+          "reason": "폴더블폰 신제품 기대감",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "폴더블폰 신제품 기대에 부품주 희비… 유티아이 ·도우인시스 '휘파람'",
+              "link": "https://www.pinpointnews.co.kr/news/articleView.html?idxno=498444",
+              "source": "pinpointnews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "모바일 부품",
+            "avgPct": -3.92,
+            "n": 35,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "033340",
+          "company": "좋은사람들",
+          "sector": "경기소비재",
+          "industry": "의류/패션",
+          "changePct": 12.07,
+          "close": 1922.0,
+          "tradingValue": 5912761998,
+          "priceSource": "naver",
+          "marketCapB": 0.037,
+          "reason": "장중 급등",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "좋은사람들 장중 2225원까지 급등",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397163",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의류/패션",
+            "avgPct": -2.67,
+            "n": 39,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "108490",
+          "company": "로보티즈",
+          "sector": "기술",
+          "industry": "로보틱스",
+          "changePct": 9.11,
+          "close": 245500.0,
+          "tradingValue": 268964890000,
+          "priceSource": "naver",
+          "marketCapB": 3.616,
+          "reason": "젠슨 황 시연 로봇에 액추에이터 공급 확대",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "로보티즈 , 젠슨 황 홀린 ‘오리로봇’에 액추에이터 공급한다",
+              "link": "https://n.news.naver.com/mnews/article/011/0004675272?sid=101",
+              "source": "sedaily.com",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "로보티즈 , 젠슨 황이 시연한 '오리 로봇' 부품 공급 확대…내년 100만대...",
+              "link": "https://news.mtn.co.kr/article/2026102611015939466",
+              "source": "news.mtn.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
             "name": "로보틱스",
-            "avgPct": -2.98,
+            "avgPct": -0.67,
             "n": 27,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "278650",
-          "company": "HLB바이오스텝",
-          "sector": "헬스케어",
-          "industry": "바이오/제약",
-          "changePct": 13.37,
-          "close": 6530.0,
-          "tradingValue": 9938738360,
-          "priceSource": "naver",
-          "marketCapB": 0.114,
-          "reason": "비임상 CRO 전략 점검",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "HLB바이오스텝 13.37% 상승…비임상 CRO 전략 점검",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234251",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "바이오/제약",
-            "avgPct": -1.08,
-            "n": 21,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "434480",
-          "company": "모니터랩",
+          "ticker": "459550",
+          "company": "알트",
           "sector": "기술",
-          "industry": "소프트웨어",
-          "changePct": 12.5,
-          "close": 2970.0,
-          "tradingValue": 16846840890,
+          "industry": "모바일 부품",
+          "changePct": 8.82,
+          "close": 1604.0,
+          "tradingValue": 9977678792,
           "priceSource": "naver",
-          "marketCapB": 0.037,
-          "reason": "PHP 보안 위협 상승에 관련주 강세",
+          "marketCapB": 0.041,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "모바일 부품",
+            "avgPct": -3.92,
+            "n": 35,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "175250",
+          "company": "아이큐어",
+          "sector": "필수소비재",
+          "industry": "화장품",
+          "changePct": 9.21,
+          "close": 1541.0,
+          "tradingValue": 55109242,
+          "priceSource": "naver",
+          "marketCapB": 0.095,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "화장품",
+            "avgPct": -2.04,
+            "n": 34,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "308170",
+          "company": "씨티알모빌리티",
+          "sector": "경기소비재",
+          "industry": "자동차부품",
+          "changePct": 9.5,
+          "close": 3285.0,
+          "tradingValue": 240636105,
+          "priceSource": "naver",
+          "marketCapB": 0.028,
+          "reason": "대표이사 자사주 매수 및 지분율 확대",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -2456,42 +2138,35 @@
           "evidence": [
             {
               "type": "news",
-              "title": "모니터랩 13.07% 상승…클라우드 보안 매출 성장성 점검",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234252",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
+              "title": "씨티알모빌리티 강상우 대표, 자사주 1만주 장내매수",
+              "link": "https://n.news.naver.com/mnews/article/293/0000092127?sid=101",
+              "source": "bloter.net",
+              "date": "2026-10-26"
             },
             {
               "type": "news",
-              "title": "[특징주] 모니터랩 , PHP 보안 위협 상승에 장 초반 급등세",
-              "link": "https://www.widedaily.com/news/articleView.html?idxno=302252",
-              "source": "widedaily.com",
-              "date": "2026-10-23"
-            },
-            {
-              "type": "news",
-              "title": "PHP 보안 비상에 관련주 강세… 모니터랩 25%↑[특징주]",
-              "link": "https://www.newsway.co.kr/news/view?ud=2026102309290004042",
-              "source": "newsway.co.kr",
-              "date": "2026-10-23"
+              "title": "씨티알모빌리티 강상우 대표, 잇단 장내 매수… 지분율 26.58% 확대",
+              "link": "https://www.fntoday.co.kr/news/articleView.html?idxno=396202",
+              "source": "fntoday.co.kr",
+              "date": "2026-10-26"
             }
           ],
           "sectorMove": {
             "level": "업종",
-            "name": "소프트웨어",
-            "avgPct": -3.69,
-            "n": 28,
+            "name": "자동차부품",
+            "avgPct": -1.3,
+            "n": 85,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "154030",
-          "company": "아시아종묘",
-          "sector": "헬스케어",
-          "industry": "바이오",
-          "changePct": 10.47,
-          "close": 1657.0,
-          "tradingValue": 71534347,
+          "ticker": "195990",
+          "company": "루트K",
+          "sector": "산업재",
+          "industry": "기계",
+          "changePct": 8.77,
+          "close": 1240.0,
+          "tradingValue": 521633280,
           "priceSource": "naver",
           "marketCapB": 0.02,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2503,338 +2178,53 @@
           "evidence": [],
           "sectorMove": {
             "level": "업종",
-            "name": "바이오",
-            "avgPct": 2.97,
-            "n": 43,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "001000",
-          "company": "신라섬유",
-          "sector": "부동산",
-          "industry": "부동산",
-          "changePct": 10.32,
-          "close": 2780.0,
-          "tradingValue": 3153512460,
-          "priceSource": "naver",
-          "marketCapB": 0.013,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "부동산",
-            "avgPct": 0.59,
-            "n": 22,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "119500",
-          "company": "포메탈",
-          "sector": "산업재",
-          "industry": "기계",
-          "changePct": 9.57,
-          "close": 2520.0,
-          "tradingValue": 1433993400,
-          "priceSource": "naver",
-          "marketCapB": 0.03,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
             "name": "기계",
-            "avgPct": -2.79,
+            "avgPct": -3.38,
             "n": 64,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "425420",
-          "company": "티에프이",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 7.33,
-          "close": 64400.0,
-          "tradingValue": 19136331200,
-          "priceSource": "naver",
-          "marketCapB": 0.803,
-          "reason": "반도체 업종 동반 상승(한양디지텍·엑시콘 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(한양디지텍·엑시콘 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.0,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "353190",
-          "company": "휴럼",
-          "sector": "헬스케어",
-          "industry": "의료서비스",
-          "changePct": 8.05,
-          "close": 2160.0,
-          "tradingValue": 102405600,
-          "priceSource": "naver",
-          "marketCapB": 0.017,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의료서비스",
-            "avgPct": -2.89,
-            "n": 16,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "078350",
-          "company": "한양디지텍",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": 7.89,
-          "close": 34850.0,
-          "tradingValue": 27260715500,
-          "priceSource": "naver",
-          "marketCapB": 0.533,
-          "reason": "반도체 업종 동반 상승(티에프이·엑시콘 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "반도체 업종 동반 상승(티에프이·엑시콘 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.0,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        }
-      ],
-      "down": [
-        {
-          "ticker": "011080",
-          "company": "형지I&C",
-          "sector": "경기소비재",
-          "industry": "의류/패션",
-          "changePct": -23.8,
-          "close": 775.0,
-          "tradingValue": 1501805075,
-          "priceSource": "naver",
-          "marketCapB": 0.005,
-          "reason": "의류/패션 업종 동반 하락(형지엘리트·신세계인터내셔날 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "의류/패션 업종 동반 하락(형지엘리트·신세계인터내셔날 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의류/패션",
-            "avgPct": -2.48,
-            "n": 40,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "290720",
-          "company": "푸드나무",
-          "sector": "필수소비재",
-          "industry": "식품",
-          "changePct": -19.42,
-          "close": 1336.0,
-          "tradingValue": 5605333624,
-          "priceSource": "naver",
-          "marketCapB": 0.051,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "식품",
-            "avgPct": -0.46,
-            "n": 49,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "093240",
-          "company": "형지엘리트",
-          "sector": "경기소비재",
-          "industry": "의류/패션",
-          "changePct": -14.87,
-          "close": 1775.0,
-          "tradingValue": 6474268125,
-          "priceSource": "naver",
-          "marketCapB": 0.022,
-          "reason": "의류/패션 업종 동반 하락(형지I&C·신세계인터내셔날 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "의류/패션 업종 동반 하락(형지I&C·신세계인터내셔날 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의류/패션",
-            "avgPct": -2.48,
-            "n": 40,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "015260",
-          "company": "에이엔피",
-          "sector": "기술",
-          "industry": "전자장비",
-          "changePct": -14.5,
-          "close": 171.0,
-          "tradingValue": 646417791,
-          "priceSource": "naver",
-          "marketCapB": 0.008,
-          "reason": "공매도 과열종목 지정기간 연장",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "에이엔피 , 공매도 과열종목 지정기간 1일 연장",
-              "link": "https://www.topstarnews.net/news/articleView.html?idxno=16255282",
-              "source": "topstarnews.net",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "전자장비",
-            "avgPct": -2.61,
-            "n": 55,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "199730",
-          "company": "바이오인프라",
-          "sector": "헬스케어",
-          "industry": "바이오/제약",
-          "changePct": -14.17,
-          "close": 1751.0,
-          "tradingValue": 637034812,
-          "priceSource": "naver",
-          "marketCapB": 0.009,
-          "reason": "공매도 과열종목 지정기간 연장",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "바이오인프라 , 공매도 과열종목 지정기간 1일 연장",
-              "link": "https://www.topstarnews.net/news/articleView.html?idxno=16255281",
-              "source": "topstarnews.net",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "바이오/제약",
-            "avgPct": -0.87,
-            "n": 22,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "064850",
-          "company": "에프앤가이드",
-          "sector": "기술",
-          "industry": "IT 서비스",
-          "changePct": -12.11,
-          "close": 15240.0,
-          "tradingValue": 4903134720,
-          "priceSource": "naver",
-          "marketCapB": 0.172,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "IT 서비스",
-            "avgPct": 0.0,
-            "n": 64,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "317400",
-          "company": "자이에스앤디",
-          "sector": "산업재",
-          "industry": "건설",
-          "changePct": -12.71,
-          "close": 7970.0,
-          "tradingValue": 13167077600,
-          "priceSource": "naver",
-          "marketCapB": 0.309,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "건설",
-            "avgPct": 2.17,
-            "n": 50,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "006050",
-          "company": "국영지앤엠",
+          "ticker": "186230",
+          "company": "그린플러스",
           "sector": "소재",
           "industry": "건축자재",
-          "changePct": -11.49,
-          "close": 2850.0,
-          "tradingValue": 575640150,
+          "changePct": 9.02,
+          "close": 3990.0,
+          "tradingValue": 1214013360,
+          "priceSource": "naver",
+          "marketCapB": 0.043,
+          "reason": "장중 6%대 상승",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "그린플러스 , 26일 장중 6%대 상승",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397239",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "건축자재",
+            "avgPct": -1.52,
+            "n": 28,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "239340",
+          "company": "이스트에이드",
+          "sector": "금융",
+          "industry": "증권",
+          "changePct": 8.34,
+          "close": 1819.0,
+          "tradingValue": 37007555,
           "priceSource": "naver",
           "marketCapB": 0.01,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2846,22 +2236,22 @@
           "evidence": [],
           "sectorMove": {
             "level": "업종",
-            "name": "건축자재",
-            "avgPct": -1.58,
-            "n": 28,
+            "name": "증권",
+            "avgPct": -2.12,
+            "n": 23,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "200350",
-          "company": "아티스트스튜디오",
-          "sector": "커뮤니케이션",
-          "industry": "엔터테인먼트",
-          "changePct": -11.4,
-          "close": 3690.0,
-          "tradingValue": 954558720,
+          "ticker": "900100",
+          "company": "파이온엑스",
+          "sector": "경기소비재",
+          "industry": "의류/패션",
+          "changePct": 8.22,
+          "close": 1541.0,
+          "tradingValue": 2505229897,
           "priceSource": "naver",
-          "marketCapB": 0.043,
+          "marketCapB": 0.008,
           "reason": "뚜렷한 재료 확인 안 됨",
           "reasonStatus": "none",
           "sectorNote": "",
@@ -2871,22 +2261,674 @@
           "evidence": [],
           "sectorMove": {
             "level": "업종",
-            "name": "엔터테인먼트",
-            "avgPct": -1.23,
-            "n": 27,
+            "name": "의류/패션",
+            "avgPct": -2.67,
+            "n": 39,
+            "weighting": "시총가중"
+          }
+        }
+      ],
+      "down": [
+        {
+          "ticker": "013810",
+          "company": "스페코",
+          "sector": "산업재",
+          "industry": "기계",
+          "changePct": -22.77,
+          "close": 1587.0,
+          "tradingValue": 5832151998,
+          "priceSource": "naver",
+          "marketCapB": 0.023,
+          "reason": "김정은 방중 소식에 방산주 약세",
+          "reasonStatus": "ok",
+          "sectorNote": "기계 업종 동반 하락(혜인·한선엔지니어링 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "김정은 방중 소식에 방산株 약세… 스페코 16%↓",
+              "link": "https://n.news.naver.com/mnews/article/003/0014277695?sid=101",
+              "source": "newsis.com",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "기계",
+            "avgPct": -3.38,
+            "n": 64,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "001420",
-          "company": "태원물산",
+          "ticker": "003010",
+          "company": "혜인",
+          "sector": "산업재",
+          "industry": "기계",
+          "changePct": -22.09,
+          "close": 7690.0,
+          "tradingValue": 11989932710,
+          "priceSource": "naver",
+          "marketCapB": 0.099,
+          "reason": "포항 AI 데이터센터 발전기 공급 계약",
+          "reasonStatus": "ok",
+          "sectorNote": "기계 업종 동반 하락(스페코·한선엔지니어링 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "혜인 , 포항 AI 데이터센터 발전기 463억원 공급",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396702",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "기계",
+            "avgPct": -3.32,
+            "n": 63,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "335870",
+          "company": "윙스풋",
           "sector": "경기소비재",
-          "industry": "자동차부품",
-          "changePct": -10.81,
-          "close": 2600.0,
-          "tradingValue": 23818600,
+          "industry": "의류/패션",
+          "changePct": -20.77,
+          "close": 3815.0,
+          "tradingValue": 1898237180,
+          "priceSource": "naver",
+          "marketCapB": 0.013,
+          "reason": "100억원 규모 CB에 물류센터 담보 추가",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "윙스풋 , 100억원 CB에 곤지암 물류센터 담보 추가",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396769",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "의류/패션",
+            "avgPct": -2.67,
+            "n": 39,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "396690",
+          "company": "미래에셋글로벌리츠",
+          "sector": "부동산",
+          "industry": "부동산",
+          "changePct": -20.03,
+          "close": 986.0,
+          "tradingValue": 630205844,
+          "priceSource": "naver",
+          "marketCapB": 0.039,
+          "reason": "미국 물류센터 투자 56% 손실 발생",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "고금리에 발목 잡힌 미래에셋글로벌리츠 …미국 물류센터 투자 56% 손실",
+              "link": "https://www.dnews.co.kr/uhtml/view.jsp?idxno=202610261615390830213",
+              "source": "dnews.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "미래에셋글로벌리츠 , 탬파 FedEx센터 771억원에 처분",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396062",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-23"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "부동산",
+            "avgPct": -1.13,
+            "n": 21,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "101670",
+          "company": "하이드로리튬",
+          "sector": "산업재",
+          "industry": "전기제품",
+          "changePct": -20.44,
+          "close": 358.0,
+          "tradingValue": 1276107468,
           "priceSource": "naver",
           "marketCapB": 0.02,
+          "reason": "주가 미달로 상장폐지 우려 발생",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "공시",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "disclosure",
+              "title": "DART: 기타시장안내              (주가 미달에 따른 상장폐지 우려 관련 안내)",
+              "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261023900896",
+              "source": "DART",
+              "date": "2026-10-23"
+            },
+            {
+              "type": "news",
+              "title": "하이드로리튬 상장폐지 우려…1000원 45거래일 회복해야",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397123",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "하이드로리튬 , 주가 미달로 상장폐지 경고등… 주식병합마저 부결돼 불...",
+              "link": "https://www.fntoday.co.kr/news/articleView.html?idxno=396171",
+              "source": "fntoday.co.kr",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "전기제품",
+            "avgPct": -1.59,
+            "n": 41,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "065450",
+          "company": "빅텍",
+          "sector": "산업재",
+          "industry": "방산/우주항공",
+          "changePct": -19.95,
+          "close": 3050.0,
+          "tradingValue": 25612481750,
+          "priceSource": "naver",
+          "marketCapB": 0.091,
+          "reason": "방산 테마 변동성에 따른 급락",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "빅텍 19.29% 급락…방산 테마 변동성에 822만주 거래",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234542",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "빅텍 주가, 10월 26일 장중 3,090원 18.90% 급락",
+              "link": "https://www.joongangenews.com/news/articleView.html?idxno=558283",
+              "source": "joongangenews.com",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "방산/우주항공",
+            "avgPct": -5.77,
+            "n": 25,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "089890",
+          "company": "코세스",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -18.8,
+          "close": 32400.0,
+          "tradingValue": 26488263600,
+          "priceSource": "naver",
+          "marketCapB": 0.542,
+          "reason": "장중 주가 하락",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(한솔아이원스·에스티아이 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "코세스 주가 장중 3만6000원 밑돌아",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397253",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "142760",
+          "company": "모아라이프플러스",
+          "sector": "헬스케어",
+          "industry": "제약",
+          "changePct": -16.0,
+          "close": 420.0,
+          "tradingValue": 272576640,
+          "priceSource": "naver",
+          "marketCapB": 0.009,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "제약",
+            "avgPct": -2.95,
+            "n": 119,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "452280",
+          "company": "한선엔지니어링",
+          "sector": "산업재",
+          "industry": "기계",
+          "changePct": -16.27,
+          "close": 12710.0,
+          "tradingValue": 12343049590,
+          "priceSource": "naver",
+          "marketCapB": 0.246,
+          "reason": "기계 업종 동반 하락(스페코·혜인 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "기계 업종 동반 하락(스페코·혜인 등)",
+          "tags": [
+            "섹터동조"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "기계",
+            "avgPct": -3.29,
+            "n": 63,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "006110",
+          "company": "삼아알미늄",
+          "sector": "소재",
+          "industry": "비철금속",
+          "changePct": -14.67,
+          "close": 57600.0,
+          "tradingValue": 40287456000,
+          "priceSource": "naver",
+          "marketCapB": 0.864,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "비철금속",
+            "avgPct": -1.57,
+            "n": 25,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "078520",
+          "company": "에이블씨엔씨",
+          "sector": "필수소비재",
+          "industry": "화장품",
+          "changePct": -14.86,
+          "close": 9800.0,
+          "tradingValue": 3750028800,
+          "priceSource": "naver",
+          "marketCapB": 0.244,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "화장품",
+            "avgPct": -1.9,
+            "n": 34,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "023770",
+          "company": "플레이위드",
+          "sector": "커뮤니케이션",
+          "industry": "게임",
+          "changePct": -14.42,
+          "close": 2225.0,
+          "tradingValue": 320682575,
+          "priceSource": "naver",
+          "marketCapB": 0.02,
+          "reason": "신작 '씰M2' 매출 부진 및 오류 발생",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[특징주] 플레이위드 15% 급락..신작 '씰M2' 매출 41위·오류 속출",
+              "link": "http://www.4th.kr/news/articleView.html?idxno=2120432",
+              "source": "4th.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "플레이위드 코리아 '씰M2' 출시부터 오류 속출..임시점검 1시간 연장",
+              "link": "http://www.4th.kr/news/articleView.html?idxno=2120351",
+              "source": "4th.kr",
+              "date": "2026-10-24"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "게임",
+            "avgPct": -1.48,
+            "n": 23,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "210980",
+          "company": "SK디앤디",
+          "sector": "부동산",
+          "industry": "부동산",
+          "changePct": -14.1,
+          "close": 2345.0,
+          "tradingValue": 968065245,
+          "priceSource": "naver",
+          "marketCapB": 0.044,
+          "reason": "신주 상장 앞두고 주가 급락",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "SK디앤디 , 신주 상장 앞두고 장중 13%대 급락",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397164",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "신주 상장 부담됐나… SK디앤디 11%대 급락 [이런국장 저런주식]",
+              "link": "https://n.news.naver.com/mnews/article/011/0004675148?sid=101",
+              "source": "sedaily.com",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "부동산",
+            "avgPct": -1.13,
+            "n": 21,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "138930",
+          "company": "BNK금융지주",
+          "sector": "산업재",
+          "industry": "지주회사",
+          "changePct": -13.53,
+          "close": 11820.0,
+          "tradingValue": 37234796640,
+          "priceSource": "naver",
+          "marketCapB": 3.615,
+          "reason": "3분기 순이익 전년 대비 감소",
+          "reasonStatus": "ok",
+          "sectorNote": "지주회사 업종 동반 하락(피에스케이홀딩스·GS 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "BNK금융지주 3분기 순익 2105억원…전년比 28.5%↓",
+              "link": "https://n.news.naver.com/mnews/article/029/0003055283?sid=101",
+              "source": "dt.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "지주회사",
+            "avgPct": -1.3,
+            "n": 84,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "126340",
+          "company": "비나텍",
+          "sector": "산업재",
+          "industry": "전기장비",
+          "changePct": -13.22,
+          "close": 103700.0,
+          "tradingValue": 44828161900,
+          "priceSource": "naver",
+          "marketCapB": 0.741,
+          "reason": "공급 계약 및 CB 공시 후 자금조달 부담",
+          "reasonStatus": "ok",
+          "sectorNote": "전기장비 업종 동반 하락(지엔씨에너지·한중엔시에스 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "비나텍 13.64% 급락…공급계약·CB 공시 뒤 자금조달 부담",
+              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234560",
+              "source": "job-post.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "비나텍 , 산미나와 인도 데이터센터 부품 1195억원 계약",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=396699",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "전기장비",
+            "avgPct": -2.63,
+            "n": 22,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "114810",
+          "company": "한솔아이원스",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -14.49,
+          "close": 10090.0,
+          "tradingValue": 5348991520,
+          "priceSource": "naver",
+          "marketCapB": 0.287,
+          "reason": "충청북도와 1560억원 규모 투자협약 체결",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(코세스·에스티아이 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "충청북도, 한솔아이원스 와 1560억 원 규모 투자협약",
+              "link": "https://n.news.naver.com/mnews/article/057/0001975134?sid=004",
+              "source": "mbn.co.kr",
+              "date": "2026-10-26"
+            },
+            {
+              "type": "news",
+              "title": "한솔아이원스 , 청주 오창에 1560억원 투자…반도체 부품 공장 신설",
+              "link": "https://www.dynews.co.kr/news/articleView.html?idxno=870859",
+              "source": "dynews.co.kr",
+              "date": "2026-10-25"
+            },
+            {
+              "type": "news",
+              "title": "충북도·청주시· 한솔아이원스 ㈜ 투자협약 체결",
+              "link": "https://www.ggilbo.com/news/articleView.html?idxno=1188781",
+              "source": "ggilbo.com",
+              "date": "2026-10-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "126600",
+          "company": "BGF에코머티리얼즈",
+          "sector": "소재",
+          "industry": "화학",
+          "changePct": -13.52,
+          "close": 2975.0,
+          "tradingValue": 795996950,
+          "priceSource": "naver",
+          "marketCapB": 0.187,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "화학",
+            "avgPct": -3.43,
+            "n": 72,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "099520",
+          "company": "DGI",
+          "sector": "기술",
+          "industry": "통신장비",
+          "changePct": -13.96,
+          "close": 918.0,
+          "tradingValue": 506023632,
+          "priceSource": "naver",
+          "marketCapB": 0.042,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "통신장비",
+            "avgPct": -1.7,
+            "n": 34,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "039440",
+          "company": "에스티아이",
+          "sector": "기술",
+          "industry": "반도체",
+          "changePct": -13.33,
+          "close": 23400.0,
+          "tradingValue": 15293046600,
+          "priceSource": "naver",
+          "marketCapB": 0.366,
+          "reason": "장중 급락",
+          "reasonStatus": "ok",
+          "sectorNote": "반도체 업종 동반 하락(코세스·한솔아이원스 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "[특징주] 에스티아이 장중 11% 급락…2만4000원",
+              "link": "https://www.vegannews.co.kr/news/article.html?no=397275",
+              "source": "vegannews.co.kr",
+              "date": "2026-10-26"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "반도체",
+            "avgPct": -0.98,
+            "n": 140,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "024740",
+          "company": "한일단조",
+          "sector": "경기소비재",
+          "industry": "자동차부품",
+          "changePct": -13.03,
+          "close": 2035.0,
+          "tradingValue": 2798080230,
+          "priceSource": "naver",
+          "marketCapB": 0.067,
           "reason": "뚜렷한 재료 확인 안 됨",
           "reasonStatus": "none",
           "sectorNote": "",
@@ -2897,290 +2939,8 @@
           "sectorMove": {
             "level": "업종",
             "name": "자동차부품",
-            "avgPct": -2.05,
-            "n": 87,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "272210",
-          "company": "한화시스템",
-          "sector": "산업재",
-          "industry": "방산/우주항공",
-          "changePct": -10.15,
-          "close": 66400.0,
-          "tradingValue": 93572672800,
-          "priceSource": "naver",
-          "marketCapB": 12.525,
-          "reason": "방산전자·위성 사업 점검",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "한화시스템 9.74% 내려…방산전자·위성 사업 점검",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=234171",
-              "source": "job-post.co.kr",
-              "date": "2026-10-23"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "방산/우주항공",
-            "avgPct": -1.96,
-            "n": 25,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "179880",
-          "company": "멜콘",
-          "sector": "기술",
-          "industry": "반도체",
-          "changePct": -10.22,
-          "close": 12210.0,
-          "tradingValue": 12563967900,
-          "priceSource": "naver",
-          "marketCapB": 0.154,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "반도체",
-            "avgPct": 2.01,
-            "n": 140,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "387690",
-          "company": "레메디",
-          "sector": "헬스케어",
-          "industry": "의료기기",
-          "changePct": -10.13,
-          "close": 12680.0,
-          "tradingValue": 4573726720,
-          "priceSource": "naver",
-          "marketCapB": 0.097,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의료기기",
-            "avgPct": -1.58,
-            "n": 58,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "239340",
-          "company": "이스트에이드",
-          "sector": "금융",
-          "industry": "증권",
-          "changePct": -9.59,
-          "close": 1679.0,
-          "tradingValue": 16850444,
-          "priceSource": "naver",
-          "marketCapB": 0.009,
-          "reason": "시가총액 미달 관리종목 지정 사유 추가",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "이스트에이드 , 시가총액 미달로 관리종목 사유 추가 지정",
-              "link": "https://www.topstarnews.net/news/articleView.html?idxno=16255127",
-              "source": "topstarnews.net",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "증권",
-            "avgPct": -1.26,
-            "n": 23,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "027970",
-          "company": "한국제지",
-          "sector": "소재",
-          "industry": "제지/목재",
-          "changePct": -10.18,
-          "close": 1985.0,
-          "tradingValue": 216287585,
-          "priceSource": "naver",
-          "marketCapB": 0.076,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "제지/목재",
-            "avgPct": -0.71,
-            "n": 6,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "031430",
-          "company": "신세계인터내셔날",
-          "sector": "경기소비재",
-          "industry": "의류/패션",
-          "changePct": -10.18,
-          "close": 10060.0,
-          "tradingValue": 5555484100,
-          "priceSource": "naver",
-          "marketCapB": 0.355,
-          "reason": "의류/패션 업종 동반 하락(형지I&C·형지엘리트 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "의류/패션 업종 동반 하락(형지I&C·형지엘리트 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "의류/패션",
-            "avgPct": -2.28,
-            "n": 39,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "003010",
-          "company": "혜인",
-          "sector": "산업재",
-          "industry": "기계",
-          "changePct": -10.04,
-          "close": 9770.0,
-          "tradingValue": 23560462470,
-          "priceSource": "naver",
-          "marketCapB": 0.125,
-          "reason": "투자경고종목 지정예고",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "혜인 , 주가 5일간 60% 이상 급등으로 투자경고종목 지정예고",
-              "link": "https://www.topstarnews.net/news/articleView.html?idxno=16255268",
-              "source": "topstarnews.net",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "기계",
-            "avgPct": -2.77,
-            "n": 63,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "357880",
-          "company": "SKAI",
-          "sector": "기술",
-          "industry": "IT 서비스",
-          "changePct": -9.56,
-          "close": 1674.0,
-          "tradingValue": 34532917542,
-          "priceSource": "naver",
-          "marketCapB": 0.093,
-          "reason": "AI 데이터 인프라 사업 주목",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "SKAI 상한가 1851원…AI 데이터 인프라 사업 주목",
-              "link": "https://www.job-post.co.kr/news/articleView.html?idxno=233968",
-              "source": "job-post.co.kr",
-              "date": "2026-10-22"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "IT 서비스",
-            "avgPct": -0.02,
-            "n": 64,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "005440",
-          "company": "현대지에프홀딩스",
-          "sector": "산업재",
-          "industry": "지주회사",
-          "changePct": -8.86,
-          "close": 11010.0,
-          "tradingValue": 4623616470,
-          "priceSource": "naver",
-          "marketCapB": 2.016,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "지주회사",
-            "avgPct": 0.02,
+            "avgPct": -1.29,
             "n": 84,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "046970",
-          "company": "우리로",
-          "sector": "기술",
-          "industry": "IT 장비",
-          "changePct": -9.27,
-          "close": 7540.0,
-          "tradingValue": 17044818440,
-          "priceSource": "naver",
-          "marketCapB": 0.332,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "IT 장비",
-            "avgPct": -1.06,
-            "n": 6,
             "weighting": "시총가중"
           }
         }

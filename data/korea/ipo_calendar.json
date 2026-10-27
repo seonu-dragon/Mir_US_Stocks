@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-26 16:24 KST",
+  "updatedAtKst": "2026-10-27 16:22 KST",
   "lastFileDate": "2026.12.10",
-  "count": 41,
+  "count": 42,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -48,6 +48,21 @@
       "offerPriceBand": [
         20000,
         24000
+      ]
+    },
+    {
+      "company": "우리투자스팩1호",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "우리투자증권",
+      "fileDate": "2026.12.02",
+      "accession": "kr-ipo-bidding-우리투자스팩1호",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        2000,
+        2000
       ]
     },
     {
@@ -429,9 +444,9 @@
     {
       "company": "SK증권스팩14호",
       "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
-      "form": "SK증권",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
+      "form": "",
       "fileDate": "2026.10.27",
       "accession": "kr-ipo-listed-SK증권스팩14호",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",

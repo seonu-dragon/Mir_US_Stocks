@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-27 06:38:16 KST",
+  "updatedAtKst": "2026-10-27 13:42:30 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7726,
+  "tradeCount": 7710,
   "politicianCount": 157,
   "rankings": [
     {
@@ -36,7 +36,7 @@
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 42.21,
+      "estReturnPct": 43.29,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
@@ -68,6 +68,18 @@
     },
     {
       "rank": 6,
+      "id": "house-rob-bresnahan",
+      "name": "Rob Bresnahan",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 32.01,
+      "buyCount": 111,
+      "sellCount": 165,
+      "tradeCount": 276,
+      "committees": []
+    },
+    {
+      "rank": 7,
       "id": "house-ed-case",
       "name": "Ed Case",
       "chamber": "House",
@@ -79,21 +91,21 @@
       "committees": []
     },
     {
-      "rank": 7,
+      "rank": 8,
       "id": "house-josh-gottheimer",
       "name": "Josh Gottheimer",
       "chamber": "House",
       "party": "D",
       "estReturnPct": 26.98,
-      "buyCount": 409,
+      "buyCount": 408,
       "sellCount": 143,
-      "tradeCount": 553,
+      "tradeCount": 552,
       "committees": [
         "Financial Services"
       ]
     },
     {
-      "rank": 8,
+      "rank": 9,
       "id": "house-jared-moskowitz",
       "name": "Jared Moskowitz",
       "chamber": "House",
@@ -102,18 +114,6 @@
       "buyCount": 129,
       "sellCount": 58,
       "tradeCount": 187,
-      "committees": []
-    },
-    {
-      "rank": 9,
-      "id": "house-rob-bresnahan",
-      "name": "Rob Bresnahan",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 24.77,
-      "buyCount": 111,
-      "sellCount": 165,
-      "tradeCount": 276,
       "committees": []
     },
     {
@@ -134,7 +134,7 @@
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 15.43,
+      "estReturnPct": 15.55,
       "buyCount": 202,
       "sellCount": 5,
       "tradeCount": 207,
@@ -156,6 +156,18 @@
     },
     {
       "rank": 13,
+      "id": "house-lisa-mcclain",
+      "name": "Lisa McClain",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 14.13,
+      "buyCount": 340,
+      "sellCount": 332,
+      "tradeCount": 672,
+      "committees": []
+    },
+    {
+      "rank": 14,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -167,18 +179,6 @@
       "committees": [
         "Financial Services"
       ]
-    },
-    {
-      "rank": 14,
-      "id": "house-lisa-mcclain",
-      "name": "Lisa McClain",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 10.98,
-      "buyCount": 340,
-      "sellCount": 332,
-      "tradeCount": 672,
-      "committees": []
     },
     {
       "rank": 15,
@@ -194,6 +194,18 @@
     },
     {
       "rank": 16,
+      "id": "house-thomas-h-kean",
+      "name": "Thomas H. Kean",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 10.78,
+      "buyCount": 42,
+      "sellCount": 14,
+      "tradeCount": 67,
+      "committees": []
+    },
+    {
+      "rank": 17,
       "id": "house-michael-rulli",
       "name": "Michael Rulli",
       "chamber": "House",
@@ -205,7 +217,7 @@
       "committees": []
     },
     {
-      "rank": 17,
+      "rank": 18,
       "id": "house-sheri-biggs",
       "name": "Sheri Biggs",
       "chamber": "House",
@@ -217,7 +229,7 @@
       "committees": []
     },
     {
-      "rank": 18,
+      "rank": 19,
       "id": "house-lloyd-doggett",
       "name": "Lloyd Doggett",
       "chamber": "House",
@@ -229,7 +241,7 @@
       "committees": []
     },
     {
-      "rank": 19,
+      "rank": 20,
       "id": "house-david-j-taylor",
       "name": "David J. Taylor",
       "chamber": "House",
@@ -241,19 +253,19 @@
       "committees": []
     },
     {
-      "rank": 20,
+      "rank": 21,
       "id": "house-julie-johnson",
       "name": "Julie Johnson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 6.63,
+      "estReturnPct": 6.71,
       "buyCount": 80,
       "sellCount": 159,
       "tradeCount": 241,
       "committees": []
     },
     {
-      "rank": 21,
+      "rank": 22,
       "id": "house-kevin-hern",
       "name": "Kevin Hern",
       "chamber": "House",
@@ -265,7 +277,19 @@
       "committees": []
     },
     {
-      "rank": 22,
+      "rank": 23,
+      "id": "house-dan-newhouse",
+      "name": "Dan Newhouse",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 4.75,
+      "buyCount": 57,
+      "sellCount": 15,
+      "tradeCount": 72,
+      "committees": []
+    },
+    {
+      "rank": 24,
       "id": "house-maria-elvira-salazar",
       "name": "Maria Elvira Salazar",
       "chamber": "House",
@@ -277,19 +301,7 @@
       "committees": []
     },
     {
-      "rank": 23,
-      "id": "house-dan-newhouse",
-      "name": "Dan Newhouse",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 4.33,
-      "buyCount": 57,
-      "sellCount": 15,
-      "tradeCount": 72,
-      "committees": []
-    },
-    {
-      "rank": 24,
+      "rank": 25,
       "id": "house-rick-larsen",
       "name": "Rick Larsen",
       "chamber": "House",
@@ -298,18 +310,6 @@
       "buyCount": 21,
       "sellCount": 19,
       "tradeCount": 41,
-      "committees": []
-    },
-    {
-      "rank": 25,
-      "id": "house-thomas-h-kean",
-      "name": "Thomas H. Kean",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 1.72,
-      "buyCount": 42,
-      "sellCount": 14,
-      "tradeCount": 67,
       "committees": []
     },
     {
@@ -1164,7 +1164,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 10.98
+      "estReturnPct": 14.13
     },
     {
       "id": "house-josh-gottheimer",
@@ -1175,8 +1175,8 @@
         "Financial Services"
       ],
       "district": "NJ05",
-      "tradeCount": 553,
-      "buyCount": 409,
+      "tradeCount": 552,
+      "buyCount": 408,
       "sellCount": 143,
       "recentTrades": [
         {
@@ -2228,7 +2228,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 24.77
+      "estReturnPct": 32.01
     },
     {
       "id": "house-kevin-hern",
@@ -2936,7 +2936,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 42.21
+      "estReturnPct": 43.29
     },
     {
       "id": "house-julie-johnson",
@@ -3290,7 +3290,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 6.63
+      "estReturnPct": 6.71
     },
     {
       "id": "house-kathy-manning",
@@ -4000,7 +4000,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 15.43
+      "estReturnPct": 15.55
     },
     {
       "id": "house-virginia-foxx",
@@ -9664,7 +9664,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 4.33
+      "estReturnPct": 4.75
     },
     {
       "id": "house-greg-landsman",
@@ -11080,7 +11080,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 1.72
+      "estReturnPct": 10.78
     },
     {
       "id": "house-ritchie-john-torres",
@@ -20267,360 +20267,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-james-r-langevin",
-      "name": "James R. Langevin",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "RI02",
-      "tradeCount": 22,
-      "buyCount": 12,
-      "sellCount": 10,
-      "recentTrades": [
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "GNRC",
-          "asset": "Generac Holdlings Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-12-05",
-          "disclosureDate": "01/03/2023",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022212.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "GNRC",
-          "asset": "Generac Holdlings Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-11-29",
-          "disclosureDate": "12/06/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022086.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "ABNB",
-          "asset": "Airbnb, Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-11-07",
-          "disclosureDate": "12/06/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022086.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-10-28",
-          "disclosureDate": "11/02/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "ABNB",
-          "asset": "Airbnb, Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2022-10-27",
-          "disclosureDate": "11/02/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "DASH",
-          "asset": "DoorDash, Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-10-20",
-          "disclosureDate": "11/02/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "ABNB",
-          "asset": "Airbnb, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-10-13",
-          "disclosureDate": "11/02/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "GNRC",
-          "asset": "Generac Holdlings Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-10-03",
-          "disclosureDate": "11/02/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-09-28",
-          "disclosureDate": "10/04/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021812.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "DASH",
-          "asset": "DoorDash, Inc. Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-08-17",
-          "disclosureDate": "09/07/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021669.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2022-08-05",
-          "disclosureDate": "09/07/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021669.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "ABNB",
-          "asset": "Airbnb, Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-06-09",
-          "disclosureDate": "07/07/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021338.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-06-09",
-          "disclosureDate": "07/07/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021338.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "DASH",
-          "asset": "DoorDash, Inc. Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-05-31",
-          "disclosureDate": "06/06/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021156.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-05-11",
-          "disclosureDate": "06/06/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021156.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "FB",
-          "asset": "Meta Platforms, Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-04-06",
-          "disclosureDate": "05/08/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020955.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-03-18",
-          "disclosureDate": "04/07/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020774.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "BABA",
-          "asset": "Alibaba group Holding Limited American Depositary Shares each representing eight Ordinary share",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-02-11",
-          "disclosureDate": "03/04/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020559.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Block, Inc. Class A Common Stock,",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-02-02",
-          "disclosureDate": "03/04/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020559.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "PYPL",
-          "asset": "PayPal Holdings, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-01-05",
-          "disclosureDate": "02/07/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020391.pdf",
-          "district": "RI02",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-robert-e-latta",
       "name": "Robert E. Latta",
       "chamber": "House",
@@ -20973,6 +20619,360 @@
         }
       ],
       "estReturnPct": 45.5
+    },
+    {
+      "id": "house-james-r-langevin",
+      "name": "James R. Langevin",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "RI02",
+      "tradeCount": 21,
+      "buyCount": 12,
+      "sellCount": 9,
+      "recentTrades": [
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "GNRC",
+          "asset": "Generac Holdlings Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-12-05",
+          "disclosureDate": "01/03/2023",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022212.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "GNRC",
+          "asset": "Generac Holdlings Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-11-29",
+          "disclosureDate": "12/06/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022086.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "ABNB",
+          "asset": "Airbnb, Inc. - Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-11-07",
+          "disclosureDate": "12/06/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022086.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-10-28",
+          "disclosureDate": "11/02/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "ABNB",
+          "asset": "Airbnb, Inc. - Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2022-10-27",
+          "disclosureDate": "11/02/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "DASH",
+          "asset": "DoorDash, Inc. Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-10-20",
+          "disclosureDate": "11/02/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "ABNB",
+          "asset": "Airbnb, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-10-13",
+          "disclosureDate": "11/02/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "GNRC",
+          "asset": "Generac Holdlings Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-10-03",
+          "disclosureDate": "11/02/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021929.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-09-28",
+          "disclosureDate": "10/04/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021812.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "DASH",
+          "asset": "DoorDash, Inc. Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-08-17",
+          "disclosureDate": "09/07/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021669.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2022-08-05",
+          "disclosureDate": "09/07/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021669.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "ABNB",
+          "asset": "Airbnb, Inc. - Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-06-09",
+          "disclosureDate": "07/07/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021338.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-06-09",
+          "disclosureDate": "07/07/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021338.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "DASH",
+          "asset": "DoorDash, Inc. Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-05-31",
+          "disclosureDate": "06/06/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021156.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-05-11",
+          "disclosureDate": "06/06/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021156.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "FB",
+          "asset": "Meta Platforms, Inc. - Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-04-06",
+          "disclosureDate": "05/08/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020955.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-03-18",
+          "disclosureDate": "04/07/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020774.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "BABA",
+          "asset": "Alibaba group Holding Limited American Depositary Shares each representing eight Ordinary share",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-02-11",
+          "disclosureDate": "03/04/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020559.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Block, Inc. Class A Common Stock,",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-02-02",
+          "disclosureDate": "03/04/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020559.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "James R. Langevin",
+          "chamber": "House",
+          "ticker": "PYPL",
+          "asset": "PayPal Holdings, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-01-05",
+          "disclosureDate": "02/07/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020391.pdf",
+          "district": "RI02",
+          "source": "house_ptr",
+          "party": "D"
+        }
+      ],
+      "estReturnPct": null
     },
     {
       "id": "house-nancy-pelosi",
@@ -22352,309 +22352,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027982.pdf",
           "district": "CA27",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
-      "id": "house-kim-schrier",
-      "name": "Kim Schrier",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "WA08",
-      "tradeCount": 17,
-      "buyCount": 1,
-      "sellCount": 16,
-      "recentTrades": [
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$500,001 - $1,000,000",
-          "amountMid": 750000,
-          "transactionDate": "2022-03-22",
-          "disclosureDate": "03/22/2022",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020712.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "TSLA",
-          "asset": "Tesla, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$250,001 - $500,000",
-          "amountMid": 375000,
-          "transactionDate": "2022-03-22",
-          "disclosureDate": "03/22/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020712.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$250,001",
-          "amountMid": 250001,
-          "transactionDate": "2021-11-15",
-          "disclosureDate": "11/16/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019965.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "CVS",
-          "asset": "CVS Health Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "HON",
-          "asset": "Honeywell International Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "J",
-          "asset": "Jacobs Engineering group Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "VMW",
-          "asset": "Vmware, Inc. Common stock, Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "ABT",
-          "asset": "Abbott laboratories",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$250,001 - $500,000",
-          "amountMid": 375000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "BMY",
-          "asset": "bristol-Myers Squibb Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "CSCO",
-          "asset": "Cisco Systems, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "COST",
-          "asset": "Costco Wholesale Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "DCI",
-          "asset": "Donaldson Company, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "ETN",
-          "asset": "Eaton Corporation, PlC Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "JPM",
-          "asset": "JP Morgan Chase & Co.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "LUMN",
-          "asset": "lumen Technologies, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "PYPL",
-          "asset": "PayPal Holdings, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -29893,6 +29590,71 @@
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20017965.pdf",
           "district": "TX03",
           "source": "house_ptr"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-kim-schrier",
+      "name": "Kim Schrier",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "WA08",
+      "tradeCount": 3,
+      "buyCount": 0,
+      "sellCount": 3,
+      "recentTrades": [
+        {
+          "politician": "Kim Schrier",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$500,001 - $1,000,000",
+          "amountMid": 750000,
+          "transactionDate": "2022-03-22",
+          "disclosureDate": "03/22/2022",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020712.pdf",
+          "district": "WA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Kim Schrier",
+          "chamber": "House",
+          "ticker": "TSLA",
+          "asset": "Tesla, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$250,001 - $500,000",
+          "amountMid": 375000,
+          "transactionDate": "2022-03-22",
+          "disclosureDate": "03/22/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020712.pdf",
+          "district": "WA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Kim Schrier",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$250,001",
+          "amountMid": 250001,
+          "transactionDate": "2021-11-15",
+          "disclosureDate": "11/16/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019965.pdf",
+          "district": "WA08",
+          "source": "house_ptr",
+          "party": "D"
         }
       ],
       "estReturnPct": null
@@ -37818,8 +37580,8 @@
     "CSCO": {
       "ticker": "CSCO",
       "netBuys": 9,
-      "netSells": 12,
-      "politicianCount": 17,
+      "netSells": 11,
+      "politicianCount": 16,
       "trades": [
         {
           "politician": "Maria Elvira Salazar",
@@ -38158,23 +37920,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
           "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "CSCO",
-          "asset": "Cisco Systems, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -41407,7 +41152,7 @@
     },
     "AAPL": {
       "ticker": "AAPL",
-      "netBuys": 67,
+      "netBuys": 66,
       "netSells": 31,
       "politicianCount": 43,
       "trades": [
@@ -42009,8 +41754,8 @@
     "COST": {
       "ticker": "COST",
       "netBuys": 20,
-      "netSells": 12,
-      "politicianCount": 19,
+      "netSells": 11,
+      "politicianCount": 18,
       "trades": [
         {
           "politician": "Richard W. Allen",
@@ -42441,8 +42186,8 @@
     "ABT": {
       "ticker": "ABT",
       "netBuys": 15,
-      "netSells": 13,
-      "politicianCount": 19,
+      "netSells": 12,
+      "politicianCount": 18,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -48513,7 +48258,7 @@
     },
     "MSFT": {
       "ticker": "MSFT",
-      "netBuys": 76,
+      "netBuys": 75,
       "netSells": 28,
       "politicianCount": 38,
       "trades": [
@@ -53361,8 +53106,8 @@
     "HON": {
       "ticker": "HON",
       "netBuys": 4,
-      "netSells": 12,
-      "politicianCount": 12,
+      "netSells": 11,
+      "politicianCount": 11,
       "trades": [
         {
           "politician": "Kevin Hern",
@@ -53618,23 +53363,6 @@
           "district": "VA01",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "HON",
-          "asset": "Honeywell International Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -53869,8 +53597,8 @@
     "ETN": {
       "ticker": "ETN",
       "netBuys": 10,
-      "netSells": 8,
-      "politicianCount": 11,
+      "netSells": 7,
+      "politicianCount": 10,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -54158,23 +53886,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020021.pdf",
           "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "ETN",
-          "asset": "Eaton Corporation, PlC Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -90795,8 +90506,8 @@
     "BMY": {
       "ticker": "BMY",
       "netBuys": 6,
-      "netSells": 10,
-      "politicianCount": 13,
+      "netSells": 9,
+      "politicianCount": 12,
       "trades": [
         {
           "politician": "Mike Kelly",
@@ -91052,23 +90763,6 @@
           "district": "FL04",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "BMY",
-          "asset": "bristol-Myers Squibb Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -99206,8 +98900,8 @@
     "PYPL": {
       "ticker": "PYPL",
       "netBuys": 14,
-      "netSells": 13,
-      "politicianCount": 14,
+      "netSells": 12,
+      "politicianCount": 13,
       "trades": [
         {
           "politician": "Byron Donalds",
@@ -105193,8 +104887,8 @@
     "JPM": {
       "ticker": "JPM",
       "netBuys": 34,
-      "netSells": 9,
-      "politicianCount": 27,
+      "netSells": 8,
+      "politicianCount": 26,
       "trades": [
         {
           "politician": "Jonathan Jackson",
@@ -111774,8 +111468,8 @@
     "CVS": {
       "ticker": "CVS",
       "netBuys": 7,
-      "netSells": 9,
-      "politicianCount": 12,
+      "netSells": 8,
+      "politicianCount": 11,
       "trades": [
         {
           "politician": "Dwight Evans",
@@ -112028,23 +111722,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019847.pdf",
           "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "CVS",
-          "asset": "CVS Health Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -142759,8 +142436,8 @@
     "J": {
       "ticker": "J",
       "netBuys": 2,
-      "netSells": 1,
-      "politicianCount": 4,
+      "netSells": 0,
+      "politicianCount": 3,
       "trades": [
         {
           "politician": "Tim Walberg",
@@ -142827,23 +142504,6 @@
           "owner": "Spouse",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023892.pdf",
           "district": "AZ04",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "J",
-          "asset": "Jacobs Engineering group Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -148242,8 +147902,8 @@
     "VMW": {
       "ticker": "VMW",
       "netBuys": 0,
-      "netSells": 3,
-      "politicianCount": 3,
+      "netSells": 2,
+      "politicianCount": 2,
       "trades": [
         {
           "politician": "Stephen F. Lynch",
@@ -148278,23 +147938,6 @@
           "district": "NJ07",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "VMW",
-          "asset": "Vmware, Inc. Common stock, Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -156776,8 +156419,8 @@
     "LUMN": {
       "ticker": "LUMN",
       "netBuys": 0,
-      "netSells": 2,
-      "politicianCount": 2,
+      "netSells": 1,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Daniel Goldman",
@@ -156793,23 +156436,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022653.pdf",
           "district": "NY10",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "LUMN",
-          "asset": "lumen Technologies, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -158259,7 +157885,7 @@
     "GNRC": {
       "ticker": "GNRC",
       "netBuys": 4,
-      "netSells": 2,
+      "netSells": 1,
       "politicianCount": 2,
       "trades": [
         {
@@ -158344,23 +157970,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
           "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "James R. Langevin",
-          "chamber": "House",
-          "ticker": "GNRC",
-          "asset": "generac Holdlings Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001",
-          "amountMid": 100001,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019734.pdf",
-          "district": "RI02",
           "source": "house_ptr",
           "party": "D"
         }
@@ -163289,8 +162898,8 @@
     "DCI": {
       "ticker": "DCI",
       "netBuys": 0,
-      "netSells": 2,
-      "politicianCount": 2,
+      "netSells": 1,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Lois Frankel",
@@ -163306,23 +162915,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020401.pdf",
           "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kim Schrier",
-          "chamber": "House",
-          "ticker": "DCI",
-          "asset": "Donaldson Company, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-28",
-          "disclosureDate": "10/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019850.pdf",
-          "district": "WA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -164426,7 +164018,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-26",
-    "measuredTrades": 5014,
+    "measuredTrades": 5011,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -164452,7 +164044,7 @@
         },
         "disc": {
           "n": 14,
-          "avgExcess": 0.18,
+          "avgExcess": 0.19,
           "medianExcess": 0.14,
           "winRate": 50.0
         },
@@ -164519,7 +164111,7 @@
         },
         "disc": {
           "n": 171,
-          "avgExcess": 9.26,
+          "avgExcess": 9.27,
           "medianExcess": 5.92,
           "winRate": 55.6
         },
@@ -164677,18 +164269,18 @@
       {
         "name": "Josh Gottheimer",
         "tx": {
-          "n": 288,
-          "avgExcess": 2.89,
-          "medianExcess": 2.8,
-          "winRate": 52.4
+          "n": 286,
+          "avgExcess": 3.05,
+          "medianExcess": 3.06,
+          "winRate": 52.8
         },
         "disc": {
-          "n": 287,
-          "avgExcess": 3.26,
-          "medianExcess": 0.59,
-          "winRate": 50.9
+          "n": 285,
+          "avgExcess": 3.42,
+          "medianExcess": 1.22,
+          "winRate": 51.2
         },
-        "buyAvgExcess": 0.24,
+        "buyAvgExcess": 0.44,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
@@ -164971,13 +164563,13 @@
         "name": "Richard W. Allen",
         "tx": {
           "n": 39,
-          "avgExcess": -1.37,
+          "avgExcess": -1.39,
           "medianExcess": -0.69,
           "winRate": 43.6
         },
         "disc": {
           "n": 37,
-          "avgExcess": -0.04,
+          "avgExcess": -0.08,
           "medianExcess": -0.95,
           "winRate": 48.6
         },
@@ -165028,26 +164620,6 @@
         "party": "D"
       },
       {
-        "name": "Rick Larsen",
-        "tx": {
-          "n": 23,
-          "avgExcess": -2.34,
-          "medianExcess": -8.73,
-          "winRate": 30.4
-        },
-        "disc": {
-          "n": 23,
-          "avgExcess": -2.89,
-          "medianExcess": -8.11,
-          "winRate": 26.1
-        },
-        "buyAvgExcess": -13.75,
-        "lagDays": 2,
-        "id": "house-rick-larsen",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "Blake Moore",
         "tx": {
           "n": 18,
@@ -165066,6 +164638,26 @@
         "id": "house-blake-moore",
         "chamber": "House",
         "party": "R"
+      },
+      {
+        "name": "Rick Larsen",
+        "tx": {
+          "n": 23,
+          "avgExcess": -2.39,
+          "medianExcess": -8.73,
+          "winRate": 30.4
+        },
+        "disc": {
+          "n": 23,
+          "avgExcess": -2.95,
+          "medianExcess": -8.11,
+          "winRate": 26.1
+        },
+        "buyAvgExcess": -13.75,
+        "lagDays": 2,
+        "id": "house-rick-larsen",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Dan Newhouse",
@@ -165211,17 +164803,17 @@
         "name": "Gilbert Cisneros",
         "tx": {
           "n": 646,
-          "avgExcess": -5.1,
+          "avgExcess": -5.11,
           "medianExcess": -4.83,
-          "winRate": 42.0
+          "winRate": 42.1
         },
         "disc": {
           "n": 625,
-          "avgExcess": -5.69,
+          "avgExcess": -5.67,
           "medianExcess": -5.16,
           "winRate": 40.8
         },
-        "buyAvgExcess": -6.73,
+        "buyAvgExcess": -6.74,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
@@ -165383,7 +164975,7 @@
         "disc": {
           "n": 185,
           "avgExcess": -10.06,
-          "medianExcess": -7.79,
+          "medianExcess": -7.55,
           "winRate": 29.7
         },
         "buyAvgExcess": -14.98,
@@ -165413,6 +165005,26 @@
         "party": "R"
       },
       {
+        "name": "Michael Patrick Guest",
+        "tx": {
+          "n": 10,
+          "avgExcess": -13.88,
+          "medianExcess": -22.52,
+          "winRate": 30.0
+        },
+        "disc": {
+          "n": 10,
+          "avgExcess": -20.64,
+          "medianExcess": -21.9,
+          "winRate": 40.0
+        },
+        "buyAvgExcess": -3.1,
+        "lagDays": 26,
+        "id": "house-michael-patrick-guest",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "James French Hill",
         "tx": {
           "n": 15,
@@ -165425,26 +165037,6 @@
         "id": "house-james-french-hill",
         "chamber": "House",
         "party": ""
-      },
-      {
-        "name": "Michael Patrick Guest",
-        "tx": {
-          "n": 11,
-          "avgExcess": -16.19,
-          "medianExcess": -29.42,
-          "winRate": 27.3
-        },
-        "disc": {
-          "n": 11,
-          "avgExcess": -21.89,
-          "medianExcess": -24.06,
-          "winRate": 36.4
-        },
-        "buyAvgExcess": -9.14,
-        "lagDays": 26,
-        "id": "house-michael-patrick-guest",
-        "chamber": "House",
-        "party": "R"
       }
     ]
   },
@@ -165456,12 +165048,12 @@
         "Real Estate",
         "Technology"
       ],
-      "buyCount": 424,
+      "buyCount": 423,
       "sellCount": 146,
       "topTickers": [
         {
           "ticker": "MSFT",
-          "count": 12
+          "count": 11
         },
         {
           "ticker": "LLY",
@@ -165495,7 +165087,7 @@
       "topPoliticians": [
         {
           "name": "Josh Gottheimer",
-          "count": 409
+          "count": 408
         },
         {
           "name": "Nancy Pelosi",

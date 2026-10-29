@@ -1,30 +1,21 @@
 {
- "updatedAtKst": "2026-10-29 06:41 KST",
- "from": "2026-10-29",
- "to": "2027-01-27",
+ "updatedAtKst": "2026-10-30 06:41 KST",
+ "from": "2026-10-30",
+ "to": "2027-01-28",
  "horizonDays": 90,
  "source": "exchange_calendars 4.13.2 (XKRX·XNYS) · 만기는 거래소 규칙으로 계산 · FOMC 는 연준 공개 일정표",
  "coverage": {
   "kr": {
    "exchange": "XKRX",
-   "lastSession": "2027-10-28"
+   "lastSession": "2027-10-29"
   },
   "us": {
    "exchange": "XNYS",
-   "lastSession": "2027-10-28"
+   "lastSession": "2027-10-29"
   }
  },
  "count": 17,
  "events": [
-  {
-   "date": "2026-10-29",
-   "time": "03:00",
-   "market": "us",
-   "kind": "fomc",
-   "title": "FOMC 기준금리 결정",
-   "detail": "미 동부 10/28 14:00 발표(회의 10/27~10/28)",
-   "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
-  },
   {
    "date": "2026-11-12",
    "market": "kr",
@@ -146,6 +137,15 @@
    "kind": "holiday",
    "title": "미국 휴장",
    "name": "마틴 루서 킹 데이"
+  },
+  {
+   "date": "2027-01-28",
+   "time": "04:00",
+   "market": "us",
+   "kind": "fomc",
+   "title": "FOMC 기준금리 결정",
+   "detail": "미 동부 1/27 14:00 발표(회의 1/26~1/27)",
+   "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
   }
  ]
 }

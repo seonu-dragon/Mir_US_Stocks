@@ -1,11 +1,166 @@
 {
-  "updatedAtKst": "2026-10-29 13:33 KST",
-  "lastFileDate": "2026-10-28",
+  "updatedAtKst": "2026-10-30 13:33 KST",
+  "lastFileDate": "2026-10-29",
   "partialFetch": false,
-  "count": 563,
+  "count": 578,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Ocean Power Technologies, Inc.",
+      "ticker": "OPTT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001493152-26-049198:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1378140/000149315226049198/forms-1a.htm"
+    },
+    {
+      "company": "Ocean Power Technologies, Inc.",
+      "ticker": "OPTT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001493152-26-049198:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1378140/000149315226049198/forms-1a.htm"
+    },
+    {
+      "company": "Redwoods Acquisition Corp II",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-29",
+      "accession": "0001477932-26-006519:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152549/000147793226006519/rwod_s1.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001477932-26-006517:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226006517/medx_s1a.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001477932-26-006517:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226006517/medx_s1a.htm"
+    },
+    {
+      "company": "Stratum Holdings Corp.  (LRHC, SRTM)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-29",
+      "accession": "0001213900-26-113906:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1879403/000121390026113906/ea0309825-s1_stratum.htm"
+    },
+    {
+      "company": "KAT Construction Services, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-29",
+      "accession": "0001213900-26-113816:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142104/000121390026113816/ea0297900-06.htm"
+    },
+    {
+      "company": "Megan Holdings Ltd.",
+      "ticker": "MGN",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-29",
+      "accession": "0001213900-26-113588:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1995075/000121390026113588/ea0310082-424b4_megan.htm",
+      "offerPrice": 0.5,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "NuvOx Therapeutics, Inc.",
+      "ticker": "NUOX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001213900-26-113463:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1966126/000121390026113463/ea0225257-14.htm"
+    },
+    {
+      "company": "NuvOx Therapeutics, Inc.",
+      "ticker": "NUOX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001213900-26-113463:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1966126/000121390026113463/ea0225257-14.htm"
+    },
+    {
+      "company": "GEORGIA BANKING CO INC",
+      "ticker": "GBC",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-29",
+      "accession": "0001104659-26-119890:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1070965/000110465926119890/tm2620318-22_424b4.htm",
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "resale",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Football Manager SPAC Inc.",
+      "ticker": "FBLL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001104659-26-119778:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133939/000110465926119778/tmb-20261028xs1a.htm"
+    },
+    {
+      "company": "Football Manager SPAC Inc.",
+      "ticker": "FBLL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001104659-26-119778:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133939/000110465926119778/tmb-20261028xs1a.htm"
+    },
+    {
+      "company": "USBC, Inc.",
+      "ticker": "USBC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001074828-26-000089:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000089/usbc-20261029.htm"
+    },
+    {
+      "company": "USBC, Inc.",
+      "ticker": "USBC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-29",
+      "accession": "0001074828-26-000089:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000089/usbc-20261029.htm"
+    },
     {
       "company": "Glow Holdings, Inc.",
       "ticker": "GLOH",

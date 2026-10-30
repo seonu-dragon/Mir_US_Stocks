@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-29 16:22 KST",
+  "updatedAtKst": "2026-10-30 16:19 KST",
   "lastFileDate": "2026.12.14",
-  "count": 45,
+  "count": 41,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -216,6 +216,19 @@
       ]
     },
     {
+      "company": "옵토닉스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "한국투자증권",
+      "fileDate": "2026.11.17",
+      "accession": "kr-ipo-listed-옵토닉스",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 12000,
+      "instCompetition": 1201.81,
+      "commitPct": 5.62
+    },
+    {
       "company": "엠비디",
       "ticker": null,
       "stage": "filed",
@@ -261,6 +274,32 @@
       ]
     },
     {
+      "company": "넥스아이",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "한국투자증권",
+      "fileDate": "2026.11.12",
+      "accession": "kr-ipo-listed-넥스아이",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        10500,
+        13000
+      ]
+    },
+    {
+      "company": "바로팜",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "미래에셋증권",
+      "fileDate": "2026.11.11",
+      "accession": "kr-ipo-listed-바로팜",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 16400
+    },
+    {
       "company": "하나에어로다이내믹스",
       "ticker": null,
       "stage": "filed",
@@ -291,6 +330,17 @@
       ]
     },
     {
+      "company": "동원파츠",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "삼성증권",
+      "fileDate": "2026.11.10",
+      "accession": "kr-ipo-listed-동원파츠",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 26500
+    },
+    {
       "company": "에이엘로봇",
       "ticker": null,
       "stage": "filed",
@@ -303,21 +353,6 @@
       "offerPriceBand": [
         15700,
         17600
-      ]
-    },
-    {
-      "company": "옵토닉스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "한국투자증권",
-      "fileDate": "2026.11.05",
-      "accession": "kr-ipo-bidding-옵토닉스",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        10000,
-        12000
       ]
     },
     {
@@ -362,21 +397,6 @@
       "subscriptionCompetition": 28.95
     },
     {
-      "company": "넥스아이",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "한국투자증권",
-      "fileDate": "2026.11.03",
-      "accession": "kr-ipo-bidding-넥스아이",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        10500,
-        13000
-      ]
-    },
-    {
       "company": "래블업",
       "ticker": null,
       "stage": "filed",
@@ -389,36 +409,6 @@
       "instCompetition": 284.53,
       "commitPct": 2.09,
       "subscriptionCompetition": 3.55
-    },
-    {
-      "company": "바로팜",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "미래에셋증권",
-      "fileDate": "2026.11.02",
-      "accession": "kr-ipo-bidding-바로팜",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        16400,
-        20200
-      ]
-    },
-    {
-      "company": "동원파츠",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "삼성증권",
-      "fileDate": "2026.11.02",
-      "accession": "kr-ipo-bidding-동원파츠",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        23000,
-        26500
-      ]
     },
     {
       "company": "영광(구.영광공작소)",
@@ -436,9 +426,9 @@
     },
     {
       "company": "크리에이츠",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "ticker": "439270",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "",
       "fileDate": "2026.10.30",
       "accession": "kr-ipo-listed-크리에이츠",
@@ -449,9 +439,9 @@
     },
     {
       "company": "인텔리빅스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "ticker": "420610",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "미래에셋증권",
       "fileDate": "2026.10.30",
       "accession": "kr-ipo-listed-인텔리빅스",
@@ -464,8 +454,8 @@
     {
       "company": "한화플러스스팩6호",
       "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "",
       "fileDate": "2026.10.30",
       "accession": "kr-ipo-listed-한화플러스스팩6호",
@@ -596,60 +586,6 @@
       "instCompetition": 868.64,
       "commitPct": 4.05,
       "subscriptionCompetition": 332.82
-    },
-    {
-      "company": "빅웨이브로보틱스",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.09.29",
-      "accession": "kr-ipo-listed-빅웨이브로보틱스",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 18000,
-      "instCompetition": 1109.37,
-      "commitPct": 18.14,
-      "subscriptionCompetition": 1375.34
-    },
-    {
-      "company": "글로벌테크놀로지",
-      "ticker": "486510",
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.09.29",
-      "accession": "kr-ipo-listed-글로벌테크놀로지",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 10000,
-      "instCompetition": 123.19,
-      "commitPct": 0.27,
-      "subscriptionCompetition": 57.15
-    },
-    {
-      "company": "와이즈플래닛컴퍼니",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.09.23",
-      "accession": "kr-ipo-listed-와이즈플래닛컴퍼니",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 12000,
-      "instCompetition": 1248.47,
-      "commitPct": 3.65,
-      "subscriptionCompetition": 1477.65
-    },
-    {
-      "company": "KB스팩34호",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.09.22",
-      "accession": "kr-ipo-listed-KB스팩34호",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 2000,
-      "instCompetition": 1232.51
     }
   ]
 }

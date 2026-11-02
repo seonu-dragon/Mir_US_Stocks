@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-02 06:39:53 KST",
+  "updatedAtKst": "2026-11-02 13:42:56 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7724,
+  "tradeCount": 7722,
   "politicianCount": 157,
   "rankings": [
     {
@@ -85,9 +85,9 @@
       "chamber": "House",
       "party": "D",
       "estReturnPct": 22.32,
-      "buyCount": 406,
+      "buyCount": 405,
       "sellCount": 142,
-      "tradeCount": 549,
+      "tradeCount": 548,
       "committees": [
         "Financial Services"
       ]
@@ -1163,8 +1163,8 @@
         "Financial Services"
       ],
       "district": "NJ05",
-      "tradeCount": 549,
-      "buyCount": 406,
+      "tradeCount": 548,
+      "buyCount": 405,
       "sellCount": 142,
       "recentTrades": [
         {
@@ -25829,224 +25829,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-peter-welch",
-      "name": "Peter Welch",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "VT00",
-      "tradeCount": 12,
-      "buyCount": 0,
-      "sellCount": 12,
-      "recentTrades": [
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "IBM",
-          "asset": "International business Machines Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "UNP",
-          "asset": "Union Pacific Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "MITK",
-          "asset": "Mitek Systems, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "TNC",
-          "asset": "Tennant Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "UN",
-          "asset": "Unilever NV",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "VAIAF",
-          "asset": "Vaisala Oy Ordinary Shares -A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "A",
-          "asset": "Agilent Technologies, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "CERN",
-          "asset": "Cerner Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "CSCO",
-          "asset": "Cisco Systems, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "KYOCF",
-          "asset": "Kyocera Corp Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "USB",
-          "asset": "U.S. bancorp",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-18",
-          "disclosureDate": "11/18/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "WFC",
-          "asset": "Wells Fargo & Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-03",
-          "disclosureDate": "11/03/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019937.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-mike-kelly",
       "name": "Mike Kelly",
       "chamber": "House",
@@ -26243,6 +26025,207 @@
           "district": "PA16",
           "source": "house_ptr",
           "party": "R"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-peter-welch",
+      "name": "Peter Welch",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "VT00",
+      "tradeCount": 11,
+      "buyCount": 0,
+      "sellCount": 11,
+      "recentTrades": [
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "IBM",
+          "asset": "International business Machines Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-26",
+          "disclosureDate": "11/30/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "UNP",
+          "asset": "Union Pacific Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2021-11-26",
+          "disclosureDate": "11/30/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "MITK",
+          "asset": "Mitek Systems, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "TNC",
+          "asset": "Tennant Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "UN",
+          "asset": "Unilever NV",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "VAIAF",
+          "asset": "Vaisala Oy Ordinary Shares -A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "A",
+          "asset": "Agilent Technologies, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "CERN",
+          "asset": "Cerner Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "CSCO",
+          "asset": "Cisco Systems, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "KYOCF",
+          "asset": "Kyocera Corp Ordinary Shares",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Peter Welch",
+          "chamber": "House",
+          "ticker": "USB",
+          "asset": "U.S. bancorp",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2021-11-18",
+          "disclosureDate": "11/18/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
+          "district": "VT00",
+          "source": "house_ptr",
+          "party": "D"
         }
       ],
       "estReturnPct": null
@@ -34455,7 +34438,7 @@
     },
     "GOOG": {
       "ticker": "GOOG",
-      "netBuys": 35,
+      "netBuys": 34,
       "netSells": 14,
       "politicianCount": 21,
       "trades": [
@@ -93493,8 +93476,8 @@
     "WFC": {
       "ticker": "WFC",
       "netBuys": 5,
-      "netSells": 5,
-      "politicianCount": 9,
+      "netSells": 4,
+      "politicianCount": 8,
       "trades": [
         {
           "politician": "Lloyd K. Smucker",
@@ -93648,23 +93631,6 @@
           "district": "KS04",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "WFC",
-          "asset": "Wells Fargo & Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-03",
-          "disclosureDate": "11/03/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019937.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -163854,7 +163820,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-30",
-    "measuredTrades": 5020,
+    "measuredTrades": 5016,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -163905,26 +163871,6 @@
         "party": "D"
       },
       {
-        "name": "Marjorie Taylor Greene",
-        "tx": {
-          "n": 182,
-          "avgExcess": 8.84,
-          "medianExcess": 5.16,
-          "winRate": 55.5
-        },
-        "disc": {
-          "n": 171,
-          "avgExcess": 9.25,
-          "medianExcess": 5.92,
-          "winRate": 55.6
-        },
-        "buyAvgExcess": 8.84,
-        "lagDays": 1,
-        "id": "house-marjorie-taylor-greene",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Pete Sessions",
         "tx": {
           "n": 17,
@@ -163941,6 +163887,26 @@
         "buyAvgExcess": 13.89,
         "lagDays": 3,
         "id": "house-pete-sessions",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Marjorie Taylor Greene",
+        "tx": {
+          "n": 179,
+          "avgExcess": 8.04,
+          "medianExcess": 3.37,
+          "winRate": 54.7
+        },
+        "disc": {
+          "n": 168,
+          "avgExcess": 8.3,
+          "medianExcess": 4.99,
+          "winRate": 54.8
+        },
+        "buyAvgExcess": 8.04,
+        "lagDays": 1,
+        "id": "house-marjorie-taylor-greene",
         "chamber": "House",
         "party": "R"
       },
@@ -164125,18 +164091,18 @@
       {
         "name": "Josh Gottheimer",
         "tx": {
-          "n": 284,
-          "avgExcess": 2.5,
-          "medianExcess": 2.51,
-          "winRate": 52.8
+          "n": 283,
+          "avgExcess": 2.78,
+          "medianExcess": 2.57,
+          "winRate": 53.0
         },
         "disc": {
-          "n": 283,
-          "avgExcess": 2.88,
-          "medianExcess": -0.27,
-          "winRate": 49.5
+          "n": 282,
+          "avgExcess": 3.17,
+          "medianExcess": -0.19,
+          "winRate": 49.6
         },
-        "buyAvgExcess": -0.11,
+        "buyAvgExcess": 0.28,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
@@ -164884,7 +164850,7 @@
         "Real Estate",
         "Technology"
       ],
-      "buyCount": 421,
+      "buyCount": 420,
       "sellCount": 145,
       "topTickers": [
         {
@@ -164909,7 +164875,7 @@
         },
         {
           "ticker": "GOOG",
-          "count": 8
+          "count": 7
         },
         {
           "ticker": "NOW",
@@ -164923,7 +164889,7 @@
       "topPoliticians": [
         {
           "name": "Josh Gottheimer",
-          "count": 406
+          "count": 405
         },
         {
           "name": "Nancy Pelosi",

@@ -1,11 +1,71 @@
 {
-  "updatedAtKst": "2026-11-02 13:34 KST",
-  "lastFileDate": "2026-10-30",
+  "updatedAtKst": "2026-11-03 13:33 KST",
+  "lastFileDate": "2026-11-02",
   "partialFetch": false,
-  "count": 578,
+  "count": 576,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Canary Staked INJ ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-02",
+      "accession": "0001999371-26-024117:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2073616/000199937126024117/inj-s1a_110226.htm"
+    },
+    {
+      "company": "Canary Staked INJ ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-02",
+      "accession": "0001999371-26-024117:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2073616/000199937126024117/inj-s1a_110226.htm"
+    },
+    {
+      "company": "Anthropic, PBC",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-02",
+      "accession": "0001628280-26-068676:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026068676/anthropicpbc-sx1ax1.htm"
+    },
+    {
+      "company": "Anthropic, PBC",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-02",
+      "accession": "0001628280-26-068676:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026068676/anthropicpbc-sx1ax1.htm"
+    },
+    {
+      "company": "SunPower Inc.  (SPWR, SPWRW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-02",
+      "accession": "0001213900-26-114542:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1838987/000121390026114542/ea0308685-s1_sunpower.htm"
+    },
+    {
+      "company": "Ja-Lika Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-02",
+      "accession": "0001171520-26-000318:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2158764/000117152026000318/eps12907_jalika.htm"
+    },
     {
       "company": "Exascale Labs Holdings Inc.  (XLAB, XLABW)",
       "ticker": null,
@@ -5805,86 +5865,6 @@
       "fileDate": "2026-09-03",
       "accession": "0001185185-26-003839:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1787518/000118518526003839/dfnss1090126.htm"
-    },
-    {
-      "company": "Sensei Harbor Corp.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-02",
-      "accession": "0001683168-26-006875:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826006875/sensei_s1a5.htm"
-    },
-    {
-      "company": "Sensei Harbor Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-02",
-      "accession": "0001683168-26-006875:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826006875/sensei_s1a5.htm"
-    },
-    {
-      "company": "Aura Consolidated Group, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-02",
-      "accession": "0001628280-26-060183:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2055301/000162828026060183/aura-sx1a.htm"
-    },
-    {
-      "company": "Aura Consolidated Group, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-02",
-      "accession": "0001628280-26-060183:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2055301/000162828026060183/aura-sx1a.htm"
-    },
-    {
-      "company": "Accelevation Holdings Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-02",
-      "accession": "0001628280-26-060083:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2141406/000162828026060083/accelevationllc-sx1publicf.htm"
-    },
-    {
-      "company": "First Breach, Inc.",
-      "ticker": "FBDT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-02",
-      "accession": "0001493152-26-041268:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1892704/000149315226041268/forms-1.htm"
-    },
-    {
-      "company": "Haymaker Acquisition Corp V",
-      "ticker": "HYAC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-02",
-      "accession": "0001193125-26-380080:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2111838/000119312526380080/d86766ds1a.htm"
-    },
-    {
-      "company": "Haymaker Acquisition Corp V",
-      "ticker": "HYAC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-02",
-      "accession": "0001193125-26-380080:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2111838/000119312526380080/d86766ds1a.htm"
     }
   ]
 }

@@ -1,20 +1,20 @@
 {
- "updatedAtKst": "2026-11-03 06:41 KST",
- "from": "2026-11-03",
- "to": "2027-02-01",
+ "updatedAtKst": "2026-11-04 06:42 KST",
+ "from": "2026-11-04",
+ "to": "2027-02-02",
  "horizonDays": 90,
  "source": "exchange_calendars 4.13.2 (XKRX·XNYS) · 만기는 거래소 규칙으로 계산 · FOMC 는 연준 공개 일정표",
  "coverage": {
   "kr": {
    "exchange": "XKRX",
-   "lastSession": "2027-11-02"
+   "lastSession": "2027-11-03"
   },
   "us": {
    "exchange": "XNYS",
-   "lastSession": "2027-11-02"
+   "lastSession": "2027-11-03"
   }
  },
- "count": 17,
+ "count": 18,
  "events": [
   {
    "date": "2026-11-12",
@@ -146,6 +146,14 @@
    "title": "FOMC 기준금리 결정",
    "detail": "미 동부 1/27 14:00 발표(회의 1/26~1/27)",
    "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+  },
+  {
+   "date": "2027-02-02",
+   "market": "kr",
+   "kind": "expiry",
+   "quarterly": false,
+   "title": "코스피200 옵션 월물 만기",
+   "detail": "매월 둘째 목요일, 휴장이라 직전 거래일로 당김"
   }
  ]
 }

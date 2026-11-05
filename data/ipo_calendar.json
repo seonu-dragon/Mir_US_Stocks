@@ -1,11 +1,55 @@
 {
-  "updatedAtKst": "2026-11-04 13:34 KST",
-  "lastFileDate": "2026-11-02",
+  "updatedAtKst": "2026-11-05 13:34 KST",
+  "lastFileDate": "2026-11-04",
   "partialFetch": false,
-  "count": 568,
+  "count": 553,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "GeoVax Labs, Inc.",
+      "ticker": "GOVX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-04",
+      "accession": "0001437749-26-034729:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/832489/000143774926034729/govx20261102_s1.htm"
+    },
+    {
+      "company": "Churchill Capital Corp XIV",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-04",
+      "accession": "0001213900-26-115921:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2128984/000121390026115921/ea0310524-01.htm"
+    },
+    {
+      "company": "reAlpha Tech Corp.",
+      "ticker": "AIRE",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-04",
+      "accession": "0001213900-26-115755:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1859199/000121390026115755/ea0306283-04.htm",
+      "offerPrice": 0.4,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Research Alliance Corp III",
+      "ticker": "RACC",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-04",
+      "accession": "0001193125-26-447320:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2118032/000119312526447320/d149484d424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceChecked": 2
+    },
     {
       "company": "Canary Staked INJ ETF",
       "ticker": null,
@@ -5590,196 +5634,6 @@
       "fileDate": "2026-09-08",
       "accession": "0001104659-26-105917:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1736243/000110465926105917/tm2624622-1_s1.htm"
-    },
-    {
-      "company": "Albatross Acquisition Corp",
-      "ticker": "ATAC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001829126-26-009779:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2135163/000182912626009779/albatrossacq_s1a.htm"
-    },
-    {
-      "company": "Albatross Acquisition Corp",
-      "ticker": "ATAC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001829126-26-009779:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2135163/000182912626009779/albatrossacq_s1a.htm"
-    },
-    {
-      "company": "CLEARONE INC",
-      "ticker": "CLRO",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001753926-26-001724:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/840715/000175392626001724/MainDocument.htm"
-    },
-    {
-      "company": "CLEARONE INC",
-      "ticker": "CLRO",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001753926-26-001724:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/840715/000175392626001724/MainDocument.htm"
-    },
-    {
-      "company": "SB Energy, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001628280-26-060761:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026060761/sbenergy-sx1a1exhibitsonly.htm"
-    },
-    {
-      "company": "SB Energy, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001628280-26-060761:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026060761/sbenergy-sx1a1exhibitsonly.htm"
-    },
-    {
-      "company": "Laser Photonics Corp",
-      "ticker": "LASE",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-04",
-      "accession": "0001493152-26-041613:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226041613/forms-1.htm"
-    },
-    {
-      "company": "Rothe Development, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-04",
-      "accession": "0001493152-26-041590:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2108671/000149315226041590/forms-1.htm"
-    },
-    {
-      "company": "AIxCrypto Holdings, Inc.",
-      "ticker": "AIXC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001493152-26-041428:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226041428/forms-1a.htm"
-    },
-    {
-      "company": "AIxCrypto Holdings, Inc.",
-      "ticker": "AIXC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001493152-26-041428:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226041428/forms-1a.htm"
-    },
-    {
-      "company": "ECOMINAS CORP.",
-      "ticker": "ILXP",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001477932-26-005410:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226005410/ilxp_s1a.htm"
-    },
-    {
-      "company": "ECOMINAS CORP.",
-      "ticker": "ILXP",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001477932-26-005410:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226005410/ilxp_s1a.htm"
-    },
-    {
-      "company": "Game Your Game Inc.",
-      "ticker": "GYGY",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001213900-26-097734:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2111846/000121390026097734/ea0304501-s1a1_game.htm"
-    },
-    {
-      "company": "Game Your Game Inc.",
-      "ticker": "GYGY",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001213900-26-097734:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2111846/000121390026097734/ea0304501-s1a1_game.htm"
-    },
-    {
-      "company": "Legion Capital Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-04",
-      "accession": "0001213900-26-097368:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2151558/000121390026097368/ea0304337-01.htm"
-    },
-    {
-      "company": "PBT Land & Minerals, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001213900-26-097366:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026097366/ea0299258-02.htm"
-    },
-    {
-      "company": "PBT Land & Minerals, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-04",
-      "accession": "0001213900-26-097366:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026097366/ea0299258-02.htm"
-    },
-    {
-      "company": "ADARx Pharmaceuticals, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-04",
-      "accession": "0001193125-26-383838:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526383838/d903461ds1.htm"
-    },
-    {
-      "company": "New Iceland Arctic Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-04",
-      "accession": "0001185185-26-003850:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2148245/000118518526003850/newicelands1081926.htm"
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
- "updatedAtKst": "2026-11-05 17:05 KST",
+ "updatedAtKst": "2026-11-06 07:10 KST",
  "count": 112,
  "curatedCount": 72,
  "autoCount": 40,
@@ -8,7 +8,7 @@
   "to": "2026-11-05",
   "days": 365
  },
- "usAsOf": "2026-11-04",
+ "usAsOf": "2026-11-05",
  "krAsOf": "2026-11-05",
  "nextDay": {
   "from": "2021-11-08",
@@ -37,312 +37,297 @@
  "method": "일간 로그수익률, 최근 1년. 미국 D일→국내 다음 거래일(lagCorr), 같은 날짜 국내→미국(sameCorr). 강도는 같은 구간 미국 시장(SPY)을 통제한 편상관으로 판정.",
  "note": "관계는 사람이 정한 것(자동 후보 제외)이고 상관은 과거 서술 통계다. 예측·매매 신호가 아니다.",
  "strengths": {
-  "weak": 27,
-  "strong": 17,
+  "weak": 29,
+  "strong": 15,
   "moderate": 28
  },
  "tickers": {
   "us": {
    "NVDA": {
     "name": "NVIDIA Corporation",
-    "chg": -3.2,
-    "date": "2026-11-04"
+    "chg": -9.3,
+    "date": "2026-11-05"
    },
    "MU": {
     "name": "Micron Technology Inc.",
-    "chg": -7.0,
-    "date": "2026-11-04"
+    "chg": -17.5,
+    "date": "2026-11-05"
    },
    "AMD": {
     "name": "Advanced Micro Devices Inc.",
-    "chg": 1.0,
-    "date": "2026-11-04"
+    "chg": -17.3,
+    "date": "2026-11-05"
    },
    "SOXX": {
     "name": "iShares PHLX SOX Semiconductor Sector Index Fund",
-    "chg": -3.1,
-    "date": "2026-11-04",
+    "chg": -70.7,
+    "date": "2026-11-05",
     "etf": true
    },
    "AMAT": {
     "name": "Applied Materials Inc.",
-    "chg": -3.3,
-    "date": "2026-11-04"
+    "chg": -13.6,
+    "date": "2026-11-05"
    },
    "LRCX": {
     "name": "Lam Research Corporation",
-    "chg": -4.0,
-    "date": "2026-11-04"
+    "chg": -16.4,
+    "date": "2026-11-05"
    },
    "TSLA": {
     "name": "Tesla Inc.",
-    "chg": -3.3,
-    "date": "2026-11-04"
+    "chg": -10.8,
+    "date": "2026-11-05"
    },
    "GM": {
     "name": "General Motors Company",
-    "chg": 4.6,
-    "date": "2026-11-04"
+    "chg": -3.4,
+    "date": "2026-11-05"
    },
    "F": {
     "name": "Ford Motor Company",
-    "chg": 2.9,
-    "date": "2026-11-04"
+    "chg": -1.1,
+    "date": "2026-11-05"
    },
    "ALB": {
     "name": "Albemarle Corporation",
-    "chg": 5.3,
-    "date": "2026-11-04"
+    "chg": 3.6,
+    "date": "2026-11-05"
    },
    "RIVN": {
     "name": "Rivian Automotive Inc. Class A",
-    "chg": 5.8,
-    "date": "2026-11-04"
+    "chg": -5.5,
+    "date": "2026-11-05"
    },
    "LIT": {
     "name": "Global X Lithium & Battery Tech ETF",
-    "chg": 3.0,
-    "date": "2026-11-04",
+    "chg": -2.7,
+    "date": "2026-11-05",
     "etf": true
    },
    "LNG": {
     "name": "Cheniere Energy Inc.",
-    "chg": -6.2,
-    "date": "2026-11-04"
+    "chg": -4.3,
+    "date": "2026-11-05"
    },
    "FRO": {
     "name": "Frontline Plc Ordinary Shares",
-    "chg": -7.6,
-    "date": "2026-11-04"
+    "chg": -7.8,
+    "date": "2026-11-05"
    },
    "ZIM": {
     "name": "ZIM Integrated Shipping Services Ltd. Ordinary Shares",
-    "chg": -3.0,
-    "date": "2026-11-04"
+    "chg": -3.4,
+    "date": "2026-11-05"
    },
    "LMT": {
     "name": "Lockheed Martin Corporation",
-    "chg": -6.9,
-    "date": "2026-11-04"
+    "chg": -3.2,
+    "date": "2026-11-05"
    },
    "RTX": {
     "name": "RTX Corporation",
-    "chg": -2.6,
-    "date": "2026-11-04"
+    "chg": -3.3,
+    "date": "2026-11-05"
    },
    "GD": {
     "name": "General Dynamics Corporation",
-    "chg": -2.6,
-    "date": "2026-11-04"
+    "chg": -2.3,
+    "date": "2026-11-05"
    },
    "BA": {
     "name": "Boeing Company (The)",
-    "chg": 2.1,
-    "date": "2026-11-04"
+    "chg": -2.5,
+    "date": "2026-11-05"
    },
    "SMR": {
     "name": "NuScale Power Corporation Class A",
-    "chg": -4.5,
-    "date": "2026-11-04"
+    "chg": -14.8,
+    "date": "2026-11-05"
    },
    "CEG": {
     "name": "Constellation Energy Corporation",
-    "chg": -6.7,
-    "date": "2026-11-04"
+    "chg": -2.5,
+    "date": "2026-11-05"
    },
    "CCJ": {
     "name": "Cameco Corporation",
-    "chg": -1.2,
-    "date": "2026-11-04"
+    "chg": -4.7,
+    "date": "2026-11-05"
    },
    "BWXT": {
     "name": "BWX Technologies Inc.",
-    "chg": -7.8,
-    "date": "2026-11-04"
+    "chg": -5.4,
+    "date": "2026-11-05"
    },
    "ETN": {
     "name": "Eaton Corporation PLC Ordinary Shares",
-    "chg": -9.9,
-    "date": "2026-11-04"
+    "chg": -7.4,
+    "date": "2026-11-05"
    },
    "GEV": {
     "name": "GE Vernova Inc.",
-    "chg": -9.3,
-    "date": "2026-11-04"
+    "chg": -7.5,
+    "date": "2026-11-05"
    },
    "VRT": {
     "name": "Vertiv Holdings LLC Class A",
-    "chg": -12.9,
-    "date": "2026-11-04"
+    "chg": -14.0,
+    "date": "2026-11-05"
    },
    "LLY": {
     "name": "Eli Lilly and Company",
-    "chg": 0.6,
-    "date": "2026-11-04"
+    "chg": -3.8,
+    "date": "2026-11-05"
    },
    "NVO": {
     "name": "Novo Nordisk A/S",
-    "chg": 5.0,
-    "date": "2026-11-04"
+    "chg": -4.5,
+    "date": "2026-11-05"
    },
    "AMGN": {
     "name": "Amgen Inc.",
-    "chg": 3.7,
-    "date": "2026-11-04"
+    "chg": -3.8,
+    "date": "2026-11-05"
    },
    "XBI": {
     "name": "State Street SPDR S&P Biotech ETF",
-    "chg": 2.7,
-    "date": "2026-11-04",
+    "chg": -6.7,
+    "date": "2026-11-05",
     "etf": true
    },
    "AAPL": {
     "name": "Apple Inc.",
-    "chg": 5.3,
-    "date": "2026-11-04"
+    "chg": -1.5,
+    "date": "2026-11-05"
    },
    "GOOGL": {
     "name": "Alphabet Inc. Class A",
-    "chg": 3.2,
-    "date": "2026-11-04"
+    "chg": -2.2,
+    "date": "2026-11-05"
    },
    "META": {
     "name": "Meta Platforms Inc. Class A",
-    "chg": 1.4,
-    "date": "2026-11-04"
+    "chg": -4.0,
+    "date": "2026-11-05"
    },
    "TTWO": {
     "name": "Take-Two Interactive Software Inc.",
-    "chg": 7.1,
-    "date": "2026-11-04"
+    "chg": 2.1,
+    "date": "2026-11-05"
    },
    "NUE": {
     "name": "Nucor Corporation",
-    "chg": -2.1,
-    "date": "2026-11-04"
+    "chg": -8.3,
+    "date": "2026-11-05"
    },
    "XOM": {
     "name": "ExxonMobil Holdings Corporation",
-    "chg": -4.6,
-    "date": "2026-11-04"
+    "chg": -2.3,
+    "date": "2026-11-05"
    },
    "VLO": {
     "name": "Valero Energy Corporation",
-    "chg": -5.8,
-    "date": "2026-11-04"
+    "chg": -3.9,
+    "date": "2026-11-05"
    },
    "FSLR": {
     "name": "First Solar Inc.",
-    "chg": 4.6,
-    "date": "2026-11-04"
+    "chg": 0.6,
+    "date": "2026-11-05"
    },
    "ENPH": {
     "name": "Enphase Energy Inc.",
-    "chg": 3.7,
-    "date": "2026-11-04"
+    "chg": -8.2,
+    "date": "2026-11-05"
    },
    "DAL": {
     "name": "Delta Air Lines Inc.",
-    "chg": 7.2,
-    "date": "2026-11-04"
+    "chg": -4.3,
+    "date": "2026-11-05"
    },
    "UAL": {
     "name": "United Airlines Holdings",
-    "chg": 8.0,
-    "date": "2026-11-04"
+    "chg": -4.6,
+    "date": "2026-11-05"
    },
    "JPM": {
     "name": "JP Morgan Chase & Co.",
-    "chg": 4.2,
-    "date": "2026-11-04"
+    "chg": -4.2,
+    "date": "2026-11-05"
    },
    "WPM": {
     "name": "Wheaton Precious Metals Corp Common Shares (Canada)",
-    "chg": 12.0,
-    "date": "2026-11-04"
+    "chg": 0.7,
+    "date": "2026-11-05"
    },
    "AU": {
     "name": "AngloGold Ashanti PLC Ordinary Shares",
-    "chg": 8.0,
-    "date": "2026-11-04"
+    "chg": 0.7,
+    "date": "2026-11-05"
    },
    "SMH": {
     "name": "VanEck Semiconductor ETF",
-    "chg": -2.7,
-    "date": "2026-11-04",
+    "chg": -11.2,
+    "date": "2026-11-05",
     "etf": true
    },
    "URA": {
     "name": "Global X Uranium ETF",
-    "chg": -1.1,
-    "date": "2026-11-04",
+    "chg": -5.3,
+    "date": "2026-11-05",
     "etf": true
    },
    "PWR": {
     "name": "Quanta Services Inc.",
-    "chg": -11.7,
-    "date": "2026-11-04"
-   },
-   "TER": {
-    "name": "Teradyne Inc.",
-    "chg": -6.8,
-    "date": "2026-11-04"
+    "chg": -12.3,
+    "date": "2026-11-05"
    },
    "CVE": {
     "name": "Cenovus Energy Inc",
-    "chg": -7.6,
-    "date": "2026-11-04"
+    "chg": -2.7,
+    "date": "2026-11-05"
    },
    "ASML": {
     "name": "ASML Holding N.V. New York Registry Shares",
-    "chg": -3.6,
-    "date": "2026-11-04"
+    "chg": -9.3,
+    "date": "2026-11-05"
    },
    "SNDK": {
     "name": "Sandisk Corporation",
-    "chg": -7.9,
-    "date": "2026-11-04"
-   },
-   "ALAB": {
-    "name": "Astera Labs Inc.",
-    "chg": -4.4,
-    "date": "2026-11-04"
+    "chg": -22.3,
+    "date": "2026-11-05"
    },
    "KLAC": {
     "name": "KLA Corporation",
-    "chg": -4.1,
-    "date": "2026-11-04"
+    "chg": -13.3,
+    "date": "2026-11-05"
    },
    "EQNR": {
     "name": "Equinor ASA",
-    "chg": -6.2,
-    "date": "2026-11-04"
+    "chg": -0.6,
+    "date": "2026-11-05"
    },
    "XLK": {
     "name": "State Street Technology Select Sector SPDR ETF",
-    "chg": -0.0,
-    "date": "2026-11-04",
+    "chg": -8.0,
+    "date": "2026-11-05",
     "etf": true
    },
    "WDC": {
     "name": "Western Digital Corporation",
-    "chg": -6.8,
-    "date": "2026-11-04"
-   },
-   "LABT": {
-    "name": "Lakewood-Amedex Biotherapeutics Inc.",
-    "chg": -4.5,
-    "date": "2026-11-04"
+    "chg": -17.4,
+    "date": "2026-11-05"
    },
    "MT": {
     "name": "Arcelor Mittal NY Registry Shares NEW",
-    "chg": 3.4,
-    "date": "2026-11-04"
+    "chg": -3.3,
+    "date": "2026-11-05"
    },
    "VST": {
     "name": "Vistra Corp.",
-    "chg": -13.8,
-    "date": "2026-11-04"
+    "chg": -6.2,
+    "date": "2026-11-05"
    }
   },
   "kr": {
@@ -556,14 +541,14 @@
     "chg": -10.0,
     "date": "2026-11-05"
    },
+   "180640": {
+    "name": "한진칼",
+    "chg": 3.3,
+    "date": "2026-11-05"
+   },
    "062040": {
     "name": "산일전기",
     "chg": -17.2,
-    "date": "2026-11-05"
-   },
-   "034730": {
-    "name": "SK",
-    "chg": -6.8,
     "date": "2026-11-05"
    },
    "353200": {
@@ -581,6 +566,11 @@
     "chg": -6.0,
     "date": "2026-11-05"
    },
+   "034730": {
+    "name": "SK",
+    "chg": -6.8,
+    "date": "2026-11-05"
+   },
    "031980": {
     "name": "피에스케이홀딩스",
     "chg": -19.4,
@@ -594,11 +584,6 @@
    "007660": {
     "name": "이수페타시스",
     "chg": -13.5,
-    "date": "2026-11-05"
-   },
-   "010060": {
-    "name": "OCI홀딩스",
-    "chg": 2.0,
     "date": "2026-11-05"
    },
    "000150": {
@@ -618,8 +603,8 @@
    "n": 239,
    "lagCorr": 0.225,
    "lagCorrEx": 0.048,
-   "sameCorr": 0.216,
-   "sameCorrEx": 0.169,
+   "sameCorr": 0.235,
+   "sameCorrEx": 0.17,
    "strength": "weak",
    "sameStrength": "moderate",
    "nextDay": {
@@ -652,8 +637,8 @@
    "n": 239,
    "lagCorr": 0.434,
    "lagCorrEx": 0.344,
-   "sameCorr": 0.279,
-   "sameCorrEx": 0.245,
+   "sameCorr": 0.295,
+   "sameCorrEx": 0.248,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -686,8 +671,8 @@
    "n": 239,
    "lagCorr": 0.345,
    "lagCorrEx": 0.219,
-   "sameCorr": 0.215,
-   "sameCorrEx": 0.167,
+   "sameCorr": 0.235,
+   "sameCorrEx": 0.17,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -718,12 +703,12 @@
    "why": "미국 반도체 지수 ETF",
    "source": "curated",
    "n": 239,
-   "lagCorr": 0.395,
-   "lagCorrEx": 0.275,
-   "sameCorr": 0.298,
-   "sameCorrEx": 0.289,
-   "strength": "strong",
-   "sameStrength": "strong",
+   "lagCorr": 0.107,
+   "lagCorrEx": 0.035,
+   "sameCorr": 0.174,
+   "sameCorrEx": 0.118,
+   "strength": "weak",
+   "sameStrength": "weak",
    "nextDay": {
     "base": {
      "n": 1222,
@@ -732,16 +717,16 @@
      "ret": 0.12
     },
     "up": {
-     "n": 229,
-     "gap": 1.63,
-     "bull": 42.4,
-     "ret": 1.33
+     "n": 231,
+     "gap": 1.61,
+     "bull": 42.0,
+     "ret": 1.31
     },
     "down": {
      "n": 209,
-     "gap": -1.45,
-     "bull": 45.0,
-     "ret": -1.41
+     "gap": -1.43,
+     "bull": 45.5,
+     "ret": -1.39
     }
    }
   },
@@ -754,8 +739,8 @@
    "n": 239,
    "lagCorr": 0.22,
    "lagCorrEx": 0.055,
-   "sameCorr": 0.213,
-   "sameCorrEx": 0.16,
+   "sameCorr": 0.234,
+   "sameCorrEx": 0.162,
    "strength": "weak",
    "sameStrength": "moderate",
    "nextDay": {
@@ -788,8 +773,8 @@
    "n": 239,
    "lagCorr": 0.454,
    "lagCorrEx": 0.376,
-   "sameCorr": 0.333,
-   "sameCorrEx": 0.305,
+   "sameCorr": 0.348,
+   "sameCorrEx": 0.308,
    "strength": "strong",
    "sameStrength": "strong",
    "nextDay": {
@@ -822,8 +807,8 @@
    "n": 239,
    "lagCorr": 0.376,
    "lagCorrEx": 0.271,
-   "sameCorr": 0.205,
-   "sameCorrEx": 0.149,
+   "sameCorr": 0.226,
+   "sameCorrEx": 0.153,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -854,12 +839,12 @@
    "why": "미국 반도체 지수 ETF",
    "source": "curated",
    "n": 239,
-   "lagCorr": 0.413,
-   "lagCorrEx": 0.318,
-   "sameCorr": 0.322,
-   "sameCorrEx": 0.318,
-   "strength": "strong",
-   "sameStrength": "strong",
+   "lagCorr": 0.114,
+   "lagCorrEx": 0.046,
+   "sameCorr": 0.197,
+   "sameCorrEx": 0.141,
+   "strength": "weak",
+   "sameStrength": "moderate",
    "nextDay": {
     "base": {
      "n": 1222,
@@ -868,16 +853,16 @@
      "ret": 0.27
     },
     "up": {
-     "n": 229,
-     "gap": 2.53,
-     "bull": 39.3,
-     "ret": 2.15
+     "n": 231,
+     "gap": 2.48,
+     "bull": 39.4,
+     "ret": 2.1
     },
     "down": {
      "n": 209,
-     "gap": -2.28,
-     "bull": 50.2,
-     "ret": -2.1
+     "gap": -2.27,
+     "bull": 50.7,
+     "ret": -2.08
     }
    }
   },
@@ -890,8 +875,8 @@
    "n": 239,
    "lagCorr": 0.222,
    "lagCorrEx": 0.086,
-   "sameCorr": 0.131,
-   "sameCorrEx": 0.071,
+   "sameCorr": 0.151,
+   "sameCorrEx": 0.073,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -924,8 +909,8 @@
    "n": 239,
    "lagCorr": 0.337,
    "lagCorrEx": 0.253,
-   "sameCorr": 0.153,
-   "sameCorrEx": 0.107,
+   "sameCorr": 0.171,
+   "sameCorrEx": 0.11,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -958,8 +943,8 @@
    "n": 239,
    "lagCorr": 0.338,
    "lagCorrEx": 0.247,
-   "sameCorr": 0.198,
-   "sameCorrEx": 0.16,
+   "sameCorr": 0.215,
+   "sameCorrEx": 0.161,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -992,8 +977,8 @@
    "n": 239,
    "lagCorr": 0.452,
    "lagCorrEx": 0.378,
-   "sameCorr": 0.126,
-   "sameCorrEx": 0.123,
+   "sameCorr": 0.156,
+   "sameCorrEx": 0.127,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -1026,8 +1011,8 @@
    "n": 239,
    "lagCorr": 0.447,
    "lagCorrEx": 0.372,
-   "sameCorr": 0.165,
-   "sameCorrEx": 0.176,
+   "sameCorr": 0.197,
+   "sameCorrEx": 0.182,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -1060,8 +1045,8 @@
    "n": 239,
    "lagCorr": 0.23,
    "lagCorrEx": 0.055,
-   "sameCorr": 0.07,
-   "sameCorrEx": 0.014,
+   "sameCorr": 0.055,
+   "sameCorrEx": 0.01,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1094,8 +1079,8 @@
    "n": 239,
    "lagCorr": 0.139,
    "lagCorrEx": 0.005,
-   "sameCorr": 0.047,
-   "sameCorrEx": 0.007,
+   "sameCorr": 0.041,
+   "sameCorrEx": 0.011,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1128,8 +1113,8 @@
    "n": 239,
    "lagCorr": 0.241,
    "lagCorrEx": 0.136,
-   "sameCorr": 0.149,
-   "sameCorrEx": 0.12,
+   "sameCorr": 0.147,
+   "sameCorrEx": 0.129,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1162,8 +1147,8 @@
    "n": 239,
    "lagCorr": 0.252,
    "lagCorrEx": 0.101,
-   "sameCorr": 0.066,
-   "sameCorrEx": 0.018,
+   "sameCorr": 0.041,
+   "sameCorrEx": 0.013,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1196,8 +1181,8 @@
    "n": 239,
    "lagCorr": 0.145,
    "lagCorrEx": 0.022,
-   "sameCorr": -0.006,
-   "sameCorrEx": -0.046,
+   "sameCorr": -0.016,
+   "sameCorrEx": -0.041,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1230,8 +1215,8 @@
    "n": 239,
    "lagCorr": 0.203,
    "lagCorrEx": 0.083,
-   "sameCorr": 0.011,
-   "sameCorrEx": -0.027,
+   "sameCorr": 0.021,
+   "sameCorrEx": -0.026,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1264,8 +1249,8 @@
    "n": 239,
    "lagCorr": 0.222,
    "lagCorrEx": 0.14,
-   "sameCorr": -0.05,
-   "sameCorrEx": -0.08,
+   "sameCorr": -0.045,
+   "sameCorrEx": -0.081,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1298,8 +1283,8 @@
    "n": 239,
    "lagCorr": 0.266,
    "lagCorrEx": 0.205,
-   "sameCorr": 0.068,
-   "sameCorrEx": 0.054,
+   "sameCorr": 0.065,
+   "sameCorrEx": 0.049,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1332,8 +1317,8 @@
    "n": 239,
    "lagCorr": 0.207,
    "lagCorrEx": 0.098,
-   "sameCorr": -0.003,
-   "sameCorrEx": -0.038,
+   "sameCorr": 0.005,
+   "sameCorrEx": -0.041,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1366,8 +1351,8 @@
    "n": 239,
    "lagCorr": 0.281,
    "lagCorrEx": 0.196,
-   "sameCorr": 0.11,
-   "sameCorrEx": 0.088,
+   "sameCorr": 0.103,
+   "sameCorrEx": 0.075,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1400,7 +1385,7 @@
    "n": 239,
    "lagCorr": 0.18,
    "lagCorrEx": 0.066,
-   "sameCorr": 0.014,
+   "sameCorr": 0.019,
    "sameCorrEx": -0.03,
    "strength": "weak",
    "sameStrength": "weak",
@@ -1434,8 +1419,8 @@
    "n": 239,
    "lagCorr": 0.324,
    "lagCorrEx": 0.252,
-   "sameCorr": 0.104,
-   "sameCorrEx": 0.076,
+   "sameCorr": 0.1,
+   "sameCorrEx": 0.072,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -1468,8 +1453,8 @@
    "n": 239,
    "lagCorr": 0.302,
    "lagCorrEx": 0.235,
-   "sameCorr": 0.1,
-   "sameCorrEx": 0.071,
+   "sameCorr": 0.094,
+   "sameCorrEx": 0.06,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1502,8 +1487,8 @@
    "n": 239,
    "lagCorr": 0.328,
    "lagCorrEx": 0.223,
-   "sameCorr": 0.281,
-   "sameCorrEx": 0.278,
+   "sameCorr": 0.287,
+   "sameCorrEx": 0.266,
    "strength": "moderate",
    "sameStrength": "strong",
    "nextDay": {
@@ -1536,8 +1521,8 @@
    "n": 239,
    "lagCorr": 0.001,
    "lagCorrEx": 0.088,
-   "sameCorr": -0.157,
-   "sameCorrEx": -0.145,
+   "sameCorr": -0.149,
+   "sameCorrEx": -0.136,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1570,8 +1555,8 @@
    "n": 239,
    "lagCorr": 0.049,
    "lagCorrEx": 0.13,
-   "sameCorr": -0.117,
-   "sameCorrEx": -0.101,
+   "sameCorr": -0.109,
+   "sameCorrEx": -0.093,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1604,8 +1589,8 @@
    "n": 239,
    "lagCorr": -0.005,
    "lagCorrEx": 0.064,
-   "sameCorr": -0.125,
-   "sameCorrEx": -0.113,
+   "sameCorr": -0.11,
+   "sameCorrEx": -0.093,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1638,8 +1623,8 @@
    "n": 239,
    "lagCorr": 0.124,
    "lagCorrEx": 0.102,
-   "sameCorr": -0.079,
-   "sameCorrEx": -0.082,
+   "sameCorr": -0.064,
+   "sameCorrEx": -0.073,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1672,8 +1657,8 @@
    "n": 239,
    "lagCorr": 0.203,
    "lagCorrEx": 0.165,
-   "sameCorr": -0.146,
-   "sameCorrEx": -0.133,
+   "sameCorr": -0.137,
+   "sameCorrEx": -0.132,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1706,8 +1691,8 @@
    "n": 239,
    "lagCorr": 0.21,
    "lagCorrEx": 0.219,
-   "sameCorr": 0.234,
-   "sameCorrEx": 0.236,
+   "sameCorr": 0.244,
+   "sameCorrEx": 0.246,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -1740,8 +1725,8 @@
    "n": 239,
    "lagCorr": 0.292,
    "lagCorrEx": 0.281,
-   "sameCorr": 0.073,
-   "sameCorrEx": 0.072,
+   "sameCorr": 0.088,
+   "sameCorrEx": 0.081,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -1774,8 +1759,8 @@
    "n": 239,
    "lagCorr": 0.224,
    "lagCorrEx": 0.208,
-   "sameCorr": 0.021,
-   "sameCorrEx": 0.018,
+   "sameCorr": 0.045,
+   "sameCorrEx": 0.032,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -1808,8 +1793,8 @@
    "n": 239,
    "lagCorr": 0.168,
    "lagCorrEx": 0.182,
-   "sameCorr": 0.162,
-   "sameCorrEx": 0.164,
+   "sameCorr": 0.177,
+   "sameCorrEx": 0.18,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -1842,8 +1827,8 @@
    "n": 239,
    "lagCorr": 0.16,
    "lagCorrEx": 0.124,
-   "sameCorr": 0.072,
-   "sameCorrEx": 0.069,
+   "sameCorr": 0.079,
+   "sameCorrEx": 0.072,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -1876,8 +1861,8 @@
    "n": 239,
    "lagCorr": 0.095,
    "lagCorrEx": 0.11,
-   "sameCorr": 0.165,
-   "sameCorrEx": 0.175,
+   "sameCorr": 0.17,
+   "sameCorrEx": 0.174,
    "strength": "weak",
    "sameStrength": "moderate",
    "nextDay": {
@@ -1910,7 +1895,7 @@
    "n": 239,
    "lagCorr": 0.169,
    "lagCorrEx": 0.084,
-   "sameCorr": 0.1,
+   "sameCorr": 0.103,
    "sameCorrEx": 0.06,
    "strength": "weak",
    "sameStrength": "weak",
@@ -1944,8 +1929,8 @@
    "n": 239,
    "lagCorr": 0.43,
    "lagCorrEx": 0.308,
-   "sameCorr": 0.058,
-   "sameCorrEx": 0.005,
+   "sameCorr": 0.072,
+   "sameCorrEx": 0.003,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -1978,8 +1963,8 @@
    "n": 239,
    "lagCorr": 0.333,
    "lagCorrEx": 0.236,
-   "sameCorr": 0.046,
-   "sameCorrEx": 0.012,
+   "sameCorr": 0.05,
+   "sameCorrEx": 0.007,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2012,8 +1997,8 @@
    "n": 239,
    "lagCorr": 0.452,
    "lagCorrEx": 0.324,
-   "sameCorr": 0.11,
-   "sameCorrEx": 0.062,
+   "sameCorr": 0.119,
+   "sameCorrEx": 0.053,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -2046,8 +2031,8 @@
    "n": 239,
    "lagCorr": 0.342,
    "lagCorrEx": 0.199,
-   "sameCorr": 0.095,
-   "sameCorrEx": 0.049,
+   "sameCorr": 0.105,
+   "sameCorrEx": 0.044,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2080,8 +2065,8 @@
    "n": 239,
    "lagCorr": 0.318,
    "lagCorrEx": 0.227,
-   "sameCorr": 0.077,
-   "sameCorrEx": 0.052,
+   "sameCorr": 0.087,
+   "sameCorrEx": 0.051,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2114,8 +2099,8 @@
    "n": 239,
    "lagCorr": 0.219,
    "lagCorrEx": 0.144,
-   "sameCorr": 0.028,
-   "sameCorrEx": 0.008,
+   "sameCorr": 0.032,
+   "sameCorrEx": 0.005,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2148,8 +2133,8 @@
    "n": 239,
    "lagCorr": 0.351,
    "lagCorrEx": 0.213,
-   "sameCorr": 0.225,
-   "sameCorrEx": 0.157,
+   "sameCorr": 0.241,
+   "sameCorrEx": 0.155,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -2182,8 +2167,8 @@
    "n": 239,
    "lagCorr": 0.366,
    "lagCorrEx": 0.251,
-   "sameCorr": 0.175,
-   "sameCorrEx": 0.108,
+   "sameCorr": 0.189,
+   "sameCorrEx": 0.107,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -2216,8 +2201,8 @@
    "n": 239,
    "lagCorr": 0.354,
    "lagCorrEx": 0.222,
-   "sameCorr": 0.177,
-   "sameCorrEx": 0.173,
+   "sameCorr": 0.203,
+   "sameCorrEx": 0.167,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -2250,8 +2235,8 @@
    "n": 239,
    "lagCorr": 0.343,
    "lagCorrEx": 0.215,
-   "sameCorr": 0.181,
-   "sameCorrEx": 0.175,
+   "sameCorr": 0.212,
+   "sameCorrEx": 0.179,
    "strength": "moderate",
    "sameStrength": "moderate",
    "nextDay": {
@@ -2284,8 +2269,8 @@
    "n": 239,
    "lagCorr": 0.399,
    "lagCorrEx": 0.288,
-   "sameCorr": 0.121,
-   "sameCorrEx": 0.061,
+   "sameCorr": 0.142,
+   "sameCorrEx": 0.058,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -2318,8 +2303,8 @@
    "n": 239,
    "lagCorr": 0.148,
    "lagCorrEx": 0.146,
-   "sameCorr": -0.06,
-   "sameCorrEx": -0.059,
+   "sameCorr": -0.064,
+   "sameCorrEx": -0.061,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2352,8 +2337,8 @@
    "n": 239,
    "lagCorr": 0.198,
    "lagCorrEx": 0.199,
-   "sameCorr": -0.004,
-   "sameCorrEx": 0.002,
+   "sameCorr": -0.007,
+   "sameCorrEx": 0.001,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2386,8 +2371,8 @@
    "n": 239,
    "lagCorr": 0.135,
    "lagCorrEx": 0.105,
-   "sameCorr": 0.036,
-   "sameCorrEx": 0.032,
+   "sameCorr": 0.011,
+   "sameCorrEx": 0.021,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2420,8 +2405,8 @@
    "n": 239,
    "lagCorr": 0.264,
    "lagCorrEx": 0.195,
-   "sameCorr": -0.069,
-   "sameCorrEx": -0.091,
+   "sameCorr": -0.107,
+   "sameCorrEx": -0.102,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2454,8 +2439,8 @@
    "n": 239,
    "lagCorr": 0.008,
    "lagCorrEx": -0.103,
-   "sameCorr": -0.105,
-   "sameCorrEx": -0.167,
+   "sameCorr": -0.091,
+   "sameCorrEx": -0.171,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2488,8 +2473,8 @@
    "n": 239,
    "lagCorr": 0.033,
    "lagCorrEx": -0.06,
-   "sameCorr": -0.076,
-   "sameCorrEx": -0.117,
+   "sameCorr": -0.069,
+   "sameCorrEx": -0.118,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2522,8 +2507,8 @@
    "n": 239,
    "lagCorr": 0.127,
    "lagCorrEx": 0.023,
-   "sameCorr": -0.015,
-   "sameCorrEx": -0.079,
+   "sameCorr": -0.017,
+   "sameCorrEx": -0.074,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2556,8 +2541,8 @@
    "n": 239,
    "lagCorr": 0.16,
    "lagCorrEx": 0.01,
-   "sameCorr": -0.014,
-   "sameCorrEx": -0.081,
+   "sameCorr": -0.024,
+   "sameCorrEx": -0.055,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2590,8 +2575,8 @@
    "n": 239,
    "lagCorr": 0.216,
    "lagCorrEx": 0.069,
-   "sameCorr": 0.007,
-   "sameCorrEx": -0.011,
+   "sameCorr": -0.016,
+   "sameCorrEx": 0.005,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2624,8 +2609,8 @@
    "n": 239,
    "lagCorr": 0.177,
    "lagCorrEx": 0.141,
-   "sameCorr": 0.094,
-   "sameCorrEx": 0.076,
+   "sameCorr": 0.099,
+   "sameCorrEx": 0.091,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2692,8 +2677,8 @@
    "n": 239,
    "lagCorr": 0.353,
    "lagCorrEx": 0.283,
-   "sameCorr": 0.08,
-   "sameCorrEx": 0.08,
+   "sameCorr": 0.079,
+   "sameCorrEx": 0.077,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -2726,8 +2711,8 @@
    "n": 239,
    "lagCorr": 0.121,
    "lagCorrEx": 0.2,
-   "sameCorr": 0.101,
-   "sameCorrEx": 0.103,
+   "sameCorr": 0.111,
+   "sameCorrEx": 0.125,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2760,8 +2745,8 @@
    "n": 239,
    "lagCorr": 0.135,
    "lagCorrEx": 0.169,
-   "sameCorr": -0.029,
-   "sameCorrEx": -0.031,
+   "sameCorr": -0.015,
+   "sameCorrEx": -0.012,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2794,8 +2779,8 @@
    "n": 239,
    "lagCorr": 0.214,
    "lagCorrEx": 0.226,
-   "sameCorr": -0.003,
-   "sameCorrEx": -0.003,
+   "sameCorr": 0.008,
+   "sameCorrEx": 0.011,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
@@ -2829,7 +2814,7 @@
    "lagCorr": 0.146,
    "lagCorrEx": 0.072,
    "sameCorr": -0.027,
-   "sameCorrEx": -0.091,
+   "sameCorrEx": -0.089,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2862,7 +2847,7 @@
    "n": 239,
    "lagCorr": 0.199,
    "lagCorrEx": 0.139,
-   "sameCorr": 0.106,
+   "sameCorr": 0.11,
    "sameCorrEx": 0.065,
    "strength": "moderate",
    "sameStrength": "weak",
@@ -2896,8 +2881,8 @@
    "n": 239,
    "lagCorr": 0.362,
    "lagCorrEx": 0.259,
-   "sameCorr": 0.011,
-   "sameCorrEx": -0.014,
+   "sameCorr": 0.005,
+   "sameCorrEx": -0.008,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -2930,8 +2915,8 @@
    "n": 239,
    "lagCorr": 0.389,
    "lagCorrEx": 0.292,
-   "sameCorr": 0.025,
-   "sameCorrEx": 0.003,
+   "sameCorr": 0.02,
+   "sameCorrEx": 0.011,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -2964,8 +2949,8 @@
    "n": 239,
    "lagCorr": 0.145,
    "lagCorrEx": 0.037,
-   "sameCorr": -0.001,
-   "sameCorrEx": -0.018,
+   "sameCorr": -0.005,
+   "sameCorrEx": -0.014,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -2998,8 +2983,8 @@
    "n": 239,
    "lagCorr": 0.137,
    "lagCorrEx": -0.0,
-   "sameCorr": 0.141,
-   "sameCorrEx": 0.086,
+   "sameCorr": 0.121,
+   "sameCorrEx": 0.08,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -3032,8 +3017,8 @@
    "n": 239,
    "lagCorr": 0.19,
    "lagCorrEx": 0.067,
-   "sameCorr": 0.093,
-   "sameCorrEx": 0.083,
+   "sameCorr": 0.077,
+   "sameCorrEx": 0.079,
    "strength": "weak",
    "sameStrength": "weak",
    "nextDay": {
@@ -3066,8 +3051,8 @@
    "n": 239,
    "lagCorr": 0.502,
    "lagCorrEx": 0.445,
-   "sameCorr": 0.097,
-   "sameCorrEx": 0.083,
+   "sameCorr": 0.098,
+   "sameCorrEx": 0.113,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3100,8 +3085,8 @@
    "n": 239,
    "lagCorr": 0.453,
    "lagCorrEx": 0.42,
-   "sameCorr": 0.064,
-   "sameCorrEx": 0.075,
+   "sameCorr": 0.108,
+   "sameCorrEx": 0.081,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3134,8 +3119,8 @@
    "n": 239,
    "lagCorr": 0.474,
    "lagCorrEx": 0.413,
-   "sameCorr": 0.067,
-   "sameCorrEx": 0.048,
+   "sameCorr": 0.068,
+   "sameCorrEx": 0.078,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3168,8 +3153,8 @@
    "n": 239,
    "lagCorr": 0.442,
    "lagCorrEx": 0.411,
-   "sameCorr": 0.07,
-   "sameCorrEx": 0.084,
+   "sameCorr": 0.118,
+   "sameCorrEx": 0.094,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3202,8 +3187,8 @@
    "n": 239,
    "lagCorr": 0.508,
    "lagCorrEx": 0.398,
-   "sameCorr": 0.125,
-   "sameCorrEx": 0.044,
+   "sameCorr": 0.164,
+   "sameCorrEx": 0.05,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3236,8 +3221,8 @@
    "n": 239,
    "lagCorr": 0.499,
    "lagCorrEx": 0.396,
-   "sameCorr": 0.249,
-   "sameCorrEx": 0.204,
+   "sameCorr": 0.267,
+   "sameCorrEx": 0.207,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3270,8 +3255,8 @@
    "n": 239,
    "lagCorr": 0.503,
    "lagCorrEx": 0.39,
-   "sameCorr": 0.153,
-   "sameCorrEx": 0.067,
+   "sameCorr": 0.192,
+   "sameCorrEx": 0.07,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3297,15 +3282,15 @@
   },
   {
    "kr": "402340",
-   "us": "SOXX",
+   "us": "LRCX",
    "type": "auto",
-   "why": "지주회사 ↔ Semiconductors",
+   "why": "지주회사 ↔ Industrial Machinery/Components",
    "source": "auto",
    "n": 239,
-   "lagCorr": 0.497,
+   "lagCorr": 0.492,
    "lagCorrEx": 0.372,
-   "sameCorr": 0.277,
-   "sameCorrEx": 0.247,
+   "sameCorr": 0.295,
+   "sameCorrEx": 0.241,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3316,16 +3301,50 @@
      "ret": 0.27
     },
     "up": {
-     "n": 228,
-     "gap": 1.89,
-     "bull": 56.6,
-     "ret": 2.45
+     "n": 279,
+     "gap": 1.68,
+     "bull": 55.9,
+     "ret": 2.4
     },
     "down": {
-     "n": 207,
-     "gap": -1.99,
-     "bull": 43.5,
-     "ret": -2.24
+     "n": 244,
+     "gap": -1.55,
+     "bull": 41.4,
+     "ret": -1.92
+    }
+   }
+  },
+  {
+   "kr": "180640",
+   "us": "SOXX",
+   "type": "auto",
+   "why": "항공/운송 ↔ Semiconductors",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.408,
+   "lagCorrEx": 0.368,
+   "sameCorr": 0.046,
+   "sameCorrEx": 0.039,
+   "strength": "strong",
+   "sameStrength": "weak",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": -0.01,
+     "bull": 50.6,
+     "ret": 0.17
+    },
+    "up": {
+     "n": 231,
+     "gap": 0.63,
+     "bull": 60.2,
+     "ret": 1.39
+    },
+    "down": {
+     "n": 209,
+     "gap": -0.39,
+     "bull": 44.0,
+     "ret": -0.71
     }
    }
   },
@@ -3338,8 +3357,8 @@
    "n": 239,
    "lagCorr": 0.488,
    "lagCorrEx": 0.367,
-   "sameCorr": 0.191,
-   "sameCorrEx": 0.167,
+   "sameCorr": 0.2,
+   "sameCorrEx": 0.155,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3372,8 +3391,8 @@
    "n": 239,
    "lagCorr": 0.454,
    "lagCorrEx": 0.367,
-   "sameCorr": 0.148,
-   "sameCorrEx": 0.107,
+   "sameCorr": 0.197,
+   "sameCorrEx": 0.126,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3398,40 +3417,6 @@
    }
   },
   {
-   "kr": "034730",
-   "us": "TER",
-   "type": "auto",
-   "why": "지주회사 ↔ Semiconductor Materials & Equipment",
-   "source": "auto",
-   "n": 239,
-   "lagCorr": 0.451,
-   "lagCorrEx": 0.35,
-   "sameCorr": 0.229,
-   "sameCorrEx": 0.225,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.06,
-     "bull": 48.6,
-     "ret": 0.1
-    },
-    "up": {
-     "n": 275,
-     "gap": 0.92,
-     "bull": 51.3,
-     "ret": 1.15
-    },
-    "down": {
-     "n": 254,
-     "gap": -1.01,
-     "bull": 47.2,
-     "ret": -1.0
-    }
-   }
-  },
-  {
    "kr": "267260",
    "us": "LRCX",
    "type": "auto",
@@ -3440,8 +3425,8 @@
    "n": 239,
    "lagCorr": 0.465,
    "lagCorrEx": 0.345,
-   "sameCorr": 0.195,
-   "sameCorrEx": 0.112,
+   "sameCorr": 0.218,
+   "sameCorrEx": 0.115,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3474,8 +3459,8 @@
    "n": 239,
    "lagCorr": 0.333,
    "lagCorrEx": 0.345,
-   "sameCorr": 0.055,
-   "sameCorrEx": 0.055,
+   "sameCorr": 0.062,
+   "sameCorrEx": 0.066,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3508,8 +3493,8 @@
    "n": 239,
    "lagCorr": 0.427,
    "lagCorrEx": 0.345,
-   "sameCorr": 0.143,
-   "sameCorrEx": 0.147,
+   "sameCorr": 0.17,
+   "sameCorrEx": 0.145,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3542,8 +3527,8 @@
    "n": 239,
    "lagCorr": 0.413,
    "lagCorrEx": 0.345,
-   "sameCorr": 0.164,
-   "sameCorrEx": 0.166,
+   "sameCorr": 0.17,
+   "sameCorrEx": 0.156,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3576,8 +3561,8 @@
    "n": 239,
    "lagCorr": 0.417,
    "lagCorrEx": 0.339,
-   "sameCorr": 0.282,
-   "sameCorrEx": 0.245,
+   "sameCorr": 0.298,
+   "sameCorrEx": 0.248,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3610,10 +3595,10 @@
    "n": 239,
    "lagCorr": 0.4,
    "lagCorrEx": 0.339,
-   "sameCorr": 0.159,
-   "sameCorrEx": 0.122,
+   "sameCorr": 0.208,
+   "sameCorrEx": 0.13,
    "strength": "strong",
-   "sameStrength": "weak",
+   "sameStrength": "moderate",
    "nextDay": {
     "base": {
      "n": 1222,
@@ -3636,40 +3621,6 @@
    }
   },
   {
-   "kr": "062040",
-   "us": "ALAB",
-   "type": "auto",
-   "why": "전기장비 ↔ Semiconductors",
-   "source": "auto",
-   "n": 239,
-   "lagCorr": 0.44,
-   "lagCorrEx": 0.338,
-   "sameCorr": 0.073,
-   "sameCorrEx": 0.015,
-   "strength": "strong",
-   "sameStrength": "weak",
-   "nextDay": {
-    "base": {
-     "n": 550,
-     "gap": 0.41,
-     "bull": 44.0,
-     "ret": 0.3
-    },
-    "up": {
-     "n": 193,
-     "gap": 1.49,
-     "bull": 42.0,
-     "ret": 1.44
-    },
-    "down": {
-     "n": 164,
-     "gap": -0.95,
-     "bull": 39.6,
-     "ret": -1.54
-    }
-   }
-  },
-  {
    "kr": "240810",
    "us": "KLAC",
    "type": "auto",
@@ -3678,8 +3629,8 @@
    "n": 239,
    "lagCorr": 0.42,
    "lagCorrEx": 0.338,
-   "sameCorr": 0.21,
-   "sameCorrEx": 0.225,
+   "sameCorr": 0.236,
+   "sameCorrEx": 0.227,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3712,7 +3663,7 @@
    "n": 239,
    "lagCorr": 0.435,
    "lagCorrEx": 0.335,
-   "sameCorr": 0.266,
+   "sameCorr": 0.278,
    "sameCorrEx": 0.204,
    "strength": "strong",
    "sameStrength": "moderate",
@@ -3738,40 +3689,6 @@
    }
   },
   {
-   "kr": "267260",
-   "us": "ALAB",
-   "type": "auto",
-   "why": "전력기기 ↔ Semiconductors",
-   "source": "auto",
-   "n": 239,
-   "lagCorr": 0.443,
-   "lagCorrEx": 0.335,
-   "sameCorr": 0.104,
-   "sameCorrEx": 0.021,
-   "strength": "strong",
-   "sameStrength": "weak",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.22,
-     "bull": 47.2,
-     "ret": 0.31
-    },
-    "up": {
-     "n": 213,
-     "gap": 1.4,
-     "bull": 48.4,
-     "ret": 1.35
-    },
-    "down": {
-     "n": 191,
-     "gap": -0.95,
-     "bull": 37.2,
-     "ret": -1.35
-    }
-   }
-  },
-  {
    "kr": "032830",
    "us": "MU",
    "type": "auto",
@@ -3780,8 +3697,8 @@
    "n": 239,
    "lagCorr": 0.437,
    "lagCorrEx": 0.333,
-   "sameCorr": 0.163,
-   "sameCorrEx": 0.14,
+   "sameCorr": 0.179,
+   "sameCorrEx": 0.144,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3806,6 +3723,40 @@
    }
   },
   {
+   "kr": "267260",
+   "us": "ASML",
+   "type": "auto",
+   "why": "전력기기 ↔ Industrial Machinery/Components",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.455,
+   "lagCorrEx": 0.333,
+   "sameCorr": 0.184,
+   "sameCorrEx": 0.074,
+   "strength": "strong",
+   "sameStrength": "weak",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.22,
+     "bull": 47.2,
+     "ret": 0.31
+    },
+    "up": {
+     "n": 247,
+     "gap": 1.34,
+     "bull": 46.6,
+     "ret": 1.16
+    },
+    "down": {
+     "n": 229,
+     "gap": -1.08,
+     "bull": 46.7,
+     "ret": -0.96
+    }
+   }
+  },
+  {
    "kr": "010950",
    "us": "EQNR",
    "type": "auto",
@@ -3814,8 +3765,8 @@
    "n": 239,
    "lagCorr": 0.291,
    "lagCorrEx": 0.332,
-   "sameCorr": -0.009,
-   "sameCorrEx": -0.009,
+   "sameCorr": -0.007,
+   "sameCorrEx": 0.005,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3848,7 +3799,7 @@
    "n": 239,
    "lagCorr": 0.407,
    "lagCorrEx": 0.331,
-   "sameCorr": 0.251,
+   "sameCorr": 0.272,
    "sameCorrEx": 0.243,
    "strength": "strong",
    "sameStrength": "moderate",
@@ -3874,40 +3825,6 @@
    }
   },
   {
-   "kr": "009150",
-   "us": "ALAB",
-   "type": "auto",
-   "why": "전자부품 ↔ Semiconductors",
-   "source": "auto",
-   "n": 239,
-   "lagCorr": 0.432,
-   "lagCorrEx": 0.331,
-   "sameCorr": 0.204,
-   "sameCorrEx": 0.143,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.24,
-     "bull": 44.3,
-     "ret": 0.2
-    },
-    "up": {
-     "n": 213,
-     "gap": 1.59,
-     "bull": 41.8,
-     "ret": 1.62
-    },
-    "down": {
-     "n": 191,
-     "gap": -1.04,
-     "bull": 47.6,
-     "ret": -1.14
-    }
-   }
-  },
-  {
    "kr": "034730",
    "us": "SNDK",
    "type": "auto",
@@ -3916,8 +3833,8 @@
    "n": 239,
    "lagCorr": 0.422,
    "lagCorrEx": 0.329,
-   "sameCorr": 0.212,
-   "sameCorrEx": 0.199,
+   "sameCorr": 0.228,
+   "sameCorrEx": 0.203,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -3942,6 +3859,40 @@
    }
   },
   {
+   "kr": "034730",
+   "us": "WDC",
+   "type": "auto",
+   "why": "지주회사 ↔ Electronic Components",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.428,
+   "lagCorrEx": 0.329,
+   "sameCorr": 0.278,
+   "sameCorrEx": 0.263,
+   "strength": "strong",
+   "sameStrength": "strong",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.06,
+     "bull": 48.6,
+     "ret": 0.1
+    },
+    "up": {
+     "n": 270,
+     "gap": 0.88,
+     "bull": 51.9,
+     "ret": 1.2
+    },
+    "down": {
+     "n": 248,
+     "gap": -0.89,
+     "bull": 45.6,
+     "ret": -1.08
+    }
+   }
+  },
+  {
    "kr": "031980",
    "us": "AMAT",
    "type": "auto",
@@ -3950,8 +3901,8 @@
    "n": 239,
    "lagCorr": 0.37,
    "lagCorrEx": 0.329,
-   "sameCorr": 0.093,
-   "sameCorrEx": 0.087,
+   "sameCorr": 0.138,
+   "sameCorrEx": 0.093,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -3984,10 +3935,10 @@
    "n": 239,
    "lagCorr": 0.374,
    "lagCorrEx": 0.327,
-   "sameCorr": 0.145,
-   "sameCorrEx": 0.125,
+   "sameCorr": 0.187,
+   "sameCorrEx": 0.133,
    "strength": "strong",
-   "sameStrength": "weak",
+   "sameStrength": "moderate",
    "nextDay": {
     "base": {
      "n": 1222,
@@ -4018,8 +3969,8 @@
    "n": 239,
    "lagCorr": 0.412,
    "lagCorrEx": 0.326,
-   "sameCorr": 0.239,
-   "sameCorrEx": 0.2,
+   "sameCorr": 0.256,
+   "sameCorrEx": 0.203,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -4052,8 +4003,8 @@
    "n": 239,
    "lagCorr": 0.431,
    "lagCorrEx": 0.326,
-   "sameCorr": 0.158,
-   "sameCorrEx": 0.066,
+   "sameCorr": 0.195,
+   "sameCorrEx": 0.068,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4078,40 +4029,6 @@
    }
   },
   {
-   "kr": "010120",
-   "us": "ALAB",
-   "type": "auto",
-   "why": "전력기기 ↔ Semiconductors",
-   "source": "auto",
-   "n": 239,
-   "lagCorr": 0.431,
-   "lagCorrEx": 0.325,
-   "sameCorr": 0.053,
-   "sameCorrEx": 0.026,
-   "strength": "strong",
-   "sameStrength": "weak",
-   "nextDay": {
-    "base": {
-     "n": 1218,
-     "gap": 0.32,
-     "bull": 45.0,
-     "ret": 0.27
-    },
-    "up": {
-     "n": 210,
-     "gap": 1.56,
-     "bull": 43.8,
-     "ret": 1.45
-    },
-    "down": {
-     "n": 191,
-     "gap": -0.73,
-     "bull": 39.8,
-     "ret": -1.2
-    }
-   }
-  },
-  {
    "kr": "005930",
    "us": "WDC",
    "type": "auto",
@@ -4120,8 +4037,8 @@
    "n": 239,
    "lagCorr": 0.416,
    "lagCorrEx": 0.324,
-   "sameCorr": 0.331,
-   "sameCorrEx": 0.306,
+   "sameCorr": 0.345,
+   "sameCorrEx": 0.308,
    "strength": "strong",
    "sameStrength": "strong",
    "nextDay": {
@@ -4146,40 +4063,6 @@
    }
   },
   {
-   "kr": "010060",
-   "us": "LABT",
-   "type": "auto",
-   "why": "지주회사 ↔ Biotechnology: Pharmaceutical Preparations",
-   "source": "auto",
-   "n": 124,
-   "lagCorr": 0.322,
-   "lagCorrEx": 0.322,
-   "sameCorr": 0.06,
-   "sameCorrEx": 0.059,
-   "strength": "strong",
-   "sameStrength": "weak",
-   "nextDay": {
-    "base": {
-     "n": 1201,
-     "gap": 0.24,
-     "bull": 42.5,
-     "ret": 0.16
-    },
-    "up": {
-     "n": 35,
-     "gap": 1.17,
-     "bull": 37.1,
-     "ret": 0.76
-    },
-    "down": {
-     "n": 68,
-     "gap": 0.06,
-     "bull": 36.8,
-     "ret": -0.7
-    }
-   }
-  },
-  {
    "kr": "039030",
    "us": "ASML",
    "type": "auto",
@@ -4188,8 +4071,8 @@
    "n": 239,
    "lagCorr": 0.371,
    "lagCorrEx": 0.322,
-   "sameCorr": 0.166,
-   "sameCorrEx": 0.152,
+   "sameCorr": 0.199,
+   "sameCorrEx": 0.149,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
@@ -4222,8 +4105,8 @@
    "n": 239,
    "lagCorr": 0.414,
    "lagCorrEx": 0.319,
-   "sameCorr": 0.192,
-   "sameCorrEx": 0.124,
+   "sameCorr": 0.206,
+   "sameCorrEx": 0.125,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4256,8 +4139,8 @@
    "n": 239,
    "lagCorr": 0.383,
    "lagCorrEx": 0.317,
-   "sameCorr": 0.154,
-   "sameCorrEx": 0.117,
+   "sameCorr": 0.199,
+   "sameCorrEx": 0.123,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4290,8 +4173,8 @@
    "n": 239,
    "lagCorr": 0.413,
    "lagCorrEx": 0.313,
-   "sameCorr": 0.086,
-   "sameCorrEx": 0.054,
+   "sameCorr": 0.104,
+   "sameCorrEx": 0.058,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4324,8 +4207,8 @@
    "n": 239,
    "lagCorr": 0.361,
    "lagCorrEx": 0.311,
-   "sameCorr": 0.029,
-   "sameCorrEx": 0.021,
+   "sameCorr": 0.014,
+   "sameCorrEx": 0.048,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4358,8 +4241,8 @@
    "n": 239,
    "lagCorr": 0.411,
    "lagCorrEx": 0.31,
-   "sameCorr": 0.046,
-   "sameCorrEx": 0.028,
+   "sameCorr": 0.069,
+   "sameCorrEx": 0.026,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4392,8 +4275,8 @@
    "n": 239,
    "lagCorr": 0.317,
    "lagCorrEx": 0.307,
-   "sameCorr": 0.019,
-   "sameCorrEx": 0.009,
+   "sameCorr": 0.031,
+   "sameCorrEx": -0.009,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
@@ -4414,6 +4297,108 @@
      "gap": -0.17,
      "bull": 47.4,
      "ret": -0.72
+    }
+   }
+  },
+  {
+   "kr": "047810",
+   "us": "URA",
+   "type": "auto",
+   "why": "방산 ↔ Uranium / Nuclear",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.379,
+   "lagCorrEx": 0.307,
+   "sameCorr": 0.057,
+   "sameCorrEx": -0.03,
+   "strength": "strong",
+   "sameStrength": "weak",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.17,
+     "bull": 45.3,
+     "ret": 0.15
+    },
+    "up": {
+     "n": 241,
+     "gap": 0.6,
+     "bull": 49.0,
+     "ret": 0.83
+    },
+    "down": {
+     "n": 251,
+     "gap": -0.36,
+     "bull": 44.2,
+     "ret": -0.6
+    }
+   }
+  },
+  {
+   "kr": "010120",
+   "us": "SMH",
+   "type": "auto",
+   "why": "전력기기 ↔ Semiconductors",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.437,
+   "lagCorrEx": 0.304,
+   "sameCorr": 0.171,
+   "sameCorrEx": 0.13,
+   "strength": "strong",
+   "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1218,
+     "gap": 0.32,
+     "bull": 45.0,
+     "ret": 0.27
+    },
+    "up": {
+     "n": 225,
+     "gap": 1.56,
+     "bull": 42.2,
+     "ret": 1.52
+    },
+    "down": {
+     "n": 196,
+     "gap": -1.43,
+     "bull": 49.5,
+     "ret": -1.49
+    }
+   }
+  },
+  {
+   "kr": "042700",
+   "us": "LRCX",
+   "type": "auto",
+   "why": "반도체 ↔ Industrial Machinery/Components",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.384,
+   "lagCorrEx": 0.304,
+   "sameCorr": 0.223,
+   "sameCorrEx": 0.172,
+   "strength": "strong",
+   "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1218,
+     "gap": 0.29,
+     "bull": 42.5,
+     "ret": 0.3
+    },
+    "up": {
+     "n": 282,
+     "gap": 2.2,
+     "bull": 36.5,
+     "ret": 1.91
+    },
+    "down": {
+     "n": 243,
+     "gap": -1.82,
+     "bull": 50.6,
+     "ret": -1.57
     }
    }
   }

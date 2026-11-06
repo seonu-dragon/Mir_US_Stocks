@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-06 06:38:03 KST",
+  "updatedAtKst": "2026-11-06 13:42:40 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 7715,
@@ -56,18 +56,6 @@
     },
     {
       "rank": 5,
-      "id": "house-rob-bresnahan",
-      "name": "Rob Bresnahan",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 24.08,
-      "buyCount": 111,
-      "sellCount": 165,
-      "tradeCount": 276,
-      "committees": []
-    },
-    {
-      "rank": 6,
       "id": "house-richard-dean-mccormick",
       "name": "Richard Dean McCormick",
       "chamber": "House",
@@ -79,7 +67,7 @@
       "committees": []
     },
     {
-      "rank": 7,
+      "rank": 6,
       "id": "house-valerie-hoyle",
       "name": "Valerie Hoyle",
       "chamber": "House",
@@ -91,7 +79,7 @@
       "committees": []
     },
     {
-      "rank": 8,
+      "rank": 7,
       "id": "house-jared-moskowitz",
       "name": "Jared Moskowitz",
       "chamber": "House",
@@ -103,16 +91,30 @@
       "committees": []
     },
     {
-      "rank": 9,
+      "rank": 8,
       "id": "house-lloyd-doggett",
       "name": "Lloyd Doggett",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 12.4,
+      "estReturnPct": 12.66,
       "buyCount": 70,
       "sellCount": 0,
       "tradeCount": 70,
       "committees": []
+    },
+    {
+      "rank": 9,
+      "id": "house-josh-gottheimer",
+      "name": "Josh Gottheimer",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 9.71,
+      "buyCount": 403,
+      "sellCount": 141,
+      "tradeCount": 545,
+      "committees": [
+        "Financial Services"
+      ]
     },
     {
       "rank": 10,
@@ -128,25 +130,11 @@
     },
     {
       "rank": 11,
-      "id": "house-josh-gottheimer",
-      "name": "Josh Gottheimer",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 9.25,
-      "buyCount": 403,
-      "sellCount": 141,
-      "tradeCount": 545,
-      "committees": [
-        "Financial Services"
-      ]
-    },
-    {
-      "rank": 12,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 8.87,
+      "estReturnPct": 8.81,
       "buyCount": 201,
       "sellCount": 5,
       "tradeCount": 206,
@@ -155,7 +143,7 @@
       ]
     },
     {
-      "rank": 13,
+      "rank": 12,
       "id": "house-cliff-bentz",
       "name": "Cliff Bentz",
       "chamber": "House",
@@ -167,31 +155,19 @@
       "committees": []
     },
     {
+      "rank": 13,
+      "id": "house-rob-bresnahan",
+      "name": "Rob Bresnahan",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 5.76,
+      "buyCount": 111,
+      "sellCount": 165,
+      "tradeCount": 276,
+      "committees": []
+    },
+    {
       "rank": 14,
-      "id": "house-thomas-h-kean",
-      "name": "Thomas H. Kean",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 4.99,
-      "buyCount": 44,
-      "sellCount": 14,
-      "tradeCount": 69,
-      "committees": []
-    },
-    {
-      "rank": 15,
-      "id": "house-lisa-mcclain",
-      "name": "Lisa McClain",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 4.89,
-      "buyCount": 340,
-      "sellCount": 332,
-      "tradeCount": 672,
-      "committees": []
-    },
-    {
-      "rank": 16,
       "id": "house-david-j-taylor",
       "name": "David J. Taylor",
       "chamber": "House",
@@ -203,7 +179,19 @@
       "committees": []
     },
     {
-      "rank": 17,
+      "rank": 15,
+      "id": "house-lisa-mcclain",
+      "name": "Lisa McClain",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 4.69,
+      "buyCount": 340,
+      "sellCount": 332,
+      "tradeCount": 672,
+      "committees": []
+    },
+    {
+      "rank": 16,
       "id": "house-byron-donalds",
       "name": "Byron Donalds",
       "chamber": "House",
@@ -215,7 +203,7 @@
       "committees": []
     },
     {
-      "rank": 18,
+      "rank": 17,
       "id": "house-sheri-biggs",
       "name": "Sheri Biggs",
       "chamber": "House",
@@ -227,7 +215,7 @@
       "committees": []
     },
     {
-      "rank": 19,
+      "rank": 18,
       "id": "house-julie-johnson",
       "name": "Julie Johnson",
       "chamber": "House",
@@ -239,7 +227,7 @@
       "committees": []
     },
     {
-      "rank": 20,
+      "rank": 19,
       "id": "house-michael-rulli",
       "name": "Michael Rulli",
       "chamber": "House",
@@ -251,7 +239,7 @@
       "committees": []
     },
     {
-      "rank": 21,
+      "rank": 20,
       "id": "house-dan-newhouse",
       "name": "Dan Newhouse",
       "chamber": "House",
@@ -263,7 +251,7 @@
       "committees": []
     },
     {
-      "rank": 22,
+      "rank": 21,
       "id": "house-dwight-evans",
       "name": "Dwight Evans",
       "chamber": "House",
@@ -275,7 +263,7 @@
       "committees": []
     },
     {
-      "rank": 23,
+      "rank": 22,
       "id": "house-gilbert-cisneros",
       "name": "Gilbert Cisneros",
       "chamber": "House",
@@ -284,6 +272,18 @@
       "buyCount": 546,
       "sellCount": 135,
       "tradeCount": 685,
+      "committees": []
+    },
+    {
+      "rank": 23,
+      "id": "house-thomas-h-kean",
+      "name": "Thomas H. Kean",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": -0.86,
+      "buyCount": 44,
+      "sellCount": 14,
+      "tradeCount": 69,
       "committees": []
     },
     {
@@ -1152,7 +1152,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 4.89
+      "estReturnPct": 4.69
     },
     {
       "id": "house-josh-gottheimer",
@@ -1508,7 +1508,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 9.25
+      "estReturnPct": 9.71
     },
     {
       "id": "house-daniel-goldman",
@@ -2216,7 +2216,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 24.08
+      "estReturnPct": 5.76
     },
     {
       "id": "house-kevin-hern",
@@ -3988,7 +3988,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 8.87
+      "estReturnPct": 8.81
     },
     {
       "id": "house-virginia-foxx",
@@ -10360,7 +10360,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 12.4
+      "estReturnPct": 12.66
     },
     {
       "id": "house-thomas-h-kean",
@@ -10714,7 +10714,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 4.99
+      "estReturnPct": -0.86
     },
     {
       "id": "house-maria-elvira-salazar",
@@ -163983,26 +163983,6 @@
         "party": "D"
       },
       {
-        "name": "Josh Gottheimer",
-        "tx": {
-          "n": 282,
-          "avgExcess": 1.49,
-          "medianExcess": 0.25,
-          "winRate": 50.4
-        },
-        "disc": {
-          "n": 282,
-          "avgExcess": 2.09,
-          "medianExcess": -0.88,
-          "winRate": 49.3
-        },
-        "buyAvgExcess": -1.16,
-        "lagDays": 21,
-        "id": "house-josh-gottheimer",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "John James",
         "tx": {
           "n": 114,
@@ -164021,6 +164001,26 @@
         "id": "house-john-james",
         "chamber": "House",
         "party": "R"
+      },
+      {
+        "name": "Josh Gottheimer",
+        "tx": {
+          "n": 282,
+          "avgExcess": 1.48,
+          "medianExcess": 0.25,
+          "winRate": 50.4
+        },
+        "disc": {
+          "n": 282,
+          "avgExcess": 2.08,
+          "medianExcess": -0.89,
+          "winRate": 49.3
+        },
+        "buyAvgExcess": -1.16,
+        "lagDays": 21,
+        "id": "house-josh-gottheimer",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Kathy Manning",
@@ -164357,6 +164357,26 @@
         "party": "D"
       },
       {
+        "name": "Gilbert Cisneros",
+        "tx": {
+          "n": 654,
+          "avgExcess": -3.34,
+          "medianExcess": -3.47,
+          "winRate": 44.8
+        },
+        "disc": {
+          "n": 619,
+          "avgExcess": -3.97,
+          "medianExcess": -4.22,
+          "winRate": 43.6
+        },
+        "buyAvgExcess": -4.28,
+        "lagDays": 23,
+        "id": "house-gilbert-cisneros",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
         "name": "Maria Elvira Salazar",
         "tx": {
           "n": 60,
@@ -164375,26 +164395,6 @@
         "id": "house-maria-elvira-salazar",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Gilbert Cisneros",
-        "tx": {
-          "n": 654,
-          "avgExcess": -3.38,
-          "medianExcess": -3.82,
-          "winRate": 44.6
-        },
-        "disc": {
-          "n": 619,
-          "avgExcess": -4.02,
-          "medianExcess": -4.22,
-          "winRate": 43.6
-        },
-        "buyAvgExcess": -4.32,
-        "lagDays": 23,
-        "id": "house-gilbert-cisneros",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "Julia Letlow",
@@ -164610,13 +164610,13 @@
         "name": "Michael Patrick Guest",
         "tx": {
           "n": 10,
-          "avgExcess": -9.54,
+          "avgExcess": -9.57,
           "medianExcess": -10.28,
           "winRate": 40.0
         },
         "disc": {
           "n": 10,
-          "avgExcess": -15.37,
+          "avgExcess": -15.4,
           "medianExcess": -16.39,
           "winRate": 40.0
         },

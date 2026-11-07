@@ -1,18 +1,18 @@
 {
   "market": "us",
-  "updatedAtKst": "2026-11-07 06:31 KST",
-  "count": 83,
+  "updatedAtKst": "2026-11-08 06:31 KST",
+  "count": 84,
   "source": "Yahoo Finance via yfinance (build snapshot)",
   "earnings": [
-    {
-      "ticker": "BRK.B",
-      "nextDate": "2026-11-07",
-      "epsEstimate": 6.1353
-    },
     {
       "ticker": "BRK.A",
       "nextDate": "2026-11-07",
       "epsEstimate": 9092.319
+    },
+    {
+      "ticker": "BRK.B",
+      "nextDate": "2026-11-07",
+      "epsEstimate": 6.1353
     },
     {
       "ticker": "CSCO",
@@ -42,7 +42,7 @@
     {
       "ticker": "HD",
       "nextDate": "2026-11-17",
-      "epsEstimate": 3.8362
+      "epsEstimate": 3.8381
     },
     {
       "ticker": "DIS",
@@ -112,7 +112,7 @@
     {
       "ticker": "COST",
       "nextDate": "2026-12-10",
-      "epsEstimate": 4.9441
+      "epsEstimate": 4.9339
     },
     {
       "ticker": "ORCL",
@@ -167,7 +167,7 @@
     {
       "ticker": "BAC",
       "nextDate": "2027-01-15",
-      "epsEstimate": 1.123
+      "epsEstimate": 1.1228
     },
     {
       "ticker": "NFLX",
@@ -190,14 +190,14 @@
       "epsEstimate": 2.0356
     },
     {
-      "ticker": "ISRG",
-      "nextDate": "2027-01-21",
-      "epsEstimate": 2.9506
-    },
-    {
       "ticker": "SCHW",
       "nextDate": "2027-01-21",
       "epsEstimate": 1.7161
+    },
+    {
+      "ticker": "ISRG",
+      "nextDate": "2027-01-21",
+      "epsEstimate": 2.9506
     },
     {
       "ticker": "V",
@@ -260,14 +260,14 @@
       "epsEstimate": 15.3884
     },
     {
-      "ticker": "IBM",
-      "nextDate": "2027-01-27",
-      "epsEstimate": 4.6257
-    },
-    {
       "ticker": "LRCX",
       "nextDate": "2027-01-27",
       "epsEstimate": 2.3492
+    },
+    {
+      "ticker": "IBM",
+      "nextDate": "2027-01-27",
+      "epsEstimate": 4.6257
     },
     {
       "ticker": "GEV",
@@ -275,14 +275,14 @@
       "epsEstimate": 6.9219
     },
     {
-      "ticker": "NEE",
-      "nextDate": "2027-01-27",
-      "epsEstimate": 0.5734
-    },
-    {
       "ticker": "APH",
       "nextDate": "2027-01-27",
       "epsEstimate": 0.8293
+    },
+    {
+      "ticker": "NEE",
+      "nextDate": "2027-01-27",
+      "epsEstimate": 0.5734
     },
     {
       "ticker": "DHR",
@@ -295,14 +295,24 @@
       "epsEstimate": 0.5404
     },
     {
+      "ticker": "PGR",
+      "nextDate": "2027-01-27",
+      "epsEstimate": 4.1164
+    },
+    {
       "ticker": "AAPL",
       "nextDate": "2027-01-28",
-      "epsEstimate": 2.9155
+      "epsEstimate": 2.9174
     },
     {
       "ticker": "MA",
       "nextDate": "2027-01-28",
-      "epsEstimate": 5.1213
+      "epsEstimate": 5.1167
+    },
+    {
+      "ticker": "INTC",
+      "nextDate": "2027-01-28",
+      "epsEstimate": 0.249
     },
     {
       "ticker": "SAP",
@@ -310,19 +320,14 @@
       "epsEstimate": 2.1821
     },
     {
-      "ticker": "INTC",
+      "ticker": "TMO",
       "nextDate": "2027-01-28",
-      "epsEstimate": 0.2486
+      "epsEstimate": 7.1305
     },
     {
       "ticker": "CAT",
       "nextDate": "2027-01-28",
       "epsEstimate": 6.4215
-    },
-    {
-      "ticker": "TMO",
-      "nextDate": "2027-01-28",
-      "epsEstimate": 7.1305
     },
     {
       "ticker": "ABT",
@@ -342,17 +347,17 @@
     {
       "ticker": "XOM",
       "nextDate": "2027-01-29",
-      "epsEstimate": 4.1205
+      "epsEstimate": 4.0764
     },
     {
       "ticker": "CVX",
       "nextDate": "2027-01-29",
-      "epsEstimate": 5.705
+      "epsEstimate": 5.6902
     },
     {
       "ticker": "AXP",
       "nextDate": "2027-01-29",
-      "epsEstimate": 4.289
+      "epsEstimate": 4.2868
     },
     {
       "ticker": "PLTR",
@@ -362,17 +367,27 @@
     {
       "ticker": "AMD",
       "nextDate": "2027-02-02",
-      "epsEstimate": 2.9387
+      "epsEstimate": 2.9273
     },
     {
       "ticker": "AMGN",
       "nextDate": "2027-02-02",
-      "epsEstimate": 5.7494
+      "epsEstimate": 5.638
     },
     {
       "ticker": "PFE",
       "nextDate": "2027-02-02",
-      "epsEstimate": 0.6946
+      "epsEstimate": 0.6894
+    },
+    {
+      "ticker": "ETN",
+      "nextDate": "2027-02-02",
+      "epsEstimate": 4.1364
+    },
+    {
+      "ticker": "ARM",
+      "nextDate": "2027-02-03",
+      "epsEstimate": 0.5597
     },
     {
       "ticker": "NVO",
@@ -380,19 +395,14 @@
       "epsEstimate": 4.308
     },
     {
-      "ticker": "ARM",
-      "nextDate": "2027-02-03",
-      "epsEstimate": 0.551
-    },
-    {
       "ticker": "QCOM",
       "nextDate": "2027-02-03",
-      "epsEstimate": 2.2376
+      "epsEstimate": 2.2332
     },
     {
       "ticker": "UBER",
       "nextDate": "2027-02-03",
-      "epsEstimate": 0.9668
+      "epsEstimate": 0.9689
     },
     {
       "ticker": "TM",
@@ -402,7 +412,7 @@
     {
       "ticker": "COP",
       "nextDate": "2027-02-04",
-      "epsEstimate": 3.3776
+      "epsEstimate": 3.5244
     },
     {
       "ticker": "SONY",
@@ -411,11 +421,6 @@
     },
     {
       "ticker": "UL",
-      "nextDate": "2027-02-11",
-      "epsEstimate": null
-    },
-    {
-      "ticker": "BTI",
       "nextDate": "2027-02-11",
       "epsEstimate": null
     }

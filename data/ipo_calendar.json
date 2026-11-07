@@ -1,11 +1,154 @@
 {
-  "updatedAtKst": "2026-11-06 13:34 KST",
-  "lastFileDate": "2026-11-05",
+  "updatedAtKst": "2026-11-07 13:33 KST",
+  "lastFileDate": "2026-11-06",
   "partialFetch": false,
-  "count": 570,
+  "count": 584,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "EXOZYMES INC.",
+      "ticker": "EXOZ",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-06",
+      "accession": "0001493152-26-050521:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2010788/000149315226050521/forms-1.htm"
+    },
+    {
+      "company": "Parabolic Technologies, Inc.  (PARA, PARAW)",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-06",
+      "accession": "0001493152-26-050319:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1826011/000149315226050319/form424b4.htm",
+      "offerPrice": 2.72,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Simwon America Corp.",
+      "ticker": "SWA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116984:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1698506/000121390026116984/ea0270032-21.htm"
+    },
+    {
+      "company": "Simwon America Corp.",
+      "ticker": "SWA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116984:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1698506/000121390026116984/ea0270032-21.htm"
+    },
+    {
+      "company": "Alopexx, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116942:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1880995/000121390026116942/ea0231844-11.htm"
+    },
+    {
+      "company": "Alopexx, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116942:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1880995/000121390026116942/ea0231844-11.htm"
+    },
+    {
+      "company": "AParadise III Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116922:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2114402/000121390026116922/ea0282162-03.htm"
+    },
+    {
+      "company": "SeeQC, Inc.",
+      "ticker": "SEQC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116829:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1779977/000121390026116829/ea0288470-11.htm"
+    },
+    {
+      "company": "SeeQC, Inc.",
+      "ticker": "SEQC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001213900-26-116829:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1779977/000121390026116829/ea0288470-11.htm"
+    },
+    {
+      "company": "Hometown Financial Group, Inc./MD",
+      "ticker": "HFG",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001193125-26-451816:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152644/000119312526451816/hfg-20261106.htm"
+    },
+    {
+      "company": "Hometown Financial Group, Inc./MD",
+      "ticker": "HFG",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001193125-26-451816:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152644/000119312526451816/hfg-20261106.htm"
+    },
+    {
+      "company": "Hifortune Holdings Inc",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-06",
+      "accession": "0001185185-26-005243:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2156369/000118518526005243/hifortunes1102026.htm"
+    },
+    {
+      "company": "MFB Bancorp, Inc.",
+      "ticker": "MFDB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001104659-26-123884:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152813/000110465926123884/tm2624212-22_s1a.htm"
+    },
+    {
+      "company": "MFB Bancorp, Inc.",
+      "ticker": "MFDB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-06",
+      "accession": "0001104659-26-123884:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152813/000110465926123884/tm2624212-22_s1a.htm"
+    },
     {
       "company": "Holvek Technologies Corp",
       "ticker": null,

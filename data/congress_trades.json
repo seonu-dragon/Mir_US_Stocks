@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-07 06:38:34 KST",
+  "updatedAtKst": "2026-11-07 13:42:34 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7718,
+  "tradeCount": 7709,
   "politicianCount": 157,
   "rankings": [
     {
@@ -36,7 +36,7 @@
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 29.97,
+      "estReturnPct": 30.13,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
@@ -130,20 +130,6 @@
     },
     {
       "rank": 11,
-      "id": "house-marjorie-taylor-greene",
-      "name": "Marjorie Taylor Greene",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 8.47,
-      "buyCount": 201,
-      "sellCount": 5,
-      "tradeCount": 206,
-      "committees": [
-        "Homeland Security"
-      ]
-    },
-    {
-      "rank": 12,
       "id": "house-kevin-hern",
       "name": "Kevin Hern",
       "chamber": "House",
@@ -153,6 +139,20 @@
       "sellCount": 118,
       "tradeCount": 259,
       "committees": []
+    },
+    {
+      "rank": 12,
+      "id": "house-marjorie-taylor-greene",
+      "name": "Marjorie Taylor Greene",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 7.63,
+      "buyCount": 201,
+      "sellCount": 5,
+      "tradeCount": 206,
+      "committees": [
+        "Homeland Security"
+      ]
     },
     {
       "rank": 13,
@@ -360,6 +360,18 @@
     },
     {
       "rank": 30,
+      "id": "house-john-mcguire",
+      "name": "John McGuire",
+      "chamber": "House",
+      "party": "",
+      "estReturnPct": -5.57,
+      "buyCount": 8,
+      "sellCount": 0,
+      "tradeCount": 8,
+      "committees": []
+    },
+    {
+      "rank": 31,
       "id": "house-jonathan-jackson",
       "name": "Jonathan Jackson",
       "chamber": "House",
@@ -371,7 +383,7 @@
       "committees": []
     },
     {
-      "rank": 31,
+      "rank": 32,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -383,18 +395,6 @@
       "committees": [
         "Financial Services"
       ]
-    },
-    {
-      "rank": 32,
-      "id": "house-john-mcguire",
-      "name": "John McGuire",
-      "chamber": "House",
-      "party": "",
-      "estReturnPct": -12.06,
-      "buyCount": 8,
-      "sellCount": 0,
-      "tradeCount": 8,
-      "committees": []
     },
     {
       "rank": 33,
@@ -3988,7 +3988,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 8.47
+      "estReturnPct": 7.63
     },
     {
       "id": "house-virginia-foxx",
@@ -3997,8 +3997,8 @@
       "party": "R",
       "committees": [],
       "district": "NC05",
-      "tradeCount": 190,
-      "buyCount": 152,
+      "tradeCount": 189,
+      "buyCount": 151,
       "sellCount": 38,
       "recentTrades": [
         {
@@ -7174,7 +7174,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 29.97
+      "estReturnPct": 30.13
     },
     {
       "id": "house-bruce-westerman",
@@ -12487,369 +12487,15 @@
       "estReturnPct": 18.67
     },
     {
-      "id": "house-john-curtis",
-      "name": "John Curtis",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "UT03",
-      "tradeCount": 55,
-      "buyCount": 22,
-      "sellCount": 33,
-      "recentTrades": [
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "ADBE",
-          "asset": "Adobe Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "GOOG",
-          "asset": "Alphabet Inc. - Class C Capital Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "AXP",
-          "asset": "American Express Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "AMAT",
-          "asset": "Applied Materials, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "BSX",
-          "asset": "Boston Scientific Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "CVX",
-          "asset": "Chevron Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "KO",
-          "asset": "Coca-Cola Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "COP",
-          "asset": "ConocoPhillips",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "COST",
-          "asset": "Costco Wholesale Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "DHR",
-          "asset": "Danaher Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "EW",
-          "asset": "Edwards Lifesciences Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "LLY",
-          "asset": "Eli Lilly and Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "FI",
-          "asset": "Fiserv, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "HLT",
-          "asset": "Hilton Worldwide Holdings Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "HON",
-          "asset": "Honeywell International Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "JPM",
-          "asset": "JP Morgan Chase & Co.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "LRCX",
-          "asset": "Lam Research Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "META",
-          "asset": "Meta Platforms, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "NKE",
-          "asset": "Nike, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "PANW",
-          "asset": "Palo Alto Networks, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-04",
-          "disclosureDate": "12/04/2023",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-mark-green",
       "name": "Mark Green",
       "chamber": "House",
       "party": "R",
       "committees": [],
       "district": "TN07",
-      "tradeCount": 54,
-      "buyCount": 13,
-      "sellCount": 41,
+      "tradeCount": 52,
+      "buyCount": 12,
+      "sellCount": 40,
       "recentTrades": [
         {
           "politician": "Mark Green",
@@ -14235,6 +13881,360 @@
         }
       ],
       "estReturnPct": -3.02
+    },
+    {
+      "id": "house-john-curtis",
+      "name": "John Curtis",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "UT03",
+      "tradeCount": 49,
+      "buyCount": 18,
+      "sellCount": 31,
+      "recentTrades": [
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "ADBE",
+          "asset": "Adobe Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "GOOG",
+          "asset": "Alphabet Inc. - Class C Capital Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "AXP",
+          "asset": "American Express Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "AMAT",
+          "asset": "Applied Materials, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "BSX",
+          "asset": "Boston Scientific Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "CVX",
+          "asset": "Chevron Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "KO",
+          "asset": "Coca-Cola Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "COP",
+          "asset": "ConocoPhillips",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "COST",
+          "asset": "Costco Wholesale Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "DHR",
+          "asset": "Danaher Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "EW",
+          "asset": "Edwards Lifesciences Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "LLY",
+          "asset": "Eli Lilly and Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "FI",
+          "asset": "Fiserv, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "HLT",
+          "asset": "Hilton Worldwide Holdings Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "HON",
+          "asset": "Honeywell International Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "JPM",
+          "asset": "JP Morgan Chase & Co.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "LRCX",
+          "asset": "Lam Research Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "META",
+          "asset": "Meta Platforms, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "NKE",
+          "asset": "Nike, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Curtis",
+          "chamber": "House",
+          "ticker": "PANW",
+          "asset": "Palo Alto Networks, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-04",
+          "disclosureDate": "12/04/2023",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20024152.pdf",
+          "district": "UT03",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": null
     },
     {
       "id": "house-robert-j-wittman",
@@ -26670,7 +26670,7 @@
           "source": "house_ptr"
         }
       ],
-      "estReturnPct": -12.06
+      "estReturnPct": -5.57
     },
     {
       "id": "house-greg-steube",
@@ -37991,7 +37991,7 @@
     },
     "V": {
       "ticker": "V",
-      "netBuys": 27,
+      "netBuys": 26,
       "netSells": 10,
       "politicianCount": 17,
       "trades": [
@@ -46417,9 +46417,9 @@
     },
     "CAT": {
       "ticker": "CAT",
-      "netBuys": 15,
+      "netBuys": 14,
       "netSells": 5,
-      "politicianCount": 13,
+      "politicianCount": 12,
       "trades": [
         {
           "politician": "Lisa McClain",
@@ -46741,23 +46741,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020828.pdf",
           "district": "FL04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "CAT",
-          "asset": "Caterpillar, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/15/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019828.pdf",
-          "district": "UT03",
           "source": "house_ptr",
           "party": "R"
         }
@@ -79830,7 +79813,7 @@
     },
     "NHI": {
       "ticker": "NHI",
-      "netBuys": 4,
+      "netBuys": 3,
       "netSells": 2,
       "politicianCount": 2,
       "trades": [
@@ -79915,23 +79898,6 @@
           "disclosureDate": "01/28/2022",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020355.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "NHI",
-          "asset": "National Health Investors, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/08/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019946.pdf",
           "district": "NC05",
           "source": "house_ptr",
           "party": "R"
@@ -84066,9 +84032,9 @@
     },
     "KLAC": {
       "ticker": "KLAC",
-      "netBuys": 6,
+      "netBuys": 5,
       "netSells": 1,
-      "politicianCount": 6,
+      "politicianCount": 5,
       "trades": [
         {
           "politician": "Michael Rulli",
@@ -84171,23 +84137,6 @@
           "district": "FL21",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "KLAC",
-          "asset": "KlA Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/15/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019828.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -95431,8 +95380,8 @@
     "GPN": {
       "ticker": "GPN",
       "netBuys": 3,
-      "netSells": 4,
-      "politicianCount": 6,
+      "netSells": 3,
+      "politicianCount": 5,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -95535,23 +95484,6 @@
           "district": "IA03",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "GPN",
-          "asset": "global Payments Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/15/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019828.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -124694,9 +124626,9 @@
     },
     "ULTA": {
       "ticker": "ULTA",
-      "netBuys": 3,
+      "netBuys": 2,
       "netSells": 1,
-      "politicianCount": 4,
+      "politicianCount": 3,
       "trades": [
         {
           "politician": "Valerie Hoyle",
@@ -124746,23 +124678,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023020.pdf",
           "district": "WA04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "ULTA",
-          "asset": "ulta beauty, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/15/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019828.pdf",
-          "district": "UT03",
           "source": "house_ptr",
           "party": "R"
         }
@@ -148289,8 +148204,8 @@
     "ATVI": {
       "ticker": "ATVI",
       "netBuys": 3,
-      "netSells": 4,
-      "politicianCount": 6,
+      "netSells": 3,
+      "politicianCount": 5,
       "trades": [
         {
           "politician": "Richard W. Allen",
@@ -148389,23 +148304,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020158.pdf",
           "district": "WV01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "ATVI",
-          "asset": "Activision blizzard, Inc",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/15/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019828.pdf",
-          "district": "UT03",
           "source": "house_ptr",
           "party": "R"
         }
@@ -163654,56 +163552,6 @@
           "party": "D"
         }
       ]
-    },
-    "CAPL": {
-      "ticker": "CAPL",
-      "netBuys": 0,
-      "netSells": 1,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "CAPL",
-          "asset": "CrossAmerica Partners lP gfedcb Common units representing limited partner interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$250,001 - $500,000",
-          "amountMid": 375000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/09/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019780.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "MPLX": {
-      "ticker": "MPLX",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "MPLX",
-          "asset": "MPlX lP Common units Representing limited Partner Interests",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$500,001 - $1,000,000",
-          "amountMid": 750000,
-          "transactionDate": "2021-11-08",
-          "disclosureDate": "11/09/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019780.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
     }
   },
   "performance": {
@@ -163711,7 +163559,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-11-06",
-    "measuredTrades": 5021,
+    "measuredTrades": 5020,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -163737,7 +163585,7 @@
         },
         "disc": {
           "n": 14,
-          "avgExcess": 0.32,
+          "avgExcess": 0.37,
           "medianExcess": 3.97,
           "winRate": 50.0
         },
@@ -163989,7 +163837,7 @@
         },
         "disc": {
           "n": 231,
-          "avgExcess": 3.16,
+          "avgExcess": 3.15,
           "medianExcess": 5.99,
           "winRate": 56.7
         },
@@ -164003,7 +163851,7 @@
         "name": "Josh Gottheimer",
         "tx": {
           "n": 282,
-          "avgExcess": 1.69,
+          "avgExcess": 1.68,
           "medianExcess": 0.31,
           "winRate": 50.7
         },
@@ -164317,7 +164165,7 @@
         "name": "Dan Newhouse",
         "tx": {
           "n": 52,
-          "avgExcess": -2.51,
+          "avgExcess": -2.5,
           "medianExcess": -4.66,
           "winRate": 44.2
         },
@@ -164327,31 +164175,11 @@
           "medianExcess": 5.21,
           "winRate": 52.6
         },
-        "buyAvgExcess": -4.87,
+        "buyAvgExcess": -4.85,
         "lagDays": 15,
         "id": "house-dan-newhouse",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Jonathan Jackson",
-        "tx": {
-          "n": 77,
-          "avgExcess": -2.7,
-          "medianExcess": -5.47,
-          "winRate": 45.5
-        },
-        "disc": {
-          "n": 77,
-          "avgExcess": -1.36,
-          "medianExcess": -0.7,
-          "winRate": 48.1
-        },
-        "buyAvgExcess": -8.7,
-        "lagDays": 21,
-        "id": "house-jonathan-jackson",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "Maria Elvira Salazar",
@@ -164372,6 +164200,26 @@
         "id": "house-maria-elvira-salazar",
         "chamber": "House",
         "party": "R"
+      },
+      {
+        "name": "Jonathan Jackson",
+        "tx": {
+          "n": 76,
+          "avgExcess": -3.04,
+          "medianExcess": -5.87,
+          "winRate": 44.7
+        },
+        "disc": {
+          "n": 76,
+          "avgExcess": -1.75,
+          "medianExcess": -0.92,
+          "winRate": 47.4
+        },
+        "buyAvgExcess": -9.45,
+        "lagDays": 20,
+        "id": "house-jonathan-jackson",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Lloyd Doggett",
@@ -164397,17 +164245,17 @@
         "name": "Gilbert Cisneros",
         "tx": {
           "n": 654,
-          "avgExcess": -3.53,
-          "medianExcess": -4.19,
-          "winRate": 44.2
+          "avgExcess": -3.56,
+          "medianExcess": -4.22,
+          "winRate": 43.9
         },
         "disc": {
           "n": 619,
-          "avgExcess": -4.12,
-          "medianExcess": -4.27,
+          "avgExcess": -4.15,
+          "medianExcess": -4.18,
           "winRate": 43.3
         },
-        "buyAvgExcess": -4.6,
+        "buyAvgExcess": -4.64,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
@@ -164661,17 +164509,17 @@
         "name": "Virginia Foxx",
         "tx": {
           "n": 40,
-          "avgExcess": -11.02,
+          "avgExcess": -10.83,
           "medianExcess": -10.57,
-          "winRate": 25.0
+          "winRate": 27.5
         },
         "disc": {
           "n": 38,
-          "avgExcess": -9.66,
+          "avgExcess": -9.52,
           "medianExcess": -11.13,
           "winRate": 36.8
         },
-        "buyAvgExcess": -12.27,
+        "buyAvgExcess": -12.05,
         "lagDays": 15,
         "id": "house-virginia-foxx",
         "chamber": "House",
@@ -164721,7 +164569,7 @@
         "name": "James French Hill",
         "tx": {
           "n": 15,
-          "avgExcess": -15.71,
+          "avgExcess": -15.83,
           "medianExcess": -14.65,
           "winRate": 13.3
         },

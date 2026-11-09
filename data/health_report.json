@@ -1,56 +1,49 @@
 {
- "updatedAtKst": "2026-11-09 08:31 KST",
+ "updatedAtKst": "2026-11-10 08:30 KST",
  "status": "problem",
- "count": 8,
- "checks": 506,
+ "count": 39,
+ "checks": 505,
  "counts": {
   "freshness": 4,
-  "structure": 1,
+  "structure": 0,
   "values": 0,
-  "workflow": 3,
-  "deploy": 0
+  "workflow": 4,
+  "deploy": 31
  },
  "problems": [
   {
    "id": "freshness:data/korea/etf_holdings.js",
    "category": "freshness",
    "label": "ETF 구성 종목 (data/korea/etf_holdings.js)",
-   "value": "550h / 허용 288h",
+   "value": "574h / 허용 288h",
    "severity": "error"
   },
   {
    "id": "freshness:data/korea/nps_holdings.js",
    "category": "freshness",
    "label": "krNps (data/korea/nps_holdings.js)",
-   "value": "365h / 허용 360h",
+   "value": "389h / 허용 360h",
    "severity": "error"
   },
   {
    "id": "freshness:data/korea/short_interest.js",
    "category": "freshness",
    "label": "공매도 (data/korea/short_interest.js)",
-   "value": "352h / 허용 120h",
+   "value": "376h / 허용 120h",
    "severity": "error"
   },
   {
    "id": "freshness:data/korea/short_volume.js",
    "category": "freshness",
    "label": "공매도 거래비중 (data/korea/short_volume.js)",
-   "value": "352h / 허용 96h",
+   "value": "376h / 허용 96h",
    "severity": "error"
   },
   {
-   "id": "structure:drop:data/white_house_schedule.js",
-   "category": "structure",
-   "label": "data/white_house_schedule.js 행 수 급감",
-   "value": "22 → 10 (-55%)",
-   "severity": "error"
-  },
-  {
-   "id": "workflow:hidden:Daily US market snapshot",
+   "id": "workflow:failed:Deploy Pages",
    "category": "workflow",
-   "label": "Daily US market snapshot 가려진 스텝 실패(continue-on-error)",
-   "value": "2건 · python scripts/build_federal_contracts.py 외 · 2026-11-08 21:05 UTC",
+   "label": "Deploy Pages 실패",
+   "value": "Artifact size guard · 2026-11-09 22:31 UTC · 기간 내 8회",
    "severity": "error"
   },
   {
@@ -64,7 +57,231 @@
    "id": "workflow:failed:Korea close briefing",
    "category": "workflow",
    "label": "Korea close briefing 실패",
-   "value": "Check data freshness (KR) · 2026-11-08 06:42 UTC · 기간 내 3회",
+   "value": "Check data freshness (KR) · 2026-11-09 06:42 UTC · 기간 내 3회",
+   "severity": "error"
+  },
+  {
+   "id": "workflow:hidden:Material events (SEC 8-K)",
+   "category": "workflow",
+   "label": "Material events (SEC 8-K) 가려진 스텝 실패(continue-on-error)",
+   "value": "1건 · python scripts/build_earnings_releases.py --push · 2026-11-09 04:23 UTC",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/analyst_consensus.js",
+   "category": "deploy",
+   "label": "data/analyst_consensus.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:51 · 레포 11-10 06:37 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/cot_positioning.js",
+   "category": "deploy",
+   "label": "data/cot_positioning.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:42 · 레포 11-10 06:29 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/cross_market_links.js",
+   "category": "deploy",
+   "label": "data/cross_market_links.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 17:04 · 레포 11-10 07:07 (14h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/earnings_scoreboard.js",
+   "category": "deploy",
+   "label": "data/earnings_scoreboard.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:24 · 레포 11-10 06:24 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/federal_contracts.js",
+   "category": "deploy",
+   "label": "data/federal_contracts.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-07 06:29 · 레포 11-10 06:28 (72h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/finra_short_volume.js",
+   "category": "deploy",
+   "label": "data/finra_short_volume.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:24 · 레포 11-10 06:24 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/history/market_history.js",
+   "category": "deploy",
+   "label": "data/history/market_history.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 07:20 · 레포 11-10 07:05 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/korea/ir_schedule.js",
+   "category": "deploy",
+   "label": "data/korea/ir_schedule.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:42 · 레포 11-10 06:42 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/korea/lockups.js",
+   "category": "deploy",
+   "label": "data/korea/lockups.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:43 · 레포 11-10 06:43 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/macro_indicators.js",
+   "category": "deploy",
+   "label": "data/macro_indicators.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:24 · 레포 11-10 06:24 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/market_breadth.js",
+   "category": "deploy",
+   "label": "data/market_breadth.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 07:21 · 레포 11-10 07:07 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/market_calendar.js",
+   "category": "deploy",
+   "label": "data/market_calendar.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:41 · 레포 11-10 06:41 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/market_indicators.js",
+   "category": "deploy",
+   "label": "data/market_indicators.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 16:11 · 레포 11-10 07:31 (15h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/market_issues.js",
+   "category": "deploy",
+   "label": "data/market_issues.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-07 07:08 · 레포 11-10 07:07 (72h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/market_snapshot.json",
+   "category": "deploy",
+   "label": "data/market_snapshot.json 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 07:13 · 레포 11-10 06:59 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/movers_reasons.js",
+   "category": "deploy",
+   "label": "data/movers_reasons.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-08 07:24 · 레포 11-10 07:07 (48h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/options_flow.js",
+   "category": "deploy",
+   "label": "data/options_flow.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 07:23 · 레포 11-10 07:11 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/options_stats.js",
+   "category": "deploy",
+   "label": "data/options_stats.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:25 · 레포 11-10 06:25 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/sec_ftd.js",
+   "category": "deploy",
+   "label": "data/sec_ftd.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-01 06:41 · 레포 11-10 06:29 (216h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/sentiment_gauges.js",
+   "category": "deploy",
+   "label": "data/sentiment_gauges.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:43 · 레포 11-10 06:30 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/seohak_top.js",
+   "category": "deploy",
+   "label": "data/seohak_top.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:43 · 레포 11-10 06:30 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/short_volume_index.js",
+   "category": "deploy",
+   "label": "data/short_volume_index.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:24 · 레포 11-10 06:24 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/signal_scorecard.js",
+   "category": "deploy",
+   "label": "data/signal_scorecard.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 17:04 · 레포 11-10 07:07 (14h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/tech_signals.js",
+   "category": "deploy",
+   "label": "data/tech_signals.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 07:21 · 레포 11-10 07:07 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/treasury_auctions.js",
+   "category": "deploy",
+   "label": "data/treasury_auctions.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:42 · 레포 11-10 06:29 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/us_calendar.js",
+   "category": "deploy",
+   "label": "data/us_calendar.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:26 · 레포 11-10 06:26 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/us_splits.js",
+   "category": "deploy",
+   "label": "data/us_splits.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:43 · 레포 11-10 06:43 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/vix_term_structure.js",
+   "category": "deploy",
+   "label": "data/vix_term_structure.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 16:11 · 레포 11-10 07:31 (15h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/wiki_attention.js",
+   "category": "deploy",
+   "label": "data/wiki_attention.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:43 · 레포 11-10 06:29 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/wsb_sentiment.js",
+   "category": "deploy",
+   "label": "data/wsb_sentiment.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:43 · 레포 11-10 06:29 (24h)",
+   "severity": "error"
+  },
+  {
+   "id": "deploy:lag:data/yield_curve.js",
+   "category": "deploy",
+   "label": "data/yield_curve.js 라이브가 레포보다 늦음",
+   "value": "라이브 11-09 06:24 · 레포 11-10 06:24 (24h)",
    "severity": "error"
   }
  ],
@@ -75,12 +292,12 @@
    "market": "us",
    "maxHours": 168.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:31 KST",
-   "repoStamp": "2026-11-08 13:31 KST",
-   "rows": 2843,
+   "stamp": "2026-11-09 13:32 KST",
+   "repoStamp": "2026-11-09 13:32 KST",
+   "rows": 2761,
    "ageHours": 19.0,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "excusedHours": 0.0,
+   "effectiveHours": 19.0,
    "stale": false
   },
   {
@@ -88,13 +305,13 @@
    "name": "analystConsensus",
    "market": "us",
    "maxHours": 240.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:51 KST",
-   "repoStamp": "2026-11-09 06:51 KST",
+   "repoStamp": "2026-11-10 06:37 KST",
    "rows": 209,
-   "ageHours": 1.7,
+   "ageHours": 25.7,
    "excusedHours": 0.0,
-   "effectiveHours": 1.7,
+   "effectiveHours": 25.7,
    "stale": false
   },
   {
@@ -103,8 +320,8 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:39 KST",
-   "repoStamp": "2026-11-09 06:39 KST",
+   "stamp": "2026-11-10 06:37 KST",
+   "repoStamp": "2026-11-10 06:37 KST",
    "rows": 147,
    "ageHours": 1.9,
    "excusedHours": 0.0,
@@ -120,9 +337,9 @@
    "stamp": "2026-11-08 13:25 KST",
    "repoStamp": "2026-11-08 13:25 KST",
    "rows": 77,
-   "ageHours": 19.1,
+   "ageHours": 43.1,
    "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "effectiveHours": 19.1,
    "stale": false
   },
   {
@@ -134,9 +351,9 @@
    "stamp": "2026-11-04 10:34 KST",
    "repoStamp": "2026-11-04 10:34 KST",
    "rows": 4183,
-   "ageHours": 118.0,
+   "ageHours": 141.9,
    "excusedHours": 0.0,
-   "effectiveHours": 118.0,
+   "effectiveHours": 141.9,
    "stale": false
   },
   {
@@ -145,9 +362,9 @@
    "market": "us",
    "maxHours": 336.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:37:59 KST",
-   "repoStamp": "2026-11-09 06:37:59 KST",
-   "rows": 7708,
+   "stamp": "2026-11-10 06:39:03 KST",
+   "repoStamp": "2026-11-10 06:39:03 KST",
+   "rows": 10938,
    "ageHours": 1.9,
    "excusedHours": 0.0,
    "effectiveHours": 1.9,
@@ -158,13 +375,13 @@
    "name": "COT 포지셔닝",
    "market": null,
    "maxHours": 336.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:42 KST",
-   "repoStamp": "2026-11-09 06:42 KST",
+   "repoStamp": "2026-11-10 06:29 KST",
    "rows": 11,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -176,9 +393,9 @@
    "stamp": "2026-11-01 11:24 KST",
    "repoStamp": "2026-11-01 11:24 KST",
    "rows": 359,
-   "ageHours": 189.1,
+   "ageHours": 213.1,
    "excusedHours": 0.0,
-   "effectiveHours": 189.1,
+   "effectiveHours": 213.1,
    "stale": false
   },
   {
@@ -186,13 +403,13 @@
    "name": "국내·미국 연관 종목",
    "market": null,
    "maxHours": 96.0,
-   "status": "ok",
-   "stamp": "2026-11-09 07:20 KST",
-   "repoStamp": "2026-11-09 07:20 KST",
+   "status": "problem",
+   "stamp": "2026-11-09 17:04 KST",
+   "repoStamp": "2026-11-10 07:07 KST",
    "rows": 111,
-   "ageHours": 1.2,
+   "ageHours": 15.4,
    "excusedHours": 0.0,
-   "effectiveHours": 1.2,
+   "effectiveHours": 15.4,
    "stale": false
   },
   {
@@ -204,9 +421,9 @@
    "stamp": "2026-11-08 03:11 KST",
    "repoStamp": "2026-11-08 03:11 KST",
    "rows": 1426,
-   "ageHours": 29.3,
+   "ageHours": 53.3,
    "excusedHours": 0.0,
-   "effectiveHours": 29.3,
+   "effectiveHours": 53.3,
    "stale": false
   },
   {
@@ -218,9 +435,9 @@
    "stamp": "2026-11-04 10:22 KST",
    "repoStamp": "2026-11-04 10:22 KST",
    "rows": 673,
-   "ageHours": 118.2,
+   "ageHours": 142.1,
    "excusedHours": 0.0,
-   "effectiveHours": 118.2,
+   "effectiveHours": 142.1,
    "stale": false
   },
   {
@@ -229,8 +446,8 @@
    "market": "us",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:32 KST",
-   "repoStamp": "2026-11-09 06:32 KST",
+   "stamp": "2026-11-10 06:32 KST",
+   "repoStamp": "2026-11-10 06:32 KST",
    "rows": 14,
    "ageHours": 2.0,
    "excusedHours": 0.0,
@@ -246,9 +463,9 @@
    "stamp": "2026-11-08 13:25 KST",
    "repoStamp": "2026-11-08 13:25 KST",
    "rows": 192,
-   "ageHours": 19.1,
+   "ageHours": 43.1,
    "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "effectiveHours": 19.1,
    "stale": false
   },
   {
@@ -256,13 +473,13 @@
    "name": "실적 시즌 스코어보드",
    "market": "us",
    "maxHours": 120.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:24 KST",
-   "repoStamp": "2026-11-09 06:24 KST",
+   "repoStamp": "2026-11-10 06:24 KST",
    "rows": 422,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -274,9 +491,9 @@
    "stamp": "2026-11-03 06:30 KST",
    "repoStamp": "2026-11-03 06:30 KST",
    "rows": 300,
-   "ageHours": 146.0,
+   "ageHours": 170.0,
    "excusedHours": 0.0,
-   "effectiveHours": 146.0,
+   "effectiveHours": 170.0,
    "stale": false
   },
   {
@@ -288,9 +505,9 @@
    "stamp": "2026-11-07 14:31 KST",
    "repoStamp": "2026-11-07 14:31 KST",
    "rows": 86803,
-   "ageHours": 42.0,
+   "ageHours": 66.0,
    "excusedHours": 0.0,
-   "effectiveHours": 42.0,
+   "effectiveHours": 66.0,
    "stale": false
   },
   {
@@ -302,9 +519,9 @@
    "stamp": "2026-11-08 03:07 KST",
    "repoStamp": "2026-11-08 03:07 KST",
    "rows": 28,
-   "ageHours": 29.4,
+   "ageHours": 53.4,
    "excusedHours": 0.0,
-   "effectiveHours": 29.4,
+   "effectiveHours": 53.4,
    "stale": false
   },
   {
@@ -312,13 +529,13 @@
    "name": "federalContracts",
    "market": "us",
    "maxHours": 240.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-07 06:29 KST",
-   "repoStamp": "2026-11-07 06:29 KST",
+   "repoStamp": "2026-11-10 06:28 KST",
    "rows": 39,
-   "ageHours": 50.0,
+   "ageHours": 74.0,
    "excusedHours": 0.0,
-   "effectiveHours": 50.0,
+   "effectiveHours": 74.0,
    "stale": false
   },
   {
@@ -330,9 +547,9 @@
    "stamp": "2026-11-08 03:03 KST",
    "repoStamp": "2026-11-08 03:03 KST",
    "rows": 1055,
-   "ageHours": 29.5,
+   "ageHours": 53.5,
    "excusedHours": 0.0,
-   "effectiveHours": 29.5,
+   "effectiveHours": 53.5,
    "stale": false
   },
   {
@@ -344,9 +561,9 @@
    "stamp": "2026-11-06 15:16 KST",
    "repoStamp": "2026-11-06 15:16 KST",
    "rows": 4915,
-   "ageHours": 65.3,
+   "ageHours": 89.2,
    "excusedHours": 0.0,
-   "effectiveHours": 65.3,
+   "effectiveHours": 89.2,
    "stale": false
   },
   {
@@ -354,13 +571,13 @@
    "name": "finraShort",
    "market": "us",
    "maxHours": 168.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:24 KST",
-   "repoStamp": "2026-11-09 06:24 KST",
+   "repoStamp": "2026-11-10 06:24 KST",
    "rows": 5765,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -369,12 +586,12 @@
    "market": "us",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:19 KST",
-   "repoStamp": "2026-11-08 13:19 KST",
-   "rows": 955,
+   "stamp": "2026-11-09 13:19 KST",
+   "repoStamp": "2026-11-09 13:19 KST",
+   "rows": 939,
    "ageHours": 19.2,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "excusedHours": 0.0,
+   "effectiveHours": 19.2,
    "stale": false
   },
   {
@@ -382,9 +599,9 @@
    "name": "marketHistory",
    "market": null,
    "maxHours": null,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 07:20 KST",
-   "repoStamp": "2026-11-09 07:20 KST",
+   "repoStamp": "2026-11-10 07:05 KST",
    "rows": 91
   },
   {
@@ -393,8 +610,8 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:20 KST",
-   "repoStamp": "2026-11-09 06:20 KST",
+   "stamp": "2026-11-10 06:20 KST",
+   "repoStamp": "2026-11-10 06:20 KST",
    "rows": 268,
    "ageHours": 2.2,
    "excusedHours": 0.0,
@@ -407,8 +624,8 @@
    "market": null,
    "maxHours": null,
    "status": "ok",
-   "stamp": "2026-11-09 06:20 KST",
-   "repoStamp": "2026-11-09 06:20 KST",
+   "stamp": "2026-11-10 06:20 KST",
+   "repoStamp": "2026-11-10 06:20 KST",
    "rows": 29
   },
   {
@@ -417,8 +634,8 @@
    "market": null,
    "maxHours": 48.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:20 KST",
-   "repoStamp": "2026-11-09 06:20 KST",
+   "stamp": "2026-11-10 06:20 KST",
+   "repoStamp": "2026-11-10 06:20 KST",
    "rows": 198,
    "ageHours": 2.2,
    "excusedHours": 0.0,
@@ -431,8 +648,8 @@
    "market": null,
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:20 KST",
-   "repoStamp": "2026-11-09 06:20 KST",
+   "stamp": "2026-11-10 06:20 KST",
+   "repoStamp": "2026-11-10 06:20 KST",
    "rows": 13,
    "ageHours": 2.2,
    "excusedHours": 0.0,
@@ -445,12 +662,12 @@
    "market": "us",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:18 KST",
-   "repoStamp": "2026-11-08 13:18 KST",
-   "rows": 7522,
+   "stamp": "2026-11-09 13:19 KST",
+   "repoStamp": "2026-11-09 13:19 KST",
+   "rows": 7365,
    "ageHours": 19.2,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "excusedHours": 0.0,
+   "effectiveHours": 19.2,
    "stale": false
   },
   {
@@ -462,9 +679,9 @@
    "stamp": "2026-11-05 15:05 KST",
    "repoStamp": "2026-11-05 15:05 KST",
    "rows": 153,
-   "ageHours": 89.4,
+   "ageHours": 113.4,
    "excusedHours": 0.0,
-   "effectiveHours": 89.4,
+   "effectiveHours": 113.4,
    "stale": false
   },
   {
@@ -476,9 +693,9 @@
    "stamp": "2026-10-23 10:41 KST",
    "repoStamp": "2026-10-23 10:41 KST",
    "rows": 5682,
-   "ageHours": 405.8,
+   "ageHours": 429.8,
    "excusedHours": 0.0,
-   "effectiveHours": 405.8,
+   "effectiveHours": 429.8,
    "stale": false
   },
   {
@@ -487,12 +704,12 @@
    "market": "us",
    "maxHours": 168.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:34 KST",
-   "repoStamp": "2026-11-08 13:34 KST",
-   "rows": 584,
-   "ageHours": 19.0,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "stamp": "2026-11-09 13:34 KST",
+   "repoStamp": "2026-11-09 13:34 KST",
+   "rows": 576,
+   "ageHours": 18.9,
+   "excusedHours": 0.0,
+   "effectiveHours": 18.9,
    "stale": false
   },
   {
@@ -504,9 +721,9 @@
    "stamp": "2026-11-08 04:21 KST",
    "repoStamp": "2026-11-08 04:21 KST",
    "rows": 2497,
-   "ageHours": 28.2,
+   "ageHours": 52.2,
    "excusedHours": 0.0,
-   "effectiveHours": 28.2,
+   "effectiveHours": 52.2,
    "stale": false
   },
   {
@@ -515,12 +732,12 @@
    "market": "kr",
    "maxHours": 168.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:52 KST",
-   "repoStamp": "2026-11-08 16:52 KST",
+   "stamp": "2026-11-09 17:04 KST",
+   "repoStamp": "2026-11-09 17:04 KST",
    "rows": 16,
-   "ageHours": 15.7,
+   "ageHours": 15.4,
    "excusedHours": 0.0,
-   "effectiveHours": 15.7,
+   "effectiveHours": 15.4,
    "stale": false
   },
   {
@@ -529,11 +746,11 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-06 15:47 KST",
-   "repoStamp": "2026-11-06 15:47 KST",
+   "stamp": "2026-11-09 15:48 KST",
+   "repoStamp": "2026-11-09 15:48 KST",
    "rows": 493,
-   "ageHours": 64.7,
-   "excusedHours": 48.0,
+   "ageHours": 16.7,
+   "excusedHours": 0.0,
    "effectiveHours": 16.7,
    "stale": false
   },
@@ -543,12 +760,12 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:32 KST",
-   "repoStamp": "2026-11-08 16:32 KST",
+   "stamp": "2026-11-09 16:36 KST",
+   "repoStamp": "2026-11-09 16:36 KST",
    "rows": 501,
-   "ageHours": 16.0,
+   "ageHours": 15.9,
    "excusedHours": 0.0,
-   "effectiveHours": 16.0,
+   "effectiveHours": 15.9,
    "stale": false
   },
   {
@@ -557,12 +774,12 @@
    "market": "kr",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:22 KST",
-   "repoStamp": "2026-11-08 16:22 KST",
-   "rows": 462,
-   "ageHours": 16.2,
+   "stamp": "2026-11-09 16:26 KST",
+   "repoStamp": "2026-11-09 16:26 KST",
+   "rows": 474,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 16.2,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -574,9 +791,9 @@
    "stamp": "2026-11-08 03:07 KST",
    "repoStamp": "2026-11-08 03:07 KST",
    "rows": 367,
-   "ageHours": 29.4,
+   "ageHours": 53.4,
    "excusedHours": 0.0,
-   "effectiveHours": 29.4,
+   "effectiveHours": 53.4,
    "stale": false
   },
   {
@@ -598,9 +815,9 @@
    "stamp": "2026-11-04 10:22 KST",
    "repoStamp": "2026-11-04 10:22 KST",
    "rows": 1245,
-   "ageHours": 118.2,
+   "ageHours": 142.1,
    "excusedHours": 0.0,
-   "effectiveHours": 118.2,
+   "effectiveHours": 142.1,
    "stale": false
   },
   {
@@ -609,12 +826,12 @@
    "market": "kr",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:22 KST",
-   "repoStamp": "2026-11-08 16:22 KST",
-   "rows": 61,
-   "ageHours": 16.2,
+   "stamp": "2026-11-09 16:26 KST",
+   "repoStamp": "2026-11-09 16:26 KST",
+   "rows": 62,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 16.2,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -623,12 +840,12 @@
    "market": "kr",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:21 KST",
-   "repoStamp": "2026-11-08 16:21 KST",
-   "rows": 415,
-   "ageHours": 16.2,
+   "stamp": "2026-11-09 16:24 KST",
+   "repoStamp": "2026-11-09 16:24 KST",
+   "rows": 453,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 16.2,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -637,8 +854,8 @@
    "market": "kr",
    "maxHours": 144.0,
    "status": "ok",
-   "stamp": "2026-11-08 15:43 KST",
-   "repoStamp": "2026-11-08 15:43 KST",
+   "stamp": "2026-11-09 15:43 KST",
+   "repoStamp": "2026-11-09 15:43 KST",
    "rows": 7,
    "ageHours": 16.8,
    "excusedHours": 0.0,
@@ -654,9 +871,9 @@
    "stamp": "2026-10-17 10:23 KST",
    "repoStamp": "2026-10-17 10:23 KST",
    "rows": 107,
-   "ageHours": 550.1,
+   "ageHours": 574.1,
    "excusedHours": 0.0,
-   "effectiveHours": 550.1,
+   "effectiveHours": 574.1,
    "stale": true
   },
   {
@@ -668,9 +885,9 @@
    "stamp": "2026-11-07 10:23 KST",
    "repoStamp": "2026-11-07 10:23 KST",
    "rows": 597,
-   "ageHours": 46.1,
+   "ageHours": 70.1,
    "excusedHours": 0.0,
-   "effectiveHours": 46.1,
+   "effectiveHours": 70.1,
    "stale": false
   },
   {
@@ -682,9 +899,9 @@
    "stamp": "2026-11-08 03:07 KST",
    "repoStamp": "2026-11-08 03:07 KST",
    "rows": 1056,
-   "ageHours": 29.4,
+   "ageHours": 53.4,
    "excusedHours": 0.0,
-   "effectiveHours": 29.4,
+   "effectiveHours": 53.4,
    "stale": false
   },
   {
@@ -693,12 +910,12 @@
    "market": "kr",
    "maxHours": 192.0,
    "status": "ok",
-   "stamp": "2026-11-08 15:50 KST",
-   "repoStamp": "2026-11-08 15:50 KST",
+   "stamp": "2026-11-09 15:53 KST",
+   "repoStamp": "2026-11-09 15:53 KST",
    "rows": 300,
-   "ageHours": 16.7,
+   "ageHours": 16.6,
    "excusedHours": 0.0,
-   "effectiveHours": 16.7,
+   "effectiveHours": 16.6,
    "stale": false
   },
   {
@@ -707,12 +924,12 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:51 KST",
-   "repoStamp": "2026-11-08 16:51 KST",
+   "stamp": "2026-11-09 16:57 KST",
+   "repoStamp": "2026-11-09 16:57 KST",
    "rows": 2588,
-   "ageHours": 15.7,
+   "ageHours": 15.6,
    "excusedHours": 0.0,
-   "effectiveHours": 15.7,
+   "effectiveHours": 15.6,
    "stale": false
   },
   {
@@ -721,12 +938,12 @@
    "market": "kr",
    "maxHours": 168.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:20 KST",
-   "repoStamp": "2026-11-08 16:20 KST",
-   "rows": 40,
-   "ageHours": 16.2,
+   "stamp": "2026-11-09 16:23 KST",
+   "repoStamp": "2026-11-09 16:23 KST",
+   "rows": 39,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 16.2,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -734,13 +951,13 @@
    "name": "실적 IR 일정",
    "market": "kr",
    "maxHours": 72.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:42 KST",
-   "repoStamp": "2026-11-09 06:42 KST",
+   "repoStamp": "2026-11-10 06:42 KST",
    "rows": 252,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -748,13 +965,13 @@
    "name": "보호예수 해제",
    "market": "kr",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:43 KST",
-   "repoStamp": "2026-11-09 06:43 KST",
+   "repoStamp": "2026-11-10 06:43 KST",
    "rows": 196,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -763,11 +980,11 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-06 15:48 KST",
-   "repoStamp": "2026-11-06 15:48 KST",
-   "rows": 154,
-   "ageHours": 64.7,
-   "excusedHours": 48.0,
+   "stamp": "2026-11-09 15:49 KST",
+   "repoStamp": "2026-11-09 15:49 KST",
+   "rows": 155,
+   "ageHours": 16.7,
+   "excusedHours": 0.0,
    "effectiveHours": 16.7,
    "stale": false
   },
@@ -777,12 +994,12 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:20 KST",
-   "repoStamp": "2026-11-08 16:20 KST",
-   "rows": 566,
-   "ageHours": 16.2,
+   "stamp": "2026-11-09 16:24 KST",
+   "repoStamp": "2026-11-09 16:24 KST",
+   "rows": 527,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 16.2,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -791,12 +1008,12 @@
    "market": "kr",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:52 KST",
-   "repoStamp": "2026-11-08 16:52 KST",
+   "stamp": "2026-11-09 16:57 KST",
+   "repoStamp": "2026-11-09 16:57 KST",
    "rows": 252,
-   "ageHours": 15.7,
+   "ageHours": 15.6,
    "excusedHours": 0.0,
-   "effectiveHours": 15.7,
+   "effectiveHours": 15.6,
    "stale": false
   },
   {
@@ -805,12 +1022,12 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:51 KST",
-   "repoStamp": "2026-11-08 16:51 KST",
-   "rows": 273,
-   "ageHours": 15.7,
+   "stamp": "2026-11-09 16:57 KST",
+   "repoStamp": "2026-11-09 16:57 KST",
+   "rows": 274,
+   "ageHours": 15.6,
    "excusedHours": 0.0,
-   "effectiveHours": 15.7,
+   "effectiveHours": 15.6,
    "stale": false
   },
   {
@@ -819,12 +1036,12 @@
    "market": "kr",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-06 17:05 KST",
-   "repoStamp": "2026-11-06 17:05 KST",
-   "rows": 1,
-   "ageHours": 63.4,
-   "excusedHours": 48.0,
-   "effectiveHours": 15.4,
+   "stamp": "2026-11-09 17:03 KST",
+   "repoStamp": "2026-11-09 17:03 KST",
+   "rows": 4,
+   "ageHours": 15.5,
+   "excusedHours": 0.0,
+   "effectiveHours": 15.5,
    "stale": false
   },
   {
@@ -833,12 +1050,12 @@
    "market": "kr",
    "maxHours": 48.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:15 KST",
-   "repoStamp": "2026-11-08 16:15 KST",
+   "stamp": "2026-11-09 16:18 KST",
+   "repoStamp": "2026-11-09 16:18 KST",
    "rows": 3813,
-   "ageHours": 16.3,
+   "ageHours": 16.2,
    "excusedHours": 0.0,
-   "effectiveHours": 16.3,
+   "effectiveHours": 16.2,
    "stale": false
   },
   {
@@ -847,12 +1064,12 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-06 17:05 KST",
-   "repoStamp": "2026-11-06 17:05 KST",
-   "rows": 55,
-   "ageHours": 63.4,
-   "excusedHours": 48.0,
-   "effectiveHours": 15.4,
+   "stamp": "2026-11-09 17:03 KST",
+   "repoStamp": "2026-11-09 17:03 KST",
+   "rows": 61,
+   "ageHours": 15.5,
+   "excusedHours": 0.0,
+   "effectiveHours": 15.5,
    "stale": false
   },
   {
@@ -864,9 +1081,9 @@
    "stamp": "2026-11-08 05:41 KST",
    "repoStamp": "2026-11-08 05:41 KST",
    "rows": 10,
-   "ageHours": 26.8,
+   "ageHours": 50.8,
    "excusedHours": 0.0,
-   "effectiveHours": 26.8,
+   "effectiveHours": 50.8,
    "stale": false
   },
   {
@@ -878,9 +1095,9 @@
    "stamp": "2026-10-25 03:05 KST",
    "repoStamp": "2026-10-25 03:05 KST",
    "rows": 1120,
-   "ageHours": 365.4,
+   "ageHours": 389.4,
    "excusedHours": 0.0,
-   "effectiveHours": 365.4,
+   "effectiveHours": 389.4,
    "stale": true
   },
   {
@@ -892,9 +1109,9 @@
    "stamp": "2026-11-08 07:42 KST",
    "repoStamp": "2026-11-08 07:42 KST",
    "rows": 2565,
-   "ageHours": 24.8,
+   "ageHours": 48.8,
    "excusedHours": 0.0,
-   "effectiveHours": 24.8,
+   "effectiveHours": 48.8,
    "stale": false
   },
   {
@@ -906,9 +1123,9 @@
    "stamp": "2026-11-08 03:11 KST",
    "repoStamp": "2026-11-08 03:11 KST",
    "rows": 1052,
-   "ageHours": 29.3,
+   "ageHours": 53.3,
    "excusedHours": 0.0,
-   "effectiveHours": 29.3,
+   "effectiveHours": 53.3,
    "stale": false
   },
   {
@@ -920,9 +1137,9 @@
    "stamp": "2026-11-08 05:41 KST",
    "repoStamp": "2026-11-08 05:41 KST",
    "rows": 2539,
-   "ageHours": 26.8,
+   "ageHours": 50.8,
    "excusedHours": 0.0,
-   "effectiveHours": 26.8,
+   "effectiveHours": 50.8,
    "stale": false
   },
   {
@@ -934,9 +1151,9 @@
    "stamp": "2026-10-19 16:22 KST",
    "repoStamp": "2026-10-19 16:22 KST",
    "rows": 2583,
-   "ageHours": 496.2,
+   "ageHours": 520.1,
    "excusedHours": 144.0,
-   "effectiveHours": 352.2,
+   "effectiveHours": 376.1,
    "stale": true
   },
   {
@@ -948,9 +1165,9 @@
    "stamp": "2026-10-19 16:22 KST",
    "repoStamp": "2026-10-19 16:22 KST",
    "rows": 500,
-   "ageHours": 496.2,
+   "ageHours": 520.1,
    "excusedHours": 144.0,
-   "effectiveHours": 352.2,
+   "effectiveHours": 376.1,
    "stale": true
   },
   {
@@ -959,11 +1176,11 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-06 15:49 KST",
-   "repoStamp": "2026-11-06 15:49 KST",
-   "rows": 363,
-   "ageHours": 64.7,
-   "excusedHours": 48.0,
+   "stamp": "2026-11-09 15:49 KST",
+   "repoStamp": "2026-11-09 15:49 KST",
+   "rows": 362,
+   "ageHours": 16.7,
+   "excusedHours": 0.0,
    "effectiveHours": 16.7,
    "stale": false
   },
@@ -973,12 +1190,12 @@
    "market": "kr",
    "maxHours": 168.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:52 KST",
-   "repoStamp": "2026-11-08 16:52 KST",
-   "rows": 579,
-   "ageHours": 15.7,
+   "stamp": "2026-11-09 17:04 KST",
+   "repoStamp": "2026-11-09 17:04 KST",
+   "rows": 632,
+   "ageHours": 15.4,
    "excusedHours": 0.0,
-   "effectiveHours": 15.7,
+   "effectiveHours": 15.4,
    "stale": false
   },
   {
@@ -987,12 +1204,12 @@
    "market": "kr",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:52 KST",
-   "repoStamp": "2026-11-08 16:52 KST",
+   "stamp": "2026-11-09 16:57 KST",
+   "repoStamp": "2026-11-09 16:57 KST",
    "rows": 2574,
-   "ageHours": 15.7,
+   "ageHours": 15.6,
    "excusedHours": 0.0,
-   "effectiveHours": 15.7,
+   "effectiveHours": 15.6,
    "stale": false
   },
   {
@@ -1004,9 +1221,9 @@
    "stamp": "2026-11-07 10:19 KST",
    "repoStamp": "2026-11-07 10:19 KST",
    "rows": 4490,
-   "ageHours": 46.2,
+   "ageHours": 70.2,
    "excusedHours": 0.0,
-   "effectiveHours": 46.2,
+   "effectiveHours": 70.2,
    "stale": false
   },
   {
@@ -1015,8 +1232,8 @@
    "market": "kr",
    "maxHours": 192.0,
    "status": "ok",
-   "stamp": "2026-11-08 15:55 KST",
-   "repoStamp": "2026-11-08 15:55 KST",
+   "stamp": "2026-11-09 15:55 KST",
+   "repoStamp": "2026-11-09 15:55 KST",
    "rows": 8,
    "ageHours": 16.6,
    "excusedHours": 0.0,
@@ -1032,9 +1249,9 @@
    "stamp": "2026-11-07 10:18 KST",
    "repoStamp": "2026-11-07 10:18 KST",
    "rows": 2718,
-   "ageHours": 46.2,
+   "ageHours": 70.2,
    "excusedHours": 0.0,
-   "effectiveHours": 46.2,
+   "effectiveHours": 70.2,
    "stale": false
   },
   {
@@ -1043,12 +1260,12 @@
    "market": "kr",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 16:22 KST",
-   "repoStamp": "2026-11-08 16:22 KST",
-   "rows": 2811,
-   "ageHours": 16.2,
+   "stamp": "2026-11-09 16:26 KST",
+   "repoStamp": "2026-11-09 16:26 KST",
+   "rows": 2823,
+   "ageHours": 16.1,
    "excusedHours": 0.0,
-   "effectiveHours": 16.2,
+   "effectiveHours": 16.1,
    "stale": false
   },
   {
@@ -1057,11 +1274,11 @@
    "market": "kr",
    "maxHours": 48.0,
    "status": "ok",
-   "stamp": "2026-11-06 15:32 KST",
-   "repoStamp": "2026-11-06 15:32 KST",
-   "rows": 2443,
-   "ageHours": 65.0,
-   "excusedHours": 48.0,
+   "stamp": "2026-11-09 15:32 KST",
+   "repoStamp": "2026-11-09 15:32 KST",
+   "rows": 2187,
+   "ageHours": 17.0,
+   "excusedHours": 0.0,
    "effectiveHours": 17.0,
    "stale": false
   },
@@ -1071,12 +1288,12 @@
    "market": "kr",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-06 15:46 KST",
-   "repoStamp": "2026-11-06 15:46 KST",
-   "rows": 42,
-   "ageHours": 64.8,
-   "excusedHours": 48.0,
-   "effectiveHours": 16.8,
+   "stamp": "2026-11-09 15:46 KST",
+   "repoStamp": "2026-11-09 15:46 KST",
+   "rows": 38,
+   "ageHours": 16.7,
+   "excusedHours": 0.0,
+   "effectiveHours": 16.7,
    "stale": false
   },
   {
@@ -1085,11 +1302,11 @@
    "market": "kr",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-06 15:45 KST",
-   "repoStamp": "2026-11-06 15:45 KST",
-   "rows": 249,
-   "ageHours": 64.8,
-   "excusedHours": 48.0,
+   "stamp": "2026-11-09 15:45 KST",
+   "repoStamp": "2026-11-09 15:45 KST",
+   "rows": 260,
+   "ageHours": 16.8,
+   "excusedHours": 0.0,
    "effectiveHours": 16.8,
    "stale": false
   },
@@ -1112,9 +1329,9 @@
    "stamp": "2026-11-04 10:19 KST",
    "repoStamp": "2026-11-04 10:19 KST",
    "rows": 1500,
-   "ageHours": 118.2,
+   "ageHours": 142.2,
    "excusedHours": 0.0,
-   "effectiveHours": 118.2,
+   "effectiveHours": 142.2,
    "stale": false
   },
   {
@@ -1122,13 +1339,13 @@
    "name": "macro",
    "market": null,
    "maxHours": 168.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:24 KST",
-   "repoStamp": "2026-11-09 06:24 KST",
+   "repoStamp": "2026-11-10 06:24 KST",
    "rows": 9,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -1137,8 +1354,8 @@
    "market": null,
    "maxHours": 36.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:38 KST",
-   "repoStamp": "2026-11-09 06:38 KST",
+   "stamp": "2026-11-10 06:38 KST",
+   "repoStamp": "2026-11-10 06:38 KST",
    "rows": 7,
    "ageHours": 1.9,
    "excusedHours": 0.0,
@@ -1150,13 +1367,13 @@
    "name": "시장 폭 추이",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 07:21 KST",
-   "repoStamp": "2026-11-09 07:21 KST",
+   "repoStamp": "2026-11-10 07:07 KST",
    "rows": 252,
-   "ageHours": 1.2,
+   "ageHours": 25.2,
    "excusedHours": 0.0,
-   "effectiveHours": 1.2,
+   "effectiveHours": 25.2,
    "stale": false
   },
   {
@@ -1164,13 +1381,13 @@
    "name": "휴장·만기 달력",
    "market": null,
    "maxHours": 72.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:41 KST",
-   "repoStamp": "2026-11-09 06:41 KST",
+   "repoStamp": "2026-11-10 06:41 KST",
    "rows": 18,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1178,13 +1395,13 @@
    "name": "시장지표",
    "market": null,
    "maxHours": 72.0,
-   "status": "ok",
-   "stamp": "2026-11-09 07:31 KST",
-   "repoStamp": "2026-11-09 07:31 KST",
+   "status": "problem",
+   "stamp": "2026-11-09 16:11 KST",
+   "repoStamp": "2026-11-10 07:31 KST",
    "rows": 47,
-   "ageHours": 1.0,
+   "ageHours": 16.3,
    "excusedHours": 0.0,
-   "effectiveHours": 1.0,
+   "effectiveHours": 16.3,
    "stale": false
   },
   {
@@ -1192,13 +1409,13 @@
    "name": "오늘의 이슈",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-07 07:08 KST",
-   "repoStamp": "2026-11-07 07:08 KST",
+   "repoStamp": "2026-11-10 07:07 KST",
    "rows": 6,
-   "ageHours": 49.4,
+   "ageHours": 73.4,
    "excusedHours": 48.0,
-   "effectiveHours": 1.4,
+   "effectiveHours": 25.4,
    "stale": false
   },
   {
@@ -1206,13 +1423,13 @@
    "name": "US 시장 스냅샷",
    "market": "us",
    "maxHours": 48.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 07:13 KST",
-   "repoStamp": "2026-11-09 07:13 KST",
+   "repoStamp": "2026-11-10 06:59 KST",
    "rows": 7316,
-   "ageHours": 1.3,
+   "ageHours": 25.3,
    "excusedHours": 0.0,
-   "effectiveHours": 1.3,
+   "effectiveHours": 25.3,
    "stale": false
   },
   {
@@ -1221,12 +1438,12 @@
    "market": "us",
    "maxHours": 72.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:24 KST",
-   "repoStamp": "2026-11-08 13:24 KST",
-   "rows": 1502,
+   "stamp": "2026-11-09 13:25 KST",
+   "repoStamp": "2026-11-09 13:25 KST",
+   "rows": 1473,
    "ageHours": 19.1,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "excusedHours": 0.0,
+   "effectiveHours": 19.1,
    "stale": false
   },
   {
@@ -1235,12 +1452,12 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:26 KST",
-   "repoStamp": "2026-11-08 13:26 KST",
+   "stamp": "2026-11-09 13:25 KST",
+   "repoStamp": "2026-11-09 13:25 KST",
    "rows": 36,
    "ageHours": 19.1,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "excusedHours": 0.0,
+   "effectiveHours": 19.1,
    "stale": false
   },
   {
@@ -1248,13 +1465,13 @@
    "name": "오늘의 특징주",
    "market": "us",
    "maxHours": 120.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-08 07:24 KST",
-   "repoStamp": "2026-11-08 07:24 KST",
+   "repoStamp": "2026-11-10 07:07 KST",
    "rows": 75,
-   "ageHours": 25.1,
+   "ageHours": 49.1,
    "excusedHours": 24.0,
-   "effectiveHours": 1.1,
+   "effectiveHours": 25.1,
    "stale": false
   },
   {
@@ -1266,9 +1483,9 @@
    "stamp": "2026-11-08 05:41 KST",
    "repoStamp": "2026-11-08 05:41 KST",
    "rows": 9,
-   "ageHours": 26.8,
+   "ageHours": 50.8,
    "excusedHours": 0.0,
-   "effectiveHours": 26.8,
+   "effectiveHours": 50.8,
    "stale": false
   },
   {
@@ -1276,13 +1493,13 @@
    "name": "옵션 포지션(GEX·이상 거래)",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 07:23 KST",
-   "repoStamp": "2026-11-09 07:23 KST",
+   "repoStamp": "2026-11-10 07:11 KST",
    "rows": 78,
-   "ageHours": 1.1,
+   "ageHours": 25.1,
    "excusedHours": 0.0,
-   "effectiveHours": 1.1,
+   "effectiveHours": 25.1,
    "stale": false
   },
   {
@@ -1290,13 +1507,13 @@
    "name": "optionsStats",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:25 KST",
-   "repoStamp": "2026-11-09 06:25 KST",
+   "repoStamp": "2026-11-10 06:25 KST",
    "rows": 82,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -1308,9 +1525,9 @@
    "stamp": "2026-11-08 03:11 KST",
    "repoStamp": "2026-11-08 03:11 KST",
    "rows": 1019,
-   "ageHours": 29.3,
+   "ageHours": 53.3,
    "excusedHours": 0.0,
-   "effectiveHours": 29.3,
+   "effectiveHours": 53.3,
    "stale": false
   },
   {
@@ -1322,9 +1539,9 @@
    "stamp": "2026-11-08 03:03 KST",
    "repoStamp": "2026-11-08 03:03 KST",
    "rows": 468,
-   "ageHours": 29.5,
+   "ageHours": 53.5,
    "excusedHours": 0.0,
-   "effectiveHours": 29.5,
+   "effectiveHours": 53.5,
    "stale": false
   },
   {
@@ -1336,9 +1553,9 @@
    "stamp": "2026-11-08 05:41 KST",
    "repoStamp": "2026-11-08 05:41 KST",
    "rows": 3502,
-   "ageHours": 26.8,
+   "ageHours": 50.8,
    "excusedHours": 0.0,
-   "effectiveHours": 26.8,
+   "effectiveHours": 50.8,
    "stale": false
   },
   {
@@ -1346,13 +1563,13 @@
    "name": "결제 불이행(FTD)",
    "market": "us",
    "maxHours": 1080.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-01 06:41 KST",
-   "repoStamp": "2026-11-01 06:41 KST",
+   "repoStamp": "2026-11-10 06:29 KST",
    "rows": 40,
-   "ageHours": 193.8,
+   "ageHours": 217.8,
    "excusedHours": 0.0,
-   "effectiveHours": 193.8,
+   "effectiveHours": 217.8,
    "stale": false
   },
   {
@@ -1364,9 +1581,9 @@
    "stamp": "2026-11-08 03:03 KST",
    "repoStamp": "2026-11-08 03:03 KST",
    "rows": 814,
-   "ageHours": 29.5,
+   "ageHours": 53.5,
    "excusedHours": 0.0,
-   "effectiveHours": 29.5,
+   "effectiveHours": 53.5,
    "stale": false
   },
   {
@@ -1374,13 +1591,13 @@
    "name": "외부 공포탐욕",
    "market": null,
    "maxHours": 144.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:43 KST",
-   "repoStamp": "2026-11-09 06:43 KST",
+   "repoStamp": "2026-11-10 06:30 KST",
    "rows": 3,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1388,13 +1605,13 @@
    "name": "seohakTop",
    "market": "us",
    "maxHours": 144.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:43 KST",
-   "repoStamp": "2026-11-09 06:43 KST",
+   "repoStamp": "2026-11-10 06:30 KST",
    "rows": 350,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1406,9 +1623,9 @@
    "stamp": "2026-11-06 15:15 KST",
    "repoStamp": "2026-11-06 15:15 KST",
    "rows": 240,
-   "ageHours": 65.3,
+   "ageHours": 89.3,
    "excusedHours": 0.0,
-   "effectiveHours": 65.3,
+   "effectiveHours": 89.3,
    "stale": false
   },
   {
@@ -1416,13 +1633,13 @@
    "name": "공매도 거래량 비율 지수",
    "market": "us",
    "maxHours": 120.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:24 KST",
-   "repoStamp": "2026-11-09 06:24 KST",
+   "repoStamp": "2026-11-10 06:24 KST",
    "rows": 286,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -1430,13 +1647,13 @@
    "name": "신호 성적표",
    "market": null,
    "maxHours": 72.0,
-   "status": "ok",
-   "stamp": "2026-11-09 07:21 KST",
-   "repoStamp": "2026-11-09 07:21 KST",
+   "status": "problem",
+   "stamp": "2026-11-09 17:04 KST",
+   "repoStamp": "2026-11-10 07:07 KST",
    "rows": 26,
-   "ageHours": 1.2,
+   "ageHours": 15.4,
    "excusedHours": 0.0,
-   "effectiveHours": 1.2,
+   "effectiveHours": 15.4,
    "stale": false
   },
   {
@@ -1444,13 +1661,13 @@
    "name": "techSignals",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 07:21 KST",
-   "repoStamp": "2026-11-09 07:21 KST",
+   "repoStamp": "2026-11-10 07:07 KST",
    "rows": 3516,
-   "ageHours": 1.2,
+   "ageHours": 25.2,
    "excusedHours": 0.0,
-   "effectiveHours": 1.2,
+   "effectiveHours": 25.2,
    "stale": false
   },
   {
@@ -1468,13 +1685,13 @@
    "name": "국채 경매",
    "market": null,
    "maxHours": 336.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:42 KST",
-   "repoStamp": "2026-11-09 06:42 KST",
+   "repoStamp": "2026-11-10 06:29 KST",
    "rows": 12,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1482,13 +1699,13 @@
    "name": "usCalendar",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:26 KST",
-   "repoStamp": "2026-11-09 06:26 KST",
+   "repoStamp": "2026-11-10 06:26 KST",
    "rows": 202,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   },
   {
@@ -1497,12 +1714,12 @@
    "market": "us",
    "maxHours": 120.0,
    "status": "ok",
-   "stamp": "2026-11-08 13:34 KST",
-   "repoStamp": "2026-11-08 13:34 KST",
-   "rows": 677,
-   "ageHours": 19.0,
-   "excusedHours": 24.0,
-   "effectiveHours": 0.0,
+   "stamp": "2026-11-09 13:34 KST",
+   "repoStamp": "2026-11-09 13:34 KST",
+   "rows": 665,
+   "ageHours": 18.9,
+   "excusedHours": 0.0,
+   "effectiveHours": 18.9,
    "stale": false
   },
   {
@@ -1511,9 +1728,9 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:39 KST",
-   "repoStamp": "2026-11-09 06:39 KST",
-   "rows": 579,
+   "stamp": "2026-11-10 06:37 KST",
+   "repoStamp": "2026-11-10 06:37 KST",
+   "rows": 576,
    "ageHours": 1.9,
    "excusedHours": 0.0,
    "effectiveHours": 1.9,
@@ -1528,9 +1745,9 @@
    "stamp": "2026-11-07 11:02 KST",
    "repoStamp": "2026-11-07 11:02 KST",
    "rows": 697,
-   "ageHours": 45.5,
+   "ageHours": 69.5,
    "excusedHours": 48.0,
-   "effectiveHours": 0.0,
+   "effectiveHours": 21.5,
    "stale": false
   },
   {
@@ -1539,9 +1756,9 @@
    "market": "us",
    "maxHours": 96.0,
    "status": "ok",
-   "stamp": "2026-11-09 06:39 KST",
-   "repoStamp": "2026-11-09 06:39 KST",
-   "rows": 3268,
+   "stamp": "2026-11-10 06:37 KST",
+   "repoStamp": "2026-11-10 06:37 KST",
+   "rows": 3247,
    "ageHours": 1.9,
    "excusedHours": 0.0,
    "effectiveHours": 1.9,
@@ -1552,13 +1769,13 @@
    "name": "액면분할 일정",
    "market": "us",
    "maxHours": 96.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:43 KST",
-   "repoStamp": "2026-11-09 06:43 KST",
+   "repoStamp": "2026-11-10 06:43 KST",
    "rows": 84,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1570,9 +1787,9 @@
    "stamp": "2026-11-03 06:30 KST",
    "repoStamp": "2026-11-03 06:30 KST",
    "rows": 1148,
-   "ageHours": 146.0,
+   "ageHours": 170.0,
    "excusedHours": 0.0,
-   "effectiveHours": 146.0,
+   "effectiveHours": 170.0,
    "stale": false
   },
   {
@@ -1584,9 +1801,9 @@
    "stamp": "2026-11-08 03:07 KST",
    "repoStamp": "2026-11-08 03:07 KST",
    "rows": 628,
-   "ageHours": 29.4,
+   "ageHours": 53.4,
    "excusedHours": 0.0,
-   "effectiveHours": 29.4,
+   "effectiveHours": 53.4,
    "stale": false
   },
   {
@@ -1594,13 +1811,13 @@
    "name": "VIX 기간구조",
    "market": null,
    "maxHours": 96.0,
-   "status": "ok",
-   "stamp": "2026-11-09 07:32 KST",
-   "repoStamp": "2026-11-09 07:32 KST",
+   "status": "problem",
+   "stamp": "2026-11-09 16:11 KST",
+   "repoStamp": "2026-11-10 07:31 KST",
    "rows": 15,
-   "ageHours": 1.0,
+   "ageHours": 16.3,
    "excusedHours": 0.0,
-   "effectiveHours": 1.0,
+   "effectiveHours": 16.3,
    "stale": false
   },
   {
@@ -1608,10 +1825,10 @@
    "name": "백악관 일정",
    "market": "us",
    "maxHours": 48.0,
-   "status": "problem",
-   "stamp": "2026-11-09 06:01:15 KST",
-   "repoStamp": "2026-11-09 06:01:15 KST",
-   "rows": 10,
+   "status": "ok",
+   "stamp": "2026-11-10 06:01:08 KST",
+   "repoStamp": "2026-11-10 06:01:08 KST",
+   "rows": 16,
    "ageHours": 2.5,
    "excusedHours": 0.0,
    "effectiveHours": 2.5,
@@ -1622,13 +1839,13 @@
    "name": "리테일 관심도",
    "market": null,
    "maxHours": 144.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:43 KST",
-   "repoStamp": "2026-11-09 06:43 KST",
+   "repoStamp": "2026-11-10 06:29 KST",
    "rows": 12,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1636,13 +1853,13 @@
    "name": "WSB 감성",
    "market": "us",
    "maxHours": 144.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:43 KST",
-   "repoStamp": "2026-11-09 06:43 KST",
+   "repoStamp": "2026-11-10 06:29 KST",
    "rows": 30,
-   "ageHours": 1.8,
+   "ageHours": 25.8,
    "excusedHours": 0.0,
-   "effectiveHours": 1.8,
+   "effectiveHours": 25.8,
    "stale": false
   },
   {
@@ -1650,13 +1867,13 @@
    "name": "yieldCurve",
    "market": null,
    "maxHours": 168.0,
-   "status": "ok",
+   "status": "problem",
    "stamp": "2026-11-09 06:24 KST",
-   "repoStamp": "2026-11-09 06:24 KST",
+   "repoStamp": "2026-11-10 06:24 KST",
    "rows": 252,
-   "ageHours": 2.1,
+   "ageHours": 26.1,
    "excusedHours": 0.0,
-   "effectiveHours": 2.1,
+   "effectiveHours": 26.1,
    "stale": false
   }
  ],
@@ -1666,12 +1883,12 @@
    "priceDate": null,
    "changeOutliers": 0,
    "changeOutlierTop": [],
-   "changePctSuspect": 1,
+   "changePctSuspect": 0,
    "nullRatios": {
     "price": 0.0,
     "changePct": 0.0,
     "marketCapB": 0.0,
-    "volume": 0.0435,
+    "volume": 0.0456,
     "rsi14": 0.0087,
     "closeSeries": 0.0
    },
@@ -1680,21 +1897,21 @@
      "symbol": "^KS11",
      "label": "코스피",
      "group": "idx_kospi",
-     "index": -6.02,
+     "index": -0.81,
      "members": 825,
-     "median": -2.1,
-     "capWeighted": -5.86,
-     "gap": -0.16
+     "median": -0.3,
+     "capWeighted": -0.78,
+     "gap": -0.03
     },
     {
      "symbol": "^KQ11",
      "label": "코스닥",
      "group": "idx_kosdaq",
-     "index": -5.03,
+     "index": -0.82,
      "members": 1763,
-     "median": -2.7,
-     "capWeighted": -4.82,
-     "gap": -0.21
+     "median": 0.0,
+     "capWeighted": -0.44,
+     "gap": -0.38
     }
    ]
   },
@@ -1738,7 +1955,7 @@
  },
  "details": {
   "kr": {
-   "referenceDate": "2026-11-06",
+   "referenceDate": "2026-11-09",
    "files": 3785,
    "withBars": 3780,
    "noBars": 5,
@@ -1752,16 +1969,17 @@
   },
   "us": {
    "referenceDate": "2026-11-06",
-   "files": 7223,
-   "withBars": 4970,
-   "noBars": 2253,
+   "files": 7221,
+   "withBars": 4985,
+   "noBars": 2236,
    "unreadable": 0,
-   "lastBarOutsideRange": 3,
-   "recentBarOutsideRange": 3,
+   "lastBarOutsideRange": 4,
+   "recentBarOutsideRange": 4,
    "staleBars": 12,
    "lastBarExamples": [
+    "CDT",
+    "NCI",
     "NXDR",
-    "STKH",
     "WCT"
    ],
    "staleExamples": [
@@ -1778,9 +1996,9 @@
   }
  },
  "workflows": {
-  "workflows": 32,
-  "runs": 177,
-  "badRuns": 11,
+  "workflows": 31,
+  "runs": 175,
+  "badRuns": 14,
   "days": 3
  }
 }

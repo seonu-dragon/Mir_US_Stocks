@@ -1,18 +1,18 @@
 {
- "updatedAtKst": "2026-11-10 07:07 KST",
+ "updatedAtKst": "2026-11-10 16:51 KST",
  "count": 111,
  "curatedCount": 72,
  "autoCount": 39,
  "window": {
-  "from": "2025-11-09",
-  "to": "2026-11-09",
+  "from": "2025-11-10",
+  "to": "2026-11-10",
   "days": 365
  },
  "usAsOf": "2026-11-09",
- "krAsOf": "2026-11-09",
+ "krAsOf": "2026-11-10",
  "nextDay": {
-  "from": "2021-11-10",
-  "to": "2026-11-09",
+  "from": "2021-11-11",
+  "to": "2026-11-10",
   "thrPct": 2.0,
   "minN": 20,
   "count": 111
@@ -37,8 +37,8 @@
  "method": "일간 로그수익률, 최근 1년. 미국 D일→국내 다음 거래일(lagCorr), 같은 날짜 국내→미국(sameCorr). 강도는 같은 구간 미국 시장(SPY)을 통제한 편상관으로 판정.",
  "note": "관계는 사람이 정한 것(자동 후보 제외)이고 상관은 과거 서술 통계다. 예측·매매 신호가 아니다.",
  "strengths": {
-  "weak": 28,
-  "strong": 15,
+  "weak": 27,
+  "strong": 16,
   "moderate": 29
  },
  "tickers": {
@@ -308,11 +308,10 @@
     "chg": 9.3,
     "date": "2026-11-09"
    },
-   "XLK": {
-    "name": "State Street Technology Select Sector SPDR ETF",
-    "chg": 3.7,
-    "date": "2026-11-09",
-    "etf": true
+   "WDC": {
+    "name": "Western Digital Corporation",
+    "chg": 9.9,
+    "date": "2026-11-09"
    },
    "FIX": {
     "name": "Comfort Systems USA Inc.",
@@ -324,10 +323,11 @@
     "chg": -2.1,
     "date": "2026-11-09"
    },
-   "WDC": {
-    "name": "Western Digital Corporation",
-    "chg": 9.9,
-    "date": "2026-11-09"
+   "XLK": {
+    "name": "State Street Technology Select Sector SPDR ETF",
+    "chg": 3.7,
+    "date": "2026-11-09",
+    "etf": true
    },
    "MT": {
     "name": "Arcelor Mittal NY Registry Shares NEW",
@@ -338,263 +338,263 @@
   "kr": {
    "005930": {
     "name": "삼성전자",
-    "chg": 0.6,
-    "date": "2026-11-09"
+    "chg": 4.7,
+    "date": "2026-11-10"
    },
    "000660": {
     "name": "SK하이닉스",
-    "chg": 0.3,
-    "date": "2026-11-09"
+    "chg": 6.7,
+    "date": "2026-11-10"
    },
    "042700": {
     "name": "한미반도체",
-    "chg": -0.4,
-    "date": "2026-11-09"
+    "chg": 7.9,
+    "date": "2026-11-10"
    },
    "240810": {
     "name": "원익IPS",
-    "chg": 0.9,
-    "date": "2026-11-09"
+    "chg": 1.6,
+    "date": "2026-11-10"
    },
    "005380": {
     "name": "현대차",
-    "chg": -2.9,
-    "date": "2026-11-09"
+    "chg": 1.3,
+    "date": "2026-11-10"
    },
    "000270": {
     "name": "기아",
-    "chg": -3.3,
-    "date": "2026-11-09"
+    "chg": -0.9,
+    "date": "2026-11-10"
    },
    "373220": {
     "name": "LG에너지솔루션",
-    "chg": -5.8,
-    "date": "2026-11-09"
+    "chg": 3.9,
+    "date": "2026-11-10"
    },
    "006400": {
     "name": "삼성SDI",
-    "chg": -11.3,
-    "date": "2026-11-09"
+    "chg": 9.9,
+    "date": "2026-11-10"
    },
    "003670": {
     "name": "포스코퓨처엠",
-    "chg": -5.0,
-    "date": "2026-11-09"
+    "chg": 9.9,
+    "date": "2026-11-10"
    },
    "247540": {
     "name": "에코프로비엠",
-    "chg": -8.7,
-    "date": "2026-11-09"
+    "chg": 8.7,
+    "date": "2026-11-10"
    },
    "009540": {
     "name": "HD한국조선해양",
-    "chg": -1.9,
-    "date": "2026-11-09"
+    "chg": 4.0,
+    "date": "2026-11-10"
    },
    "010140": {
     "name": "삼성중공업",
-    "chg": -5.4,
-    "date": "2026-11-09"
+    "chg": 7.4,
+    "date": "2026-11-10"
    },
    "042660": {
     "name": "한화오션",
-    "chg": -3.8,
-    "date": "2026-11-09"
+    "chg": 5.6,
+    "date": "2026-11-10"
    },
    "329180": {
     "name": "HD현대중공업",
-    "chg": -1.9,
-    "date": "2026-11-09"
+    "chg": 3.9,
+    "date": "2026-11-10"
    },
    "011200": {
     "name": "HMM",
-    "chg": -6.3,
-    "date": "2026-11-09"
+    "chg": -1.4,
+    "date": "2026-11-10"
    },
    "012450": {
     "name": "한화에어로스페이스",
-    "chg": -3.2,
-    "date": "2026-11-09"
+    "chg": 3.1,
+    "date": "2026-11-10"
    },
    "079550": {
     "name": "LIG디펜스앤에어로스페이스",
-    "chg": -8.9,
-    "date": "2026-11-09"
+    "chg": 14.1,
+    "date": "2026-11-10"
    },
    "064350": {
     "name": "현대로템",
-    "chg": -2.4,
-    "date": "2026-11-09"
+    "chg": 4.7,
+    "date": "2026-11-10"
    },
    "047810": {
     "name": "한국항공우주",
-    "chg": -3.5,
-    "date": "2026-11-09"
+    "chg": 2.2,
+    "date": "2026-11-10"
    },
    "034020": {
     "name": "두산에너빌리티",
-    "chg": -3.0,
-    "date": "2026-11-09"
+    "chg": 8.3,
+    "date": "2026-11-10"
    },
    "052690": {
     "name": "한전기술",
-    "chg": -1.5,
-    "date": "2026-11-09"
+    "chg": 3.0,
+    "date": "2026-11-10"
    },
    "267260": {
     "name": "HD현대일렉트릭",
-    "chg": -2.9,
-    "date": "2026-11-09"
+    "chg": 10.7,
+    "date": "2026-11-10"
    },
    "010120": {
     "name": "LS ELECTRIC",
-    "chg": -4.1,
-    "date": "2026-11-09"
+    "chg": 8.3,
+    "date": "2026-11-10"
    },
    "298040": {
     "name": "효성중공업",
-    "chg": -1.8,
-    "date": "2026-11-09"
+    "chg": 12.7,
+    "date": "2026-11-10"
    },
    "207940": {
     "name": "삼성바이오로직스",
-    "chg": -0.4,
-    "date": "2026-11-09"
+    "chg": -2.8,
+    "date": "2026-11-10"
    },
    "068270": {
     "name": "셀트리온",
-    "chg": -0.5,
-    "date": "2026-11-09"
+    "chg": -3.3,
+    "date": "2026-11-10"
    },
    "009150": {
     "name": "삼성전기",
-    "chg": -3.1,
-    "date": "2026-11-09"
+    "chg": 4.6,
+    "date": "2026-11-10"
    },
    "011070": {
     "name": "LG이노텍",
-    "chg": -0.4,
-    "date": "2026-11-09"
+    "chg": 5.3,
+    "date": "2026-11-10"
    },
    "034220": {
     "name": "LG디스플레이",
-    "chg": -1.1,
-    "date": "2026-11-09"
+    "chg": 4.0,
+    "date": "2026-11-10"
    },
    "035420": {
     "name": "NAVER",
-    "chg": -1.6,
-    "date": "2026-11-09"
+    "chg": 3.1,
+    "date": "2026-11-10"
    },
    "035720": {
     "name": "카카오",
-    "chg": -0.6,
-    "date": "2026-11-09"
+    "chg": -0.2,
+    "date": "2026-11-10"
    },
    "259960": {
     "name": "크래프톤",
-    "chg": -1.4,
-    "date": "2026-11-09"
+    "chg": -0.5,
+    "date": "2026-11-10"
    },
    "005490": {
     "name": "POSCO홀딩스",
-    "chg": -2.3,
-    "date": "2026-11-09"
+    "chg": 4.6,
+    "date": "2026-11-10"
    },
    "096770": {
     "name": "SK이노베이션",
-    "chg": -2.5,
-    "date": "2026-11-09"
+    "chg": 2.8,
+    "date": "2026-11-10"
    },
    "010950": {
     "name": "S-Oil",
-    "chg": -0.6,
-    "date": "2026-11-09"
+    "chg": 0.3,
+    "date": "2026-11-10"
    },
    "009830": {
     "name": "한화솔루션",
-    "chg": -6.9,
-    "date": "2026-11-09"
+    "chg": 0.6,
+    "date": "2026-11-10"
    },
    "003490": {
     "name": "대한항공",
-    "chg": -1.0,
-    "date": "2026-11-09"
+    "chg": 11.5,
+    "date": "2026-11-10"
    },
    "105560": {
     "name": "KB금융",
-    "chg": -0.1,
-    "date": "2026-11-09"
+    "chg": 1.2,
+    "date": "2026-11-10"
    },
    "055550": {
     "name": "신한지주",
-    "chg": -1.0,
-    "date": "2026-11-09"
+    "chg": -0.3,
+    "date": "2026-11-10"
    },
    "010130": {
     "name": "고려아연",
-    "chg": -2.6,
-    "date": "2026-11-09"
+    "chg": 3.4,
+    "date": "2026-11-10"
    },
    "402340": {
     "name": "SK스퀘어",
-    "chg": -0.3,
-    "date": "2026-11-09"
+    "chg": 5.3,
+    "date": "2026-11-10"
    },
    "062040": {
     "name": "산일전기",
-    "chg": -2.2,
-    "date": "2026-11-09"
+    "chg": 7.7,
+    "date": "2026-11-10"
    },
    "034730": {
     "name": "SK",
-    "chg": 0.7,
-    "date": "2026-11-09"
+    "chg": 7.1,
+    "date": "2026-11-10"
    },
    "353200": {
     "name": "대덕전자",
-    "chg": 5.6,
-    "date": "2026-11-09"
+    "chg": 6.4,
+    "date": "2026-11-10"
    },
    "039030": {
     "name": "이오테크닉스",
-    "chg": 6.0,
-    "date": "2026-11-09"
+    "chg": 14.5,
+    "date": "2026-11-10"
    },
    "028260": {
     "name": "삼성물산",
-    "chg": -1.5,
-    "date": "2026-11-09"
+    "chg": 3.5,
+    "date": "2026-11-10"
    },
    "031980": {
     "name": "피에스케이홀딩스",
-    "chg": 1.1,
-    "date": "2026-11-09"
+    "chg": 7.0,
+    "date": "2026-11-10"
    },
    "032830": {
     "name": "삼성생명",
-    "chg": 1.1,
-    "date": "2026-11-09"
+    "chg": 3.2,
+    "date": "2026-11-10"
    },
    "007660": {
     "name": "이수페타시스",
-    "chg": 1.9,
-    "date": "2026-11-09"
+    "chg": 8.5,
+    "date": "2026-11-10"
    },
    "222800": {
     "name": "심텍",
-    "chg": 6.8,
-    "date": "2026-11-09"
-   },
-   "403870": {
-    "name": "HPSP",
-    "chg": 3.3,
-    "date": "2026-11-09"
+    "chg": 6.7,
+    "date": "2026-11-10"
    },
    "036930": {
     "name": "주성엔지니어링",
-    "chg": 6.7,
-    "date": "2026-11-09"
+    "chg": 7.5,
+    "date": "2026-11-10"
+   },
+   "403870": {
+    "name": "HPSP",
+    "chg": 5.8,
+    "date": "2026-11-10"
    }
   }
  },
@@ -605,9 +605,9 @@
    "type": "customer",
    "why": "HBM·메모리 공급처(AI 가속기)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.234,
-   "lagCorrEx": 0.043,
+   "n": 239,
+   "lagCorr": 0.225,
+   "lagCorrEx": 0.04,
    "sameCorr": 0.222,
    "sameCorrEx": 0.157,
    "strength": "weak",
@@ -615,7 +615,7 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.16,
+     "gap": 0.17,
      "bull": 44.2,
      "ret": 0.12
     },
@@ -626,10 +626,10 @@
      "ret": 0.68
     },
     "down": {
-     "n": 264,
-     "gap": -0.96,
-     "bull": 49.2,
-     "ret": -0.7
+     "n": 265,
+     "gap": -0.93,
+     "bull": 49.1,
+     "ret": -0.68
     }
    }
   },
@@ -639,8 +639,8 @@
    "type": "competitor",
    "why": "D램·낸드 메모리 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.442,
+   "n": 239,
+   "lagCorr": 0.445,
    "lagCorrEx": 0.346,
    "sameCorr": 0.296,
    "sameCorrEx": 0.251,
@@ -649,15 +649,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.16,
+     "gap": 0.17,
      "bull": 44.2,
      "ret": 0.12
     },
     "up": {
-     "n": 313,
-     "gap": 1.43,
-     "bull": 45.4,
-     "ret": 1.34
+     "n": 314,
+     "gap": 1.45,
+     "bull": 45.2,
+     "ret": 1.36
     },
     "down": {
      "n": 274,
@@ -673,9 +673,9 @@
    "type": "customer",
    "why": "HBM 공급처(AI 가속기)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.351,
-   "lagCorrEx": 0.216,
+   "n": 239,
+   "lagCorr": 0.355,
+   "lagCorrEx": 0.215,
    "sameCorr": 0.218,
    "sameCorrEx": 0.15,
    "strength": "moderate",
@@ -683,15 +683,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.16,
+     "gap": 0.17,
      "bull": 44.2,
      "ret": 0.12
     },
     "up": {
-     "n": 310,
-     "gap": 1.18,
-     "bull": 41.6,
-     "ret": 0.9
+     "n": 311,
+     "gap": 1.2,
+     "bull": 41.5,
+     "ret": 0.91
     },
     "down": {
      "n": 296,
@@ -707,8 +707,8 @@
    "type": "peer",
    "why": "미국 반도체 지수 ETF",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.401,
+   "n": 239,
+   "lagCorr": 0.405,
    "lagCorrEx": 0.275,
    "sameCorr": 0.308,
    "sameCorrEx": 0.285,
@@ -717,15 +717,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.16,
+     "gap": 0.17,
      "bull": 44.2,
      "ret": 0.12
     },
     "up": {
-     "n": 231,
-     "gap": 1.62,
-     "bull": 42.4,
-     "ret": 1.33
+     "n": 232,
+     "gap": 1.63,
+     "bull": 42.2,
+     "ret": 1.34
     },
     "down": {
      "n": 211,
@@ -741,9 +741,9 @@
    "type": "customer",
    "why": "HBM 주요 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.242,
-   "lagCorrEx": 0.057,
+   "n": 239,
+   "lagCorr": 0.232,
+   "lagCorrEx": 0.05,
    "sameCorr": 0.224,
    "sameCorrEx": 0.152,
    "strength": "weak",
@@ -762,10 +762,10 @@
      "ret": 1.29
     },
     "down": {
-     "n": 264,
-     "gap": -1.74,
-     "bull": 54.5,
-     "ret": -1.29
+     "n": 265,
+     "gap": -1.71,
+     "bull": 54.3,
+     "ret": -1.26
     }
    }
   },
@@ -775,8 +775,8 @@
    "type": "competitor",
    "why": "D램·HBM 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.467,
+   "n": 239,
+   "lagCorr": 0.469,
    "lagCorrEx": 0.378,
    "sameCorr": 0.34,
    "sameCorrEx": 0.3,
@@ -790,10 +790,10 @@
      "ret": 0.26
     },
     "up": {
-     "n": 313,
-     "gap": 2.31,
-     "bull": 44.7,
-     "ret": 2.21
+     "n": 314,
+     "gap": 2.32,
+     "bull": 44.6,
+     "ret": 2.23
     },
     "down": {
      "n": 274,
@@ -809,9 +809,9 @@
    "type": "customer",
    "why": "HBM 공급처(AI 가속기)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.387,
-   "lagCorrEx": 0.267,
+   "n": 239,
+   "lagCorr": 0.392,
+   "lagCorrEx": 0.268,
    "sameCorr": 0.206,
    "sameCorrEx": 0.127,
    "strength": "strong",
@@ -824,10 +824,10 @@
      "ret": 0.26
     },
     "up": {
-     "n": 310,
-     "gap": 1.81,
-     "bull": 40.6,
-     "ret": 1.45
+     "n": 311,
+     "gap": 1.82,
+     "bull": 40.5,
+     "ret": 1.47
     },
     "down": {
      "n": 296,
@@ -843,8 +843,8 @@
    "type": "peer",
    "why": "미국 반도체 지수 ETF",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.426,
+   "n": 239,
+   "lagCorr": 0.431,
    "lagCorrEx": 0.317,
    "sameCorr": 0.327,
    "sameCorrEx": 0.305,
@@ -858,10 +858,10 @@
      "ret": 0.26
     },
     "up": {
-     "n": 231,
-     "gap": 2.5,
-     "bull": 39.8,
-     "ret": 2.13
+     "n": 232,
+     "gap": 2.52,
+     "bull": 39.7,
+     "ret": 2.15
     },
     "down": {
      "n": 211,
@@ -877,9 +877,9 @@
    "type": "theme",
    "why": "HBM 적층 장비(TC 본더) — 엔비디아향 HBM 공급망(간접)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.221,
-   "lagCorrEx": 0.079,
+   "n": 239,
+   "lagCorr": 0.21,
+   "lagCorrEx": 0.066,
    "sameCorr": 0.142,
    "sameCorrEx": 0.07,
    "strength": "weak",
@@ -888,8 +888,8 @@
     "base": {
      "n": 1218,
      "gap": 0.28,
-     "bull": 42.6,
-     "ret": 0.29
+     "bull": 42.7,
+     "ret": 0.3
     },
     "up": {
      "n": 302,
@@ -898,10 +898,10 @@
      "ret": 1.67
     },
     "down": {
-     "n": 262,
-     "gap": -1.78,
-     "bull": 56.5,
-     "ret": -0.77
+     "n": 263,
+     "gap": -1.75,
+     "bull": 56.7,
+     "ret": -0.74
     }
    }
   },
@@ -911,9 +911,9 @@
    "type": "customer",
    "why": "HBM TC 본더 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.34,
-   "lagCorrEx": 0.253,
+   "n": 239,
+   "lagCorr": 0.343,
+   "lagCorrEx": 0.252,
    "sameCorr": 0.173,
    "sameCorrEx": 0.116,
    "strength": "strong",
@@ -922,14 +922,14 @@
     "base": {
      "n": 1218,
      "gap": 0.28,
-     "bull": 42.6,
-     "ret": 0.29
+     "bull": 42.7,
+     "ret": 0.3
     },
     "up": {
-     "n": 313,
-     "gap": 2.06,
-     "bull": 37.1,
-     "ret": 1.99
+     "n": 314,
+     "gap": 2.07,
+     "bull": 37.3,
+     "ret": 2.01
     },
     "down": {
      "n": 272,
@@ -945,9 +945,9 @@
    "type": "peer",
    "why": "반도체 장비",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.34,
-   "lagCorrEx": 0.248,
+   "n": 239,
+   "lagCorr": 0.347,
+   "lagCorrEx": 0.25,
    "sameCorr": 0.21,
    "sameCorrEx": 0.158,
    "strength": "moderate",
@@ -956,14 +956,14 @@
     "base": {
      "n": 1218,
      "gap": 0.28,
-     "bull": 42.6,
-     "ret": 0.29
+     "bull": 42.7,
+     "ret": 0.3
     },
     "up": {
      "n": 260,
-     "gap": 2.17,
-     "bull": 35.8,
-     "ret": 1.89
+     "gap": 2.19,
+     "bull": 36.2,
+     "ret": 1.93
     },
     "down": {
      "n": 236,
@@ -979,9 +979,9 @@
    "type": "peer",
    "why": "반도체 전공정 장비",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.452,
-   "lagCorrEx": 0.374,
+   "n": 239,
+   "lagCorr": 0.448,
+   "lagCorrEx": 0.37,
    "sameCorr": 0.153,
    "sameCorrEx": 0.12,
    "strength": "strong",
@@ -989,15 +989,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.08,
+     "gap": 0.09,
      "bull": 46.2,
      "ret": 0.14
     },
     "up": {
      "n": 260,
-     "gap": 1.73,
+     "gap": 1.75,
      "bull": 43.1,
-     "ret": 1.86
+     "ret": 1.88
     },
     "down": {
      "n": 239,
@@ -1013,9 +1013,9 @@
    "type": "peer",
    "why": "반도체 식각·증착 장비",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.446,
-   "lagCorrEx": 0.367,
+   "n": 239,
+   "lagCorr": 0.443,
+   "lagCorrEx": 0.365,
    "sameCorr": 0.187,
    "sameCorrEx": 0.167,
    "strength": "strong",
@@ -1023,15 +1023,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.08,
+     "gap": 0.09,
      "bull": 46.2,
      "ret": 0.14
     },
     "up": {
      "n": 282,
-     "gap": 1.67,
+     "gap": 1.69,
      "bull": 46.5,
-     "ret": 1.97
+     "ret": 1.99
     },
     "down": {
      "n": 247,
@@ -1047,9 +1047,9 @@
    "type": "competitor",
    "why": "전기차 경쟁",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.232,
-   "lagCorrEx": 0.048,
+   "lagCorrEx": 0.047,
    "sameCorr": 0.044,
    "sameCorrEx": 0.003,
    "strength": "weak",
@@ -1057,20 +1057,20 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.13,
+     "gap": 0.14,
      "bull": 42.6,
-     "ret": 0.05
+     "ret": 0.06
     },
     "up": {
-     "n": 314,
-     "gap": 0.8,
-     "bull": 36.3,
-     "ret": 0.53
+     "n": 315,
+     "gap": 0.81,
+     "bull": 36.2,
+     "ret": 0.54
     },
     "down": {
-     "n": 310,
+     "n": 309,
      "gap": -0.7,
-     "bull": 43.9,
+     "bull": 44.0,
      "ret": -0.62
     }
    }
@@ -1081,9 +1081,9 @@
    "type": "competitor",
    "why": "미국 완성차 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.148,
-   "lagCorrEx": 0.014,
+   "n": 239,
+   "lagCorr": 0.149,
+   "lagCorrEx": 0.012,
    "sameCorr": 0.05,
    "sameCorrEx": 0.023,
    "strength": "weak",
@@ -1091,14 +1091,14 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.13,
+     "gap": 0.14,
      "bull": 42.6,
-     "ret": 0.05
+     "ret": 0.06
     },
     "up": {
-     "n": 192,
-     "gap": 1.0,
-     "bull": 39.1,
+     "n": 193,
+     "gap": 1.02,
+     "bull": 38.9,
      "ret": 0.7
     },
     "down": {
@@ -1115,9 +1115,9 @@
    "type": "competitor",
    "why": "미국 완성차 경쟁",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.242,
-   "lagCorrEx": 0.141,
+   "lagCorrEx": 0.142,
    "sameCorr": 0.151,
    "sameCorrEx": 0.137,
    "strength": "moderate",
@@ -1125,9 +1125,9 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.13,
+     "gap": 0.14,
      "bull": 42.6,
-     "ret": 0.05
+     "ret": 0.06
     },
     "up": {
      "n": 191,
@@ -1149,9 +1149,9 @@
    "type": "competitor",
    "why": "전기차 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.234,
-   "lagCorrEx": 0.087,
+   "n": 239,
+   "lagCorr": 0.23,
+   "lagCorrEx": 0.086,
    "sameCorr": 0.037,
    "sameCorrEx": 0.014,
    "strength": "weak",
@@ -1159,20 +1159,20 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.03,
+     "gap": 0.04,
      "bull": 47.4,
      "ret": 0.04
     },
     "up": {
-     "n": 314,
+     "n": 315,
      "gap": 0.54,
-     "bull": 40.4,
+     "bull": 40.3,
      "ret": 0.42
     },
     "down": {
-     "n": 310,
-     "gap": -0.65,
-     "bull": 50.0,
+     "n": 309,
+     "gap": -0.64,
+     "bull": 50.2,
      "ret": -0.56
     }
    }
@@ -1183,9 +1183,9 @@
    "type": "competitor",
    "why": "미국 완성차 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.147,
-   "lagCorrEx": 0.034,
+   "n": 239,
+   "lagCorr": 0.144,
+   "lagCorrEx": 0.031,
    "sameCorr": -0.015,
    "sameCorrEx": -0.037,
    "strength": "weak",
@@ -1193,15 +1193,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.03,
+     "gap": 0.04,
      "bull": 47.4,
      "ret": 0.04
     },
     "up": {
-     "n": 192,
-     "gap": 0.77,
-     "bull": 39.1,
-     "ret": 0.54
+     "n": 193,
+     "gap": 0.78,
+     "bull": 38.9,
+     "ret": 0.53
     },
     "down": {
      "n": 191,
@@ -1217,8 +1217,8 @@
    "type": "customer",
    "why": "원통형 배터리 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.192,
+   "n": 239,
+   "lagCorr": 0.198,
    "lagCorrEx": 0.068,
    "sameCorr": 0.008,
    "sameCorrEx": -0.03,
@@ -1226,16 +1226,16 @@
    "sameStrength": "weak",
    "nextDay": {
     "base": {
-     "n": 1166,
+     "n": 1167,
      "gap": 0.14,
      "bull": 43.0,
      "ret": 0.01
     },
     "up": {
-     "n": 300,
-     "gap": 0.86,
-     "bull": 48.7,
-     "ret": 1.02
+     "n": 301,
+     "gap": 0.87,
+     "bull": 48.8,
+     "ret": 1.03
     },
     "down": {
      "n": 292,
@@ -1251,25 +1251,25 @@
    "type": "customer",
    "why": "합작 배터리 공장(얼티엄셀즈) 파트너",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.231,
-   "lagCorrEx": 0.153,
+   "n": 239,
+   "lagCorr": 0.237,
+   "lagCorrEx": 0.154,
    "sameCorr": -0.048,
    "sameCorrEx": -0.077,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
     "base": {
-     "n": 1166,
+     "n": 1167,
      "gap": 0.14,
      "bull": 43.0,
      "ret": 0.01
     },
     "up": {
-     "n": 181,
+     "n": 182,
      "gap": 0.87,
-     "bull": 49.7,
-     "ret": 0.91
+     "bull": 50.0,
+     "ret": 0.93
     },
     "down": {
      "n": 179,
@@ -1285,16 +1285,16 @@
    "type": "supplier",
    "why": "리튬 원료",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.257,
-   "lagCorrEx": 0.206,
+   "n": 239,
+   "lagCorr": 0.256,
+   "lagCorrEx": 0.204,
    "sameCorr": 0.07,
    "sameCorrEx": 0.059,
    "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
     "base": {
-     "n": 1166,
+     "n": 1167,
      "gap": 0.14,
      "bull": 43.0,
      "ret": 0.01
@@ -1319,9 +1319,9 @@
    "type": "customer",
    "why": "배터리 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.218,
-   "lagCorrEx": 0.104,
+   "n": 239,
+   "lagCorr": 0.222,
+   "lagCorrEx": 0.102,
    "sameCorr": 0.01,
    "sameCorrEx": -0.023,
    "strength": "weak",
@@ -1331,13 +1331,13 @@
      "n": 1222,
      "gap": 0.1,
      "bull": 42.7,
-     "ret": 0.01
+     "ret": 0.02
     },
     "up": {
-     "n": 331,
-     "gap": 0.8,
-     "bull": 42.6,
-     "ret": 0.62
+     "n": 332,
+     "gap": 0.81,
+     "bull": 42.8,
+     "ret": 0.65
     },
     "down": {
      "n": 374,
@@ -1353,9 +1353,9 @@
    "type": "supplier",
    "why": "리튬 원료",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.262,
-   "lagCorrEx": 0.188,
+   "n": 239,
+   "lagCorr": 0.26,
+   "lagCorrEx": 0.183,
    "sameCorr": 0.113,
    "sameCorrEx": 0.095,
    "strength": "moderate",
@@ -1365,7 +1365,7 @@
      "n": 1222,
      "gap": 0.1,
      "bull": 42.7,
-     "ret": 0.01
+     "ret": 0.02
     },
     "up": {
      "n": 293,
@@ -1387,9 +1387,9 @@
    "type": "customer",
    "why": "양극재 합작 파트너",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.195,
-   "lagCorrEx": 0.077,
+   "n": 239,
+   "lagCorr": 0.207,
+   "lagCorrEx": 0.081,
    "sameCorr": 0.028,
    "sameCorrEx": -0.014,
    "strength": "weak",
@@ -1398,14 +1398,14 @@
     "base": {
      "n": 1222,
      "gap": 0.16,
-     "bull": 44.7,
-     "ret": 0.08
+     "bull": 44.8,
+     "ret": 0.1
     },
     "up": {
-     "n": 192,
-     "gap": 1.14,
-     "bull": 45.8,
-     "ret": 1.09
+     "n": 193,
+     "gap": 1.15,
+     "bull": 46.1,
+     "ret": 1.14
     },
     "down": {
      "n": 191,
@@ -1421,9 +1421,9 @@
    "type": "peer",
    "why": "2차전지 소재(리튬)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.313,
-   "lagCorrEx": 0.249,
+   "n": 239,
+   "lagCorr": 0.31,
+   "lagCorrEx": 0.243,
    "sameCorr": 0.105,
    "sameCorrEx": 0.082,
    "strength": "moderate",
@@ -1432,8 +1432,8 @@
     "base": {
      "n": 1222,
      "gap": 0.16,
-     "bull": 44.7,
-     "ret": 0.08
+     "bull": 44.8,
+     "ret": 0.1
     },
     "up": {
      "n": 293,
@@ -1455,9 +1455,9 @@
    "type": "peer",
    "why": "2차전지 소재(리튬)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.291,
-   "lagCorrEx": 0.232,
+   "n": 239,
+   "lagCorr": 0.289,
+   "lagCorrEx": 0.228,
    "sameCorr": 0.101,
    "sameCorrEx": 0.074,
    "strength": "moderate",
@@ -1465,9 +1465,9 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.15,
-     "bull": 43.4,
-     "ret": 0.05
+     "gap": 0.16,
+     "bull": 43.5,
+     "ret": 0.06
     },
     "up": {
      "n": 293,
@@ -1489,9 +1489,9 @@
    "type": "peer",
    "why": "리튬·배터리 ETF",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.327,
-   "lagCorrEx": 0.217,
+   "lagCorrEx": 0.21,
    "sameCorr": 0.284,
    "sameCorrEx": 0.277,
    "strength": "moderate",
@@ -1499,9 +1499,9 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.15,
-     "bull": 43.4,
-     "ret": 0.05
+     "gap": 0.16,
+     "bull": 43.5,
+     "ret": 0.06
     },
     "up": {
      "n": 163,
@@ -1523,9 +1523,9 @@
    "type": "theme",
    "why": "LNG 수출 → LNG 운반선 수요(직접 거래 아님)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.001,
-   "lagCorrEx": 0.065,
+   "n": 239,
+   "lagCorr": 0.007,
+   "lagCorrEx": 0.069,
    "sameCorr": -0.152,
    "sameCorrEx": -0.141,
    "strength": "weak",
@@ -1534,14 +1534,14 @@
     "base": {
      "n": 1222,
      "gap": 0.1,
-     "bull": 47.6,
+     "bull": 47.7,
      "ret": 0.11
     },
     "up": {
-     "n": 161,
-     "gap": 0.2,
-     "bull": 52.8,
-     "ret": 0.37
+     "n": 162,
+     "gap": 0.21,
+     "bull": 53.1,
+     "ret": 0.39
     },
     "down": {
      "n": 125,
@@ -1557,12 +1557,12 @@
    "type": "theme",
    "why": "LNG 수출 → LNG 운반선 수요(직접 거래 아님)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.056,
-   "lagCorrEx": 0.121,
+   "n": 239,
+   "lagCorr": 0.065,
+   "lagCorrEx": 0.13,
    "sameCorr": -0.113,
    "sameCorrEx": -0.103,
-   "strength": "weak",
+   "strength": "moderate",
    "sameStrength": "weak",
    "nextDay": {
     "base": {
@@ -1572,10 +1572,10 @@
      "ret": 0.12
     },
     "up": {
-     "n": 161,
-     "gap": 0.24,
-     "bull": 48.4,
-     "ret": 0.46
+     "n": 162,
+     "gap": 0.26,
+     "bull": 48.8,
+     "ret": 0.51
     },
     "down": {
      "n": 125,
@@ -1591,9 +1591,9 @@
    "type": "theme",
    "why": "LNG 수출 → LNG 운반선 수요(직접 거래 아님)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": -0.004,
-   "lagCorrEx": 0.05,
+   "n": 239,
+   "lagCorr": 0.002,
+   "lagCorrEx": 0.054,
    "sameCorr": -0.114,
    "sameCorrEx": -0.101,
    "strength": "weak",
@@ -1602,14 +1602,14 @@
     "base": {
      "n": 1222,
      "gap": 0.18,
-     "bull": 45.8,
+     "bull": 45.9,
      "ret": 0.14
     },
     "up": {
-     "n": 161,
-     "gap": 0.45,
-     "bull": 46.0,
-     "ret": 0.56
+     "n": 162,
+     "gap": 0.46,
+     "bull": 46.3,
+     "ret": 0.59
     },
     "down": {
      "n": 125,
@@ -1625,9 +1625,9 @@
    "type": "theme",
    "why": "유조선 선사 — 선박 발주 수요",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.121,
-   "lagCorrEx": 0.091,
+   "n": 239,
+   "lagCorr": 0.116,
+   "lagCorrEx": 0.087,
    "sameCorr": -0.064,
    "sameCorrEx": -0.072,
    "strength": "weak",
@@ -1646,10 +1646,10 @@
      "ret": 0.45
     },
     "down": {
-     "n": 267,
-     "gap": -0.04,
-     "bull": 49.4,
-     "ret": -0.2
+     "n": 268,
+     "gap": -0.03,
+     "bull": 49.6,
+     "ret": -0.19
     }
    }
   },
@@ -1659,8 +1659,8 @@
    "type": "peer",
    "why": "컨테이너 해운",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.193,
+   "n": 239,
+   "lagCorr": 0.191,
    "lagCorrEx": 0.154,
    "sameCorr": -0.139,
    "sameCorrEx": -0.127,
@@ -1670,14 +1670,14 @@
     "base": {
      "n": 1222,
      "gap": 0.14,
-     "bull": 43.5,
+     "bull": 43.4,
      "ret": 0.02
     },
     "up": {
      "n": 316,
      "gap": 0.56,
-     "bull": 45.6,
-     "ret": 0.59
+     "bull": 45.3,
+     "ret": 0.58
     },
     "down": {
      "n": 309,
@@ -1693,9 +1693,9 @@
    "type": "peer",
    "why": "방산",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.216,
-   "lagCorrEx": 0.22,
+   "n": 239,
+   "lagCorr": 0.22,
+   "lagCorrEx": 0.222,
    "sameCorr": 0.229,
    "sameCorrEx": 0.23,
    "strength": "moderate",
@@ -1705,13 +1705,13 @@
      "n": 1203,
      "gap": 0.36,
      "bull": 48.0,
-     "ret": 0.28
+     "ret": 0.29
     },
     "up": {
-     "n": 94,
-     "gap": 1.49,
-     "bull": 47.9,
-     "ret": 1.06
+     "n": 95,
+     "gap": 1.51,
+     "bull": 47.4,
+     "ret": 1.09
     },
     "down": {
      "n": 75,
@@ -1727,9 +1727,9 @@
    "type": "peer",
    "why": "방산·항공 엔진",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.299,
-   "lagCorrEx": 0.286,
+   "n": 239,
+   "lagCorr": 0.303,
+   "lagCorrEx": 0.287,
    "sameCorr": 0.082,
    "sameCorrEx": 0.074,
    "strength": "strong",
@@ -1739,13 +1739,13 @@
      "n": 1203,
      "gap": 0.36,
      "bull": 48.0,
-     "ret": 0.28
+     "ret": 0.29
     },
     "up": {
-     "n": 96,
-     "gap": 1.32,
-     "bull": 56.2,
-     "ret": 1.91
+     "n": 97,
+     "gap": 1.34,
+     "bull": 55.7,
+     "ret": 1.92
     },
     "down": {
      "n": 68,
@@ -1761,9 +1761,9 @@
    "type": "peer",
    "why": "유도무기·방공",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.246,
-   "lagCorrEx": 0.224,
+   "n": 239,
+   "lagCorr": 0.261,
+   "lagCorrEx": 0.234,
    "sameCorr": 0.04,
    "sameCorrEx": 0.028,
    "strength": "moderate",
@@ -1772,14 +1772,14 @@
     "base": {
      "n": 1222,
      "gap": 0.29,
-     "bull": 46.3,
-     "ret": 0.23
+     "bull": 46.4,
+     "ret": 0.24
     },
     "up": {
-     "n": 97,
+     "n": 98,
      "gap": 1.29,
-     "bull": 51.5,
-     "ret": 1.41
+     "bull": 52.0,
+     "ret": 1.54
     },
     "down": {
      "n": 68,
@@ -1795,9 +1795,9 @@
    "type": "peer",
    "why": "방산",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.179,
-   "lagCorrEx": 0.186,
+   "n": 239,
+   "lagCorr": 0.193,
+   "lagCorrEx": 0.197,
    "sameCorr": 0.149,
    "sameCorrEx": 0.151,
    "strength": "moderate",
@@ -1806,14 +1806,14 @@
     "base": {
      "n": 1222,
      "gap": 0.29,
-     "bull": 46.3,
-     "ret": 0.23
+     "bull": 46.4,
+     "ret": 0.24
     },
     "up": {
-     "n": 94,
-     "gap": 1.32,
-     "bull": 54.3,
-     "ret": 1.23
+     "n": 95,
+     "gap": 1.33,
+     "bull": 54.7,
+     "ret": 1.36
     },
     "down": {
      "n": 75,
@@ -1829,9 +1829,9 @@
    "type": "peer",
    "why": "지상 장비(전차)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.167,
-   "lagCorrEx": 0.126,
+   "n": 239,
+   "lagCorr": 0.173,
+   "lagCorrEx": 0.127,
    "sameCorr": 0.085,
    "sameCorrEx": 0.078,
    "strength": "weak",
@@ -1840,14 +1840,14 @@
     "base": {
      "n": 1222,
      "gap": 0.25,
-     "bull": 45.6,
+     "bull": 45.7,
      "ret": 0.16
     },
     "up": {
-     "n": 65,
-     "gap": 1.32,
-     "bull": 50.8,
-     "ret": 1.43
+     "n": 66,
+     "gap": 1.34,
+     "bull": 51.5,
+     "ret": 1.48
     },
     "down": {
      "n": 57,
@@ -1863,9 +1863,9 @@
    "type": "peer",
    "why": "항공기 제조(훈련기 공동개발 이력)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.097,
-   "lagCorrEx": 0.103,
+   "n": 239,
+   "lagCorr": 0.1,
+   "lagCorrEx": 0.102,
    "sameCorr": 0.154,
    "sameCorrEx": 0.156,
    "strength": "weak",
@@ -1875,13 +1875,13 @@
      "n": 1222,
      "gap": 0.16,
      "bull": 45.3,
-     "ret": 0.14
+     "ret": 0.15
     },
     "up": {
-     "n": 94,
-     "gap": 0.68,
-     "bull": 45.7,
-     "ret": 1.03
+     "n": 95,
+     "gap": 0.7,
+     "bull": 45.3,
+     "ret": 1.04
     },
     "down": {
      "n": 75,
@@ -1897,7 +1897,7 @@
    "type": "peer",
    "why": "항공기 제조",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.161,
    "lagCorrEx": 0.081,
    "sameCorr": 0.102,
@@ -1909,7 +1909,7 @@
      "n": 1222,
      "gap": 0.16,
      "bull": 45.3,
-     "ret": 0.14
+     "ret": 0.15
     },
     "up": {
      "n": 189,
@@ -1931,9 +1931,9 @@
    "type": "customer",
    "why": "소형모듈원전(SMR) 주기기 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.432,
-   "lagCorrEx": 0.299,
+   "n": 239,
+   "lagCorr": 0.437,
+   "lagCorrEx": 0.297,
    "sameCorr": 0.038,
    "sameCorrEx": -0.026,
    "strength": "strong",
@@ -1941,15 +1941,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
+     "gap": 0.35,
      "bull": 43.0,
-     "ret": 0.1
+     "ret": 0.11
     },
     "up": {
-     "n": 347,
-     "gap": 1.2,
-     "bull": 45.8,
-     "ret": 1.13
+     "n": 348,
+     "gap": 1.21,
+     "bull": 46.0,
+     "ret": 1.15
     },
     "down": {
      "n": 383,
@@ -1965,9 +1965,9 @@
    "type": "theme",
    "why": "원전 운영 — 원전 수요",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.326,
-   "lagCorrEx": 0.226,
+   "n": 239,
+   "lagCorr": 0.342,
+   "lagCorrEx": 0.233,
    "sameCorr": 0.024,
    "sameCorrEx": -0.018,
    "strength": "moderate",
@@ -1975,15 +1975,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
+     "gap": 0.35,
      "bull": 43.0,
-     "ret": 0.1
+     "ret": 0.11
     },
     "up": {
-     "n": 249,
-     "gap": 1.1,
-     "bull": 45.0,
-     "ret": 1.1
+     "n": 250,
+     "gap": 1.12,
+     "bull": 45.2,
+     "ret": 1.13
     },
     "down": {
      "n": 195,
@@ -1999,9 +1999,9 @@
    "type": "theme",
    "why": "우라늄 — 원전 연료",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.448,
-   "lagCorrEx": 0.308,
+   "n": 239,
+   "lagCorr": 0.455,
+   "lagCorrEx": 0.309,
    "sameCorr": 0.09,
    "sameCorrEx": 0.028,
    "strength": "strong",
@@ -2009,15 +2009,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
+     "gap": 0.35,
      "bull": 43.0,
-     "ret": 0.1
+     "ret": 0.11
     },
     "up": {
-     "n": 269,
-     "gap": 1.3,
-     "bull": 42.8,
-     "ret": 1.08
+     "n": 270,
+     "gap": 1.31,
+     "bull": 43.0,
+     "ret": 1.11
     },
     "down": {
      "n": 262,
@@ -2033,9 +2033,9 @@
    "type": "peer",
    "why": "원전 기자재",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.336,
-   "lagCorrEx": 0.181,
+   "n": 239,
+   "lagCorr": 0.349,
+   "lagCorrEx": 0.185,
    "sameCorr": 0.079,
    "sameCorrEx": 0.021,
    "strength": "moderate",
@@ -2043,15 +2043,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
+     "gap": 0.35,
      "bull": 43.0,
-     "ret": 0.1
+     "ret": 0.11
     },
     "up": {
-     "n": 158,
-     "gap": 1.28,
-     "bull": 44.9,
-     "ret": 1.21
+     "n": 159,
+     "gap": 1.3,
+     "bull": 45.3,
+     "ret": 1.25
     },
     "down": {
      "n": 145,
@@ -2067,8 +2067,8 @@
    "type": "theme",
    "why": "소형모듈원전 설계",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.315,
+   "n": 239,
+   "lagCorr": 0.317,
    "lagCorrEx": 0.218,
    "sameCorr": 0.069,
    "sameCorrEx": 0.034,
@@ -2082,10 +2082,10 @@
      "ret": 0.05
     },
     "up": {
-     "n": 347,
-     "gap": 0.81,
-     "bull": 42.9,
-     "ret": 0.73
+     "n": 348,
+     "gap": 0.82,
+     "bull": 43.1,
+     "ret": 0.74
     },
     "down": {
      "n": 383,
@@ -2101,9 +2101,9 @@
    "type": "theme",
    "why": "원전 운영 — 원전 수요",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.214,
-   "lagCorrEx": 0.138,
+   "n": 239,
+   "lagCorr": 0.218,
+   "lagCorrEx": 0.135,
    "sameCorr": 0.02,
    "sameCorrEx": -0.007,
    "strength": "moderate",
@@ -2116,10 +2116,10 @@
      "ret": 0.05
     },
     "up": {
-     "n": 249,
-     "gap": 0.67,
-     "bull": 41.4,
-     "ret": 0.52
+     "n": 250,
+     "gap": 0.68,
+     "bull": 41.6,
+     "ret": 0.53
     },
     "down": {
      "n": 195,
@@ -2135,9 +2135,9 @@
    "type": "peer",
    "why": "전력기기(변압기·배전)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.354,
-   "lagCorrEx": 0.207,
+   "n": 239,
+   "lagCorr": 0.364,
+   "lagCorrEx": 0.208,
    "sameCorr": 0.224,
    "sameCorrEx": 0.138,
    "strength": "moderate",
@@ -2146,14 +2146,14 @@
     "base": {
      "n": 1222,
      "gap": 0.21,
-     "bull": 47.1,
-     "ret": 0.29
+     "bull": 47.2,
+     "ret": 0.3
     },
     "up": {
-     "n": 171,
-     "gap": 1.54,
-     "bull": 49.7,
-     "ret": 1.73
+     "n": 172,
+     "gap": 1.56,
+     "bull": 50.0,
+     "ret": 1.78
     },
     "down": {
      "n": 149,
@@ -2169,25 +2169,25 @@
    "type": "peer",
    "why": "전력기기·송배전",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.37,
-   "lagCorrEx": 0.249,
+   "n": 239,
+   "lagCorr": 0.381,
+   "lagCorrEx": 0.252,
    "sameCorr": 0.194,
    "sameCorrEx": 0.114,
-   "strength": "moderate",
+   "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
     "base": {
      "n": 1222,
      "gap": 0.21,
-     "bull": 47.1,
-     "ret": 0.29
+     "bull": 47.2,
+     "ret": 0.3
     },
     "up": {
-     "n": 171,
-     "gap": 1.89,
-     "bull": 46.8,
-     "ret": 1.93
+     "n": 172,
+     "gap": 1.91,
+     "bull": 47.1,
+     "ret": 1.98
     },
     "down": {
      "n": 116,
@@ -2203,9 +2203,9 @@
    "type": "peer",
    "why": "전력기기(배전)",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.355,
-   "lagCorrEx": 0.213,
+   "n": 239,
+   "lagCorr": 0.362,
+   "lagCorrEx": 0.214,
    "sameCorr": 0.184,
    "sameCorrEx": 0.151,
    "strength": "moderate",
@@ -2214,14 +2214,14 @@
     "base": {
      "n": 1218,
      "gap": 0.3,
-     "bull": 44.9,
-     "ret": 0.25
+     "bull": 45.0,
+     "ret": 0.26
     },
     "up": {
-     "n": 169,
-     "gap": 1.46,
-     "bull": 47.9,
-     "ret": 1.73
+     "n": 170,
+     "gap": 1.49,
+     "bull": 48.2,
+     "ret": 1.77
     },
     "down": {
      "n": 149,
@@ -2237,9 +2237,9 @@
    "type": "theme",
    "why": "데이터센터 전력 인프라",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.349,
-   "lagCorrEx": 0.209,
+   "n": 239,
+   "lagCorr": 0.356,
+   "lagCorrEx": 0.21,
    "sameCorr": 0.203,
    "sameCorrEx": 0.173,
    "strength": "moderate",
@@ -2248,19 +2248,19 @@
     "base": {
      "n": 1218,
      "gap": 0.3,
-     "bull": 44.9,
-     "ret": 0.25
+     "bull": 45.0,
+     "ret": 0.26
     },
     "up": {
-     "n": 351,
-     "gap": 1.07,
-     "bull": 43.0,
-     "ret": 0.89
+     "n": 352,
+     "gap": 1.09,
+     "bull": 43.2,
+     "ret": 0.92
     },
     "down": {
-     "n": 283,
-     "gap": -0.85,
-     "bull": 49.1,
+     "n": 282,
+     "gap": -0.86,
+     "bull": 49.3,
      "ret": -0.98
     }
    }
@@ -2271,9 +2271,9 @@
    "type": "peer",
    "why": "전력기기·송배전",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.41,
-   "lagCorrEx": 0.287,
+   "n": 239,
+   "lagCorr": 0.421,
+   "lagCorrEx": 0.29,
    "sameCorr": 0.142,
    "sameCorrEx": 0.059,
    "strength": "strong",
@@ -2281,15 +2281,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
-     "bull": 46.3,
-     "ret": 0.34
+     "gap": 0.35,
+     "bull": 46.4,
+     "ret": 0.35
     },
     "up": {
-     "n": 171,
-     "gap": 1.89,
-     "bull": 51.5,
-     "ret": 2.13
+     "n": 172,
+     "gap": 1.92,
+     "bull": 51.7,
+     "ret": 2.19
     },
     "down": {
      "n": 116,
@@ -2305,9 +2305,9 @@
    "type": "theme",
    "why": "글로벌 대형 제약 — 바이오의약품 위탁생산(CDMO) 수요",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.148,
-   "lagCorrEx": 0.146,
+   "n": 239,
+   "lagCorr": 0.139,
+   "lagCorrEx": 0.139,
    "sameCorr": -0.065,
    "sameCorrEx": -0.061,
    "strength": "moderate",
@@ -2320,10 +2320,10 @@
      "ret": 0.04
     },
     "up": {
-     "n": 153,
-     "gap": 0.38,
-     "bull": 48.4,
-     "ret": 0.55
+     "n": 154,
+     "gap": 0.39,
+     "bull": 48.1,
+     "ret": 0.53
     },
     "down": {
      "n": 143,
@@ -2339,9 +2339,9 @@
    "type": "theme",
    "why": "글로벌 대형 제약 — 바이오의약품 위탁생산(CDMO) 수요",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.198,
-   "lagCorrEx": 0.2,
+   "n": 239,
+   "lagCorr": 0.194,
+   "lagCorrEx": 0.199,
    "sameCorr": -0.008,
    "sameCorrEx": 0.001,
    "strength": "moderate",
@@ -2354,10 +2354,10 @@
      "ret": 0.04
     },
     "up": {
-     "n": 196,
+     "n": 197,
      "gap": 0.46,
-     "bull": 45.4,
-     "ret": 0.59
+     "bull": 45.2,
+     "ret": 0.57
     },
     "down": {
      "n": 167,
@@ -2373,8 +2373,8 @@
    "type": "competitor",
    "why": "바이오시밀러·오리지널 의약품 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.146,
+   "n": 239,
+   "lagCorr": 0.142,
    "lagCorrEx": 0.109,
    "sameCorr": 0.018,
    "sameCorrEx": 0.029,
@@ -2407,9 +2407,9 @@
    "type": "peer",
    "why": "미국 바이오 ETF",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.265,
-   "lagCorrEx": 0.192,
+   "n": 239,
+   "lagCorr": 0.254,
+   "lagCorrEx": 0.19,
    "sameCorr": -0.111,
    "sameCorrEx": -0.105,
    "strength": "moderate",
@@ -2422,10 +2422,10 @@
      "ret": 0.04
     },
     "up": {
-     "n": 190,
+     "n": 191,
      "gap": 0.68,
-     "bull": 50.5,
-     "ret": 0.99
+     "bull": 50.3,
+     "ret": 0.97
     },
     "down": {
      "n": 181,
@@ -2441,9 +2441,9 @@
    "type": "customer",
    "why": "적층세라믹콘덴서(MLCC)·카메라모듈 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.015,
-   "lagCorrEx": -0.099,
+   "n": 239,
+   "lagCorr": 0.019,
+   "lagCorrEx": -0.1,
    "sameCorr": -0.093,
    "sameCorrEx": -0.173,
    "strength": "weak",
@@ -2451,15 +2451,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.23,
+     "gap": 0.24,
      "bull": 44.4,
-     "ret": 0.19
+     "ret": 0.2
     },
     "up": {
-     "n": 121,
-     "gap": 0.99,
-     "bull": 46.3,
-     "ret": 0.94
+     "n": 122,
+     "gap": 1.05,
+     "bull": 45.9,
+     "ret": 0.97
     },
     "down": {
      "n": 110,
@@ -2475,8 +2475,8 @@
    "type": "customer",
    "why": "카메라모듈 주요 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.039,
+   "n": 239,
+   "lagCorr": 0.044,
    "lagCorrEx": -0.059,
    "sameCorr": -0.067,
    "sameCorrEx": -0.12,
@@ -2485,15 +2485,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.22,
+     "gap": 0.23,
      "bull": 42.9,
-     "ret": 0.08
+     "ret": 0.09
     },
     "up": {
-     "n": 121,
-     "gap": 1.6,
-     "bull": 38.0,
-     "ret": 1.36
+     "n": 122,
+     "gap": 1.62,
+     "bull": 38.5,
+     "ret": 1.39
     },
     "down": {
      "n": 110,
@@ -2509,9 +2509,9 @@
    "type": "customer",
    "why": "OLED·LCD 패널 공급처",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.132,
-   "lagCorrEx": 0.028,
+   "n": 239,
+   "lagCorr": 0.138,
+   "lagCorrEx": 0.029,
    "sameCorr": -0.018,
    "sameCorrEx": -0.077,
    "strength": "weak",
@@ -2520,14 +2520,14 @@
     "base": {
      "n": 1222,
      "gap": 0.1,
-     "bull": 43.3,
+     "bull": 43.4,
      "ret": -0.04
     },
     "up": {
-     "n": 121,
-     "gap": 0.86,
-     "bull": 45.5,
-     "ret": 0.71
+     "n": 122,
+     "gap": 0.87,
+     "bull": 45.9,
+     "ret": 0.73
     },
     "down": {
      "n": 110,
@@ -2543,9 +2543,9 @@
    "type": "competitor",
    "why": "검색·광고 경쟁",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.169,
-   "lagCorrEx": 0.041,
+   "n": 239,
+   "lagCorr": 0.171,
+   "lagCorrEx": 0.04,
    "sameCorr": -0.031,
    "sameCorrEx": -0.055,
    "strength": "weak",
@@ -2554,7 +2554,7 @@
     "base": {
      "n": 1222,
      "gap": 0.11,
-     "bull": 40.6,
+     "bull": 40.7,
      "ret": -0.03
     },
     "up": {
@@ -2577,9 +2577,9 @@
    "type": "peer",
    "why": "메신저·소셜 광고",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.221,
-   "lagCorrEx": 0.084,
+   "n": 239,
+   "lagCorr": 0.22,
+   "lagCorrEx": 0.081,
    "sameCorr": -0.02,
    "sameCorrEx": 0.003,
    "strength": "weak",
@@ -2592,9 +2592,9 @@
      "ret": -0.08
     },
     "up": {
-     "n": 217,
-     "gap": 0.65,
-     "bull": 51.6,
+     "n": 218,
+     "gap": 0.66,
+     "bull": 51.4,
      "ret": 0.96
     },
     "down": {
@@ -2611,9 +2611,9 @@
    "type": "peer",
    "why": "게임",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.172,
-   "lagCorrEx": 0.145,
+   "lagCorrEx": 0.148,
    "sameCorr": 0.098,
    "sameCorrEx": 0.091,
    "strength": "moderate",
@@ -2622,8 +2622,8 @@
     "base": {
      "n": 1222,
      "gap": 0.04,
-     "bull": 47.9,
-     "ret": -0.02
+     "bull": 47.8,
+     "ret": -0.03
     },
     "up": {
      "n": 134,
@@ -2632,9 +2632,9 @@
      "ret": 0.47
     },
     "down": {
-     "n": 139,
+     "n": 140,
      "gap": -0.32,
-     "bull": 46.8,
+     "bull": 46.4,
      "ret": -0.59
     }
    }
@@ -2645,9 +2645,9 @@
    "type": "peer",
    "why": "철강",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.114,
-   "lagCorrEx": 0.004,
+   "n": 239,
+   "lagCorr": 0.117,
+   "lagCorrEx": 0.003,
    "sameCorr": 0.125,
    "sameCorrEx": 0.132,
    "strength": "weak",
@@ -2656,8 +2656,8 @@
     "base": {
      "n": 1222,
      "gap": 0.06,
-     "bull": 43.1,
-     "ret": 0.03
+     "bull": 43.2,
+     "ret": 0.04
     },
     "up": {
      "n": 201,
@@ -2666,10 +2666,10 @@
      "ret": 0.72
     },
     "down": {
-     "n": 175,
+     "n": 174,
      "gap": -0.86,
-     "bull": 40.6,
-     "ret": -1.06
+     "bull": 40.8,
+     "ret": -1.04
     }
    }
   },
@@ -2679,9 +2679,9 @@
    "type": "peer",
    "why": "리튬 사업",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.346,
-   "lagCorrEx": 0.286,
+   "n": 239,
+   "lagCorr": 0.344,
+   "lagCorrEx": 0.284,
    "sameCorr": 0.086,
    "sameCorrEx": 0.087,
    "strength": "strong",
@@ -2690,8 +2690,8 @@
     "base": {
      "n": 1222,
      "gap": 0.06,
-     "bull": 43.1,
-     "ret": 0.03
+     "bull": 43.2,
+     "ret": 0.04
     },
     "up": {
      "n": 293,
@@ -2713,8 +2713,8 @@
    "type": "peer",
    "why": "정유",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.128,
+   "n": 239,
+   "lagCorr": 0.127,
    "lagCorrEx": 0.194,
    "sameCorr": 0.116,
    "sameCorrEx": 0.128,
@@ -2724,8 +2724,8 @@
     "base": {
      "n": 1222,
      "gap": 0.17,
-     "bull": 43.4,
-     "ret": -0.01
+     "bull": 43.5,
+     "ret": -0.0
     },
     "up": {
      "n": 143,
@@ -2747,8 +2747,8 @@
    "type": "peer",
    "why": "정유",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.145,
+   "n": 239,
+   "lagCorr": 0.147,
    "lagCorrEx": 0.17,
    "sameCorr": -0.015,
    "sameCorrEx": -0.013,
@@ -2758,14 +2758,14 @@
     "base": {
      "n": 1222,
      "gap": 0.17,
-     "bull": 43.4,
-     "ret": -0.01
+     "bull": 43.5,
+     "ret": -0.0
     },
     "up": {
-     "n": 224,
-     "gap": 0.54,
-     "bull": 45.5,
-     "ret": 0.54
+     "n": 225,
+     "gap": 0.55,
+     "bull": 45.8,
+     "ret": 0.55
     },
     "down": {
      "n": 174,
@@ -2781,9 +2781,9 @@
    "type": "peer",
    "why": "정유",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.218,
-   "lagCorrEx": 0.226,
+   "lagCorrEx": 0.225,
    "sameCorr": 0.006,
    "sameCorrEx": 0.009,
    "strength": "moderate",
@@ -2792,13 +2792,13 @@
     "base": {
      "n": 1222,
      "gap": 0.12,
-     "bull": 44.3,
+     "bull": 44.4,
      "ret": 0.04
     },
     "up": {
-     "n": 224,
+     "n": 225,
      "gap": 0.74,
-     "bull": 51.3,
+     "bull": 51.6,
      "ret": 0.94
     },
     "down": {
@@ -2815,9 +2815,9 @@
    "type": "competitor",
    "why": "태양광 모듈",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.143,
-   "lagCorrEx": 0.081,
+   "n": 239,
+   "lagCorr": 0.142,
+   "lagCorrEx": 0.084,
    "sameCorr": -0.006,
    "sameCorrEx": -0.055,
    "strength": "weak",
@@ -2826,7 +2826,7 @@
     "base": {
      "n": 1198,
      "gap": 0.24,
-     "bull": 40.5,
+     "bull": 40.6,
      "ret": 0.03
     },
     "up": {
@@ -2836,9 +2836,9 @@
      "ret": 2.22
     },
     "down": {
-     "n": 264,
+     "n": 265,
      "gap": -0.76,
-     "bull": 37.9,
+     "bull": 38.1,
      "ret": -1.2
     }
    }
@@ -2849,9 +2849,9 @@
    "type": "theme",
    "why": "태양광 — 같은 수요처(주거용)",
    "source": "curated",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.208,
-   "lagCorrEx": 0.155,
+   "lagCorrEx": 0.156,
    "sameCorr": 0.131,
    "sameCorrEx": 0.094,
    "strength": "moderate",
@@ -2860,14 +2860,14 @@
     "base": {
      "n": 1198,
      "gap": 0.24,
-     "bull": 40.5,
+     "bull": 40.6,
      "ret": 0.03
     },
     "up": {
-     "n": 301,
+     "n": 302,
      "gap": 1.27,
-     "bull": 44.9,
-     "ret": 1.7
+     "bull": 45.0,
+     "ret": 1.69
     },
     "down": {
      "n": 355,
@@ -2883,9 +2883,9 @@
    "type": "peer",
    "why": "항공사",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.369,
-   "lagCorrEx": 0.265,
+   "n": 239,
+   "lagCorr": 0.385,
+   "lagCorrEx": 0.268,
    "sameCorr": 0.0,
    "sameCorrEx": -0.011,
    "strength": "strong",
@@ -2893,15 +2893,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.09,
-     "bull": 41.6,
-     "ret": 0.02
+     "gap": 0.1,
+     "bull": 41.7,
+     "ret": 0.03
     },
     "up": {
-     "n": 230,
-     "gap": 0.93,
-     "bull": 43.0,
-     "ret": 1.01
+     "n": 231,
+     "gap": 0.94,
+     "bull": 43.3,
+     "ret": 1.06
     },
     "down": {
      "n": 212,
@@ -2917,9 +2917,9 @@
    "type": "peer",
    "why": "항공사",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.396,
-   "lagCorrEx": 0.299,
+   "n": 239,
+   "lagCorr": 0.412,
+   "lagCorrEx": 0.302,
    "sameCorr": 0.016,
    "sameCorrEx": 0.009,
    "strength": "strong",
@@ -2927,15 +2927,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.09,
-     "bull": 41.6,
-     "ret": 0.02
+     "gap": 0.1,
+     "bull": 41.7,
+     "ret": 0.03
     },
     "up": {
-     "n": 259,
-     "gap": 0.89,
-     "bull": 42.9,
-     "ret": 0.95
+     "n": 260,
+     "gap": 0.9,
+     "bull": 43.1,
+     "ret": 0.99
     },
     "down": {
      "n": 256,
@@ -2951,9 +2951,9 @@
    "type": "supplier",
    "why": "항공기 제조사",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.148,
-   "lagCorrEx": 0.041,
+   "n": 239,
+   "lagCorr": 0.142,
+   "lagCorrEx": 0.024,
    "sameCorr": -0.007,
    "sameCorrEx": -0.013,
    "strength": "weak",
@@ -2961,9 +2961,9 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.09,
-     "bull": 41.6,
-     "ret": 0.02
+     "gap": 0.1,
+     "bull": 41.7,
+     "ret": 0.03
     },
     "up": {
      "n": 189,
@@ -2985,9 +2985,9 @@
    "type": "peer",
    "why": "은행",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.152,
-   "lagCorrEx": -0.002,
+   "n": 239,
+   "lagCorr": 0.154,
+   "lagCorrEx": -0.003,
    "sameCorr": 0.123,
    "sameCorrEx": 0.08,
    "strength": "weak",
@@ -2996,13 +2996,13 @@
     "base": {
      "n": 1222,
      "gap": 0.04,
-     "bull": 49.4,
+     "bull": 49.3,
      "ret": 0.11
     },
     "up": {
-     "n": 85,
-     "gap": 1.02,
-     "bull": 62.4,
+     "n": 86,
+     "gap": 1.06,
+     "bull": 61.6,
      "ret": 1.49
     },
     "down": {
@@ -3019,9 +3019,9 @@
    "type": "peer",
    "why": "은행",
    "source": "curated",
-   "n": 238,
-   "lagCorr": 0.198,
-   "lagCorrEx": 0.068,
+   "n": 239,
+   "lagCorr": 0.196,
+   "lagCorrEx": 0.067,
    "sameCorr": 0.076,
    "sameCorrEx": 0.075,
    "strength": "weak",
@@ -3029,15 +3029,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.0,
+     "gap": 0.01,
      "bull": 50.7,
      "ret": 0.09
     },
     "up": {
-     "n": 85,
-     "gap": 0.83,
-     "bull": 57.6,
-     "ret": 1.2
+     "n": 86,
+     "gap": 0.86,
+     "bull": 57.0,
+     "ret": 1.19
     },
     "down": {
      "n": 86,
@@ -3053,8 +3053,8 @@
    "type": "auto",
    "why": "비철금속 ↔ Precious Metals",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.499,
+   "n": 239,
+   "lagCorr": 0.501,
    "lagCorrEx": 0.442,
    "sameCorr": 0.09,
    "sameCorrEx": 0.109,
@@ -3064,14 +3064,14 @@
     "base": {
      "n": 1222,
      "gap": 0.21,
-     "bull": 43.4,
-     "ret": 0.12
+     "bull": 43.5,
+     "ret": 0.13
     },
     "up": {
-     "n": 222,
-     "gap": 0.88,
-     "bull": 46.4,
-     "ret": 1.05
+     "n": 223,
+     "gap": 0.89,
+     "bull": 46.6,
+     "ret": 1.06
     },
     "down": {
      "n": 196,
@@ -3087,8 +3087,8 @@
    "type": "auto",
    "why": "비철금속 ↔ Precious Metals",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.471,
+   "n": 239,
+   "lagCorr": 0.472,
    "lagCorrEx": 0.41,
    "sameCorr": 0.06,
    "sameCorrEx": 0.073,
@@ -3098,14 +3098,14 @@
     "base": {
      "n": 1222,
      "gap": 0.21,
-     "bull": 43.4,
-     "ret": 0.12
+     "bull": 43.5,
+     "ret": 0.13
     },
     "up": {
      "n": 294,
-     "gap": 0.73,
-     "bull": 48.0,
-     "ret": 1.3
+     "gap": 0.74,
+     "bull": 48.3,
+     "ret": 1.32
     },
     "down": {
      "n": 245,
@@ -3121,9 +3121,9 @@
    "type": "auto",
    "why": "전기장비 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.518,
-   "lagCorrEx": 0.393,
+   "n": 239,
+   "lagCorr": 0.528,
+   "lagCorrEx": 0.394,
    "sameCorr": 0.142,
    "sameCorrEx": 0.026,
    "strength": "strong",
@@ -3131,15 +3131,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
-     "bull": 46.3,
-     "ret": 0.34
+     "gap": 0.35,
+     "bull": 46.4,
+     "ret": 0.35
     },
     "up": {
      "n": 282,
-     "gap": 1.41,
-     "bull": 45.4,
-     "ret": 1.48
+     "gap": 1.43,
+     "bull": 45.7,
+     "ret": 1.53
     },
     "down": {
      "n": 247,
@@ -3155,8 +3155,8 @@
    "type": "auto",
    "why": "지주회사 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.506,
+   "n": 239,
+   "lagCorr": 0.507,
    "lagCorrEx": 0.39,
    "sameCorr": 0.265,
    "sameCorrEx": 0.205,
@@ -3164,16 +3164,16 @@
    "sameStrength": "moderate",
    "nextDay": {
     "base": {
-     "n": 1208,
+     "n": 1209,
      "gap": 0.1,
-     "bull": 50.1,
+     "bull": 50.0,
      "ret": 0.27
     },
     "up": {
-     "n": 310,
-     "gap": 1.68,
-     "bull": 60.3,
-     "ret": 2.48
+     "n": 311,
+     "gap": 1.69,
+     "bull": 60.1,
+     "ret": 2.49
     },
     "down": {
      "n": 272,
@@ -3189,9 +3189,9 @@
    "type": "auto",
    "why": "전기장비 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.515,
-   "lagCorrEx": 0.386,
+   "n": 239,
+   "lagCorr": 0.522,
+   "lagCorrEx": 0.382,
    "sameCorr": 0.176,
    "sameCorrEx": 0.054,
    "strength": "strong",
@@ -3199,15 +3199,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
-     "bull": 46.3,
-     "ret": 0.34
+     "gap": 0.35,
+     "bull": 46.4,
+     "ret": 0.35
     },
     "up": {
-     "n": 227,
-     "gap": 1.55,
-     "bull": 45.4,
-     "ret": 1.55
+     "n": 228,
+     "gap": 1.58,
+     "bull": 45.6,
+     "ret": 1.6
     },
     "down": {
      "n": 197,
@@ -3223,25 +3223,25 @@
    "type": "auto",
    "why": "지주회사 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.505,
-   "lagCorrEx": 0.369,
+   "n": 239,
+   "lagCorr": 0.506,
+   "lagCorrEx": 0.368,
    "sameCorr": 0.288,
    "sameCorrEx": 0.241,
    "strength": "strong",
    "sameStrength": "moderate",
    "nextDay": {
     "base": {
-     "n": 1208,
+     "n": 1209,
      "gap": 0.1,
-     "bull": 50.1,
+     "bull": 50.0,
      "ret": 0.27
     },
     "up": {
-     "n": 230,
-     "gap": 1.86,
-     "bull": 57.0,
-     "ret": 2.43
+     "n": 231,
+     "gap": 1.88,
+     "bull": 56.7,
+     "ret": 2.44
     },
     "down": {
      "n": 209,
@@ -3257,25 +3257,25 @@
    "type": "auto",
    "why": "전기장비 ↔ Engineering & Construction",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.463,
-   "lagCorrEx": 0.364,
+   "n": 239,
+   "lagCorr": 0.469,
+   "lagCorrEx": 0.365,
    "sameCorr": 0.174,
    "sameCorrEx": 0.105,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
     "base": {
-     "n": 552,
-     "gap": 0.38,
-     "bull": 44.0,
-     "ret": 0.28
+     "n": 553,
+     "gap": 0.39,
+     "bull": 44.1,
+     "ret": 0.29
     },
     "up": {
-     "n": 103,
-     "gap": 1.84,
-     "bull": 45.6,
-     "ret": 2.23
+     "n": 104,
+     "gap": 1.88,
+     "bull": 46.2,
+     "ret": 2.28
     },
     "down": {
      "n": 82,
@@ -3291,8 +3291,8 @@
    "type": "auto",
    "why": "전력기기 ↔ Uranium / Nuclear",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.487,
+   "n": 239,
+   "lagCorr": 0.495,
    "lagCorrEx": 0.352,
    "sameCorr": 0.174,
    "sameCorrEx": 0.134,
@@ -3301,15 +3301,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
+     "gap": 0.35,
      "bull": 43.0,
-     "ret": 0.1
+     "ret": 0.11
     },
     "up": {
-     "n": 241,
-     "gap": 1.4,
-     "bull": 41.9,
-     "ret": 1.18
+     "n": 242,
+     "gap": 1.42,
+     "bull": 42.1,
+     "ret": 1.21
     },
     "down": {
      "n": 252,
@@ -3325,9 +3325,9 @@
    "type": "auto",
    "why": "지주회사 ↔ Semiconductor Materials & Equipment",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.455,
-   "lagCorrEx": 0.347,
+   "n": 239,
+   "lagCorr": 0.461,
+   "lagCorrEx": 0.348,
    "sameCorr": 0.247,
    "sameCorrEx": 0.225,
    "strength": "strong",
@@ -3336,14 +3336,14 @@
     "base": {
      "n": 1222,
      "gap": 0.05,
-     "bull": 48.8,
-     "ret": 0.09
+     "bull": 48.9,
+     "ret": 0.1
     },
     "up": {
-     "n": 276,
-     "gap": 0.91,
-     "bull": 51.4,
-     "ret": 1.15
+     "n": 277,
+     "gap": 0.94,
+     "bull": 51.6,
+     "ret": 1.17
     },
     "down": {
      "n": 255,
@@ -3359,8 +3359,8 @@
    "type": "auto",
    "why": "전자장비 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.422,
+   "n": 239,
+   "lagCorr": 0.425,
    "lagCorrEx": 0.346,
    "sameCorr": 0.191,
    "sameCorrEx": 0.102,
@@ -3370,14 +3370,14 @@
     "base": {
      "n": 1222,
      "gap": 0.2,
-     "bull": 44.7,
+     "bull": 44.6,
      "ret": 0.2
     },
     "up": {
      "n": 282,
-     "gap": 1.68,
-     "bull": 48.9,
-     "ret": 1.89
+     "gap": 1.71,
+     "bull": 48.6,
+     "ret": 1.91
     },
     "down": {
      "n": 247,
@@ -3393,9 +3393,9 @@
    "type": "auto",
    "why": "반도체 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.43,
-   "lagCorrEx": 0.345,
+   "n": 239,
+   "lagCorr": 0.428,
+   "lagCorrEx": 0.344,
    "sameCorr": 0.161,
    "sameCorrEx": 0.131,
    "strength": "strong",
@@ -3403,14 +3403,14 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.08,
+     "gap": 0.09,
      "bull": 46.2,
      "ret": 0.14
     },
     "up": {
-     "n": 248,
-     "gap": 1.68,
-     "bull": 45.2,
+     "n": 249,
+     "gap": 1.69,
+     "bull": 45.0,
      "ret": 1.95
     },
     "down": {
@@ -3427,7 +3427,7 @@
    "type": "auto",
    "why": "기타 ↔ Oil & Gas Production",
    "source": "auto",
-   "n": 238,
+   "n": 239,
    "lagCorr": 0.335,
    "lagCorrEx": 0.343,
    "sameCorr": 0.065,
@@ -3438,7 +3438,7 @@
     "base": {
      "n": 1222,
      "gap": 0.12,
-     "bull": 44.3,
+     "bull": 44.4,
      "ret": 0.04
     },
     "up": {
@@ -3456,14 +3456,48 @@
    }
   },
   {
+   "kr": "267260",
+   "us": "LRCX",
+   "type": "auto",
+   "why": "전력기기 ↔ Industrial Machinery/Components",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.479,
+   "lagCorrEx": 0.342,
+   "sameCorr": 0.2,
+   "sameCorrEx": 0.096,
+   "strength": "strong",
+   "sameStrength": "weak",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.21,
+     "bull": 47.2,
+     "ret": 0.3
+    },
+    "up": {
+     "n": 282,
+     "gap": 1.28,
+     "bull": 45.4,
+     "ret": 1.09
+    },
+    "down": {
+     "n": 247,
+     "gap": -1.08,
+     "bull": 45.7,
+     "ret": -0.83
+    }
+   }
+  },
+  {
    "kr": "000660",
    "us": "SNDK",
    "type": "auto",
    "why": "반도체 ↔ Electronic Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.43,
-   "lagCorrEx": 0.34,
+   "n": 239,
+   "lagCorr": 0.432,
+   "lagCorrEx": 0.339,
    "sameCorr": 0.302,
    "sameCorrEx": 0.254,
    "strength": "strong",
@@ -3476,10 +3510,10 @@
      "ret": 0.26
     },
     "up": {
-     "n": 166,
-     "gap": 2.14,
-     "bull": 48.8,
-     "ret": 2.08
+     "n": 167,
+     "gap": 2.16,
+     "bull": 48.5,
+     "ret": 2.1
     },
     "down": {
      "n": 119,
@@ -3490,82 +3524,14 @@
    }
   },
   {
-   "kr": "267260",
-   "us": "LRCX",
-   "type": "auto",
-   "why": "전력기기 ↔ Industrial Machinery/Components",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.468,
-   "lagCorrEx": 0.34,
-   "sameCorr": 0.2,
-   "sameCorrEx": 0.096,
-   "strength": "strong",
-   "sameStrength": "weak",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.21,
-     "bull": 47.1,
-     "ret": 0.29
-    },
-    "up": {
-     "n": 282,
-     "gap": 1.26,
-     "bull": 45.0,
-     "ret": 1.04
-    },
-    "down": {
-     "n": 247,
-     "gap": -1.08,
-     "bull": 45.7,
-     "ret": -0.83
-    }
-   }
-  },
-  {
-   "kr": "240810",
-   "us": "KLAC",
-   "type": "auto",
-   "why": "반도체 ↔ Electronic Components",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.422,
-   "lagCorrEx": 0.336,
-   "sameCorr": 0.227,
-   "sameCorrEx": 0.214,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.08,
-     "bull": 46.2,
-     "ret": 0.14
-    },
-    "up": {
-     "n": 270,
-     "gap": 1.79,
-     "bull": 41.1,
-     "ret": 1.84
-    },
-    "down": {
-     "n": 228,
-     "gap": -1.57,
-     "bull": 48.2,
-     "ret": -1.71
-    }
-   }
-  },
-  {
    "kr": "039030",
    "us": "LRCX",
    "type": "auto",
    "why": "반도체 장비 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.384,
-   "lagCorrEx": 0.335,
+   "n": 239,
+   "lagCorr": 0.397,
+   "lagCorrEx": 0.338,
    "sameCorr": 0.189,
    "sameCorrEx": 0.126,
    "strength": "strong",
@@ -3573,15 +3539,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.12,
-     "bull": 46.5,
-     "ret": 0.18
+     "gap": 0.13,
+     "bull": 46.6,
+     "ret": 0.19
     },
     "up": {
      "n": 282,
-     "gap": 1.51,
-     "bull": 47.5,
-     "ret": 1.76
+     "gap": 1.54,
+     "bull": 47.9,
+     "ret": 1.82
     },
     "down": {
      "n": 247,
@@ -3597,8 +3563,8 @@
    "type": "auto",
    "why": "전력 ↔ Uranium / Nuclear",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.411,
+   "n": 239,
+   "lagCorr": 0.412,
    "lagCorrEx": 0.334,
    "sameCorr": 0.159,
    "sameCorrEx": 0.146,
@@ -3612,10 +3578,10 @@
      "ret": 0.05
     },
     "up": {
-     "n": 241,
-     "gap": 1.08,
-     "bull": 41.1,
-     "ret": 1.03
+     "n": 242,
+     "gap": 1.09,
+     "bull": 41.3,
+     "ret": 1.04
     },
     "down": {
      "n": 252,
@@ -3626,18 +3592,52 @@
    }
   },
   {
-   "kr": "000660",
-   "us": "XLK",
+   "kr": "240810",
+   "us": "KLAC",
    "type": "auto",
-   "why": "반도체 ↔ Technology Broad",
+   "why": "반도체 ↔ Electronic Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.422,
-   "lagCorrEx": 0.332,
-   "sameCorr": 0.264,
-   "sameCorrEx": 0.233,
+   "n": 239,
+   "lagCorr": 0.42,
+   "lagCorrEx": 0.333,
+   "sameCorr": 0.227,
+   "sameCorrEx": 0.214,
    "strength": "strong",
    "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.09,
+     "bull": 46.2,
+     "ret": 0.14
+    },
+    "up": {
+     "n": 271,
+     "gap": 1.81,
+     "bull": 41.0,
+     "ret": 1.84
+    },
+    "down": {
+     "n": 228,
+     "gap": -1.57,
+     "bull": 48.2,
+     "ret": -1.71
+    }
+   }
+  },
+  {
+   "kr": "000660",
+   "us": "WDC",
+   "type": "auto",
+   "why": "반도체 ↔ Electronic Components",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.432,
+   "lagCorrEx": 0.332,
+   "sameCorr": 0.36,
+   "sameCorrEx": 0.324,
+   "strength": "strong",
+   "sameStrength": "strong",
    "nextDay": {
     "base": {
      "n": 1222,
@@ -3646,16 +3646,16 @@
      "ret": 0.26
     },
     "up": {
-     "n": 121,
-     "gap": 3.02,
-     "bull": 37.2,
-     "ret": 2.57
+     "n": 270,
+     "gap": 2.12,
+     "bull": 47.0,
+     "ret": 2.12
     },
     "down": {
-     "n": 119,
-     "gap": -2.63,
-     "bull": 55.5,
-     "ret": -2.26
+     "n": 249,
+     "gap": -1.79,
+     "bull": 48.6,
+     "ret": -1.68
     }
    }
   },
@@ -3665,8 +3665,8 @@
    "type": "auto",
    "why": "지주회사 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.439,
+   "n": 239,
+   "lagCorr": 0.44,
    "lagCorrEx": 0.332,
    "sameCorr": 0.274,
    "sameCorrEx": 0.204,
@@ -3680,9 +3680,9 @@
      "ret": 0.11
     },
     "up": {
-     "n": 313,
-     "gap": 0.92,
-     "bull": 45.7,
+     "n": 314,
+     "gap": 0.93,
+     "bull": 45.5,
      "ret": 0.98
     },
     "down": {
@@ -3699,25 +3699,25 @@
    "type": "auto",
    "why": "전기장비 ↔ Engineering & Construction",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.446,
-   "lagCorrEx": 0.331,
+   "n": 239,
+   "lagCorr": 0.451,
+   "lagCorrEx": 0.332,
    "sameCorr": 0.134,
    "sameCorrEx": 0.049,
    "strength": "strong",
    "sameStrength": "weak",
    "nextDay": {
     "base": {
-     "n": 552,
-     "gap": 0.38,
-     "bull": 44.0,
-     "ret": 0.28
+     "n": 553,
+     "gap": 0.39,
+     "bull": 44.1,
+     "ret": 0.29
     },
     "up": {
-     "n": 147,
-     "gap": 1.72,
-     "bull": 43.5,
-     "ret": 2.02
+     "n": 148,
+     "gap": 1.74,
+     "bull": 43.9,
+     "ret": 2.05
     },
     "down": {
      "n": 105,
@@ -3728,48 +3728,14 @@
    }
   },
   {
-   "kr": "010950",
-   "us": "EQNR",
-   "type": "auto",
-   "why": "기타 ↔ Integrated oil Companies",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.293,
-   "lagCorrEx": 0.33,
-   "sameCorr": -0.005,
-   "sameCorrEx": 0.006,
-   "strength": "strong",
-   "sameStrength": "weak",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.12,
-     "bull": 44.3,
-     "ret": 0.04
-    },
-    "up": {
-     "n": 202,
-     "gap": 0.95,
-     "bull": 47.0,
-     "ret": 1.07
-    },
-    "down": {
-     "n": 177,
-     "gap": -0.66,
-     "bull": 41.8,
-     "ret": -1.06
-    }
-   }
-  },
-  {
    "kr": "031980",
    "us": "AMAT",
    "type": "auto",
    "why": "지주회사 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.384,
-   "lagCorrEx": 0.33,
+   "n": 239,
+   "lagCorr": 0.388,
+   "lagCorrEx": 0.331,
    "sameCorr": 0.131,
    "sameCorrEx": 0.084,
    "strength": "strong",
@@ -3778,14 +3744,14 @@
     "base": {
      "n": 1222,
      "gap": 0.21,
-     "bull": 46.0,
-     "ret": 0.32
+     "bull": 45.9,
+     "ret": 0.33
     },
     "up": {
      "n": 260,
-     "gap": 1.86,
-     "bull": 44.2,
-     "ret": 1.69
+     "gap": 1.9,
+     "bull": 43.8,
+     "ret": 1.72
     },
     "down": {
      "n": 239,
@@ -3796,13 +3762,47 @@
    }
   },
   {
+   "kr": "010950",
+   "us": "EQNR",
+   "type": "auto",
+   "why": "기타 ↔ Integrated oil Companies",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.293,
+   "lagCorrEx": 0.33,
+   "sameCorr": -0.005,
+   "sameCorrEx": 0.006,
+   "strength": "strong",
+   "sameStrength": "weak",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.12,
+     "bull": 44.4,
+     "ret": 0.04
+    },
+    "up": {
+     "n": 202,
+     "gap": 0.95,
+     "bull": 47.0,
+     "ret": 1.07
+    },
+    "down": {
+     "n": 178,
+     "gap": -0.66,
+     "bull": 42.1,
+     "ret": -1.05
+    }
+   }
+  },
+  {
    "kr": "032830",
    "us": "MU",
    "type": "auto",
    "why": "보험 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.438,
+   "n": 239,
+   "lagCorr": 0.439,
    "lagCorrEx": 0.328,
    "sameCorr": 0.178,
    "sameCorrEx": 0.139,
@@ -3811,15 +3811,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.0,
+     "gap": 0.01,
      "bull": 50.2,
      "ret": 0.14
     },
     "up": {
-     "n": 313,
-     "gap": 0.63,
-     "bull": 53.4,
-     "ret": 0.98
+     "n": 314,
+     "gap": 0.65,
+     "bull": 53.2,
+     "ret": 0.99
     },
     "down": {
      "n": 274,
@@ -3830,48 +3830,14 @@
    }
   },
   {
-   "kr": "005930",
-   "us": "SNDK",
-   "type": "auto",
-   "why": "반도체 ↔ Electronic Components",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.421,
-   "lagCorrEx": 0.327,
-   "sameCorr": 0.263,
-   "sameCorrEx": 0.213,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.16,
-     "bull": 44.2,
-     "ret": 0.12
-    },
-    "up": {
-     "n": 166,
-     "gap": 1.7,
-     "bull": 47.6,
-     "ret": 1.68
-    },
-    "down": {
-     "n": 119,
-     "gap": -1.46,
-     "bull": 45.4,
-     "ret": -1.53
-    }
-   }
-  },
-  {
    "kr": "034730",
    "us": "WDC",
    "type": "auto",
    "why": "지주회사 ↔ Electronic Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.435,
-   "lagCorrEx": 0.327,
+   "n": 239,
+   "lagCorr": 0.441,
+   "lagCorrEx": 0.328,
    "sameCorr": 0.283,
    "sameCorrEx": 0.265,
    "strength": "strong",
@@ -3880,14 +3846,14 @@
     "base": {
      "n": 1222,
      "gap": 0.05,
-     "bull": 48.8,
-     "ret": 0.09
+     "bull": 48.9,
+     "ret": 0.1
     },
     "up": {
-     "n": 269,
-     "gap": 0.88,
-     "bull": 52.0,
-     "ret": 1.21
+     "n": 270,
+     "gap": 0.9,
+     "bull": 52.2,
+     "ret": 1.23
     },
     "down": {
      "n": 249,
@@ -3899,69 +3865,69 @@
   },
   {
    "kr": "267260",
-   "us": "ASML",
+   "us": "TER",
    "type": "auto",
-   "why": "전력기기 ↔ Industrial Machinery/Components",
+   "why": "전력기기 ↔ Semiconductor Materials & Equipment",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.457,
-   "lagCorrEx": 0.327,
-   "sameCorr": 0.165,
-   "sameCorrEx": 0.054,
+   "n": 239,
+   "lagCorr": 0.461,
+   "lagCorrEx": 0.328,
+   "sameCorr": 0.228,
+   "sameCorrEx": 0.142,
    "strength": "strong",
-   "sameStrength": "weak",
+   "sameStrength": "moderate",
    "nextDay": {
     "base": {
      "n": 1222,
      "gap": 0.21,
-     "bull": 47.1,
-     "ret": 0.29
+     "bull": 47.2,
+     "ret": 0.3
     },
     "up": {
-     "n": 248,
-     "gap": 1.33,
-     "bull": 46.4,
-     "ret": 1.15
+     "n": 277,
+     "gap": 1.31,
+     "bull": 45.8,
+     "ret": 1.12
     },
     "down": {
-     "n": 230,
-     "gap": -1.13,
-     "bull": 47.0,
-     "ret": -0.99
+     "n": 255,
+     "gap": -1.19,
+     "bull": 46.7,
+     "ret": -1.0
     }
    }
   },
   {
-   "kr": "007660",
-   "us": "XLK",
+   "kr": "005930",
+   "us": "SNDK",
    "type": "auto",
-   "why": "전자부품 ↔ Technology Broad",
+   "why": "반도체 ↔ Electronic Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.437,
-   "lagCorrEx": 0.326,
-   "sameCorr": 0.195,
-   "sameCorrEx": 0.057,
+   "n": 239,
+   "lagCorr": 0.422,
+   "lagCorrEx": 0.327,
+   "sameCorr": 0.263,
+   "sameCorrEx": 0.213,
    "strength": "strong",
-   "sameStrength": "weak",
+   "sameStrength": "moderate",
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.34,
-     "bull": 43.9,
-     "ret": 0.34
+     "gap": 0.17,
+     "bull": 44.2,
+     "ret": 0.12
     },
     "up": {
-     "n": 121,
-     "gap": 2.83,
-     "bull": 38.0,
-     "ret": 2.6
+     "n": 167,
+     "gap": 1.72,
+     "bull": 47.3,
+     "ret": 1.7
     },
     "down": {
      "n": 119,
-     "gap": -2.64,
-     "bull": 51.3,
-     "ret": -2.34
+     "gap": -1.46,
+     "bull": 45.4,
+     "ret": -1.53
     }
    }
   },
@@ -3971,9 +3937,9 @@
    "type": "auto",
    "why": "반도체 장비 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.379,
-   "lagCorrEx": 0.326,
+   "n": 239,
+   "lagCorr": 0.39,
+   "lagCorrEx": 0.327,
    "sameCorr": 0.196,
    "sameCorrEx": 0.137,
    "strength": "strong",
@@ -3981,15 +3947,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.12,
-     "bull": 46.5,
-     "ret": 0.18
+     "gap": 0.13,
+     "bull": 46.6,
+     "ret": 0.19
     },
     "up": {
-     "n": 248,
-     "gap": 1.44,
-     "bull": 48.0,
-     "ret": 1.73
+     "n": 249,
+     "gap": 1.46,
+     "bull": 48.2,
+     "ret": 1.79
     },
     "down": {
      "n": 230,
@@ -4005,8 +3971,8 @@
    "type": "auto",
    "why": "반도체 ↔ Electronic Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.424,
+   "n": 239,
+   "lagCorr": 0.427,
    "lagCorrEx": 0.325,
    "sameCorr": 0.349,
    "sameCorrEx": 0.316,
@@ -4015,15 +3981,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.16,
+     "gap": 0.17,
      "bull": 44.2,
      "ret": 0.12
     },
     "up": {
-     "n": 269,
-     "gap": 1.42,
-     "bull": 42.4,
-     "ret": 1.36
+     "n": 270,
+     "gap": 1.43,
+     "bull": 42.2,
+     "ret": 1.37
     },
     "down": {
      "n": 249,
@@ -4034,13 +4000,47 @@
    }
   },
   {
+   "kr": "007660",
+   "us": "XLK",
+   "type": "auto",
+   "why": "전자부품 ↔ Technology Broad",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.443,
+   "lagCorrEx": 0.325,
+   "sameCorr": 0.195,
+   "sameCorrEx": 0.057,
+   "strength": "strong",
+   "sameStrength": "weak",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.35,
+     "bull": 43.9,
+     "ret": 0.35
+    },
+    "up": {
+     "n": 122,
+     "gap": 2.87,
+     "bull": 38.5,
+     "ret": 2.65
+    },
+    "down": {
+     "n": 119,
+     "gap": -2.64,
+     "bull": 51.3,
+     "ret": -2.34
+    }
+   }
+  },
+  {
    "kr": "353200",
    "us": "AMAT",
    "type": "auto",
    "why": "전자장비 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.403,
+   "n": 239,
+   "lagCorr": 0.407,
    "lagCorrEx": 0.321,
    "sameCorr": 0.191,
    "sameCorrEx": 0.108,
@@ -4050,14 +4050,14 @@
     "base": {
      "n": 1222,
      "gap": 0.2,
-     "bull": 44.7,
+     "bull": 44.6,
      "ret": 0.2
     },
     "up": {
      "n": 260,
-     "gap": 1.68,
-     "bull": 46.9,
-     "ret": 1.66
+     "gap": 1.72,
+     "bull": 46.5,
+     "ret": 1.68
     },
     "down": {
      "n": 239,
@@ -4073,8 +4073,8 @@
    "type": "auto",
    "why": "지주회사 ↔ Electronic Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.419,
+   "n": 239,
+   "lagCorr": 0.42,
    "lagCorrEx": 0.317,
    "sameCorr": 0.21,
    "sameCorrEx": 0.133,
@@ -4088,10 +4088,10 @@
      "ret": 0.11
     },
     "up": {
-     "n": 166,
-     "gap": 1.27,
-     "bull": 48.2,
-     "ret": 1.51
+     "n": 167,
+     "gap": 1.3,
+     "bull": 47.9,
+     "ret": 1.52
     },
     "down": {
      "n": 119,
@@ -4102,14 +4102,48 @@
    }
   },
   {
+   "kr": "032830",
+   "us": "XLK",
+   "type": "auto",
+   "why": "보험 ↔ Technology Broad",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.434,
+   "lagCorrEx": 0.313,
+   "sameCorr": 0.171,
+   "sameCorrEx": 0.143,
+   "strength": "strong",
+   "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.01,
+     "bull": 50.2,
+     "ret": 0.14
+    },
+    "up": {
+     "n": 122,
+     "gap": 1.04,
+     "bull": 50.8,
+     "ret": 1.49
+    },
+    "down": {
+     "n": 119,
+     "gap": -0.88,
+     "bull": 44.5,
+     "ret": -0.79
+    }
+   }
+  },
+  {
    "kr": "068270",
    "us": "MT",
    "type": "auto",
    "why": "바이오 ↔ Steel/Iron Ore",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.364,
-   "lagCorrEx": 0.313,
+   "n": 239,
+   "lagCorr": 0.35,
+   "lagCorrEx": 0.309,
    "sameCorr": 0.015,
    "sameCorrEx": 0.052,
    "strength": "strong",
@@ -4122,50 +4156,16 @@
      "ret": 0.04
     },
     "up": {
-     "n": 204,
+     "n": 205,
      "gap": 0.55,
-     "bull": 49.0,
-     "ret": 0.68
+     "bull": 48.8,
+     "ret": 0.66
     },
     "down": {
-     "n": 203,
-     "gap": -0.51,
-     "bull": 47.3,
-     "ret": -0.51
-    }
-   }
-  },
-  {
-   "kr": "032830",
-   "us": "XLK",
-   "type": "auto",
-   "why": "보험 ↔ Technology Broad",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.432,
-   "lagCorrEx": 0.312,
-   "sameCorr": 0.171,
-   "sameCorrEx": 0.143,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.0,
-     "bull": 50.2,
-     "ret": 0.14
-    },
-    "up": {
-     "n": 121,
-     "gap": 1.0,
-     "bull": 51.2,
-     "ret": 1.47
-    },
-    "down": {
-     "n": 119,
-     "gap": -0.88,
-     "bull": 44.5,
-     "ret": -0.79
+     "n": 202,
+     "gap": -0.53,
+     "bull": 47.0,
+     "ret": -0.53
     }
    }
   },
@@ -4175,9 +4175,9 @@
    "type": "auto",
    "why": "전자부품 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.373,
-   "lagCorrEx": 0.306,
+   "n": 239,
+   "lagCorr": 0.377,
+   "lagCorrEx": 0.307,
    "sameCorr": 0.281,
    "sameCorrEx": 0.175,
    "strength": "strong",
@@ -4185,15 +4185,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.25,
+     "gap": 0.26,
      "bull": 43.5,
-     "ret": 0.17
+     "ret": 0.18
     },
     "up": {
      "n": 282,
-     "gap": 2.0,
-     "bull": 42.2,
-     "ret": 1.73
+     "gap": 2.04,
+     "bull": 41.8,
+     "ret": 1.75
     },
     "down": {
      "n": 247,
@@ -4204,82 +4204,14 @@
    }
   },
   {
-   "kr": "222800",
-   "us": "AMAT",
-   "type": "auto",
-   "why": "전자부품 ↔ Semiconductors",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.371,
-   "lagCorrEx": 0.303,
-   "sameCorr": 0.29,
-   "sameCorrEx": 0.193,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.25,
-     "bull": 43.5,
-     "ret": 0.17
-    },
-    "up": {
-     "n": 260,
-     "gap": 1.95,
-     "bull": 41.9,
-     "ret": 1.59
-    },
-    "down": {
-     "n": 239,
-     "gap": -1.49,
-     "bull": 48.1,
-     "ret": -1.23
-    }
-   }
-  },
-  {
-   "kr": "403870",
-   "us": "AMAT",
-   "type": "auto",
-   "why": "반도체 ↔ Semiconductors",
-   "source": "auto",
-   "n": 238,
-   "lagCorr": 0.375,
-   "lagCorrEx": 0.303,
-   "sameCorr": 0.189,
-   "sameCorrEx": 0.135,
-   "strength": "strong",
-   "sameStrength": "moderate",
-   "nextDay": {
-    "base": {
-     "n": 1053,
-     "gap": 0.21,
-     "bull": 45.1,
-     "ret": 0.21
-    },
-    "up": {
-     "n": 222,
-     "gap": 1.81,
-     "bull": 45.0,
-     "ret": 2.04
-    },
-    "down": {
-     "n": 186,
-     "gap": -1.69,
-     "bull": 51.6,
-     "ret": -1.37
-    }
-   }
-  },
-  {
    "kr": "042700",
    "us": "LRCX",
    "type": "auto",
    "why": "반도체 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.382,
-   "lagCorrEx": 0.302,
+   "n": 239,
+   "lagCorr": 0.388,
+   "lagCorrEx": 0.303,
    "sameCorr": 0.217,
    "sameCorrEx": 0.168,
    "strength": "strong",
@@ -4288,14 +4220,14 @@
     "base": {
      "n": 1218,
      "gap": 0.28,
-     "bull": 42.6,
-     "ret": 0.29
+     "bull": 42.7,
+     "ret": 0.3
     },
     "up": {
      "n": 282,
-     "gap": 2.18,
-     "bull": 36.9,
-     "ret": 1.9
+     "gap": 2.21,
+     "bull": 37.2,
+     "ret": 1.94
     },
     "down": {
      "n": 244,
@@ -4311,9 +4243,9 @@
    "type": "auto",
    "why": "반도체 ↔ Industrial Machinery/Components",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.355,
-   "lagCorrEx": 0.302,
+   "n": 239,
+   "lagCorr": 0.359,
+   "lagCorrEx": 0.303,
    "sameCorr": 0.108,
    "sameCorrEx": 0.019,
    "strength": "strong",
@@ -4321,15 +4253,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.25,
+     "gap": 0.26,
      "bull": 45.1,
-     "ret": 0.31
+     "ret": 0.32
     },
     "up": {
      "n": 282,
-     "gap": 1.83,
+     "gap": 1.87,
      "bull": 41.1,
-     "ret": 2.21
+     "ret": 2.24
     },
     "down": {
      "n": 247,
@@ -4340,14 +4272,82 @@
    }
   },
   {
+   "kr": "222800",
+   "us": "AMAT",
+   "type": "auto",
+   "why": "전자부품 ↔ Semiconductors",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.375,
+   "lagCorrEx": 0.303,
+   "sameCorr": 0.29,
+   "sameCorrEx": 0.193,
+   "strength": "strong",
+   "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.26,
+     "bull": 43.5,
+     "ret": 0.18
+    },
+    "up": {
+     "n": 260,
+     "gap": 1.99,
+     "bull": 41.5,
+     "ret": 1.61
+    },
+    "down": {
+     "n": 239,
+     "gap": -1.49,
+     "bull": 48.1,
+     "ret": -1.23
+    }
+   }
+  },
+  {
+   "kr": "403870",
+   "us": "AMAT",
+   "type": "auto",
+   "why": "반도체 ↔ Semiconductors",
+   "source": "auto",
+   "n": 239,
+   "lagCorr": 0.379,
+   "lagCorrEx": 0.303,
+   "sameCorr": 0.189,
+   "sameCorrEx": 0.135,
+   "strength": "strong",
+   "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1054,
+     "gap": 0.21,
+     "bull": 45.1,
+     "ret": 0.22
+    },
+    "up": {
+     "n": 223,
+     "gap": 1.83,
+     "bull": 44.8,
+     "ret": 2.06
+    },
+    "down": {
+     "n": 186,
+     "gap": -1.69,
+     "bull": 51.6,
+     "ret": -1.37
+    }
+   }
+  },
+  {
    "kr": "036930",
    "us": "AMAT",
    "type": "auto",
    "why": "반도체 ↔ Semiconductors",
    "source": "auto",
-   "n": 238,
-   "lagCorr": 0.355,
-   "lagCorrEx": 0.3,
+   "n": 239,
+   "lagCorr": 0.359,
+   "lagCorrEx": 0.301,
    "sameCorr": 0.104,
    "sameCorrEx": 0.022,
    "strength": "strong",
@@ -4355,15 +4355,15 @@
    "nextDay": {
     "base": {
      "n": 1222,
-     "gap": 0.25,
+     "gap": 0.26,
      "bull": 45.1,
-     "ret": 0.31
+     "ret": 0.32
     },
     "up": {
      "n": 260,
-     "gap": 1.9,
+     "gap": 1.94,
      "bull": 40.0,
-     "ret": 2.01
+     "ret": 2.05
     },
     "down": {
      "n": 239,

@@ -1,11 +1,81 @@
 {
-  "updatedAtKst": "2026-11-09 13:34 KST",
-  "lastFileDate": "2026-11-06",
+  "updatedAtKst": "2026-11-10 13:33 KST",
+  "lastFileDate": "2026-11-09",
   "partialFetch": false,
-  "count": 576,
+  "count": 562,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "ZA Acquisition Corp. I",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-09",
+      "accession": "0001213900-26-117086:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2127714/000121390026117086/ea0295468-03.htm"
+    },
+    {
+      "company": "Blue Laser Fusion, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-09",
+      "accession": "0001193125-26-453492:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1938570/000119312526453492/d165654ds1.htm"
+    },
+    {
+      "company": "Research Alliance Corp V",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-09",
+      "accession": "0001193125-26-452284:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2137779/000119312526452284/d154414ds1.htm"
+    },
+    {
+      "company": "Rezera Inc.",
+      "ticker": "RZRA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-09",
+      "accession": "0001104659-26-124074:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141583/000110465926124074/tmq-20261109xs1a.htm"
+    },
+    {
+      "company": "Rezera Inc.",
+      "ticker": "RZRA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-09",
+      "accession": "0001104659-26-124074:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141583/000110465926124074/tmq-20261109xs1a.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-09",
+      "accession": "0001104659-26-124071:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926124071/cntm-20260630xs1a.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-09",
+      "accession": "0001104659-26-124071:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926124071/cntm-20260630xs1a.htm"
+    },
     {
       "company": "EXOZYMES INC.",
       "ticker": "EXOZ",
@@ -5659,216 +5729,6 @@
       "fileDate": "2026-09-10",
       "accession": "0001185185-26-003902:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1314196/000118518526003902/olbgroups1090626.htm"
-    },
-    {
-      "company": "iPower Inc.",
-      "ticker": "IPW",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001683168-26-007035:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1830072/000168316826007035/ipower_s1a2.htm"
-    },
-    {
-      "company": "iPower Inc.",
-      "ticker": "IPW",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001683168-26-007035:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1830072/000168316826007035/ipower_s1a2.htm"
-    },
-    {
-      "company": "Orion180 Insurance Group Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001628280-26-061012:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2124472/000162828026061012/orion180-sx1a.htm"
-    },
-    {
-      "company": "Orion180 Insurance Group Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001628280-26-061012:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2124472/000162828026061012/orion180-sx1a.htm"
-    },
-    {
-      "company": "Laser Photonics Corp",
-      "ticker": "LASE",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041999:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226041999/forms-1a.htm"
-    },
-    {
-      "company": "Laser Photonics Corp",
-      "ticker": "LASE",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041999:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226041999/forms-1a.htm"
-    },
-    {
-      "company": "AIxCrypto Holdings, Inc.",
-      "ticker": "AIXC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041886:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226041886/forms-1a.htm"
-    },
-    {
-      "company": "AIxCrypto Holdings, Inc.",
-      "ticker": "AIXC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041886:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226041886/forms-1a.htm"
-    },
-    {
-      "company": "Laser Photonics Corp",
-      "ticker": "LASE",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041875:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226041875/forms-1a.htm"
-    },
-    {
-      "company": "Laser Photonics Corp",
-      "ticker": "LASE",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041875:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226041875/forms-1a.htm"
-    },
-    {
-      "company": "AfterNext Acquisition I Corp.",
-      "ticker": "AFNX",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041834:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2087035/000149315226041834/forms-1a.htm"
-    },
-    {
-      "company": "AfterNext Acquisition I Corp.",
-      "ticker": "AFNX",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001493152-26-041834:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2087035/000149315226041834/forms-1a.htm"
-    },
-    {
-      "company": "SOBR Safe, Inc.",
-      "ticker": "SOBR",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-09",
-      "accession": "0001477932-26-005494:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1425627/000147793226005494/sobr_s1.htm"
-    },
-    {
-      "company": "StableCoinX Inc.  (USDE, USDEW)",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001213900-26-098438:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2080215/000121390026098438/ea0304920-s1a1_stable.htm"
-    },
-    {
-      "company": "StableCoinX Inc.  (USDE, USDEW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001213900-26-098438:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2080215/000121390026098438/ea0304920-s1a1_stable.htm"
-    },
-    {
-      "company": "Harbour Island Acquisition Corp. I",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-09",
-      "accession": "0001213900-26-098404:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2131072/000121390026098404/ea0299154-02.htm"
-    },
-    {
-      "company": "MapLight Therapeutics, Inc.",
-      "ticker": "MPLT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-09",
-      "accession": "0001193125-26-386648:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1770069/000119312526386648/d546679ds1.htm"
-    },
-    {
-      "company": "Football Manager SPAC Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-09",
-      "accession": "0001104659-26-106403:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133939/000110465926106403/tmb-20260910xs1.htm"
-    },
-    {
-      "company": "Bluerock Acquisition Corp. II",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001104659-26-106379:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2098410/000110465926106379/tmb-20260909xs1a.htm"
-    },
-    {
-      "company": "Bluerock Acquisition Corp. II",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-09",
-      "accession": "0001104659-26-106379:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2098410/000110465926106379/tmb-20260909xs1a.htm"
-    },
-    {
-      "company": "Securetech Innovations, Inc.",
-      "ticker": "SCTH",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-09",
-      "accession": "0001017386-26-000136:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1703157/000101738626000136/scth_forms1.htm"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-11-09 16:23 KST",
+  "updatedAtKst": "2026-11-10 16:13 KST",
   "lastFileDate": "2026.12.14",
-  "count": 39,
+  "count": 38,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -201,6 +201,19 @@
       ]
     },
     {
+      "company": "하나에어로다이내믹스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "IBK투자증권",
+      "fileDate": "2026.11.20",
+      "accession": "kr-ipo-listed-하나에어로다이내믹스",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 5700,
+      "instCompetition": 1051.38,
+      "commitPct": 4.16
+    },
+    {
       "company": "에스에프씨(유가)",
       "ticker": null,
       "stage": "filed",
@@ -241,7 +254,8 @@
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 17600,
       "instCompetition": 871.74,
-      "commitPct": 1.13
+      "commitPct": 1.13,
+      "subscriptionCompetition": 834.73
     },
     {
       "company": "옵토닉스",
@@ -345,25 +359,10 @@
       "subscriptionCompetition": 19.27
     },
     {
-      "company": "하나에어로다이내믹스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "IBK투자증권",
-      "fileDate": "2026.11.10",
-      "accession": "kr-ipo-bidding-하나에어로다이내믹스",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        4700,
-        5700
-      ]
-    },
-    {
       "company": "동원파츠",
       "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "삼성증권",
       "fileDate": "2026.11.10",
       "accession": "kr-ipo-listed-동원파츠",
@@ -547,20 +546,6 @@
       "instCompetition": 1136.84,
       "commitPct": 36.07,
       "subscriptionCompetition": 1741.48
-    },
-    {
-      "company": "진코스텍",
-      "ticker": "250030",
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.10.15",
-      "accession": "kr-ipo-listed-진코스텍",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 23500,
-      "instCompetition": 1097.62,
-      "commitPct": 5.29,
-      "subscriptionCompetition": 685.0
     }
   ]
 }

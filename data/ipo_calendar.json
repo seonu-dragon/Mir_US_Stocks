@@ -1,11 +1,181 @@
 {
-  "updatedAtKst": "2026-11-10 13:33 KST",
-  "lastFileDate": "2026-11-09",
+  "updatedAtKst": "2026-11-11 13:35 KST",
+  "lastFileDate": "2026-11-10",
   "partialFetch": false,
-  "count": 562,
+  "count": 572,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Anthropic, PBC",
+      "ticker": "ANT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001628280-26-072484:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026072484/anthropicpbc-sx1ax2.htm"
+    },
+    {
+      "company": "Anthropic, PBC",
+      "ticker": "ANT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001628280-26-072484:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026072484/anthropicpbc-sx1ax2.htm"
+    },
+    {
+      "company": "VME Companies, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001575872-26-000779:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2113640/000157587226000779/vmec005_s1a.htm"
+    },
+    {
+      "company": "VME Companies, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001575872-26-000779:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2113640/000157587226000779/vmec005_s1a.htm"
+    },
+    {
+      "company": "DataMeds AI, Inc.",
+      "ticker": "MEDS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001493152-26-050986:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2030763/000149315226050986/forms-1a.htm"
+    },
+    {
+      "company": "DataMeds AI, Inc.",
+      "ticker": "MEDS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001493152-26-050986:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2030763/000149315226050986/forms-1a.htm"
+    },
+    {
+      "company": "HYDROFARM HOLDINGS GROUP, INC.",
+      "ticker": "HYFM",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-10",
+      "accession": "0001437749-26-036233:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1695295/000143774926036233/hyfm20261105_s1.htm"
+    },
+    {
+      "company": "Agility Robotics, Inc.  (AGLT, CCXI, AGLTW, CCXIU, CCXIW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-118037:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2074973/000121390026118037/ea0311221-s1_agility.htm"
+    },
+    {
+      "company": "Agility Robotics, Inc.  (AGLT, CCXI, AGLTW, CCXIU, CCXIW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-118025:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2074973/000121390026118025/ea0311220-s1_agility.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-117956:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026117956/ea0311625-s1a7_cryptex.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-117956:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026117956/ea0311625-s1a7_cryptex.htm"
+    },
+    {
+      "company": "Boxlight Corp",
+      "ticker": "BOXL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-117784:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1624512/000121390026117784/ea0311610-s1a2_boxlight.htm"
+    },
+    {
+      "company": "Boxlight Corp",
+      "ticker": "BOXL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-117784:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1624512/000121390026117784/ea0311610-s1a2_boxlight.htm"
+    },
+    {
+      "company": "Ionetix Corp / DE /",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-117736:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026117736/ea0311592-s1a2_ionetix.htm"
+    },
+    {
+      "company": "Ionetix Corp / DE /",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-10",
+      "accession": "0001213900-26-117736:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026117736/ea0311592-s1a2_ionetix.htm"
+    },
+    {
+      "company": "American Barrick Gold Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-10",
+      "accession": "0001193125-26-455481:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2162540/000119312526455481/d338869ds1.htm"
+    },
+    {
+      "company": "Fly-E Group, Inc.",
+      "ticker": "FLYE",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-09",
+      "accession": "0001213900-26-117613:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1975940/000121390026117613/ea0311310-s1_flyegroup.htm"
+    },
     {
       "company": "ZA Acquisition Corp. I",
       "ticker": null,
@@ -5659,76 +5829,6 @@
       "fileDate": "2026-09-11",
       "accession": "0000950103-26-013811:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1468327/000095010326013811/dp253177_s1.htm"
-    },
-    {
-      "company": "Elevation Acquisition Group Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-10",
-      "accession": "0001753926-26-001740:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2131124/000175392626001740/g085804_s1.htm"
-    },
-    {
-      "company": "Rafex Gold Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-10",
-      "accession": "0001683168-26-007060:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2152921/000168316826007060/rafex_s1.htm"
-    },
-    {
-      "company": "Allarity Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-10",
-      "accession": "0001493152-26-042104:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2141983/000149315226042104/forms-1.htm"
-    },
-    {
-      "company": "VenHub Global, Inc.",
-      "ticker": "VHUB",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-10",
-      "accession": "0001213900-26-098864:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026098864/ea0305160-s1a1_venhub.htm"
-    },
-    {
-      "company": "VenHub Global, Inc.",
-      "ticker": "VHUB",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-09-10",
-      "accession": "0001213900-26-098864:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026098864/ea0305160-s1a1_venhub.htm"
-    },
-    {
-      "company": "Hometown Financial Group, Inc./MD",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-10",
-      "accession": "0001193125-26-388025:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2152644/000119312526388025/hfg-20260910.htm"
-    },
-    {
-      "company": "OLB GROUP, INC.",
-      "ticker": "OLB",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-10",
-      "accession": "0001185185-26-003902:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1314196/000118518526003902/olbgroups1090626.htm"
     }
   ]
 }

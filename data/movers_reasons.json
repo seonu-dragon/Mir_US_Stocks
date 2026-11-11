@@ -1,593 +1,67 @@
 {
   "market": "us",
-  "tradeDate": "2026-11-10",
-  "updatedAtKst": "2026-11-11 06:47 KST",
-  "status": "partial",
+  "tradeDate": "2026-11-11",
+  "updatedAtKst": "2026-11-12 06:46 KST",
+  "status": "ok",
   "attempt": 1,
-  "count": 33,
+  "count": 21,
   "criteria": "시총 20억 달러 이상 · 거래대금 2,500만 달러 이상 · ETF 제외 · 등락률 ±3% 이상 · 방향별 최대 10종목",
   "source": "SEC 8-K · Google News · Yahoo · 시장 스냅샷",
   "note": "공시·뉴스 헤드라인·업종 평균만을 근거로 한 자동 요약이라 틀릴 수 있다. 근거가 없으면 '뚜렷한 재료 확인 안 됨', 요약이 검증을 통과하지 못하면 '요약 실패'. 매매 신호가 아니다.",
   "llm": {
     "llmCalls": 1,
-    "llmStocks": 33,
+    "llmStocks": 21,
     "reused": 0,
-    "asked": 33,
+    "asked": 21,
     "models": [
       "gemini-2.5-flash-lite"
     ],
     "errors": [],
-    "callDate": "2026-11-11",
+    "callDate": "2026-11-12",
     "callsToday": 1
   },
   "indexMoves": [
     {
       "name": "S&P 500(SPY)",
-      "changePct": -0.4
+      "changePct": 1.3
     },
     {
       "name": "나스닥100(QQQ)",
-      "changePct": -0.7
+      "changePct": 2.3
     }
   ],
   "up": [
     {
-      "ticker": "CHTR",
-      "company": "Charter Communications",
-      "sector": "COMMUNICATION SERVICES",
-      "industry": "Cable & Satellite",
-      "changePct": 10.61,
-      "close": 134.05999755859375,
-      "tradingValue": 584643693,
-      "priceSource": "yahoo",
-      "marketCapB": 24.004,
-      "reason": "씨티그룹 목표가 150달러로 상향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "CHTR Maintained by Citigroup -- Price Target Raised to $150",
-          "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOalVuUUI4dDVrMXpvenhZbUFHbHVHN1NOMjExa2lpY2s5RnJpWVZnalVIMThwLUxkdGJuNnowTnFrRDV5V3VZXy0zeHQ3clNSTHZNWXVHWmhkS194eUZ1VWJhaFB1LUhUUUE4b3FpRHlyWm5xdU14Ui12UjRiQjBGMldoRnBXRkE1TmY1dkZFNDdjbWF5bGNOM1Nn?oc=5",
-          "source": "GuruFocus",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "COMMUNICATION SERVICES",
-        "avgPct": -0.2,
-        "n": 20,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "TTWO",
-      "company": "Take-Two Interactive",
-      "sector": "COMMUNICATION SERVICES",
-      "industry": "Interactive Home Entertainment",
-      "changePct": 8.31,
-      "close": 224.63999938964844,
-      "tradingValue": 1840066221,
-      "priceSource": "yahoo",
-      "marketCapB": 42.003,
-      "reason": "GTA VI 사전 예약 기대치 초과 달성",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "TTWO Stock In Focus As GTA VI Preorders Run ‘Far In Excess’ Of Expectations — UBS Trims Target",
-          "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQRUMtMmxXd2FVYlJfc1l3UklsR1RVV25JcjZWblZLUlhqNWhtWmlsWDdoWXhrdWE4UGJ5amEtaENXQzN2M0xOeUJFRnllSVI2cHllellqelQzeXNjMnFSV2tnWjcxX3F5WEI0REhqSzJzODA3ZldzcDg3NzRuZTZma3JLdWVHVE9Hb2pzMk1SV014Zw?oc=5",
-          "source": "Yahoo Finance",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Take-Two Interactive Software climbs 8% on GTA VI preorder update (TTWO:NASDAQ)",
-          "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQNHN5aVNQS1JXNHNVTW9DSlJ3ZkdfRUp3RHJlM25CWUdWcVNaYlIzR3J2SVBHeHlTTFA4bkN6X3pKVEVqbVF5YnFvcXQyMWc4alJORXNwMDZjbzBqVjF3b0JaQmpKVkRoV3BXMWZNTGI3Ty1zVHR4ejlWUXQ5LWlnN3IxNnBXNjVUdmxUNnFuSkdXWlVmZlBoQ2haaHFfR0tZRUNnX2w4aEFlSDFxbC13?oc=5",
-          "source": "Seeking Alpha",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Take-Two (NASDAQ:TTWO) Stock Surges 6% as GTA 6 Preorders Smash Expectations Despite Bookings Miss",
-          "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTFA1ZE4yLW1Oa2pWVUkyVndZQzZaNEwtYVFNZnpmU2ZRSGVYZ1VPeWE0ZHlfZWc5dS0wUlBYUFpDbWRVZkI4U2FjWk15b01qaTVfbmNvM25rVnZHNkRhbjZiOXpUNjkzY19OcDBCOGFMdXRVQ1BraXZQeXYzeDl6Zw?oc=5",
-          "source": "Stocks Down Under",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "COMMUNICATION SERVICES",
-        "avgPct": -0.22,
-        "n": 20,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "RKLB",
-      "company": "Rocket Lab",
-      "sector": "INDUSTRIALS",
-      "industry": "Aerospace & Defense",
-      "changePct": 6.54,
-      "close": 62.709999084472656,
-      "tradingValue": 1991938346,
-      "priceSource": "yahoo",
-      "marketCapB": 40.097,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
-      "tags": [
-        "불명"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Aerospace & Defense",
-        "avgPct": 1.34,
-        "n": 13,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "CVS",
-      "company": "CVS Health",
-      "sector": "HEALTHCARE",
-      "industry": "Health Care Services",
-      "changePct": 4.41,
-      "close": 89.01000213623047,
-      "tradingValue": 1166210294,
-      "priceSource": "yahoo",
-      "marketCapB": 113.886,
-      "reason": "미래 약국 CEO, 2백만 달러 주식 매수",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "CVS Health’s Future Pharmacy CEO Just Bought $2 Million of Stock",
-          "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxORHRyU0ExRzV6al9BdS1zcWtkRC1mZk5GMWwwb1Y0VFFEanR5Yzl3c3Q0TVZyTVByRVNpeVlYR2IzR0p2a3lXTzhEeHNQYTlhTkJZZ3I5U19qeVRKRGZEbkI4Y2pkUllzM2wyRlFYZXV6aC0yR2toMkVSV0w2emNjd1RJWmI0VVVvSWMtTWF0ZDBYM29URFZQdjZpbw?oc=5",
-          "source": "Yahoo Finance",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "HEALTHCARE",
-        "avgPct": 0.22,
-        "n": 59,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "AKAM",
-      "company": "Akamai Technologies",
+      "ticker": "SNDK",
+      "company": "Sandisk",
       "sector": "TECHNOLOGY",
-      "industry": "Internet Services & Infrastructure",
-      "changePct": 4.26,
-      "close": 83.70999908447266,
-      "tradingValue": 1922201736,
+      "industry": "Technology Hardware, Storage & Peripherals",
+      "changePct": 13.69,
+      "close": 977.6900024414062,
+      "tradingValue": 15382352688,
       "priceSource": "yahoo",
-      "marketCapB": 12.073,
-      "reason": "",
-      "reasonStatus": "failed",
-      "sectorNote": "",
-      "tags": [],
-      "evidence": [],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "TECHNOLOGY",
-        "avgPct": -1.34,
-        "n": 76,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "EQT",
-      "company": "EQT Corporation",
-      "sector": "ENERGY",
-      "industry": "Oil & Gas Exploration & Production",
-      "changePct": 4.19,
-      "close": 52.0,
-      "tradingValue": 406583320,
-      "priceSource": "yahoo",
-      "marketCapB": 32.529,
-      "reason": "천연가스 랠리와 최근 레인지 거래 지원",
+      "marketCapB": 139.115,
+      "reason": "AI 관련주 동반 강세",
       "reasonStatus": "ok",
-      "sectorNote": "",
+      "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Dell Technologies·Seagate Technology 등)",
       "tags": [
+        "섹터동조",
         "뉴스"
       ],
       "evidence": [
         {
           "type": "news",
-          "title": "EQT gains as natural gas rally and recent Range deal support sentiment",
-          "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOdUxheE1qUXJPdlhpRW5zTDN5VFBIaENHcTgydXBydWlaU2tBTXRtTy13ZjBlY0xWX096eTZ0TmtKeFpNZDExam9xNWtZVC1pTFhDamkyWlluR3dDZ2FNSnpoeDJWdUplZjJUYjNKNlJGdG1hWnBVY21yVjNEWmx2ZkJnQUNEODdfQUpubDVYUjZCQjh5aVozOWZ3RXVQdTA0OHd5MjlB?oc=5",
-          "source": "Quiver Quantitative",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Oil & Gas Exploration & Production",
-        "avgPct": 1.25,
-        "n": 8,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "AVGO",
-      "company": "Broadcom",
-      "sector": "TECHNOLOGY",
-      "industry": "Semiconductors",
-      "changePct": 3.91,
-      "close": 331.9800109863281,
-      "tradingValue": 9339348980,
-      "priceSource": "yahoo",
-      "marketCapB": 1584.75,
-      "reason": "",
-      "reasonStatus": "failed",
-      "sectorNote": "",
-      "tags": [],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Semiconductors",
-        "avgPct": -3.17,
-        "n": 14,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "GPN",
-      "company": "Global Payments",
-      "sector": "FINANCIAL",
-      "industry": "Transaction & Payment Processing Services",
-      "changePct": 3.91,
-      "close": 101.58999633789062,
-      "tradingValue": 336423908,
-      "priceSource": "yahoo",
-      "marketCapB": 26.884,
-      "reason": "미즈호 목표가 115달러로 상향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "GPN Maintained by Mizuho -- Price Target Raised to $115",
-          "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOUV9rbm9pUl8tWTNuQzRuQUctX3dhUzAySURDOWRBS05SNWJ2Z2dMbHdkRzV3UTQ3akR3SlpBam9oeDQyN1g1WWxic192bWlDb1hob1NZbVFseEdVX242WE5KQnFOaTdYd1JxTHNDMjZWVk1SR0NkdWlqNjVtTVBtWGF1T0RITVdlb3JnanF5ZHdnT0xn?oc=5",
-          "source": "GuruFocus",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Mizuho raises Global Payments stock price target on growth outlook",
-          "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQb3U3dEd1LVJPaVBDVFNIU2xiT1QzSks3ckdEeEh1Qmk3QmZoRWJSZFNmdXV4QnZTbHBBSjg3NE1JN3ZLQ0NaVU1odkFZLUU0ZDhjN0lUZWFkc3RNeXdxSTRNZUF2YjBoQ0NreGJUZXNXV09lSHpjeVdGUXN3QmVRU2lVaGxYWkFFV0pDYjV1bXpNTUpsbFAwWm5JWlhwZU1EMWRPZUIyLU5qaTZWMW5jaEpvWTYyb0pEM3Z5eXNYR2hyc3ZG?oc=5",
-          "source": "Investing.com",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Transaction & Payment Processing Services",
-        "avgPct": 0.13,
-        "n": 8,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "TWLO",
-      "company": "Twilio",
-      "sector": "TECHNOLOGY",
-      "industry": "Systems Software",
-      "changePct": 3.66,
-      "close": 214.2100067138672,
-      "tradingValue": 488734054,
-      "priceSource": "yahoo",
-      "marketCapB": 33.146,
-      "reason": "2026년 전망 상향 조정 후 투자자 재평가",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Twilio Rises as Investors Reassess Raised 2026 Outlook After Post-Earnings Selloff",
-          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOeThYYTlRbG5LNVhRUTNGU0pLLUJZenYzc3VtdmxHdmUzVHB2ZzVXbl9ia19KNjRpb3lfcmZOalVOVEw5ckhnOTFWdlBVblRING9IdWhCd2pOaVdWekREaWlUVWlRbmFvX3IxM0ZhUUhHbGFfd2xrRGhkeFBSaWYyd0hCb1hkM3hUcjB4QUZyVFpRUlZCLTlxTlNyYWpxQ1ZxMThaLU10NnZuZ0V6dU9fR3Rtak55Zw?oc=5",
-          "source": "Quiver Quantitative",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Systems Software",
-        "avgPct": -2.05,
-        "n": 6,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "HUM",
-      "company": "Humana",
-      "sector": "HEALTHCARE",
-      "industry": "Managed Health Care",
-      "changePct": 3.51,
-      "close": 438.05999755859375,
-      "tradingValue": 910658398,
-      "priceSource": "yahoo",
-      "marketCapB": 52.612,
-      "reason": "JP모건 목표가 484달러로 상향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "HUM Maintained by JP Morgan -- Price Target Raised to $484",
-          "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPQjg0MEhoYW5qQnFqWE92UjlwUGZUd1pRQUhHTHRuYlJ3VGtEeHU4amp4ckY3SjZtN19mTm1RZDQ0TFV1YWlNdHgxQUZCTGx4SV8yWklJdHhnblRHT25sb0RUcy03ek0teDJvUTdPZGZuaHJQSzEwMFhTOXdoYjFlQmYycXZ4bmktMEJ4NHZyN2lJSGFEYzZnYQ?oc=5",
-          "source": "GuruFocus",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "HEALTHCARE",
-        "avgPct": 0.26,
-        "n": 59,
-        "weighting": "시총가중"
-      }
-    }
-  ],
-  "down": [
-    {
-      "ticker": "SKYD",
-      "company": "Skydance",
-      "sector": "COMMUNICATION SERVICES",
-      "industry": "Movies & Entertainment",
-      "changePct": -7.59,
-      "close": 8.039999961853027,
-      "tradingValue": 192545384,
-      "priceSource": "yahoo",
-      "marketCapB": 40.539,
-      "reason": "합병 후 첫 실적 발표, 워너 브라더스 통합 어려움",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Skydance Stock Tumbles After Earnings. Integrating Warner Bros. Will Be Hard.",
-          "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE85UGRNY3B0VUJGWlBXM3BDRXZZUjkwb0xqeEdrV1pzcThLTG95aWZfdklmV3JzOXlfbURYYmNBMWtTbFdjcDhTOWN2c3VYRE1vYmdaRzUxR255V2pWdnN6alRHRm5iazM3ZzlsWUwwbnAwcnhTTk9Xams5UQ?oc=5",
+          "title": "Why Sandisk and Lumentum Are Leading the AI Comeback",
+          "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1Cdk53RHRrdDRGYlRvX3ljYWc1YnlzZ1duenJfZWoydU5zOUU1ZUNIT0VWWk1oQVVEbGw0cmhSUndPcW90WEJZcTR5cUhiTGdjamFMYW9SdkNBOXB6SUhoRFRualgxM1VHUWVPWEJiNTVaOHVkdXFMaXA4Zw?oc=5",
           "source": "Barron's",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Skydance Stock Sinks Over 8% After First Post-Merger Earnings Report",
-          "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQRGkzd3ZzQVc5TENsU29Yb05fMWFra0F6TGEtWG80UDZLMWhscV9oalpjbDNWLTN5ZXloYnRtRHNqQ3VBcG1QMU9fOE5kU2VwNzlEQWRQX19PS00xdUZVYnFibTI0U0NFR2MwUHVjdE9xY3Q2MFFUOGk5Q2J3Tk53VXlQa1ZpR0g3QTJKNllqODVuUQ?oc=5",
-          "source": "TheWrap",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Skydance Earnings: A Good Talk, but It's All About Execution Now That It Has Acquired WBD",
-          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxORVFLZVVRSUlLWk9uZVVTdS1wOS03bFB6ejMydzRnekdfdmlkcEY3NlhzZ25RdHdaOWRvUjNyUk05d2pYcHp6Q3V1aGRHZVlrYnhuZnA3TnRIVExkNlMyMTRNQV9mYlEwVnk2ZGFtRWV3cVB4cWhqaWRwOXdLcU1xa09MUnREc0pyRmtodzBVdWZVTmR1dmQ1aUxMRWNWQkJBel90R3dCaHVuVEpQSi1xWC1YeUFxQQ?oc=5",
-          "source": "Morningstar",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "COMMUNICATION SERVICES",
-        "avgPct": -0.12,
-        "n": 20,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "MRNA",
-      "company": "Moderna",
-      "sector": "HEALTHCARE",
-      "industry": "Biotechnology",
-      "changePct": -6.75,
-      "close": 250.8300018310547,
-      "tradingValue": 2783927325,
-      "priceSource": "yahoo",
-      "marketCapB": 101.491,
-      "reason": "52주 신고가 달성 후 하락",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Moderna shares decline after hitting 52-week high",
-          "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPYlRoWEptc2dnWjg3V21MRHJ4RUxwQkxWZ0wwQkdxZng2MEZyMDdadU9ZRVhlRm5QLVZYeXVlYzJZT3hFZjRvclJGQXo5cTV0bVM3bmdSemMyWFdvdGRrRDVjYzc1X3Qya29ackx5YmRIUlpXcDdMRWpCMHppb1hCOFFuSFdsNUVmMEtoelk5MmVRZmdJYlJDUVRVQ09SeDRFUzloM1hR?oc=5",
-          "source": "StreetInsider",
-          "date": "2026-11-10"
+          "date": "2026-11-11"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "Biotechnology",
-        "avgPct": 0.1,
-        "n": 7,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "NVDA",
-      "company": "Nvidia",
-      "sector": "TECHNOLOGY",
-      "industry": "Semiconductors",
-      "changePct": -5.47,
-      "close": 168.88999938964844,
-      "tradingValue": 71073005975,
-      "priceSource": "yahoo",
-      "marketCapB": 4078.187,
-      "reason": "CEO 젠슨 황의 스파이 연루 의혹",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Nvidia Stock and AI World Rocked by CEO Jensen Huang’s Affair With Alleged Chinese Spy",
-          "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPejhsbUx4eElhRHA1anpacm5YZ3J6STVCRkE2RkFMNE1hU0xJaWdya25lejZ2blVYLWtlTFdZZlIxYmMtMXI4N1l1TjdWWEk0eHMtRWNFcFVFbHFwaWdEZHh1VmtEUWdibndNb1ZjOU93cE1NLVJkX0FUOWdDbU9sQzZGZ2NhZw?oc=5",
-          "source": "Variety",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Nvidia sells off for second day in fallout from Jensen Huang’s affair with alleged spy",
-          "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQYUp3aWtLM3FHZFMycjJkRGVUeXFXWUdPOV9fbEtkVUhwUk5oX2xDVHZ4alZwdl93VnY1UzMwSUN5QjJneHVzdTZHR21JUnkyU2NtZ05LazhQMHoteDNzSVUxQ2lTR0VVSk8yczdTVTd5cXFHNnFUR1hHdVlfc1psbktyRy1OTTQ?oc=5",
-          "source": "CNBC",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Nvidia Stock Hit With Price-Target Cuts Amid Spy Scandal",
-          "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQM1NvSFlxa1ZOLUZRQ1FCYzd3SmRQSllfVkkwMGQxOG1USUlESFNHX2VpcjF6bFZRdm5pMDl3d2VwUC1tYUgxRnRVaWRCRXJNMnU3R3JOZlFXbVRHbzdnalV4alBtLTZSUk1WSzNUYmo2ZlZjN3JpTkE3b3FweUhVbFk1a21IR0pMY0l1YzVxMW5GNkgwc2hUa3pZZ0k5LUtP?oc=5",
-          "source": "Investor's Business Daily",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Semiconductors",
-        "avgPct": 1.34,
-        "n": 14,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "FSLR",
-      "company": "First Solar",
-      "sector": "TECHNOLOGY",
-      "industry": "Semiconductors",
-      "changePct": -5.55,
-      "close": 180.97999572753906,
-      "tradingValue": 683660983,
-      "priceSource": "yahoo",
-      "marketCapB": 19.452,
-      "reason": "UBS 목표가 295달러로 하향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "UBS lowers First Solar stock price target to $295 on valuation",
-          "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQRkd0bTFOSVdCNnhrczhScmtKMHlnTTdrdnVnU0F1engwdzBIZ2x3RzdfSkxydHBmckpkbXJORGhfTEd4MGpBOUxNbkcySU1qYlR3MV9QVkZuaU5fOUpqeE9mNWpXU2YtUHYxZW44VGlTRDVqcERyeVN3XzYxbTN3S2hWTU5sR0dfdTNfYXhNOUJKNWdmTUx3VFIxNklsMjh1eU13Q2dYSmFBVVl1MHVvLTdVOURmSzB4bGt5NllB?oc=5",
-          "source": "Investing.com",
-          "date": "2026-11-10"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Semiconductors",
-        "avgPct": -1.87,
-        "n": 14,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "LEN",
-      "company": "Lennar",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Homebuilding",
-      "changePct": -5.37,
-      "close": 86.66000366210938,
-      "tradingValue": 289552737,
-      "priceSource": "yahoo",
-      "marketCapB": 20.616,
-      "reason": "Homebuilding 업종 동반 하락(NVR·PulteGroup 등)",
-      "reasonStatus": "sector",
-      "sectorNote": "Homebuilding 업종 동반 하락(NVR·PulteGroup 등)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "CONSUMER CYCLICAL",
-        "avgPct": 0.5,
-        "n": 46,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "NVR",
-      "company": "NVR, Inc.",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Homebuilding",
-      "changePct": -4.76,
-      "close": 6036.419921875,
-      "tradingValue": 215910668,
-      "priceSource": "yahoo",
-      "marketCapB": 15.971,
-      "reason": "Homebuilding 업종 동반 하락(Lennar·PulteGroup 등)",
-      "reasonStatus": "sector",
-      "sectorNote": "Homebuilding 업종 동반 하락(Lennar·PulteGroup 등)",
-      "tags": [
-        "섹터동조"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "CONSUMER CYCLICAL",
-        "avgPct": 0.49,
-        "n": 46,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "COHR",
-      "company": "Coherent Corp.",
-      "sector": "TECHNOLOGY",
-      "industry": "Electronic Components",
-      "changePct": -4.68,
-      "close": 214.66000366210938,
-      "tradingValue": 2293684856,
-      "priceSource": "yahoo",
-      "marketCapB": 42.279,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
-      "tags": [
-        "불명"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "TECHNOLOGY",
-        "avgPct": -1.33,
-        "n": 76,
+        "name": "Technology Hardware, Storage & Peripherals",
+        "avgPct": 2.78,
+        "n": 9,
         "weighting": "시총가중"
       }
     },
@@ -596,12 +70,12 @@
       "company": "Bloom Energy",
       "sector": "INDUSTRIALS",
       "industry": "Electrical Components & Equipment",
-      "changePct": -4.36,
-      "close": 185.4199981689453,
-      "tradingValue": 2398983035,
+      "changePct": 12.97,
+      "close": 209.47000122070312,
+      "tradingValue": 3800919893,
       "priceSource": "yahoo",
-      "marketCapB": 54.799,
-      "reason": "AI 데이터 센터 계약 체결",
+      "marketCapB": 61.906,
+      "reason": "데이터센터 투자 심리 회복",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -610,70 +84,374 @@
       "evidence": [
         {
           "type": "news",
-          "title": "Bloom Energy (BE) Lands a Major AI Data Center Deal as Revenue Surges",
-          "link": "https://finance.yahoo.com/technology/ai/articles/bloom-energy-lands-major-ai-164403284.html",
-          "source": "Insider Monkey",
-          "date": "2026-11-10"
+          "title": "Bloom Energy’s stock is soaring as data-center jitters subside",
+          "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNLVV6MmRaTks5VlR1RjBybWhiR3pnZXNETGNpR0JBZm8zbjc2OWNXaUhFdDV0NnhNSHAxMUdFeEZrSFBTeHhTYUpXYTlLNGZzS0paWXpnV2V2bi1RUXJNVkt1TlFJNDZvMzJOblJ1M3FqWEg3VTBHck1CeXlpcmM5czlQZGpEaUt6VGdUd0NzWHNmbUhkMTJYTEk0TUZyZDVVb0tLMFZNSQ?oc=5",
+          "source": "MarketWatch",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "CoreWeave Boosts AI Trade. Bloom Energy, Other Power Stocks Are Big Winners.",
+          "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQS1RLdVRKeVVmV1pVZ1RVTW1QYnBsZHZId1c5bnpBOWlybGZkVTFnVUlkdXY0U3FUandTRmFnUUh3cVhoUE81RXI2cU5zMDY2RmNBRmhPQ2dVWG14TklaOXVudmd0YUlSdmUxMWJGU0hZSVE2QW40TW1GZFJlZlJ4NHdTVHBwdw?oc=5",
+          "source": "Barron's",
+          "date": "2026-11-11"
         }
       ],
       "sectorMove": {
         "level": "업종",
         "name": "Electrical Components & Equipment",
-        "avgPct": -1.11,
+        "avgPct": 2.1,
         "n": 5,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "CVNA",
-      "company": "Carvana",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Automotive Retail",
-      "changePct": -4.25,
-      "close": 73.0199966430664,
-      "tradingValue": 909644783,
+      "ticker": "MU",
+      "company": "Micron Technology",
+      "sector": "TECHNOLOGY",
+      "industry": "Semiconductors",
+      "changePct": 11.89,
+      "close": 811.2999877929688,
+      "tradingValue": 28536309610,
       "priceSource": "yahoo",
-      "marketCapB": 108.939,
-      "reason": "기록적인 3분기 성장 후 마진 테스트",
+      "marketCapB": 917.924,
+      "reason": "CoreWeave 전망 개선에 따른 AI 투자 심리 회복",
       "reasonStatus": "ok",
-      "sectorNote": "",
+      "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.0%)",
       "tags": [
+        "섹터동조",
         "뉴스"
       ],
       "evidence": [
         {
           "type": "news",
-          "title": "Carvana stock faces margin test after record Q3 growth",
-          "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNWGdyZ0VLdksyVnpNNUI0THVsRHF4U3JwZm9uOE5OTGJNQU81azR1S2EzbzJwWG9tUzRzX2lMZV85Z2tuWUFINXp5SFVrbjZBSlRXWkZ5MWFESzVweGtoUl9ONjlRTVJsMWk2NGhkMkxqcUx5V1hIRHptUmxjRTAzNjBPOC0zeTlmblYwa2EwWk1POFZTa01fdVpLaUZIRTRTdGpvUGpReXkwMVJvRWVUZExYUWpad1Bt?oc=5",
-          "source": "ad-hoc-news.de",
-          "date": "2026-11-10"
-        },
-        {
-          "type": "news",
-          "title": "Carvana stock faces a margin test after record Q3 growth",
-          "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQRW4xbFVGcXdmNHdlWVRUcEJPZk13aEs3QUpHbHh1TzYwU1NpZlc1RnBMZVpsZUlQZEs4QVdtUG44Z1JJUU5HM1c0Z1JQcjJmR1RxLURIaVlXQWtiakZvNW5yUXNaUTlZbWUzRTYtdFlMckNTOTdkSUhwWk52YnVqejBSalVORE02T2lUZ1JXd29fTEkwcy1KSlVISE0taHVHMm42Tkt0NGhpUThvbXpTalFiVDhmMGhBVVJR?oc=5",
-          "source": "ad-hoc-news.de",
-          "date": "2026-11-10"
+          "title": "Micron Stock Jumps 13% as CoreWeave Outlook Eases AI Spending Fears",
+          "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOUTBCRFNQZE5uSktxRUtJZHFfc1h4Nmc5NFhFUENRa1FGTEdzcFFnNDVjUlF5amgyRVNmYmJUZ1hTb2lfM19ZMmVNRXBLR0EzNXMtejZBQk9JMVVaVmVMR1lOOW52RzZpNVdEVEhhcDJKejRrRS1YM3hSUDg0eDQ2ZEg4dGxrVFdZQzZZNHV6aHV3NzNERGo3Rm1IWDdQOHhjVXk5WDVXaE13LWJ4WnhfbVM1dndXMUNqcFdpclZQNmF4VXhFQUE?oc=5",
+          "source": "Benzinga",
+          "date": "2026-11-11"
         }
       ],
       "sectorMove": {
-        "level": "섹터",
-        "name": "CONSUMER CYCLICAL",
-        "avgPct": 0.55,
-        "n": 46,
+        "level": "업종",
+        "name": "Semiconductors",
+        "avgPct": 3.99,
+        "n": 14,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "BXP",
-      "company": "BXP, Inc.",
-      "sector": "REAL ESTATE",
-      "industry": "Office REITs",
-      "changePct": -4.0,
-      "close": 63.540000915527344,
-      "tradingValue": 126369180,
+      "ticker": "DELL",
+      "company": "Dell Technologies",
+      "sector": "TECHNOLOGY",
+      "industry": "Technology Hardware, Storage & Peripherals",
+      "changePct": 11.75,
+      "close": 373.67999267578125,
+      "tradingValue": 3393317388,
       "priceSource": "yahoo",
-      "marketCapB": 11.478,
+      "marketCapB": 237.59,
+      "reason": "AI 서버 수주 잔고 증가",
+      "reasonStatus": "ok",
+      "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Sandisk·Seagate Technology 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Dell Has a $95 Billion AI Server Backlog. Is the Stock a Buy?",
+          "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOdWNhZmE4bnFLVi1XM09OVnRrRDZGSHhMdWV6UkZEQW44UEhqTXBFTTdVVG9lQ1EyOS04VDFXXzRuQmt5Zjk0Tk9YNE92VFRhTGwtVUZRWFd5R0U1bGJ6RWFuS3JHb1owWkl0MXZOWmJRRFdoYzZmSzA5QkhuYXgzU3FTbkZEc3EtaFU2dXpqaDdVU1VyaXNZdkxlUmo3Z20tWTZRYXpqQQ?oc=5",
+          "source": "The Motley Fool",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Technology Hardware, Storage & Peripherals",
+        "avgPct": 2.68,
+        "n": 9,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "LITE",
+      "company": "Lumentum",
+      "sector": "TECHNOLOGY",
+      "industry": "Communications Equipment",
+      "changePct": 10.67,
+      "close": 648.0599975585938,
+      "tradingValue": 4024316492,
+      "priceSource": "yahoo",
+      "marketCapB": 58.769,
+      "reason": "AI 광학 부문 회복 및 CoreWeave 투자 심리 개선",
+      "reasonStatus": "ok",
+      "sectorNote": "Communications Equipment 업종 동반 상승(시총가중 평균 +4.0%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Lumentum Stocks Jump 14.85% as AI Optics Rebound Narrows Marvell Deal Gap",
+          "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNemdTdzR2V0ZoRHVPdDZ6QUY1RG96aUU0Z184TDBYdjVqVno1a0lHUEcwM21vQnBQNERBbzBjTkZCekF3MG1Xa204ZS1qUzBGZHNfaWdhdlBkMEJNcVRpY1ZiZHJHRlNpYTZHWlhhbmF1LWFGc0V1cUlEeUtybkk2TFg2QXlGZ1VXc05oVGVkWHBIa3djeEE?oc=5",
+          "source": "Yahoo Finance",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Why Sandisk and Lumentum Are Leading the AI Comeback",
+          "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1Cdk53RHRrdDRGYlRvX3ljYWc1YnlzZ1duenJfZWoydU5zOUU1ZUNIT0VWWk1oQVVEbGw0cmhSUndPcW90WEJZcTR5cUhiTGdjamFMYW9SdkNBOXB6SUhoRFRualgxM1VHUWVPWEJiNTVaOHVkdXFMaXA4Zw?oc=5",
+          "source": "Barron's",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "CoreWeave just gave a shot in the arm to Micron, Lumentum and the rest of the AI trade",
+          "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNZWN5UXA1LTVfVFJTWEdEaHAtbnBGMmFzRXBDb3VuSDNmQU1DdmxwaUxBZUdqaW1OMnd0ZW0xbzVnc255VXlxaVlwMV9YMll1bWlUSU4zbDRpSzFTaV9qWVZHck9EQU16eGo4QmtqQ0MwamFyN3h3b2o1b2VkSzg1eGhLNVdwdnNoeWRYdXlFR3ctOEk3QWJ3NEJrZ2lPS1VwZmkybG5lUzYxaWFuWk9McVp2Z1ItRHhkZWxN?oc=5",
+          "source": "MarketWatch",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Communications Equipment",
+        "avgPct": 3.97,
+        "n": 5,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "STX",
+      "company": "Seagate Technology",
+      "sector": "TECHNOLOGY",
+      "industry": "Technology Hardware, Storage & Peripherals",
+      "changePct": 9.99,
+      "close": 551.719970703125,
+      "tradingValue": 4188693879,
+      "priceSource": "yahoo",
+      "marketCapB": 126.653,
+      "reason": "신규 하이브리드 스토리지 출시",
+      "reasonStatus": "ok",
+      "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Sandisk·Dell Technologies 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Seagate Expands Storage Portfolio With FireCuda Forge Launch",
+          "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQaXhhQ0VZN0RMcFpWclI4ZEptdm1IY3RzbjM5bVRsT3FhTlBEMzQ1Y0NVSnVRSjFRV0UtLWt6dUZ5UGFWQk04UVotN0RKanhnd3VCejJMc1ZMWFdRbU5EZmk4TUlhMnVBaUZTWXFFUHJ2TEkzcUx0UXhaZVBFdmoxekw5M2FYZW9sQ3VNMDdaX2ZiV2VINWc2UUlvd1ZMaEFuX251NjZ2TUl4MzZoM0xVanRwN0ZFdkk?oc=5",
+          "source": "TradingView",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Seagate Technology Holdings (STX) Launches FireCuda Forge As Undervalued Narrative Faces A Fresh Test",
+          "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNbFE0MGNvNlRidkkwUy1aYzVMbVpUYWVZSWNyXzNKTGVOckxaVDBtbGtzVGZTdW43WlJpM2JNbElYRHdHSi12S2Y0dkRxSDlNVkRmR3pMYVY1amV4QnI2R0dtRXRPcnVWTTRiMzNSeGc1aUZ6UEg4LXNjZldaRHoyV1BYWEdWOHNLaXRBUTFfY19oS01FVkR4ZThnZ2FZTXpIamlSVHAzbnhXbldJRG1nQm11XzJzOG5zeDhfMVhjN0ZnTEc5YmMzeE1YZUJfM3Y2SmZwRGRzTjPSAd4BQVVfeXFMTVpHWUUzWmNBMlFYOUVDd1ppWU1lVnNqTTFhUkJWcGRjVXJmaFVoOXY1Sm1HbXBhWE1HdDlDTzFJVXlGWnJJNjhrM0Zod2hic2l5VWdVU19VS3RXdlVrcmU2YXdDTTctNHhXZ1NqempaMF9RckRtelo4dzBhZThfYnVmVzlONThMMDFFZUFUdDB4eFpMUHczcjh5T0dFbHowdnFmdmoxUGRXTkNEMkhVcGl2UGR2d2JJckdUNkZUdnhZUDkxUjdCZmVmZXZsUmRUcW9YTFVjZFliUzZNbkF3?oc=5",
+          "source": "Simply Wall St",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Seagate stock gets new FireCuda Forge hybrid storage launch",
+          "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOaUlFTFVucVJMWDFtSjNxaTUzT2RkSEVCT0hSMWwyR2l1a3FWTXphemJXeFpJWXFsUjZ0YzhmNTFaRFdxLWMwemNwSkt3a3hVMGRQcG80NGRuU2dyYVhWQ253WEplSzZjZWVPWjBEclF4X2kyTWRjX09fZDA4YUFUR1hwUWxZcGNwclAzRlpPcVVPZmpfYll1a05zSWgyUGZpSEdVLWl3UkVINExCYW9mMURuU1VnODFUWXIwd0NzWQ?oc=5",
+          "source": "ad-hoc-news.de",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Technology Hardware, Storage & Peripherals",
+        "avgPct": 2.89,
+        "n": 9,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "SMCI",
+      "company": "Supermicro",
+      "sector": "TECHNOLOGY",
+      "industry": "Technology Hardware, Storage & Peripherals",
+      "changePct": 9.5,
+      "close": 30.43000030517578,
+      "tradingValue": 1213951245,
+      "priceSource": "yahoo",
+      "marketCapB": 20.06,
+      "reason": "신규 AI 서버 라인업 출시 및 실적 개선 기대",
+      "reasonStatus": "ok",
+      "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(시총가중 평균 +3.0%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Supermicro (SMCI) Stock May Be Undervalued Following Fresh AI Server Launches",
+          "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNLWJ1QjZ1eFk5THlRb1BxZVNQRFF0TURNZmhyWVpZblp4UU00OW83VU9EM2dwcHNfc2IyeHZSa0VpakFVSEk3QkNwbmFVNVBrT3d2eTdoYUlTZzJjNG9jdjQ2R3RWUFRpR25uWmlIcklzQlZqRDFKX0hJbXgxbEZlR1hZUmlqWjNvYTNLVW1zZw?oc=5",
+          "source": "Yahoo! Finance Canada",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Will SMCI break higher amid optimism for the new H15 server line?",
+          "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPZXhtYkZ5M0x2WmptbU9RUEdLTlE1bU5LbDJyYU83Z21aS2MxV0xvaUM3Y2h6ck1Bc2hvbU1ZcnFDNi0zSlVBWFJkSkhsclNyTWdCN0h0c0l0aHJDWmEyYWJnQVMzM3p5UVd3ZjJsTUVRRVJqZTlERU05U0gwTi1oeVdrRVlkMWVpb3BpMmc4M09vbEZhdDNN?oc=5",
+          "source": "Traders Union",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "New servers generate AI text 1.8× faster than prior AMD CPUs, Supermicro says",
+          "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQd2traEowR1NqMXM4bld2bTRHUXpQcEc4UkNfTG8zUmI2S242MnFTOGF2dzZtalhpU3RJLXY3b0xVR3dIZEtudjEzVXZnS2tLWGNTYVNMTnJaQnNyd1ppVGZidDRXczB0VTc0RHhzNndQZldINVVEdzZqbzI5UzdlZVRJcWlyazZaaEhrd3YxWXF5SVJxUllzY1B4Q0NqQlVoLWt2XzdZbXF5YldZRkpHSWIzOER6aWViU2xkNElB?oc=5",
+          "source": "Stock Titan",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Technology Hardware, Storage & Peripherals",
+        "avgPct": 3.02,
+        "n": 9,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "MRVL",
+      "company": "Marvell Technology",
+      "sector": "TECHNOLOGY",
+      "industry": "Semiconductors",
+      "changePct": 9.33,
+      "close": 168.8000030517578,
+      "tradingValue": 5561626889,
+      "priceSource": "yahoo",
+      "marketCapB": 151.88,
+      "reason": "AI 광학 부문 회복 및 Lumentum 인수 관련 불확실성 해소",
+      "reasonStatus": "ok",
+      "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.7%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Marvell Technology Stocks Surge 12.22% as AI Optics Rally Eases Lumentum Deal Doubts",
+          "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQMXNad0xQYzlFT25tRG81UDB3bU0yT1VTSUZSeWpfU0dJd0xtczdKMHhGX0xJbWY4enhibV9EN0RmcC10MV9wLW95UmVjRER4SDZKaGhkckl6dHJrajB3TlhkTjI3STBiYkItWnJPNjRRY1BLdmJhcTNEYXpLN1pNcEh5MkdlblZjdllUNHNKZ1BSWTdZRkxVR3B3YlVCbU5V?oc=5",
+          "source": "Yahoo Finance",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Marvell Technology stock rises nearly 10% as $115 billion Lumentum deal targets AI connectivity",
+          "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNb1k4ZkYwRGE4bWNNQkRNMm9CM1BVeGplT1ladTQ2blJNZ09mUnctbEhITUZJemNwOXNZWllYb0x6NlZSYkpWdUotX2xXSzRKTUxsQWNJbTdVMGFEZE92dld5Q3dRcHJVQkJyNGdXWnNfMVctbmcwcU1ucExjZHNQSFZjWmtUNW15Z1BuT2lFRzRMVE1OOVZZTzRB?oc=5",
+          "source": "Traders Union",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Semiconductors",
+        "avgPct": 4.71,
+        "n": 14,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "COHR",
+      "company": "Coherent Corp.",
+      "sector": "TECHNOLOGY",
+      "industry": "Electronic Components",
+      "changePct": 9.25,
+      "close": 234.50999450683594,
+      "tradingValue": 2614939574,
+      "priceSource": "yahoo",
+      "marketCapB": 46.189,
+      "reason": "AI 인프라 수요 증가 및 호실적 발표",
+      "reasonStatus": "ok",
+      "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "COHR Stock Gains 10% After Strong Q1 Earnings: Is it Still a Buy?",
+          "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOYXl5ckRiazJlbVZhYjdfS05zemlucWowUWpvSFR5eHhFdmRTQXpSeWk3My1GT0VOcVNHamZRRGpKek1iR08xYVJTOVdCUnhPOUlJTm5Yc0FTU0V0Y2I4UjZ5SFlkb2pGUk1ERTFXbm5KNkhTbW9FMUkySVVUS0czODVLYmsxZTUxelg3WERScGxaOEFJSmc?oc=5",
+          "source": "Yahoo Finance",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Coherent shares jump on AI infrastructure demand",
+          "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxORHhmSjladGZIeXI0Z2hsWm9fcjVmWGpUU181OXNqMFd4NklEYkh1bmgzVnRxajAyUF80c1hOX1pJR1hWdXlVZ180TkQ2Umljbm03Z2VlNFBVVHZuZXFKOG11dlFvdklXYlFIaTUyMjlmRFdCbnloZ0hLQkl5MHBCM2kzQmRsbm5WY1B4MnVPYzQ2azExUGdsR1BkRGdKNzBFT2s1Mg?oc=5",
+          "source": "StreetInsider",
+          "date": "2026-11-11"
+        },
+        {
+          "type": "news",
+          "title": "Why Are Coherent (COHR) Shares Jumping On Renewed AI Infrastructure Optimism?",
+          "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPNThHWk9DT2lwT2ZQTzg0ZFd2MlV0N0pxeGg2clJyQm04cUlKR0M2WUpqd2Q1T3duVGoyQTA3eHpuczBvNmZFRnBydS12Rm55M0EyREtndExOUjF5MTM3MWM4V3NEMFZ3ZFNVSUppdmR3dzRka1IxMlJuMFJaakhnRmd2RzV6SURsYkF3U0FpWFR6ZXAyb2dBcGd5M3QwR3pCNV9iSTc2bEcyY2xEV0hQeWVZVUc1Rm5JNzd6TG1R0gHDAUFVX3lxTE9naTRqY2RLTDFRQ09DMkFOQ0ZJRGRFWFBTOENESUFsZkIxdlVPbXZuZldTQ2kxellSemJGdW1WVmpMRTd0VzlsWkhKV3NxNk1DNDVJdU5jekhCQlQ3T1ZpdjliZFRsSk5mWXFLWHNpMERvSWZnYjhVbWRLdldpTU5PR2tpVHQ1Y3Q0MTZidG43MjdlYXRrb0daVGlnOVQ0ZnNJMU1aNmtxcVZrd193M1dnWHJmVTVVYXNrTDhfM0xRcnFTYw?oc=5",
+          "source": "Simply Wall St",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "섹터",
+        "name": "TECHNOLOGY",
+        "avgPct": 2.91,
+        "n": 76,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "MPWR",
+      "company": "Monolithic Power Systems",
+      "sector": "TECHNOLOGY",
+      "industry": "Semiconductors",
+      "changePct": 8.92,
+      "close": 1478.68994140625,
+      "tradingValue": 1575078345,
+      "priceSource": "yahoo",
+      "marketCapB": 72.113,
+      "reason": "호실적 발표 및 기술적 모멘텀",
+      "reasonStatus": "ok",
+      "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.8%)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Monolithic Power Systems shares gain almost 8% after bullish earnings and strong technical momentum",
+          "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPWHZPdnRoT3VLRVhzTVFVUDEyOUR3WWw4WTltLV84c2F6OW9CcG9odzZ2RmJ5THFHNmJkUDdzWkdud19WQ0J0LVd4V3hWcDVZSHJIaXpFRlpOeFY0OGsxRXI2a1h3TG54T0tSdDhVT0ZXa2dja05lOUU3SWRORGRnTE1xV3ZKYWZGM2hZRTdGd3k1UXlIVWhJ?oc=5",
+          "source": "Traders Union",
+          "date": "2026-11-11"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Semiconductors",
+        "avgPct": 4.76,
+        "n": 14,
+        "weighting": "시총가중"
+      }
+    }
+  ],
+  "down": [
+    {
+      "ticker": "ABNB",
+      "company": "Airbnb",
+      "sector": "CONSUMER CYCLICAL",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "changePct": -3.09,
+      "close": 181.1300048828125,
+      "tradingValue": 1163400557,
+      "priceSource": "yahoo",
+      "marketCapB": 108.088,
       "reason": "뚜렷한 재료 확인 안 됨",
       "reasonStatus": "none",
       "sectorNote": "",
@@ -682,10 +460,10 @@
       ],
       "evidence": [],
       "sectorMove": {
-        "level": "섹터",
-        "name": "REAL ESTATE",
-        "avgPct": -0.07,
-        "n": 29,
+        "level": "업종",
+        "name": "Hotels, Resorts & Cruise Lines",
+        "avgPct": -0.04,
+        "n": 7,
         "weighting": "시총가중"
       }
     }
@@ -695,668 +473,36 @@
       "criteria": "시총 20억 달러 이상 · 거래대금 2,500만 달러 이상 · ETF 제외 · 등락률 ±3% 이상 · 방향별 최대 20종목",
       "up": [
         {
-          "ticker": "CHTR",
-          "company": "Charter Communications",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Cable & Satellite",
-          "changePct": 10.61,
-          "close": 134.05999755859375,
-          "tradingValue": 584643693,
-          "priceSource": "yahoo",
-          "marketCapB": 24.004,
-          "reason": "씨티그룹 목표가 150달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "CHTR Maintained by Citigroup -- Price Target Raised to $150",
-              "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOalVuUUI4dDVrMXpvenhZbUFHbHVHN1NOMjExa2lpY2s5RnJpWVZnalVIMThwLUxkdGJuNnowTnFrRDV5V3VZXy0zeHQ3clNSTHZNWXVHWmhkS194eUZ1VWJhaFB1LUhUUUE4b3FpRHlyWm5xdU14Ui12UjRiQjBGMldoRnBXRkE1TmY1dkZFNDdjbWF5bGNOM1Nn?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.2,
-            "n": 20,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "TTWO",
-          "company": "Take-Two Interactive",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Interactive Home Entertainment",
-          "changePct": 8.31,
-          "close": 224.63999938964844,
-          "tradingValue": 1840066221,
-          "priceSource": "yahoo",
-          "marketCapB": 42.003,
-          "reason": "GTA VI 사전 예약 기대치 초과 달성",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "TTWO Stock In Focus As GTA VI Preorders Run ‘Far In Excess’ Of Expectations — UBS Trims Target",
-              "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQRUMtMmxXd2FVYlJfc1l3UklsR1RVV25JcjZWblZLUlhqNWhtWmlsWDdoWXhrdWE4UGJ5amEtaENXQzN2M0xOeUJFRnllSVI2cHllellqelQzeXNjMnFSV2tnWjcxX3F5WEI0REhqSzJzODA3ZldzcDg3NzRuZTZma3JLdWVHVE9Hb2pzMk1SV014Zw?oc=5",
-              "source": "Yahoo Finance",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Take-Two Interactive Software climbs 8% on GTA VI preorder update (TTWO:NASDAQ)",
-              "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQNHN5aVNQS1JXNHNVTW9DSlJ3ZkdfRUp3RHJlM25CWUdWcVNaYlIzR3J2SVBHeHlTTFA4bkN6X3pKVEVqbVF5YnFvcXQyMWc4alJORXNwMDZjbzBqVjF3b0JaQmpKVkRoV3BXMWZNTGI3Ty1zVHR4ejlWUXQ5LWlnN3IxNnBXNjVUdmxUNnFuSkdXWlVmZlBoQ2haaHFfR0tZRUNnX2w4aEFlSDFxbC13?oc=5",
-              "source": "Seeking Alpha",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Take-Two (NASDAQ:TTWO) Stock Surges 6% as GTA 6 Preorders Smash Expectations Despite Bookings Miss",
-              "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTFA1ZE4yLW1Oa2pWVUkyVndZQzZaNEwtYVFNZnpmU2ZRSGVYZ1VPeWE0ZHlfZWc5dS0wUlBYUFpDbWRVZkI4U2FjWk15b01qaTVfbmNvM25rVnZHNkRhbjZiOXpUNjkzY19OcDBCOGFMdXRVQ1BraXZQeXYzeDl6Zw?oc=5",
-              "source": "Stocks Down Under",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.22,
-            "n": 20,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "RKLB",
-          "company": "Rocket Lab",
-          "sector": "INDUSTRIALS",
-          "industry": "Aerospace & Defense",
-          "changePct": 6.54,
-          "close": 62.709999084472656,
-          "tradingValue": 1991938346,
-          "priceSource": "yahoo",
-          "marketCapB": 40.097,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Aerospace & Defense",
-            "avgPct": 1.34,
-            "n": 13,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "CVS",
-          "company": "CVS Health",
-          "sector": "HEALTHCARE",
-          "industry": "Health Care Services",
-          "changePct": 4.41,
-          "close": 89.01000213623047,
-          "tradingValue": 1166210294,
-          "priceSource": "yahoo",
-          "marketCapB": 113.886,
-          "reason": "미래 약국 CEO, 2백만 달러 주식 매수",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "CVS Health’s Future Pharmacy CEO Just Bought $2 Million of Stock",
-              "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxORHRyU0ExRzV6al9BdS1zcWtkRC1mZk5GMWwwb1Y0VFFEanR5Yzl3c3Q0TVZyTVByRVNpeVlYR2IzR0p2a3lXTzhEeHNQYTlhTkJZZ3I5U19qeVRKRGZEbkI4Y2pkUllzM2wyRlFYZXV6aC0yR2toMkVSV0w2emNjd1RJWmI0VVVvSWMtTWF0ZDBYM29URFZQdjZpbw?oc=5",
-              "source": "Yahoo Finance",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "HEALTHCARE",
-            "avgPct": 0.22,
-            "n": 59,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "AKAM",
-          "company": "Akamai Technologies",
+          "ticker": "SNDK",
+          "company": "Sandisk",
           "sector": "TECHNOLOGY",
-          "industry": "Internet Services & Infrastructure",
-          "changePct": 4.26,
-          "close": 83.70999908447266,
-          "tradingValue": 1922201736,
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 13.69,
+          "close": 977.6900024414062,
+          "tradingValue": 15382352688,
           "priceSource": "yahoo",
-          "marketCapB": 12.073,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "TECHNOLOGY",
-            "avgPct": -1.34,
-            "n": 76,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "EQT",
-          "company": "EQT Corporation",
-          "sector": "ENERGY",
-          "industry": "Oil & Gas Exploration & Production",
-          "changePct": 4.19,
-          "close": 52.0,
-          "tradingValue": 406583320,
-          "priceSource": "yahoo",
-          "marketCapB": 32.529,
-          "reason": "천연가스 랠리와 최근 레인지 거래 지원",
+          "marketCapB": 139.115,
+          "reason": "AI 관련주 동반 강세",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Dell Technologies·Seagate Technology 등)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "EQT gains as natural gas rally and recent Range deal support sentiment",
-              "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOdUxheE1qUXJPdlhpRW5zTDN5VFBIaENHcTgydXBydWlaU2tBTXRtTy13ZjBlY0xWX096eTZ0TmtKeFpNZDExam9xNWtZVC1pTFhDamkyWlluR3dDZ2FNSnpoeDJWdUplZjJUYjNKNlJGdG1hWnBVY21yVjNEWmx2ZkJnQUNEODdfQUpubDVYUjZCQjh5aVozOWZ3RXVQdTA0OHd5MjlB?oc=5",
-              "source": "Quiver Quantitative",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Oil & Gas Exploration & Production",
-            "avgPct": 1.25,
-            "n": 8,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "AVGO",
-          "company": "Broadcom",
-          "sector": "TECHNOLOGY",
-          "industry": "Semiconductors",
-          "changePct": 3.91,
-          "close": 331.9800109863281,
-          "tradingValue": 9339348980,
-          "priceSource": "yahoo",
-          "marketCapB": 1584.75,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Semiconductors",
-            "avgPct": -3.17,
-            "n": 14,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "GPN",
-          "company": "Global Payments",
-          "sector": "FINANCIAL",
-          "industry": "Transaction & Payment Processing Services",
-          "changePct": 3.91,
-          "close": 101.58999633789062,
-          "tradingValue": 336423908,
-          "priceSource": "yahoo",
-          "marketCapB": 26.884,
-          "reason": "미즈호 목표가 115달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "GPN Maintained by Mizuho -- Price Target Raised to $115",
-              "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOUV9rbm9pUl8tWTNuQzRuQUctX3dhUzAySURDOWRBS05SNWJ2Z2dMbHdkRzV3UTQ3akR3SlpBam9oeDQyN1g1WWxic192bWlDb1hob1NZbVFseEdVX242WE5KQnFOaTdYd1JxTHNDMjZWVk1SR0NkdWlqNjVtTVBtWGF1T0RITVdlb3JnanF5ZHdnT0xn?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Mizuho raises Global Payments stock price target on growth outlook",
-              "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQb3U3dEd1LVJPaVBDVFNIU2xiT1QzSks3ckdEeEh1Qmk3QmZoRWJSZFNmdXV4QnZTbHBBSjg3NE1JN3ZLQ0NaVU1odkFZLUU0ZDhjN0lUZWFkc3RNeXdxSTRNZUF2YjBoQ0NreGJUZXNXV09lSHpjeVdGUXN3QmVRU2lVaGxYWkFFV0pDYjV1bXpNTUpsbFAwWm5JWlhwZU1EMWRPZUIyLU5qaTZWMW5jaEpvWTYyb0pEM3Z5eXNYR2hyc3ZG?oc=5",
-              "source": "Investing.com",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Transaction & Payment Processing Services",
-            "avgPct": 0.13,
-            "n": 8,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "TWLO",
-          "company": "Twilio",
-          "sector": "TECHNOLOGY",
-          "industry": "Systems Software",
-          "changePct": 3.66,
-          "close": 214.2100067138672,
-          "tradingValue": 488734054,
-          "priceSource": "yahoo",
-          "marketCapB": 33.146,
-          "reason": "2026년 전망 상향 조정 후 투자자 재평가",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Twilio Rises as Investors Reassess Raised 2026 Outlook After Post-Earnings Selloff",
-              "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOeThYYTlRbG5LNVhRUTNGU0pLLUJZenYzc3VtdmxHdmUzVHB2ZzVXbl9ia19KNjRpb3lfcmZOalVOVEw5ckhnOTFWdlBVblRING9IdWhCd2pOaVdWekREaWlUVWlRbmFvX3IxM0ZhUUhHbGFfd2xrRGhkeFBSaWYyd0hCb1hkM3hUcjB4QUZyVFpRUlZCLTlxTlNyYWpxQ1ZxMThaLU10NnZuZ0V6dU9fR3Rtak55Zw?oc=5",
-              "source": "Quiver Quantitative",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Systems Software",
-            "avgPct": -2.05,
-            "n": 6,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "HUM",
-          "company": "Humana",
-          "sector": "HEALTHCARE",
-          "industry": "Managed Health Care",
-          "changePct": 3.51,
-          "close": 438.05999755859375,
-          "tradingValue": 910658398,
-          "priceSource": "yahoo",
-          "marketCapB": 52.612,
-          "reason": "JP모건 목표가 484달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "HUM Maintained by JP Morgan -- Price Target Raised to $484",
-              "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPQjg0MEhoYW5qQnFqWE92UjlwUGZUd1pRQUhHTHRuYlJ3VGtEeHU4amp4ckY3SjZtN19mTm1RZDQ0TFV1YWlNdHgxQUZCTGx4SV8yWklJdHhnblRHT25sb0RUcy03ek0teDJvUTdPZGZuaHJQSzEwMFhTOXdoYjFlQmYycXZ4bmktMEJ4NHZyN2lJSGFEYzZnYQ?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "HEALTHCARE",
-            "avgPct": 0.26,
-            "n": 59,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "AIG",
-          "company": "American International Group",
-          "sector": "FINANCIAL",
-          "industry": "Multi-line Insurance",
-          "changePct": 3.38,
-          "close": 82.31999969482422,
-          "tradingValue": 310920663,
-          "priceSource": "yahoo",
-          "marketCapB": 42.678,
-          "reason": "UBS 목표가 103달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "UBS Adjusts Price Target on American International to $103 From $100, Maintains Buy Rating",
-              "link": "https://finance.yahoo.com/markets/stocks/articles/ubs-adjusts-price-target-american-132522269.html",
-              "source": "MT Newswires",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "FINANCIAL",
-            "avgPct": 0.48,
-            "n": 75,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "CBOE",
-          "company": "Cboe Global Markets",
-          "sector": "FINANCIAL",
-          "industry": "Financial Exchanges & Data",
-          "changePct": 3.41,
-          "close": 364.80999755859375,
-          "tradingValue": 332765817,
-          "priceSource": "yahoo",
-          "marketCapB": 38.061,
-          "reason": "Keefe, Bruyette & Woods 목표가 320달러로 하향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Keefe, Bruyette & Woods Adjusts Price Target on Cboe Global Markets to $320 From $350",
-              "link": "https://finance.yahoo.com/markets/stocks/articles/keefe-bruyette-woods-adjusts-price-114138339.html",
-              "source": "MT Newswires",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Financial Exchanges & Data",
-            "avgPct": 0.7,
-            "n": 8,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "HII",
-          "company": "Huntington Ingalls Industries",
-          "sector": "INDUSTRIALS",
-          "industry": "Aerospace & Defense",
-          "changePct": 3.03,
-          "close": 313.57000732421875,
-          "tradingValue": 121085685,
-          "priceSource": "yahoo",
-          "marketCapB": 12.357,
-          "reason": "씨티그룹 목표가 352달러로 하향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "HII Maintained by Citigroup -- Price Target Lowered to $352",
-              "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOaHl1UDc2Y0I1cjRPa2R6VlpDek5sQjA0cDdwSVc5NVlCM2Q5aVJQbGZTREVPYU56dGtjTllPRzFydXlHUnJ0RjE4ZE9KazhYT0JWQUMzYjY0cUhxQk91UDZjaWxLTnU0MmRjWkxGQXFSZTNfUFVjMGsxY2RDc191SGl6aGFHeDJILXY2bWxrWVhWVXRGMi1QR0V3?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Citigroup Adjusts Price Target on Huntington Ingalls Industries to $352 From $379",
-              "link": "https://finance.yahoo.com/markets/stocks/articles/citigroup-adjusts-price-target-huntington-132109245.html",
-              "source": "MT Newswires",
-              "date": "2026-11-09"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Aerospace & Defense",
-            "avgPct": 1.47,
-            "n": 13,
-            "weighting": "시총가중"
-          }
-        }
-      ],
-      "down": [
-        {
-          "ticker": "SKYD",
-          "company": "Skydance",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Movies & Entertainment",
-          "changePct": -7.59,
-          "close": 8.039999961853027,
-          "tradingValue": 192545384,
-          "priceSource": "yahoo",
-          "marketCapB": 40.539,
-          "reason": "합병 후 첫 실적 발표, 워너 브라더스 통합 어려움",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Skydance Stock Tumbles After Earnings. Integrating Warner Bros. Will Be Hard.",
-              "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE85UGRNY3B0VUJGWlBXM3BDRXZZUjkwb0xqeEdrV1pzcThLTG95aWZfdklmV3JzOXlfbURYYmNBMWtTbFdjcDhTOWN2c3VYRE1vYmdaRzUxR255V2pWdnN6alRHRm5iazM3ZzlsWUwwbnAwcnhTTk9Xams5UQ?oc=5",
+              "title": "Why Sandisk and Lumentum Are Leading the AI Comeback",
+              "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1Cdk53RHRrdDRGYlRvX3ljYWc1YnlzZ1duenJfZWoydU5zOUU1ZUNIT0VWWk1oQVVEbGw0cmhSUndPcW90WEJZcTR5cUhiTGdjamFMYW9SdkNBOXB6SUhoRFRualgxM1VHUWVPWEJiNTVaOHVkdXFMaXA4Zw?oc=5",
               "source": "Barron's",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Skydance Stock Sinks Over 8% After First Post-Merger Earnings Report",
-              "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQRGkzd3ZzQVc5TENsU29Yb05fMWFra0F6TGEtWG80UDZLMWhscV9oalpjbDNWLTN5ZXloYnRtRHNqQ3VBcG1QMU9fOE5kU2VwNzlEQWRQX19PS00xdUZVYnFibTI0U0NFR2MwUHVjdE9xY3Q2MFFUOGk5Q2J3Tk53VXlQa1ZpR0g3QTJKNllqODVuUQ?oc=5",
-              "source": "TheWrap",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Skydance Earnings: A Good Talk, but It's All About Execution Now That It Has Acquired WBD",
-              "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxORVFLZVVRSUlLWk9uZVVTdS1wOS03bFB6ejMydzRnekdfdmlkcEY3NlhzZ25RdHdaOWRvUjNyUk05d2pYcHp6Q3V1aGRHZVlrYnhuZnA3TnRIVExkNlMyMTRNQV9mYlEwVnk2ZGFtRWV3cVB4cWhqaWRwOXdLcU1xa09MUnREc0pyRmtodzBVdWZVTmR1dmQ1aUxMRWNWQkJBel90R3dCaHVuVEpQSi1xWC1YeUFxQQ?oc=5",
-              "source": "Morningstar",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.12,
-            "n": 20,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "MRNA",
-          "company": "Moderna",
-          "sector": "HEALTHCARE",
-          "industry": "Biotechnology",
-          "changePct": -6.75,
-          "close": 250.8300018310547,
-          "tradingValue": 2783927325,
-          "priceSource": "yahoo",
-          "marketCapB": 101.491,
-          "reason": "52주 신고가 달성 후 하락",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Moderna shares decline after hitting 52-week high",
-              "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPYlRoWEptc2dnWjg3V21MRHJ4RUxwQkxWZ0wwQkdxZng2MEZyMDdadU9ZRVhlRm5QLVZYeXVlYzJZT3hFZjRvclJGQXo5cTV0bVM3bmdSemMyWFdvdGRrRDVjYzc1X3Qya29ackx5YmRIUlpXcDdMRWpCMHppb1hCOFFuSFdsNUVmMEtoelk5MmVRZmdJYlJDUVRVQ09SeDRFUzloM1hR?oc=5",
-              "source": "StreetInsider",
-              "date": "2026-11-10"
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "업종",
-            "name": "Biotechnology",
-            "avgPct": 0.1,
-            "n": 7,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "NVDA",
-          "company": "Nvidia",
-          "sector": "TECHNOLOGY",
-          "industry": "Semiconductors",
-          "changePct": -5.47,
-          "close": 168.88999938964844,
-          "tradingValue": 71073005975,
-          "priceSource": "yahoo",
-          "marketCapB": 4078.187,
-          "reason": "CEO 젠슨 황의 스파이 연루 의혹",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Nvidia Stock and AI World Rocked by CEO Jensen Huang’s Affair With Alleged Chinese Spy",
-              "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPejhsbUx4eElhRHA1anpacm5YZ3J6STVCRkE2RkFMNE1hU0xJaWdya25lejZ2blVYLWtlTFdZZlIxYmMtMXI4N1l1TjdWWEk0eHMtRWNFcFVFbHFwaWdEZHh1VmtEUWdibndNb1ZjOU93cE1NLVJkX0FUOWdDbU9sQzZGZ2NhZw?oc=5",
-              "source": "Variety",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Nvidia sells off for second day in fallout from Jensen Huang’s affair with alleged spy",
-              "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQYUp3aWtLM3FHZFMycjJkRGVUeXFXWUdPOV9fbEtkVUhwUk5oX2xDVHZ4alZwdl93VnY1UzMwSUN5QjJneHVzdTZHR21JUnkyU2NtZ05LazhQMHoteDNzSVUxQ2lTR0VVSk8yczdTVTd5cXFHNnFUR1hHdVlfc1psbktyRy1OTTQ?oc=5",
-              "source": "CNBC",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Nvidia Stock Hit With Price-Target Cuts Amid Spy Scandal",
-              "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQM1NvSFlxa1ZOLUZRQ1FCYzd3SmRQSllfVkkwMGQxOG1USUlESFNHX2VpcjF6bFZRdm5pMDl3d2VwUC1tYUgxRnRVaWRCRXJNMnU3R3JOZlFXbVRHbzdnalV4alBtLTZSUk1WSzNUYmo2ZlZjN3JpTkE3b3FweUhVbFk1a21IR0pMY0l1YzVxMW5GNkgwc2hUa3pZZ0k5LUtP?oc=5",
-              "source": "Investor's Business Daily",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Semiconductors",
-            "avgPct": 1.34,
-            "n": 14,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "FSLR",
-          "company": "First Solar",
-          "sector": "TECHNOLOGY",
-          "industry": "Semiconductors",
-          "changePct": -5.55,
-          "close": 180.97999572753906,
-          "tradingValue": 683660983,
-          "priceSource": "yahoo",
-          "marketCapB": 19.452,
-          "reason": "UBS 목표가 295달러로 하향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "UBS lowers First Solar stock price target to $295 on valuation",
-              "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQRkd0bTFOSVdCNnhrczhScmtKMHlnTTdrdnVnU0F1engwdzBIZ2x3RzdfSkxydHBmckpkbXJORGhfTEd4MGpBOUxNbkcySU1qYlR3MV9QVkZuaU5fOUpqeE9mNWpXU2YtUHYxZW44VGlTRDVqcERyeVN3XzYxbTN3S2hWTU5sR0dfdTNfYXhNOUJKNWdmTUx3VFIxNklsMjh1eU13Q2dYSmFBVVl1MHVvLTdVOURmSzB4bGt5NllB?oc=5",
-              "source": "Investing.com",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Semiconductors",
-            "avgPct": -1.87,
-            "n": 14,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "LEN",
-          "company": "Lennar",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -5.37,
-          "close": 86.66000366210938,
-          "tradingValue": 289552737,
-          "priceSource": "yahoo",
-          "marketCapB": 20.616,
-          "reason": "Homebuilding 업종 동반 하락(NVR·PulteGroup 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(NVR·PulteGroup 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.5,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "NVR",
-          "company": "NVR, Inc.",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -4.76,
-          "close": 6036.419921875,
-          "tradingValue": 215910668,
-          "priceSource": "yahoo",
-          "marketCapB": 15.971,
-          "reason": "Homebuilding 업종 동반 하락(Lennar·PulteGroup 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(Lennar·PulteGroup 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.49,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "COHR",
-          "company": "Coherent Corp.",
-          "sector": "TECHNOLOGY",
-          "industry": "Electronic Components",
-          "changePct": -4.68,
-          "close": 214.66000366210938,
-          "tradingValue": 2293684856,
-          "priceSource": "yahoo",
-          "marketCapB": 42.279,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "TECHNOLOGY",
-            "avgPct": -1.33,
-            "n": 76,
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 2.78,
+            "n": 9,
             "weighting": "시총가중"
           }
         },
@@ -1365,12 +511,12 @@
           "company": "Bloom Energy",
           "sector": "INDUSTRIALS",
           "industry": "Electrical Components & Equipment",
-          "changePct": -4.36,
-          "close": 185.4199981689453,
-          "tradingValue": 2398983035,
+          "changePct": 12.97,
+          "close": 209.47000122070312,
+          "tradingValue": 3800919893,
           "priceSource": "yahoo",
-          "marketCapB": 54.799,
-          "reason": "AI 데이터 센터 계약 체결",
+          "marketCapB": 61.906,
+          "reason": "데이터센터 투자 심리 회복",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -1379,237 +525,58 @@
           "evidence": [
             {
               "type": "news",
-              "title": "Bloom Energy (BE) Lands a Major AI Data Center Deal as Revenue Surges",
-              "link": "https://finance.yahoo.com/technology/ai/articles/bloom-energy-lands-major-ai-164403284.html",
-              "source": "Insider Monkey",
-              "date": "2026-11-10"
+              "title": "Bloom Energy’s stock is soaring as data-center jitters subside",
+              "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNLVV6MmRaTks5VlR1RjBybWhiR3pnZXNETGNpR0JBZm8zbjc2OWNXaUhFdDV0NnhNSHAxMUdFeEZrSFBTeHhTYUpXYTlLNGZzS0paWXpnV2V2bi1RUXJNVkt1TlFJNDZvMzJOblJ1M3FqWEg3VTBHck1CeXlpcmM5czlQZGpEaUt6VGdUd0NzWHNmbUhkMTJYTEk0TUZyZDVVb0tLMFZNSQ?oc=5",
+              "source": "MarketWatch",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "CoreWeave Boosts AI Trade. Bloom Energy, Other Power Stocks Are Big Winners.",
+              "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQS1RLdVRKeVVmV1pVZ1RVTW1QYnBsZHZId1c5bnpBOWlybGZkVTFnVUlkdXY0U3FUandTRmFnUUh3cVhoUE81RXI2cU5zMDY2RmNBRmhPQ2dVWG14TklaOXVudmd0YUlSdmUxMWJGU0hZSVE2QW40TW1GZFJlZlJ4NHdTVHBwdw?oc=5",
+              "source": "Barron's",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "업종",
             "name": "Electrical Components & Equipment",
-            "avgPct": -1.11,
+            "avgPct": 2.1,
             "n": 5,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "CVNA",
-          "company": "Carvana",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Automotive Retail",
-          "changePct": -4.25,
-          "close": 73.0199966430664,
-          "tradingValue": 909644783,
+          "ticker": "MU",
+          "company": "Micron Technology",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 11.89,
+          "close": 811.2999877929688,
+          "tradingValue": 28536309610,
           "priceSource": "yahoo",
-          "marketCapB": 108.939,
-          "reason": "기록적인 3분기 성장 후 마진 테스트",
+          "marketCapB": 917.924,
+          "reason": "CoreWeave 전망 개선에 따른 AI 투자 심리 회복",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.0%)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "Carvana stock faces margin test after record Q3 growth",
-              "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNWGdyZ0VLdksyVnpNNUI0THVsRHF4U3JwZm9uOE5OTGJNQU81azR1S2EzbzJwWG9tUzRzX2lMZV85Z2tuWUFINXp5SFVrbjZBSlRXWkZ5MWFESzVweGtoUl9ONjlRTVJsMWk2NGhkMkxqcUx5V1hIRHptUmxjRTAzNjBPOC0zeTlmblYwa2EwWk1POFZTa01fdVpLaUZIRTRTdGpvUGpReXkwMVJvRWVUZExYUWpad1Bt?oc=5",
-              "source": "ad-hoc-news.de",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Carvana stock faces a margin test after record Q3 growth",
-              "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQRW4xbFVGcXdmNHdlWVRUcEJPZk13aEs3QUpHbHh1TzYwU1NpZlc1RnBMZVpsZUlQZEs4QVdtUG44Z1JJUU5HM1c0Z1JQcjJmR1RxLURIaVlXQWtiakZvNW5yUXNaUTlZbWUzRTYtdFlMckNTOTdkSUhwWk52YnVqejBSalVORE02T2lUZ1JXd29fTEkwcy1KSlVISE0taHVHMm42Tkt0NGhpUThvbXpTalFiVDhmMGhBVVJR?oc=5",
-              "source": "ad-hoc-news.de",
-              "date": "2026-11-10"
+              "title": "Micron Stock Jumps 13% as CoreWeave Outlook Eases AI Spending Fears",
+              "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOUTBCRFNQZE5uSktxRUtJZHFfc1h4Nmc5NFhFUENRa1FGTEdzcFFnNDVjUlF5amgyRVNmYmJUZ1hTb2lfM19ZMmVNRXBLR0EzNXMtejZBQk9JMVVaVmVMR1lOOW52RzZpNVdEVEhhcDJKejRrRS1YM3hSUDg0eDQ2ZEg4dGxrVFdZQzZZNHV6aHV3NzNERGo3Rm1IWDdQOHhjVXk5WDVXaE13LWJ4WnhfbVM1dndXMUNqcFdpclZQNmF4VXhFQUE?oc=5",
+              "source": "Benzinga",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.55,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "BXP",
-          "company": "BXP, Inc.",
-          "sector": "REAL ESTATE",
-          "industry": "Office REITs",
-          "changePct": -4.0,
-          "close": 63.540000915527344,
-          "tradingValue": 126369180,
-          "priceSource": "yahoo",
-          "marketCapB": 11.478,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "REAL ESTATE",
-            "avgPct": -0.07,
-            "n": 29,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "GEV",
-          "company": "GE Vernova",
-          "sector": "INDUSTRIALS",
-          "industry": "Heavy Electrical Equipment",
-          "changePct": -3.89,
-          "close": 797.0399780273438,
-          "tradingValue": 4949141634,
-          "priceSource": "yahoo",
-          "marketCapB": 210.958,
-          "reason": "소프트뱅크 데이터 센터 프로젝트 계획 수정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "GE Vernova shares slide after SoftBank revises US data center project plans",
-              "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOdHljdVJwNjc2SGN6SWFvUl92aGU0LTJYWHhhMWxRSWdHQlRDZ0VjQjd3MTZOZmZEOUJ3amdfUVpSSEQ1QjUzcFROeVVNQTBNTzdDLXpnN3lncjdEUElvYnhTMF9QREo3ellITkIwaGhacjJfNFh6VFFXd0ZYQjRIOUI4Z3B6U2xCX2tRS01OVlUxc00tZDhMalJKTHh4QlItRFF4VlZ5MWI2bnljY1NQT1BaR0UtaGJYbHZ1UHdqNDNWbVpZUlE?oc=5",
-              "source": "Reuters",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "GE Vernova falls nearly 10% after SoftBank revises AI data center plans (GEV:NYSE)",
-              "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPcm1yUVV4VWlIR2xaSUdvRndBZUNNdWxiVFcyUXpETmhlR2tLTHE1SmhwTEt6YzB0VFZkQlh5YmY3SkJydmxJU2Jmb3QwRDlsdWVxdm9FZ2dMMnF0bVhWNThxN1BSMGxaZnJWbEhQNUNudWJaNk96aDNFZ0FzNFFMb3pZbW92bk5PaHZhVElyS1d1R3AxSVIzZVdRUVJDTV90MmhJNzExSHhua0FZLWZDT0ZLbFdYS3M?oc=5",
-              "source": "Seeking Alpha",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "INDUSTRIALS",
-            "avgPct": 0.16,
-            "n": 83,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "PHM",
-          "company": "PulteGroup",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -3.89,
-          "close": 130.60000610351562,
-          "tradingValue": 236246530,
-          "priceSource": "yahoo",
-          "marketCapB": 24.878,
-          "reason": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.5,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "DHI",
-          "company": "D. R. Horton",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -3.8,
-          "close": 149.6999969482422,
-          "tradingValue": 339445192,
-          "priceSource": "yahoo",
-          "marketCapB": 40.634,
-          "reason": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.51,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "GNRC",
-          "company": "Generac",
-          "sector": "INDUSTRIALS",
-          "industry": "Heavy Electrical Equipment",
-          "changePct": -3.69,
-          "close": 181.77999877929688,
-          "tradingValue": 301203459,
-          "priceSource": "yahoo",
-          "marketCapB": 10.723,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "INDUSTRIALS",
-            "avgPct": 0.01,
-            "n": 83,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "APP",
-          "company": "AppLovin",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Advertising",
-          "changePct": -3.53,
-          "close": 395.510009765625,
-          "tradingValue": 2146988119,
-          "priceSource": "yahoo",
-          "marketCapB": 131.041,
-          "reason": "3분기 실적 발표 후 주가 급등",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "APP Stock Surges 51% After Q3 Earnings: Is it Still a Buy?",
-              "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNR0t4bGE1Rlk2dFozZHhKeHN4ajJtVWllRHBTV0kxMTF5cHpSMHZiTlgwU2hWN0hFMmJsbUk3a3p0Umg3MkJMbnlzZTI4cTNsMVhRd3BPWjFwa3o1Rl9pajRTS0JuWFphU0NFTUs2VlExZks3QWV5X194SnREN3hUemtFSXhNQUZwWVdNUTJpWGIwSzd4dnVLN0xlbzA?oc=5",
-              "source": "Zacks Investment Research",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "A 6-Day Winning Streak Has AppLovin Stock Up 79%",
-              "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOZFhoY29ISklPXzZQeDVqOGZGdUN0TjJOUUVGQ3RqVmFUUWZyTzVLNnBsY1AwcDdfLXg3MDY3VVpOTnRuNXU1WmhRa0pidHZkZG0zYndOcC1JWVBZZHRyNE5MSzJiZ2k3dTdkSjhGZ3JZWFhxRlVRenJHa0NCeTdPR1BkTTF2a3FWcG40VW4zMnczekQzQ2o2TnJCR3NJQk95bFZKVTA3WmNsRk0?oc=5",
-              "source": "Trefis",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.1,
-            "n": 20,
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 3.99,
+            "n": 14,
             "weighting": "시총가중"
           }
         },
@@ -1618,68 +585,313 @@
           "company": "Dell Technologies",
           "sector": "TECHNOLOGY",
           "industry": "Technology Hardware, Storage & Peripherals",
-          "changePct": -3.44,
-          "close": 334.3800048828125,
-          "tradingValue": 2165326207,
+          "changePct": 11.75,
+          "close": 373.67999267578125,
+          "tradingValue": 3393317388,
           "priceSource": "yahoo",
-          "marketCapB": 212.603,
-          "reason": "AI 서버 백로그 뉴스",
+          "marketCapB": 237.59,
+          "reason": "AI 서버 수주 잔고 증가",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Sandisk·Seagate Technology 등)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "Dell (DELL) Stock May Be 42% Undervalued Following AI Server Backlog News",
-              "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQUjQ5UG9ndmFCVmRRNHppZ3dHV3o2OV9PSE5MRllndXlSSnNiODVYSU5abmJibjZPbFpIRUQxUGtFcTREelVKM2Y0ZnJDZW5zOVItWU9qODl1c2NWTG16WGhnX0lWYUtFMUo1V2I1ZS1FY2x5VTFlamFWa3N5NXhfakdlSHBwT0h1MjFkbnBqcTE?oc=5",
-              "source": "Yahoo Finance",
-              "date": "2026-11-10"
+              "title": "Dell Has a $95 Billion AI Server Backlog. Is the Stock a Buy?",
+              "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOdWNhZmE4bnFLVi1XM09OVnRrRDZGSHhMdWV6UkZEQW44UEhqTXBFTTdVVG9lQ1EyOS04VDFXXzRuQmt5Zjk0Tk9YNE92VFRhTGwtVUZRWFd5R0U1bGJ6RWFuS3JHb1owWkl0MXZOWmJRRFdoYzZmSzA5QkhuYXgzU3FTbkZEc3EtaFU2dXpqaDdVU1VyaXNZdkxlUmo3Z20tWTZRYXpqQQ?oc=5",
+              "source": "The Motley Fool",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "업종",
             "name": "Technology Hardware, Storage & Peripherals",
-            "avgPct": -0.63,
+            "avgPct": 2.68,
             "n": 9,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "XYZ",
-          "company": "Block, Inc.",
-          "sector": "FINANCIAL",
-          "industry": "Transaction & Payment Processing Services",
-          "changePct": -3.36,
-          "close": 85.58000183105469,
-          "tradingValue": 438539828,
+          "ticker": "LITE",
+          "company": "Lumentum",
+          "sector": "TECHNOLOGY",
+          "industry": "Communications Equipment",
+          "changePct": 10.67,
+          "close": 648.0599975585938,
+          "tradingValue": 4024316492,
           "priceSource": "yahoo",
-          "marketCapB": 51.735,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
+          "marketCapB": 58.769,
+          "reason": "AI 광학 부문 회복 및 CoreWeave 투자 심리 개선",
+          "reasonStatus": "ok",
+          "sectorNote": "Communications Equipment 업종 동반 상승(시총가중 평균 +4.0%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Lumentum Stocks Jump 14.85% as AI Optics Rebound Narrows Marvell Deal Gap",
+              "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNemdTdzR2V0ZoRHVPdDZ6QUY1RG96aUU0Z184TDBYdjVqVno1a0lHUEcwM21vQnBQNERBbzBjTkZCekF3MG1Xa204ZS1qUzBGZHNfaWdhdlBkMEJNcVRpY1ZiZHJHRlNpYTZHWlhhbmF1LWFGc0V1cUlEeUtybkk2TFg2QXlGZ1VXc05oVGVkWHBIa3djeEE?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Why Sandisk and Lumentum Are Leading the AI Comeback",
+              "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1Cdk53RHRrdDRGYlRvX3ljYWc1YnlzZ1duenJfZWoydU5zOUU1ZUNIT0VWWk1oQVVEbGw0cmhSUndPcW90WEJZcTR5cUhiTGdjamFMYW9SdkNBOXB6SUhoRFRualgxM1VHUWVPWEJiNTVaOHVkdXFMaXA4Zw?oc=5",
+              "source": "Barron's",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "CoreWeave just gave a shot in the arm to Micron, Lumentum and the rest of the AI trade",
+              "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNZWN5UXA1LTVfVFJTWEdEaHAtbnBGMmFzRXBDb3VuSDNmQU1DdmxwaUxBZUdqaW1OMnd0ZW0xbzVnc255VXlxaVlwMV9YMll1bWlUSU4zbDRpSzFTaV9qWVZHck9EQU16eGo4QmtqQ0MwamFyN3h3b2o1b2VkSzg1eGhLNVdwdnNoeWRYdXlFR3ctOEk3QWJ3NEJrZ2lPS1VwZmkybG5lUzYxaWFuWk9McVp2Z1ItRHhkZWxN?oc=5",
+              "source": "MarketWatch",
+              "date": "2026-11-11"
+            }
+          ],
           "sectorMove": {
             "level": "업종",
-            "name": "Transaction & Payment Processing Services",
-            "avgPct": 0.31,
-            "n": 8,
+            "name": "Communications Equipment",
+            "avgPct": 3.97,
+            "n": 5,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "DVA",
-          "company": "DaVita",
-          "sector": "HEALTHCARE",
-          "industry": "Health Care Services",
-          "changePct": -3.37,
-          "close": 179.27999877929688,
-          "tradingValue": 172687694,
+          "ticker": "STX",
+          "company": "Seagate Technology",
+          "sector": "TECHNOLOGY",
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 9.99,
+          "close": 551.719970703125,
+          "tradingValue": 4188693879,
           "priceSource": "yahoo",
-          "marketCapB": 11.277,
-          "reason": "실적 발표 후 비용 압박 및 정책 부담",
+          "marketCapB": 126.653,
+          "reason": "신규 하이브리드 스토리지 출시",
+          "reasonStatus": "ok",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Sandisk·Dell Technologies 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Seagate Expands Storage Portfolio With FireCuda Forge Launch",
+              "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQaXhhQ0VZN0RMcFpWclI4ZEptdm1IY3RzbjM5bVRsT3FhTlBEMzQ1Y0NVSnVRSjFRV0UtLWt6dUZ5UGFWQk04UVotN0RKanhnd3VCejJMc1ZMWFdRbU5EZmk4TUlhMnVBaUZTWXFFUHJ2TEkzcUx0UXhaZVBFdmoxekw5M2FYZW9sQ3VNMDdaX2ZiV2VINWc2UUlvd1ZMaEFuX251NjZ2TUl4MzZoM0xVanRwN0ZFdkk?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Seagate Technology Holdings (STX) Launches FireCuda Forge As Undervalued Narrative Faces A Fresh Test",
+              "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNbFE0MGNvNlRidkkwUy1aYzVMbVpUYWVZSWNyXzNKTGVOckxaVDBtbGtzVGZTdW43WlJpM2JNbElYRHdHSi12S2Y0dkRxSDlNVkRmR3pMYVY1amV4QnI2R0dtRXRPcnVWTTRiMzNSeGc1aUZ6UEg4LXNjZldaRHoyV1BYWEdWOHNLaXRBUTFfY19oS01FVkR4ZThnZ2FZTXpIamlSVHAzbnhXbldJRG1nQm11XzJzOG5zeDhfMVhjN0ZnTEc5YmMzeE1YZUJfM3Y2SmZwRGRzTjPSAd4BQVVfeXFMTVpHWUUzWmNBMlFYOUVDd1ppWU1lVnNqTTFhUkJWcGRjVXJmaFVoOXY1Sm1HbXBhWE1HdDlDTzFJVXlGWnJJNjhrM0Zod2hic2l5VWdVU19VS3RXdlVrcmU2YXdDTTctNHhXZ1NqempaMF9RckRtelo4dzBhZThfYnVmVzlONThMMDFFZUFUdDB4eFpMUHczcjh5T0dFbHowdnFmdmoxUGRXTkNEMkhVcGl2UGR2d2JJckdUNkZUdnhZUDkxUjdCZmVmZXZsUmRUcW9YTFVjZFliUzZNbkF3?oc=5",
+              "source": "Simply Wall St",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Seagate stock gets new FireCuda Forge hybrid storage launch",
+              "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOaUlFTFVucVJMWDFtSjNxaTUzT2RkSEVCT0hSMWwyR2l1a3FWTXphemJXeFpJWXFsUjZ0YzhmNTFaRFdxLWMwemNwSkt3a3hVMGRQcG80NGRuU2dyYVhWQ253WEplSzZjZWVPWjBEclF4X2kyTWRjX09fZDA4YUFUR1hwUWxZcGNwclAzRlpPcVVPZmpfYll1a05zSWgyUGZpSEdVLWl3UkVINExCYW9mMURuU1VnODFUWXIwd0NzWQ?oc=5",
+              "source": "ad-hoc-news.de",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 2.89,
+            "n": 9,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "SMCI",
+          "company": "Supermicro",
+          "sector": "TECHNOLOGY",
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 9.5,
+          "close": 30.43000030517578,
+          "tradingValue": 1213951245,
+          "priceSource": "yahoo",
+          "marketCapB": 20.06,
+          "reason": "신규 AI 서버 라인업 출시 및 실적 개선 기대",
+          "reasonStatus": "ok",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(시총가중 평균 +3.0%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Supermicro (SMCI) Stock May Be Undervalued Following Fresh AI Server Launches",
+              "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNLWJ1QjZ1eFk5THlRb1BxZVNQRFF0TURNZmhyWVpZblp4UU00OW83VU9EM2dwcHNfc2IyeHZSa0VpakFVSEk3QkNwbmFVNVBrT3d2eTdoYUlTZzJjNG9jdjQ2R3RWUFRpR25uWmlIcklzQlZqRDFKX0hJbXgxbEZlR1hZUmlqWjNvYTNLVW1zZw?oc=5",
+              "source": "Yahoo! Finance Canada",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Will SMCI break higher amid optimism for the new H15 server line?",
+              "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPZXhtYkZ5M0x2WmptbU9RUEdLTlE1bU5LbDJyYU83Z21aS2MxV0xvaUM3Y2h6ck1Bc2hvbU1ZcnFDNi0zSlVBWFJkSkhsclNyTWdCN0h0c0l0aHJDWmEyYWJnQVMzM3p5UVd3ZjJsTUVRRVJqZTlERU05U0gwTi1oeVdrRVlkMWVpb3BpMmc4M09vbEZhdDNN?oc=5",
+              "source": "Traders Union",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "New servers generate AI text 1.8× faster than prior AMD CPUs, Supermicro says",
+              "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQd2traEowR1NqMXM4bld2bTRHUXpQcEc4UkNfTG8zUmI2S242MnFTOGF2dzZtalhpU3RJLXY3b0xVR3dIZEtudjEzVXZnS2tLWGNTYVNMTnJaQnNyd1ppVGZidDRXczB0VTc0RHhzNndQZldINVVEdzZqbzI5UzdlZVRJcWlyazZaaEhrd3YxWXF5SVJxUllzY1B4Q0NqQlVoLWt2XzdZbXF5YldZRkpHSWIzOER6aWViU2xkNElB?oc=5",
+              "source": "Stock Titan",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 3.02,
+            "n": 9,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "MRVL",
+          "company": "Marvell Technology",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 9.33,
+          "close": 168.8000030517578,
+          "tradingValue": 5561626889,
+          "priceSource": "yahoo",
+          "marketCapB": 151.88,
+          "reason": "AI 광학 부문 회복 및 Lumentum 인수 관련 불확실성 해소",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.7%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Marvell Technology Stocks Surge 12.22% as AI Optics Rally Eases Lumentum Deal Doubts",
+              "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQMXNad0xQYzlFT25tRG81UDB3bU0yT1VTSUZSeWpfU0dJd0xtczdKMHhGX0xJbWY4enhibV9EN0RmcC10MV9wLW95UmVjRER4SDZKaGhkckl6dHJrajB3TlhkTjI3STBiYkItWnJPNjRRY1BLdmJhcTNEYXpLN1pNcEh5MkdlblZjdllUNHNKZ1BSWTdZRkxVR3B3YlVCbU5V?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Marvell Technology stock rises nearly 10% as $115 billion Lumentum deal targets AI connectivity",
+              "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNb1k4ZkYwRGE4bWNNQkRNMm9CM1BVeGplT1ladTQ2blJNZ09mUnctbEhITUZJemNwOXNZWllYb0x6NlZSYkpWdUotX2xXSzRKTUxsQWNJbTdVMGFEZE92dld5Q3dRcHJVQkJyNGdXWnNfMVctbmcwcU1ucExjZHNQSFZjWmtUNW15Z1BuT2lFRzRMVE1OOVZZTzRB?oc=5",
+              "source": "Traders Union",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.71,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "COHR",
+          "company": "Coherent Corp.",
+          "sector": "TECHNOLOGY",
+          "industry": "Electronic Components",
+          "changePct": 9.25,
+          "close": 234.50999450683594,
+          "tradingValue": 2614939574,
+          "priceSource": "yahoo",
+          "marketCapB": 46.189,
+          "reason": "AI 인프라 수요 증가 및 호실적 발표",
+          "reasonStatus": "ok",
+          "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "COHR Stock Gains 10% After Strong Q1 Earnings: Is it Still a Buy?",
+              "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOYXl5ckRiazJlbVZhYjdfS05zemlucWowUWpvSFR5eHhFdmRTQXpSeWk3My1GT0VOcVNHamZRRGpKek1iR08xYVJTOVdCUnhPOUlJTm5Yc0FTU0V0Y2I4UjZ5SFlkb2pGUk1ERTFXbm5KNkhTbW9FMUkySVVUS0czODVLYmsxZTUxelg3WERScGxaOEFJSmc?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Coherent shares jump on AI infrastructure demand",
+              "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxORHhmSjladGZIeXI0Z2hsWm9fcjVmWGpUU181OXNqMFd4NklEYkh1bmgzVnRxajAyUF80c1hOX1pJR1hWdXlVZ180TkQ2Umljbm03Z2VlNFBVVHZuZXFKOG11dlFvdklXYlFIaTUyMjlmRFdCbnloZ0hLQkl5MHBCM2kzQmRsbm5WY1B4MnVPYzQ2azExUGdsR1BkRGdKNzBFT2s1Mg?oc=5",
+              "source": "StreetInsider",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Why Are Coherent (COHR) Shares Jumping On Renewed AI Infrastructure Optimism?",
+              "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPNThHWk9DT2lwT2ZQTzg0ZFd2MlV0N0pxeGg2clJyQm04cUlKR0M2WUpqd2Q1T3duVGoyQTA3eHpuczBvNmZFRnBydS12Rm55M0EyREtndExOUjF5MTM3MWM4V3NEMFZ3ZFNVSUppdmR3dzRka1IxMlJuMFJaakhnRmd2RzV6SURsYkF3U0FpWFR6ZXAyb2dBcGd5M3QwR3pCNV9iSTc2bEcyY2xEV0hQeWVZVUc1Rm5JNzd6TG1R0gHDAUFVX3lxTE9naTRqY2RLTDFRQ09DMkFOQ0ZJRGRFWFBTOENESUFsZkIxdlVPbXZuZldTQ2kxellSemJGdW1WVmpMRTd0VzlsWkhKV3NxNk1DNDVJdU5jekhCQlQ3T1ZpdjliZFRsSk5mWXFLWHNpMERvSWZnYjhVbWRLdldpTU5PR2tpVHQ1Y3Q0MTZidG43MjdlYXRrb0daVGlnOVQ0ZnNJMU1aNmtxcVZrd193M1dnWHJmVTVVYXNrTDhfM0xRcnFTYw?oc=5",
+              "source": "Simply Wall St",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "섹터",
+            "name": "TECHNOLOGY",
+            "avgPct": 2.91,
+            "n": 76,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "MPWR",
+          "company": "Monolithic Power Systems",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 8.92,
+          "close": 1478.68994140625,
+          "tradingValue": 1575078345,
+          "priceSource": "yahoo",
+          "marketCapB": 72.113,
+          "reason": "호실적 발표 및 기술적 모멘텀",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.8%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Monolithic Power Systems shares gain almost 8% after bullish earnings and strong technical momentum",
+              "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPWHZPdnRoT3VLRVhzTVFVUDEyOUR3WWw4WTltLV84c2F6OW9CcG9odzZ2RmJ5THFHNmJkUDdzWkdud19WQ0J0LVd4V3hWcDVZSHJIaXpFRlpOeFY0OGsxRXI2a1h3TG54T0tSdDhVT0ZXa2dja05lOUU3SWRORGRnTE1xV3ZKYWZGM2hZRTdGd3k1UXlIVWhJ?oc=5",
+              "source": "Traders Union",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.76,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "ORCL",
+          "company": "Oracle Corporation",
+          "sector": "TECHNOLOGY",
+          "industry": "Application Software",
+          "changePct": 8.82,
+          "close": 128.3800048828125,
+          "tradingValue": 4870867563,
+          "priceSource": "yahoo",
+          "marketCapB": 400.251,
+          "reason": "클라우드 수요 강세 및 성장 목표 제시",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -1688,17 +900,181 @@
           "evidence": [
             {
               "type": "news",
-              "title": "DaVita Falls as Post-Earnings Cost Pressure and Kidney-Care Policy Overhang Weigh on Shares",
-              "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPTTZyTG9QNW9RWHJxenRsYU9CcXAwLWQ3cjhlNXg5ZEVwN3UyT0VrenhILXhxQ08yUGU3bndjSHdUdmlQYTM3aVo3QzRsSzEydGZhRVpqV1B2c05PN1hrS1h0dUxseUxUZ1hkOFg4NFVlUDBqYkpPamFJS25MSnRuMVpnNDRRR01UdjNKV05wZVNtSnhiT2lJMzF5dDIyRTVDcTRrOHgyamlwYXlNcko2dkFvRkUzTC1ma2p3c005RDdoZw?oc=5",
+              "title": "Oracle CFO: Cloud Demand Strong As Company Touts Growth Targets",
+              "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOZFhjQkpYMzE3MlJGUWZiU1MyZTJKLW9GU2R5aHg5U01RXzlMdGlSV1FPcFNPQ2Q0UUh1dlREejlUNlhIc1h4MGdTMktSVnp4eVdQa1RWeHFnUHE5am5oSTBUQ0M0b2FXWWJmdDFsZV9fUTZwSHZmQm9QZ1NoZy1OVjV0MElGVGJ0THNN?oc=5",
+              "source": "Investor's Business Daily",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Application Software",
+            "avgPct": 1.41,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "CIEN",
+          "company": "Ciena",
+          "sector": "TECHNOLOGY",
+          "industry": "Communications Equipment",
+          "changePct": 8.8,
+          "close": 296.0400085449219,
+          "tradingValue": 1094961403,
+          "priceSource": "yahoo",
+          "marketCapB": 41.981,
+          "reason": "AI 네트워킹 부문 회복 및 견조한 현금 흐름",
+          "reasonStatus": "ok",
+          "sectorNote": "Communications Equipment 업종 동반 상승(시총가중 평균 +4.2%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Ciena's $116M Free Cash Flow: Can Cash Generation Improve in FY27?",
+              "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQakxTeHB5Mk9GZExHXzhiVWtoemJ1OHpqVFNkUk1YVkwtV2hfOVJjVngxMGdiRzQ5Y1hrMWtBU1NNRnNxaS1aUm9LM3dvRGZNZjhHVjJ1aFhEcnRldUxoeGRhUnF5ZGIzcEVTWk0tS0tRU3R4aWNTQnpwLTlXd1pFSDRQMWR2Y1BPS1B0dXNVV2o0VENiUklZTHo2YVc1b3NMRG9aRDRBN2JydkVVekVwM1pkb0pPcGoxVng4?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Ciena jumps as AI-networking rebound lifts shares",
+              "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxNMzdGSFQ4elVxaXlfbWlyNzQ3Ny10U0JqbnFzY19nWDdaUzlqVk5EZDN2LUlSZlI3Z0cweFY2TVEyQWU4b3lPT2FMaTlsYldENkUxY3dTRHVtaU5waUZaRHp3Q3R1UVlwRnYyZXdwdTh3R25YYmNtWVpRcHNURk9TMXViNHRJck1NQmc?oc=5",
               "source": "Quiver Quantitative",
-              "date": "2026-11-09"
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Communications Equipment",
+            "avgPct": 4.21,
+            "n": 5,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "WDC",
+          "company": "Western Digital",
+          "sector": "TECHNOLOGY",
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 8.34,
+          "close": 313.30999755859375,
+          "tradingValue": 2498044422,
+          "priceSource": "yahoo",
+          "marketCapB": 117.279,
+          "reason": "AI 데이터센터 관련주 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Western Digital: A Pile Of Spinning Disks Is The AI Trade I Want To Be In - Strong Buy",
+              "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPWkV0RkEtOUs3TUVnSkgzOHl1eE9oRUwyOEt6X1h1dTFDd3dZWmZXY0x2eGtveW1HMzJiN2pISHhBV0c0T1FsUFJRZmp1RUVNT2JMdnhRdVhYMGZiajhkTVMxRUJlVHNzOW1LSmtEZ0RleU5kQWxWcFlOdGw2VWI3SC00WjhoVXFVNHZXUWNYNC1wVk5VakhWSzhXVUcxRlZjWTk1VEZNZ0pEN2ltQmdsa19oSjdpR3A5UFZNS1ZrQThKQQ?oc=5",
+              "source": "Seeking Alpha",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Seagate, Western Digital, Vishay Intertechnology, Semtech, and FormFactor stocks trade up, what you need to know",
+              "link": "https://news.google.com/rss/articles/CBMi_AFBVV95cUxOeWw2NXlad2tqSjlpZ0VDczdTUlpyQ05OY1ZYdFpvcW1oenZVUlBIRlhvNEZMN001V2hPVmczN0pjcGZadGFOaVZCRjhaVzFqZ1QxZEJLbnFwZUtuWDRoM0cyQ2RCNHlKd0NZOHB2Yk5SOTY2dl9zNFM2bEswclBXLTVlMVdUVnRXWTFzaEl1TXFIbS11SzQ3ZnVKUE4yMmF3Mm8yTXpXQmgwS1FLU3RVMmozcmUzN09wQUdxQndtUF9VS3U1TUthN1kwZExkZ0dMVVdnRFFISVZXYW5XNUx2azRHaUVDM1NYOGVnU3poRzlfemRIcmUzM0VJVFg?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 2.93,
+            "n": 9,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "TER",
+          "company": "Teradyne",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductor Materials & Equipment",
+          "changePct": 8.3,
+          "close": 265.7799987792969,
+          "tradingValue": 972958117,
+          "priceSource": "yahoo",
+          "marketCapB": 41.495,
+          "reason": "Nvidia 관련 AI 테스트 기회 및 신규 매수 등급 부여",
+          "reasonStatus": "ok",
+          "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Teradyne Stock Jumps. Jefferies Sees a $2 Billion Nvidia Opportunity.",
+              "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNXzgtMGRIazV0X0Vlb2NTRmZCUHZNb2tEU2s5c0tINVJHcEZET2JXXzBiVVdRNDRGdjZNUVNTaG9jYUJxVmhVSlNVSENjRldsMWN5VnQ5THhlR1Jnd3N6MmJJZ1Uyc1RBSDBlaXVGQS0zNEJob2pLcUdfbU1nU0liZjN3?oc=5",
+              "source": "Barron's",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Teradyne Stock Surges On Fresh Buy Rating, Called AI Play",
+              "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOZzVGS09oSDZ3SEU3d3RPYmhrWGg3NDAybmR4UGpOVEJ6bThOMFB2TG5RRHFGVHZsZ2ZfYlAtZWlCT1I0UXhmbVd1MmE4bHdxUExGa0hoM3NoOUg3SEIyLTNHMjZoUGNwNHhvMTNtUGRQdlUwcVVWeWNTb05Fb2QzcE1ZNHlSbnRSbjUzRmJBeXAwdGszZlhRZm1Wd0Y?oc=5",
+              "source": "Investor's Business Daily",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Jefferies initiates Teradyne stock with buy rating on AI growth",
+              "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNNTU4SHk0VE9oRW9TeExSdXZFSTVLNmJvWTh3aURFeGJNT1BoSEFNdHRwb1FMdWVDX0tGcW05Q1I3Qm1IX0Y2N0F5dldPZGdsOHJxM2RLT1EtaEJ6Q1k5ZklXaFl3UXEwcjY4a09ST1RtaTEyZEtReHhsWXNuc25OUXJGZnlaXzNETzdrRzAyc1RTTGs4Qm5jX1FfVXVBeEFmMnhqSWdlMEJVN0RsSGNNQXphcjI0bTBvSDYtbHlRYTQ?oc=5",
+              "source": "Investing.com",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "섹터",
-            "name": "HEALTHCARE",
-            "avgPct": 0.29,
-            "n": 59,
+            "name": "TECHNOLOGY",
+            "avgPct": 2.91,
+            "n": 76,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "INTC",
+          "company": "Intel",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 7.52,
+          "close": 62.5,
+          "tradingValue": 8013959875,
+          "priceSource": "yahoo",
+          "marketCapB": 332.188,
+          "reason": "CoreWeave 실적 발표에 따른 반도체 주가 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.7%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Intel INTC Stock Recovers 25% as CoreWeave Earnings Boost Chip Shares",
+              "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOTXpSdWVYaGJoc3o4YlR1bVFuZ29GemZJSG82ZlFoY21DM3hPdzNlN1NWTjczLVhrZnh6dFRraFY4NW1mZHRGWXplN2VBaTVRWVFZVkRVZ2JUUXNHemppOFppMHdqVzNDTUx3UTE4UXRiSFdYVG1fYmdLSDlTYXJJVzc1cDFTeVhlNXhla19qWmRiXzB2eUp2RDRTVDVzZHNVSXlOZWdSVy1paThHeGdVQw?oc=5",
+              "source": "FXLeaders",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.69,
+            "n": 14,
             "weighting": "시총가중"
           }
         },
@@ -1707,11 +1083,86 @@
           "company": "Corning Inc.",
           "sector": "TECHNOLOGY",
           "industry": "Electronic Components",
-          "changePct": -3.29,
-          "close": 112.12999725341797,
-          "tradingValue": 811807500,
+          "changePct": 7.43,
+          "close": 120.45999908447266,
+          "tradingValue": 1227386204,
           "priceSource": "yahoo",
-          "marketCapB": 96.589,
+          "marketCapB": 103.764,
+          "reason": "AI 광섬유 수요 증가 및 신규 매수 등급 부여",
+          "reasonStatus": "ok",
+          "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Corning stock jumps as Jefferies sees AI fiber demand driving growth",
+              "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNQ0V1WlNDNnhQQk5vME15cUZ4QWhxTE5TTDRRVy0xYkw3Uk1TZU56Vjg5a2swTmZxUmczWHNNWjZUaXhVU2F6TTdNbF8wbEpMSzdCZ1ZCa29fZzNlUGkxdWpoLVNWOUdQZ1luSXFiaGJ1MzlFR05LOUlQaEJ4QVFJM01pd3plSUx3ejMwQjVJa0hmUk1NSWJJbEFtRE41bGFjS25yTXJQR1dtaHRqcGpiNllNV2V1eEE4SlBBZjNMRUJudms?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Jefferies initiates Corning stock coverage with buy rating on fiber demand",
+              "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxOdlYwc2hVRFpUaDQ0WFNPUzNJZlJFdXgwRURXVEF6ZmZncnpYTUIyYXpyZmpQdjdSWV9kV2JYS1JpTGwxajNleFc4eUl6WEhYcGVOU0VOTGtWUHhtb2RnaEU2VFZIR00wQjFGQXBUQk5OclVZMGxlaFl4S3hhaVMtWHQ1c1l1SWh3ekc4bEVrQ0h3UkZGNTQtRjk2d3ctT0pqdkJ4OFpUNjYtaFBPSksyWDBreDdFYXc5T2s2NmxyWk5qMXE3NmFZYkNiQjZveHM?oc=5",
+              "source": "Investing.com",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "섹터",
+            "name": "TECHNOLOGY",
+            "avgPct": 2.9,
+            "n": 76,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "AMD",
+          "company": "Advanced Micro Devices",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 7.32,
+          "close": 552.9000244140625,
+          "tradingValue": 23517753480,
+          "priceSource": "yahoo",
+          "marketCapB": 906.804,
+          "reason": "AI 관련주 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.5%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "BofA Raised Its Earnings Estimates but Cut Its Target on AMD (AMD), Here’s Why",
+              "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNSXJleUlRZEFkakZDN3phZjBfVTRMNWRrZ2JnQWduQXh1aVdFbm5vVzNRblN2dlQ4VkxvdVlSQ1VNRFZpcXlOd0RCYWxfSnZDa3BLNE5kZHBCYUdUbHEzcEdPVTdvandlX3VmeWdWSmgzYkVWWEo4SlRMbC1LaGRFSDJ4ZnBnZHZoREZVTkhxeXVJMTFRZDN5RnI0b0pvSjVi?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.51,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "RDDT",
+          "company": "Reddit",
+          "sector": "COMMUNICATION SERVICES",
+          "industry": "Interactive Media & Services",
+          "changePct": 7.08,
+          "close": 105.66000366210938,
+          "tradingValue": 498211008,
+          "priceSource": "yahoo",
+          "marketCapB": 20.402,
           "reason": "뚜렷한 재료 확인 안 됨",
           "reasonStatus": "none",
           "sectorNote": "",
@@ -1721,23 +1172,48 @@
           "evidence": [],
           "sectorMove": {
             "level": "섹터",
-            "name": "TECHNOLOGY",
-            "avgPct": -1.33,
-            "n": 76,
+            "name": "COMMUNICATION SERVICES",
+            "avgPct": 0.92,
+            "n": 20,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "NOW",
-          "company": "ServiceNow",
-          "sector": "TECHNOLOGY",
-          "industry": "Systems Software",
-          "changePct": -3.07,
-          "close": 99.61000061035156,
-          "tradingValue": 1857743943,
+          "ticker": "FIS",
+          "company": "Fidelity National Information Services",
+          "sector": "FINANCIAL",
+          "industry": "Transaction & Payment Processing Services",
+          "changePct": 6.71,
+          "close": 30.209999084472656,
+          "tradingValue": 435143921,
           "priceSource": "yahoo",
-          "marketCapB": 103.387,
-          "reason": "앤트로픽의 새로운 AI 도구 출시",
+          "marketCapB": 15.572,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Transaction & Payment Processing Services",
+            "avgPct": 0.47,
+            "n": 8,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "GNRC",
+          "company": "Generac",
+          "sector": "INDUSTRIALS",
+          "industry": "Heavy Electrical Equipment",
+          "changePct": 6.72,
+          "close": 194.0,
+          "tradingValue": 165446304,
+          "priceSource": "yahoo",
+          "marketCapB": 11.444,
+          "reason": "호실적 가이던스 발표",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -1746,17 +1222,44 @@
           "evidence": [
             {
               "type": "news",
-              "title": "ServiceNow Stock Drops Amid Anthropic's New AI Tools",
-              "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOd0h5YzRUWW53aUF6OThhOWI4RS1YelpENnZqRXlLWXBVX1E5VFZReTNPM1BNNUwxRHlhX01qblZqcFV0Smc5YnE3a1pZYXpycDk4ZmpDTGdvRm9iRDd6VTZtZHJ4V05ObWNsb0czOTBHTXZSVEEyQkxjTjk4ZkUySU1kU2QwYlhOUUp1dG1NX1NWV3FjVXltUzhNOE9EaVdWd0dnOGlKdFctdkdQNDhaUTB3?oc=5",
-              "source": "Benzinga",
-              "date": "2026-11-10"
+              "title": "How Strong Earnings Guidance Will Impact Generac Stock Investors",
+              "link": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxPNTRsRFBaMEROWkU5Y1Z3M3NacFRfcXRiRG0tVlpocER5U0dGTnFvYjRNM29BdGJDV3ZiTzRldW9qVVcyVlpld2hXU2pmU2l3eGxkTEJyNlB0aVRCOFRjS0tiNzNpQklVTHFDd1JTNHAzSkVwbTdmTEoxMlBJYVBOSVZsdk5YOEk4Z3lsQlBMVnlsSkQxTVhrUUpNYUY1d1BNTWxNdFpMR2R6OElqNFRUZGFOanJLemxRUzhSZWhENTVrY1Z4d1l4cWtBS09fOS1ueEx3edIB2gFBVV95cUxPMFFPT1VjdW9IZU5sZEw4U1FFNkRUZ2lHLV91Z0pDNVJHdG1lcjR1RlBWczBqRDJZZm5ORV9UUWdKcm9zOHFNNV9ZbVlyQ2ZWTDEydEZNZDNyQnVBVXcwR3VRRDljRnlXZFQwcVRrQ05Qc1FtbU96cEVUblBCMk1heUUtTll3YVlTaEtWWm53eVZZNk9VUTBDZlA5UlVpQXl6TEh3XzRwRHQzSlB4d2FobVpyZ0pXUWU0czdwQnZrcHFsQWdOTGZoeV96WnBSdlBkLXpTaElGNEJBQQ?oc=5",
+              "source": "Simply Wall St",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
+            "level": "섹터",
+            "name": "INDUSTRIALS",
+            "avgPct": 1.35,
+            "n": 83,
+            "weighting": "시총가중"
+          }
+        }
+      ],
+      "down": [
+        {
+          "ticker": "ABNB",
+          "company": "Airbnb",
+          "sector": "CONSUMER CYCLICAL",
+          "industry": "Hotels, Resorts & Cruise Lines",
+          "changePct": -3.09,
+          "close": 181.1300048828125,
+          "tradingValue": 1163400557,
+          "priceSource": "yahoo",
+          "marketCapB": 108.088,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
             "level": "업종",
-            "name": "Systems Software",
-            "avgPct": -1.99,
-            "n": 6,
+            "name": "Hotels, Resorts & Cruise Lines",
+            "avgPct": -0.04,
+            "n": 7,
             "weighting": "시총가중"
           }
         }
@@ -1766,668 +1269,36 @@
       "criteria": "전체 시장(시총·거래대금 하한 없음) · ETF 제외 · 등락률 ±3% 이상 · 방향별 최대 20종목",
       "up": [
         {
-          "ticker": "CHTR",
-          "company": "Charter Communications",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Cable & Satellite",
-          "changePct": 10.61,
-          "close": 134.05999755859375,
-          "tradingValue": 584643693,
-          "priceSource": "yahoo",
-          "marketCapB": 24.004,
-          "reason": "씨티그룹 목표가 150달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "CHTR Maintained by Citigroup -- Price Target Raised to $150",
-              "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOalVuUUI4dDVrMXpvenhZbUFHbHVHN1NOMjExa2lpY2s5RnJpWVZnalVIMThwLUxkdGJuNnowTnFrRDV5V3VZXy0zeHQ3clNSTHZNWXVHWmhkS194eUZ1VWJhaFB1LUhUUUE4b3FpRHlyWm5xdU14Ui12UjRiQjBGMldoRnBXRkE1TmY1dkZFNDdjbWF5bGNOM1Nn?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.2,
-            "n": 20,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "TTWO",
-          "company": "Take-Two Interactive",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Interactive Home Entertainment",
-          "changePct": 8.31,
-          "close": 224.63999938964844,
-          "tradingValue": 1840066221,
-          "priceSource": "yahoo",
-          "marketCapB": 42.003,
-          "reason": "GTA VI 사전 예약 기대치 초과 달성",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "TTWO Stock In Focus As GTA VI Preorders Run ‘Far In Excess’ Of Expectations — UBS Trims Target",
-              "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQRUMtMmxXd2FVYlJfc1l3UklsR1RVV25JcjZWblZLUlhqNWhtWmlsWDdoWXhrdWE4UGJ5amEtaENXQzN2M0xOeUJFRnllSVI2cHllellqelQzeXNjMnFSV2tnWjcxX3F5WEI0REhqSzJzODA3ZldzcDg3NzRuZTZma3JLdWVHVE9Hb2pzMk1SV014Zw?oc=5",
-              "source": "Yahoo Finance",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Take-Two Interactive Software climbs 8% on GTA VI preorder update (TTWO:NASDAQ)",
-              "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQNHN5aVNQS1JXNHNVTW9DSlJ3ZkdfRUp3RHJlM25CWUdWcVNaYlIzR3J2SVBHeHlTTFA4bkN6X3pKVEVqbVF5YnFvcXQyMWc4alJORXNwMDZjbzBqVjF3b0JaQmpKVkRoV3BXMWZNTGI3Ty1zVHR4ejlWUXQ5LWlnN3IxNnBXNjVUdmxUNnFuSkdXWlVmZlBoQ2haaHFfR0tZRUNnX2w4aEFlSDFxbC13?oc=5",
-              "source": "Seeking Alpha",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Take-Two (NASDAQ:TTWO) Stock Surges 6% as GTA 6 Preorders Smash Expectations Despite Bookings Miss",
-              "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTFA1ZE4yLW1Oa2pWVUkyVndZQzZaNEwtYVFNZnpmU2ZRSGVYZ1VPeWE0ZHlfZWc5dS0wUlBYUFpDbWRVZkI4U2FjWk15b01qaTVfbmNvM25rVnZHNkRhbjZiOXpUNjkzY19OcDBCOGFMdXRVQ1BraXZQeXYzeDl6Zw?oc=5",
-              "source": "Stocks Down Under",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.22,
-            "n": 20,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "RKLB",
-          "company": "Rocket Lab",
-          "sector": "INDUSTRIALS",
-          "industry": "Aerospace & Defense",
-          "changePct": 6.54,
-          "close": 62.709999084472656,
-          "tradingValue": 1991938346,
-          "priceSource": "yahoo",
-          "marketCapB": 40.097,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Aerospace & Defense",
-            "avgPct": 1.34,
-            "n": 13,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "CVS",
-          "company": "CVS Health",
-          "sector": "HEALTHCARE",
-          "industry": "Health Care Services",
-          "changePct": 4.41,
-          "close": 89.01000213623047,
-          "tradingValue": 1166210294,
-          "priceSource": "yahoo",
-          "marketCapB": 113.886,
-          "reason": "미래 약국 CEO, 2백만 달러 주식 매수",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "CVS Health’s Future Pharmacy CEO Just Bought $2 Million of Stock",
-              "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxORHRyU0ExRzV6al9BdS1zcWtkRC1mZk5GMWwwb1Y0VFFEanR5Yzl3c3Q0TVZyTVByRVNpeVlYR2IzR0p2a3lXTzhEeHNQYTlhTkJZZ3I5U19qeVRKRGZEbkI4Y2pkUllzM2wyRlFYZXV6aC0yR2toMkVSV0w2emNjd1RJWmI0VVVvSWMtTWF0ZDBYM29URFZQdjZpbw?oc=5",
-              "source": "Yahoo Finance",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "HEALTHCARE",
-            "avgPct": 0.22,
-            "n": 59,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "AKAM",
-          "company": "Akamai Technologies",
+          "ticker": "SNDK",
+          "company": "Sandisk",
           "sector": "TECHNOLOGY",
-          "industry": "Internet Services & Infrastructure",
-          "changePct": 4.26,
-          "close": 83.70999908447266,
-          "tradingValue": 1922201736,
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 13.69,
+          "close": 977.6900024414062,
+          "tradingValue": 15382352688,
           "priceSource": "yahoo",
-          "marketCapB": 12.073,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "TECHNOLOGY",
-            "avgPct": -1.34,
-            "n": 76,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "EQT",
-          "company": "EQT Corporation",
-          "sector": "ENERGY",
-          "industry": "Oil & Gas Exploration & Production",
-          "changePct": 4.19,
-          "close": 52.0,
-          "tradingValue": 406583320,
-          "priceSource": "yahoo",
-          "marketCapB": 32.529,
-          "reason": "천연가스 랠리와 최근 레인지 거래 지원",
+          "marketCapB": 139.115,
+          "reason": "AI 관련주 동반 강세",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Dell Technologies·Seagate Technology 등)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "EQT gains as natural gas rally and recent Range deal support sentiment",
-              "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOdUxheE1qUXJPdlhpRW5zTDN5VFBIaENHcTgydXBydWlaU2tBTXRtTy13ZjBlY0xWX096eTZ0TmtKeFpNZDExam9xNWtZVC1pTFhDamkyWlluR3dDZ2FNSnpoeDJWdUplZjJUYjNKNlJGdG1hWnBVY21yVjNEWmx2ZkJnQUNEODdfQUpubDVYUjZCQjh5aVozOWZ3RXVQdTA0OHd5MjlB?oc=5",
-              "source": "Quiver Quantitative",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Oil & Gas Exploration & Production",
-            "avgPct": 1.25,
-            "n": 8,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "AVGO",
-          "company": "Broadcom",
-          "sector": "TECHNOLOGY",
-          "industry": "Semiconductors",
-          "changePct": 3.91,
-          "close": 331.9800109863281,
-          "tradingValue": 9339348980,
-          "priceSource": "yahoo",
-          "marketCapB": 1584.75,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Semiconductors",
-            "avgPct": -3.17,
-            "n": 14,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "GPN",
-          "company": "Global Payments",
-          "sector": "FINANCIAL",
-          "industry": "Transaction & Payment Processing Services",
-          "changePct": 3.91,
-          "close": 101.58999633789062,
-          "tradingValue": 336423908,
-          "priceSource": "yahoo",
-          "marketCapB": 26.884,
-          "reason": "미즈호 목표가 115달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "GPN Maintained by Mizuho -- Price Target Raised to $115",
-              "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOUV9rbm9pUl8tWTNuQzRuQUctX3dhUzAySURDOWRBS05SNWJ2Z2dMbHdkRzV3UTQ3akR3SlpBam9oeDQyN1g1WWxic192bWlDb1hob1NZbVFseEdVX242WE5KQnFOaTdYd1JxTHNDMjZWVk1SR0NkdWlqNjVtTVBtWGF1T0RITVdlb3JnanF5ZHdnT0xn?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Mizuho raises Global Payments stock price target on growth outlook",
-              "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQb3U3dEd1LVJPaVBDVFNIU2xiT1QzSks3ckdEeEh1Qmk3QmZoRWJSZFNmdXV4QnZTbHBBSjg3NE1JN3ZLQ0NaVU1odkFZLUU0ZDhjN0lUZWFkc3RNeXdxSTRNZUF2YjBoQ0NreGJUZXNXV09lSHpjeVdGUXN3QmVRU2lVaGxYWkFFV0pDYjV1bXpNTUpsbFAwWm5JWlhwZU1EMWRPZUIyLU5qaTZWMW5jaEpvWTYyb0pEM3Z5eXNYR2hyc3ZG?oc=5",
-              "source": "Investing.com",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Transaction & Payment Processing Services",
-            "avgPct": 0.13,
-            "n": 8,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "TWLO",
-          "company": "Twilio",
-          "sector": "TECHNOLOGY",
-          "industry": "Systems Software",
-          "changePct": 3.66,
-          "close": 214.2100067138672,
-          "tradingValue": 488734054,
-          "priceSource": "yahoo",
-          "marketCapB": 33.146,
-          "reason": "2026년 전망 상향 조정 후 투자자 재평가",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Twilio Rises as Investors Reassess Raised 2026 Outlook After Post-Earnings Selloff",
-              "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOeThYYTlRbG5LNVhRUTNGU0pLLUJZenYzc3VtdmxHdmUzVHB2ZzVXbl9ia19KNjRpb3lfcmZOalVOVEw5ckhnOTFWdlBVblRING9IdWhCd2pOaVdWekREaWlUVWlRbmFvX3IxM0ZhUUhHbGFfd2xrRGhkeFBSaWYyd0hCb1hkM3hUcjB4QUZyVFpRUlZCLTlxTlNyYWpxQ1ZxMThaLU10NnZuZ0V6dU9fR3Rtak55Zw?oc=5",
-              "source": "Quiver Quantitative",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Systems Software",
-            "avgPct": -2.05,
-            "n": 6,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "HUM",
-          "company": "Humana",
-          "sector": "HEALTHCARE",
-          "industry": "Managed Health Care",
-          "changePct": 3.51,
-          "close": 438.05999755859375,
-          "tradingValue": 910658398,
-          "priceSource": "yahoo",
-          "marketCapB": 52.612,
-          "reason": "JP모건 목표가 484달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "HUM Maintained by JP Morgan -- Price Target Raised to $484",
-              "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPQjg0MEhoYW5qQnFqWE92UjlwUGZUd1pRQUhHTHRuYlJ3VGtEeHU4amp4ckY3SjZtN19mTm1RZDQ0TFV1YWlNdHgxQUZCTGx4SV8yWklJdHhnblRHT25sb0RUcy03ek0teDJvUTdPZGZuaHJQSzEwMFhTOXdoYjFlQmYycXZ4bmktMEJ4NHZyN2lJSGFEYzZnYQ?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "HEALTHCARE",
-            "avgPct": 0.26,
-            "n": 59,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "AIG",
-          "company": "American International Group",
-          "sector": "FINANCIAL",
-          "industry": "Multi-line Insurance",
-          "changePct": 3.38,
-          "close": 82.31999969482422,
-          "tradingValue": 310920663,
-          "priceSource": "yahoo",
-          "marketCapB": 42.678,
-          "reason": "UBS 목표가 103달러로 상향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "UBS Adjusts Price Target on American International to $103 From $100, Maintains Buy Rating",
-              "link": "https://finance.yahoo.com/markets/stocks/articles/ubs-adjusts-price-target-american-132522269.html",
-              "source": "MT Newswires",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "FINANCIAL",
-            "avgPct": 0.48,
-            "n": 75,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "CBOE",
-          "company": "Cboe Global Markets",
-          "sector": "FINANCIAL",
-          "industry": "Financial Exchanges & Data",
-          "changePct": 3.41,
-          "close": 364.80999755859375,
-          "tradingValue": 332765817,
-          "priceSource": "yahoo",
-          "marketCapB": 38.061,
-          "reason": "Keefe, Bruyette & Woods 목표가 320달러로 하향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Keefe, Bruyette & Woods Adjusts Price Target on Cboe Global Markets to $320 From $350",
-              "link": "https://finance.yahoo.com/markets/stocks/articles/keefe-bruyette-woods-adjusts-price-114138339.html",
-              "source": "MT Newswires",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Financial Exchanges & Data",
-            "avgPct": 0.7,
-            "n": 8,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "HII",
-          "company": "Huntington Ingalls Industries",
-          "sector": "INDUSTRIALS",
-          "industry": "Aerospace & Defense",
-          "changePct": 3.03,
-          "close": 313.57000732421875,
-          "tradingValue": 121085685,
-          "priceSource": "yahoo",
-          "marketCapB": 12.357,
-          "reason": "씨티그룹 목표가 352달러로 하향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "HII Maintained by Citigroup -- Price Target Lowered to $352",
-              "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOaHl1UDc2Y0I1cjRPa2R6VlpDek5sQjA0cDdwSVc5NVlCM2Q5aVJQbGZTREVPYU56dGtjTllPRzFydXlHUnJ0RjE4ZE9KazhYT0JWQUMzYjY0cUhxQk91UDZjaWxLTnU0MmRjWkxGQXFSZTNfUFVjMGsxY2RDc191SGl6aGFHeDJILXY2bWxrWVhWVXRGMi1QR0V3?oc=5",
-              "source": "GuruFocus",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Citigroup Adjusts Price Target on Huntington Ingalls Industries to $352 From $379",
-              "link": "https://finance.yahoo.com/markets/stocks/articles/citigroup-adjusts-price-target-huntington-132109245.html",
-              "source": "MT Newswires",
-              "date": "2026-11-09"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Aerospace & Defense",
-            "avgPct": 1.47,
-            "n": 13,
-            "weighting": "시총가중"
-          }
-        }
-      ],
-      "down": [
-        {
-          "ticker": "SKYD",
-          "company": "Skydance",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Movies & Entertainment",
-          "changePct": -7.59,
-          "close": 8.039999961853027,
-          "tradingValue": 192545384,
-          "priceSource": "yahoo",
-          "marketCapB": 40.539,
-          "reason": "합병 후 첫 실적 발표, 워너 브라더스 통합 어려움",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Skydance Stock Tumbles After Earnings. Integrating Warner Bros. Will Be Hard.",
-              "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE85UGRNY3B0VUJGWlBXM3BDRXZZUjkwb0xqeEdrV1pzcThLTG95aWZfdklmV3JzOXlfbURYYmNBMWtTbFdjcDhTOWN2c3VYRE1vYmdaRzUxR255V2pWdnN6alRHRm5iazM3ZzlsWUwwbnAwcnhTTk9Xams5UQ?oc=5",
+              "title": "Why Sandisk and Lumentum Are Leading the AI Comeback",
+              "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1Cdk53RHRrdDRGYlRvX3ljYWc1YnlzZ1duenJfZWoydU5zOUU1ZUNIT0VWWk1oQVVEbGw0cmhSUndPcW90WEJZcTR5cUhiTGdjamFMYW9SdkNBOXB6SUhoRFRualgxM1VHUWVPWEJiNTVaOHVkdXFMaXA4Zw?oc=5",
               "source": "Barron's",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Skydance Stock Sinks Over 8% After First Post-Merger Earnings Report",
-              "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQRGkzd3ZzQVc5TENsU29Yb05fMWFra0F6TGEtWG80UDZLMWhscV9oalpjbDNWLTN5ZXloYnRtRHNqQ3VBcG1QMU9fOE5kU2VwNzlEQWRQX19PS00xdUZVYnFibTI0U0NFR2MwUHVjdE9xY3Q2MFFUOGk5Q2J3Tk53VXlQa1ZpR0g3QTJKNllqODVuUQ?oc=5",
-              "source": "TheWrap",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Skydance Earnings: A Good Talk, but It's All About Execution Now That It Has Acquired WBD",
-              "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxORVFLZVVRSUlLWk9uZVVTdS1wOS03bFB6ejMydzRnekdfdmlkcEY3NlhzZ25RdHdaOWRvUjNyUk05d2pYcHp6Q3V1aGRHZVlrYnhuZnA3TnRIVExkNlMyMTRNQV9mYlEwVnk2ZGFtRWV3cVB4cWhqaWRwOXdLcU1xa09MUnREc0pyRmtodzBVdWZVTmR1dmQ1aUxMRWNWQkJBel90R3dCaHVuVEpQSi1xWC1YeUFxQQ?oc=5",
-              "source": "Morningstar",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.12,
-            "n": 20,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "MRNA",
-          "company": "Moderna",
-          "sector": "HEALTHCARE",
-          "industry": "Biotechnology",
-          "changePct": -6.75,
-          "close": 250.8300018310547,
-          "tradingValue": 2783927325,
-          "priceSource": "yahoo",
-          "marketCapB": 101.491,
-          "reason": "52주 신고가 달성 후 하락",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Moderna shares decline after hitting 52-week high",
-              "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPYlRoWEptc2dnWjg3V21MRHJ4RUxwQkxWZ0wwQkdxZng2MEZyMDdadU9ZRVhlRm5QLVZYeXVlYzJZT3hFZjRvclJGQXo5cTV0bVM3bmdSemMyWFdvdGRrRDVjYzc1X3Qya29ackx5YmRIUlpXcDdMRWpCMHppb1hCOFFuSFdsNUVmMEtoelk5MmVRZmdJYlJDUVRVQ09SeDRFUzloM1hR?oc=5",
-              "source": "StreetInsider",
-              "date": "2026-11-10"
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "업종",
-            "name": "Biotechnology",
-            "avgPct": 0.1,
-            "n": 7,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "NVDA",
-          "company": "Nvidia",
-          "sector": "TECHNOLOGY",
-          "industry": "Semiconductors",
-          "changePct": -5.47,
-          "close": 168.88999938964844,
-          "tradingValue": 71073005975,
-          "priceSource": "yahoo",
-          "marketCapB": 4078.187,
-          "reason": "CEO 젠슨 황의 스파이 연루 의혹",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "Nvidia Stock and AI World Rocked by CEO Jensen Huang’s Affair With Alleged Chinese Spy",
-              "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPejhsbUx4eElhRHA1anpacm5YZ3J6STVCRkE2RkFMNE1hU0xJaWdya25lejZ2blVYLWtlTFdZZlIxYmMtMXI4N1l1TjdWWEk0eHMtRWNFcFVFbHFwaWdEZHh1VmtEUWdibndNb1ZjOU93cE1NLVJkX0FUOWdDbU9sQzZGZ2NhZw?oc=5",
-              "source": "Variety",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Nvidia sells off for second day in fallout from Jensen Huang’s affair with alleged spy",
-              "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQYUp3aWtLM3FHZFMycjJkRGVUeXFXWUdPOV9fbEtkVUhwUk5oX2xDVHZ4alZwdl93VnY1UzMwSUN5QjJneHVzdTZHR21JUnkyU2NtZ05LazhQMHoteDNzSVUxQ2lTR0VVSk8yczdTVTd5cXFHNnFUR1hHdVlfc1psbktyRy1OTTQ?oc=5",
-              "source": "CNBC",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Nvidia Stock Hit With Price-Target Cuts Amid Spy Scandal",
-              "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQM1NvSFlxa1ZOLUZRQ1FCYzd3SmRQSllfVkkwMGQxOG1USUlESFNHX2VpcjF6bFZRdm5pMDl3d2VwUC1tYUgxRnRVaWRCRXJNMnU3R3JOZlFXbVRHbzdnalV4alBtLTZSUk1WSzNUYmo2ZlZjN3JpTkE3b3FweUhVbFk1a21IR0pMY0l1YzVxMW5GNkgwc2hUa3pZZ0k5LUtP?oc=5",
-              "source": "Investor's Business Daily",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Semiconductors",
-            "avgPct": 1.34,
-            "n": 14,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "FSLR",
-          "company": "First Solar",
-          "sector": "TECHNOLOGY",
-          "industry": "Semiconductors",
-          "changePct": -5.55,
-          "close": 180.97999572753906,
-          "tradingValue": 683660983,
-          "priceSource": "yahoo",
-          "marketCapB": 19.452,
-          "reason": "UBS 목표가 295달러로 하향 조정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "UBS lowers First Solar stock price target to $295 on valuation",
-              "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQRkd0bTFOSVdCNnhrczhScmtKMHlnTTdrdnVnU0F1engwdzBIZ2x3RzdfSkxydHBmckpkbXJORGhfTEd4MGpBOUxNbkcySU1qYlR3MV9QVkZuaU5fOUpqeE9mNWpXU2YtUHYxZW44VGlTRDVqcERyeVN3XzYxbTN3S2hWTU5sR0dfdTNfYXhNOUJKNWdmTUx3VFIxNklsMjh1eU13Q2dYSmFBVVl1MHVvLTdVOURmSzB4bGt5NllB?oc=5",
-              "source": "Investing.com",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Semiconductors",
-            "avgPct": -1.87,
-            "n": 14,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "LEN",
-          "company": "Lennar",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -5.37,
-          "close": 86.66000366210938,
-          "tradingValue": 289552737,
-          "priceSource": "yahoo",
-          "marketCapB": 20.616,
-          "reason": "Homebuilding 업종 동반 하락(NVR·PulteGroup 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(NVR·PulteGroup 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.5,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "NVR",
-          "company": "NVR, Inc.",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -4.76,
-          "close": 6036.419921875,
-          "tradingValue": 215910668,
-          "priceSource": "yahoo",
-          "marketCapB": 15.971,
-          "reason": "Homebuilding 업종 동반 하락(Lennar·PulteGroup 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(Lennar·PulteGroup 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.49,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "COHR",
-          "company": "Coherent Corp.",
-          "sector": "TECHNOLOGY",
-          "industry": "Electronic Components",
-          "changePct": -4.68,
-          "close": 214.66000366210938,
-          "tradingValue": 2293684856,
-          "priceSource": "yahoo",
-          "marketCapB": 42.279,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "TECHNOLOGY",
-            "avgPct": -1.33,
-            "n": 76,
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 2.78,
+            "n": 9,
             "weighting": "시총가중"
           }
         },
@@ -2436,12 +1307,12 @@
           "company": "Bloom Energy",
           "sector": "INDUSTRIALS",
           "industry": "Electrical Components & Equipment",
-          "changePct": -4.36,
-          "close": 185.4199981689453,
-          "tradingValue": 2398983035,
+          "changePct": 12.97,
+          "close": 209.47000122070312,
+          "tradingValue": 3800919893,
           "priceSource": "yahoo",
-          "marketCapB": 54.799,
-          "reason": "AI 데이터 센터 계약 체결",
+          "marketCapB": 61.906,
+          "reason": "데이터센터 투자 심리 회복",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -2450,237 +1321,58 @@
           "evidence": [
             {
               "type": "news",
-              "title": "Bloom Energy (BE) Lands a Major AI Data Center Deal as Revenue Surges",
-              "link": "https://finance.yahoo.com/technology/ai/articles/bloom-energy-lands-major-ai-164403284.html",
-              "source": "Insider Monkey",
-              "date": "2026-11-10"
+              "title": "Bloom Energy’s stock is soaring as data-center jitters subside",
+              "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNLVV6MmRaTks5VlR1RjBybWhiR3pnZXNETGNpR0JBZm8zbjc2OWNXaUhFdDV0NnhNSHAxMUdFeEZrSFBTeHhTYUpXYTlLNGZzS0paWXpnV2V2bi1RUXJNVkt1TlFJNDZvMzJOblJ1M3FqWEg3VTBHck1CeXlpcmM5czlQZGpEaUt6VGdUd0NzWHNmbUhkMTJYTEk0TUZyZDVVb0tLMFZNSQ?oc=5",
+              "source": "MarketWatch",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "CoreWeave Boosts AI Trade. Bloom Energy, Other Power Stocks Are Big Winners.",
+              "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQS1RLdVRKeVVmV1pVZ1RVTW1QYnBsZHZId1c5bnpBOWlybGZkVTFnVUlkdXY0U3FUandTRmFnUUh3cVhoUE81RXI2cU5zMDY2RmNBRmhPQ2dVWG14TklaOXVudmd0YUlSdmUxMWJGU0hZSVE2QW40TW1GZFJlZlJ4NHdTVHBwdw?oc=5",
+              "source": "Barron's",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "업종",
             "name": "Electrical Components & Equipment",
-            "avgPct": -1.11,
+            "avgPct": 2.1,
             "n": 5,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "CVNA",
-          "company": "Carvana",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Automotive Retail",
-          "changePct": -4.25,
-          "close": 73.0199966430664,
-          "tradingValue": 909644783,
+          "ticker": "MU",
+          "company": "Micron Technology",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 11.89,
+          "close": 811.2999877929688,
+          "tradingValue": 28536309610,
           "priceSource": "yahoo",
-          "marketCapB": 108.939,
-          "reason": "기록적인 3분기 성장 후 마진 테스트",
+          "marketCapB": 917.924,
+          "reason": "CoreWeave 전망 개선에 따른 AI 투자 심리 회복",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.0%)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "Carvana stock faces margin test after record Q3 growth",
-              "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNWGdyZ0VLdksyVnpNNUI0THVsRHF4U3JwZm9uOE5OTGJNQU81azR1S2EzbzJwWG9tUzRzX2lMZV85Z2tuWUFINXp5SFVrbjZBSlRXWkZ5MWFESzVweGtoUl9ONjlRTVJsMWk2NGhkMkxqcUx5V1hIRHptUmxjRTAzNjBPOC0zeTlmblYwa2EwWk1POFZTa01fdVpLaUZIRTRTdGpvUGpReXkwMVJvRWVUZExYUWpad1Bt?oc=5",
-              "source": "ad-hoc-news.de",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "Carvana stock faces a margin test after record Q3 growth",
-              "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQRW4xbFVGcXdmNHdlWVRUcEJPZk13aEs3QUpHbHh1TzYwU1NpZlc1RnBMZVpsZUlQZEs4QVdtUG44Z1JJUU5HM1c0Z1JQcjJmR1RxLURIaVlXQWtiakZvNW5yUXNaUTlZbWUzRTYtdFlMckNTOTdkSUhwWk52YnVqejBSalVORE02T2lUZ1JXd29fTEkwcy1KSlVISE0taHVHMm42Tkt0NGhpUThvbXpTalFiVDhmMGhBVVJR?oc=5",
-              "source": "ad-hoc-news.de",
-              "date": "2026-11-10"
+              "title": "Micron Stock Jumps 13% as CoreWeave Outlook Eases AI Spending Fears",
+              "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOUTBCRFNQZE5uSktxRUtJZHFfc1h4Nmc5NFhFUENRa1FGTEdzcFFnNDVjUlF5amgyRVNmYmJUZ1hTb2lfM19ZMmVNRXBLR0EzNXMtejZBQk9JMVVaVmVMR1lOOW52RzZpNVdEVEhhcDJKejRrRS1YM3hSUDg0eDQ2ZEg4dGxrVFdZQzZZNHV6aHV3NzNERGo3Rm1IWDdQOHhjVXk5WDVXaE13LWJ4WnhfbVM1dndXMUNqcFdpclZQNmF4VXhFQUE?oc=5",
+              "source": "Benzinga",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.55,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "BXP",
-          "company": "BXP, Inc.",
-          "sector": "REAL ESTATE",
-          "industry": "Office REITs",
-          "changePct": -4.0,
-          "close": 63.540000915527344,
-          "tradingValue": 126369180,
-          "priceSource": "yahoo",
-          "marketCapB": 11.478,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "REAL ESTATE",
-            "avgPct": -0.07,
-            "n": 29,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "GEV",
-          "company": "GE Vernova",
-          "sector": "INDUSTRIALS",
-          "industry": "Heavy Electrical Equipment",
-          "changePct": -3.89,
-          "close": 797.0399780273438,
-          "tradingValue": 4949141634,
-          "priceSource": "yahoo",
-          "marketCapB": 210.958,
-          "reason": "소프트뱅크 데이터 센터 프로젝트 계획 수정",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "GE Vernova shares slide after SoftBank revises US data center project plans",
-              "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOdHljdVJwNjc2SGN6SWFvUl92aGU0LTJYWHhhMWxRSWdHQlRDZ0VjQjd3MTZOZmZEOUJ3amdfUVpSSEQ1QjUzcFROeVVNQTBNTzdDLXpnN3lncjdEUElvYnhTMF9QREo3ellITkIwaGhacjJfNFh6VFFXd0ZYQjRIOUI4Z3B6U2xCX2tRS01OVlUxc00tZDhMalJKTHh4QlItRFF4VlZ5MWI2bnljY1NQT1BaR0UtaGJYbHZ1UHdqNDNWbVpZUlE?oc=5",
-              "source": "Reuters",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "GE Vernova falls nearly 10% after SoftBank revises AI data center plans (GEV:NYSE)",
-              "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPcm1yUVV4VWlIR2xaSUdvRndBZUNNdWxiVFcyUXpETmhlR2tLTHE1SmhwTEt6YzB0VFZkQlh5YmY3SkJydmxJU2Jmb3QwRDlsdWVxdm9FZ2dMMnF0bVhWNThxN1BSMGxaZnJWbEhQNUNudWJaNk96aDNFZ0FzNFFMb3pZbW92bk5PaHZhVElyS1d1R3AxSVIzZVdRUVJDTV90MmhJNzExSHhua0FZLWZDT0ZLbFdYS3M?oc=5",
-              "source": "Seeking Alpha",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "INDUSTRIALS",
-            "avgPct": 0.16,
-            "n": 83,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "PHM",
-          "company": "PulteGroup",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -3.89,
-          "close": 130.60000610351562,
-          "tradingValue": 236246530,
-          "priceSource": "yahoo",
-          "marketCapB": 24.878,
-          "reason": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.5,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "DHI",
-          "company": "D. R. Horton",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Homebuilding",
-          "changePct": -3.8,
-          "close": 149.6999969482422,
-          "tradingValue": 339445192,
-          "priceSource": "yahoo",
-          "marketCapB": 40.634,
-          "reason": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "reasonStatus": "sector",
-          "sectorNote": "Homebuilding 업종 동반 하락(Lennar·NVR 등)",
-          "tags": [
-            "섹터동조"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "CONSUMER CYCLICAL",
-            "avgPct": 0.51,
-            "n": 46,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "GNRC",
-          "company": "Generac",
-          "sector": "INDUSTRIALS",
-          "industry": "Heavy Electrical Equipment",
-          "changePct": -3.69,
-          "close": 181.77999877929688,
-          "tradingValue": 301203459,
-          "priceSource": "yahoo",
-          "marketCapB": 10.723,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "INDUSTRIALS",
-            "avgPct": 0.01,
-            "n": 83,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "APP",
-          "company": "AppLovin",
-          "sector": "COMMUNICATION SERVICES",
-          "industry": "Advertising",
-          "changePct": -3.53,
-          "close": 395.510009765625,
-          "tradingValue": 2146988119,
-          "priceSource": "yahoo",
-          "marketCapB": 131.041,
-          "reason": "3분기 실적 발표 후 주가 급등",
-          "reasonStatus": "ok",
-          "sectorNote": "",
-          "tags": [
-            "뉴스"
-          ],
-          "evidence": [
-            {
-              "type": "news",
-              "title": "APP Stock Surges 51% After Q3 Earnings: Is it Still a Buy?",
-              "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNR0t4bGE1Rlk2dFozZHhKeHN4ajJtVWllRHBTV0kxMTF5cHpSMHZiTlgwU2hWN0hFMmJsbUk3a3p0Umg3MkJMbnlzZTI4cTNsMVhRd3BPWjFwa3o1Rl9pajRTS0JuWFphU0NFTUs2VlExZks3QWV5X194SnREN3hUemtFSXhNQUZwWVdNUTJpWGIwSzd4dnVLN0xlbzA?oc=5",
-              "source": "Zacks Investment Research",
-              "date": "2026-11-10"
-            },
-            {
-              "type": "news",
-              "title": "A 6-Day Winning Streak Has AppLovin Stock Up 79%",
-              "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOZFhoY29ISklPXzZQeDVqOGZGdUN0TjJOUUVGQ3RqVmFUUWZyTzVLNnBsY1AwcDdfLXg3MDY3VVpOTnRuNXU1WmhRa0pidHZkZG0zYndOcC1JWVBZZHRyNE5MSzJiZ2k3dTdkSjhGZ3JZWFhxRlVRenJHa0NCeTdPR1BkTTF2a3FWcG40VW4zMnczekQzQ2o2TnJCR3NJQk95bFZKVTA3WmNsRk0?oc=5",
-              "source": "Trefis",
-              "date": "2026-11-10"
-            }
-          ],
-          "sectorMove": {
-            "level": "섹터",
-            "name": "COMMUNICATION SERVICES",
-            "avgPct": -0.1,
-            "n": 20,
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 3.99,
+            "n": 14,
             "weighting": "시총가중"
           }
         },
@@ -2689,68 +1381,313 @@
           "company": "Dell Technologies",
           "sector": "TECHNOLOGY",
           "industry": "Technology Hardware, Storage & Peripherals",
-          "changePct": -3.44,
-          "close": 334.3800048828125,
-          "tradingValue": 2165326207,
+          "changePct": 11.75,
+          "close": 373.67999267578125,
+          "tradingValue": 3393317388,
           "priceSource": "yahoo",
-          "marketCapB": 212.603,
-          "reason": "AI 서버 백로그 뉴스",
+          "marketCapB": 237.59,
+          "reason": "AI 서버 수주 잔고 증가",
           "reasonStatus": "ok",
-          "sectorNote": "",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Sandisk·Seagate Technology 등)",
           "tags": [
+            "섹터동조",
             "뉴스"
           ],
           "evidence": [
             {
               "type": "news",
-              "title": "Dell (DELL) Stock May Be 42% Undervalued Following AI Server Backlog News",
-              "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQUjQ5UG9ndmFCVmRRNHppZ3dHV3o2OV9PSE5MRllndXlSSnNiODVYSU5abmJibjZPbFpIRUQxUGtFcTREelVKM2Y0ZnJDZW5zOVItWU9qODl1c2NWTG16WGhnX0lWYUtFMUo1V2I1ZS1FY2x5VTFlamFWa3N5NXhfakdlSHBwT0h1MjFkbnBqcTE?oc=5",
-              "source": "Yahoo Finance",
-              "date": "2026-11-10"
+              "title": "Dell Has a $95 Billion AI Server Backlog. Is the Stock a Buy?",
+              "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOdWNhZmE4bnFLVi1XM09OVnRrRDZGSHhMdWV6UkZEQW44UEhqTXBFTTdVVG9lQ1EyOS04VDFXXzRuQmt5Zjk0Tk9YNE92VFRhTGwtVUZRWFd5R0U1bGJ6RWFuS3JHb1owWkl0MXZOWmJRRFdoYzZmSzA5QkhuYXgzU3FTbkZEc3EtaFU2dXpqaDdVU1VyaXNZdkxlUmo3Z20tWTZRYXpqQQ?oc=5",
+              "source": "The Motley Fool",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "업종",
             "name": "Technology Hardware, Storage & Peripherals",
-            "avgPct": -0.63,
+            "avgPct": 2.68,
             "n": 9,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "XYZ",
-          "company": "Block, Inc.",
-          "sector": "FINANCIAL",
-          "industry": "Transaction & Payment Processing Services",
-          "changePct": -3.36,
-          "close": 85.58000183105469,
-          "tradingValue": 438539828,
+          "ticker": "LITE",
+          "company": "Lumentum",
+          "sector": "TECHNOLOGY",
+          "industry": "Communications Equipment",
+          "changePct": 10.67,
+          "close": 648.0599975585938,
+          "tradingValue": 4024316492,
           "priceSource": "yahoo",
-          "marketCapB": 51.735,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
+          "marketCapB": 58.769,
+          "reason": "AI 광학 부문 회복 및 CoreWeave 투자 심리 개선",
+          "reasonStatus": "ok",
+          "sectorNote": "Communications Equipment 업종 동반 상승(시총가중 평균 +4.0%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Lumentum Stocks Jump 14.85% as AI Optics Rebound Narrows Marvell Deal Gap",
+              "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNemdTdzR2V0ZoRHVPdDZ6QUY1RG96aUU0Z184TDBYdjVqVno1a0lHUEcwM21vQnBQNERBbzBjTkZCekF3MG1Xa204ZS1qUzBGZHNfaWdhdlBkMEJNcVRpY1ZiZHJHRlNpYTZHWlhhbmF1LWFGc0V1cUlEeUtybkk2TFg2QXlGZ1VXc05oVGVkWHBIa3djeEE?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Why Sandisk and Lumentum Are Leading the AI Comeback",
+              "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1Cdk53RHRrdDRGYlRvX3ljYWc1YnlzZ1duenJfZWoydU5zOUU1ZUNIT0VWWk1oQVVEbGw0cmhSUndPcW90WEJZcTR5cUhiTGdjamFMYW9SdkNBOXB6SUhoRFRualgxM1VHUWVPWEJiNTVaOHVkdXFMaXA4Zw?oc=5",
+              "source": "Barron's",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "CoreWeave just gave a shot in the arm to Micron, Lumentum and the rest of the AI trade",
+              "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNZWN5UXA1LTVfVFJTWEdEaHAtbnBGMmFzRXBDb3VuSDNmQU1DdmxwaUxBZUdqaW1OMnd0ZW0xbzVnc255VXlxaVlwMV9YMll1bWlUSU4zbDRpSzFTaV9qWVZHck9EQU16eGo4QmtqQ0MwamFyN3h3b2o1b2VkSzg1eGhLNVdwdnNoeWRYdXlFR3ctOEk3QWJ3NEJrZ2lPS1VwZmkybG5lUzYxaWFuWk9McVp2Z1ItRHhkZWxN?oc=5",
+              "source": "MarketWatch",
+              "date": "2026-11-11"
+            }
+          ],
           "sectorMove": {
             "level": "업종",
-            "name": "Transaction & Payment Processing Services",
-            "avgPct": 0.31,
-            "n": 8,
+            "name": "Communications Equipment",
+            "avgPct": 3.97,
+            "n": 5,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "DVA",
-          "company": "DaVita",
-          "sector": "HEALTHCARE",
-          "industry": "Health Care Services",
-          "changePct": -3.37,
-          "close": 179.27999877929688,
-          "tradingValue": 172687694,
+          "ticker": "STX",
+          "company": "Seagate Technology",
+          "sector": "TECHNOLOGY",
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 9.99,
+          "close": 551.719970703125,
+          "tradingValue": 4188693879,
           "priceSource": "yahoo",
-          "marketCapB": 11.277,
-          "reason": "실적 발표 후 비용 압박 및 정책 부담",
+          "marketCapB": 126.653,
+          "reason": "신규 하이브리드 스토리지 출시",
+          "reasonStatus": "ok",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(Sandisk·Dell Technologies 등)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Seagate Expands Storage Portfolio With FireCuda Forge Launch",
+              "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQaXhhQ0VZN0RMcFpWclI4ZEptdm1IY3RzbjM5bVRsT3FhTlBEMzQ1Y0NVSnVRSjFRV0UtLWt6dUZ5UGFWQk04UVotN0RKanhnd3VCejJMc1ZMWFdRbU5EZmk4TUlhMnVBaUZTWXFFUHJ2TEkzcUx0UXhaZVBFdmoxekw5M2FYZW9sQ3VNMDdaX2ZiV2VINWc2UUlvd1ZMaEFuX251NjZ2TUl4MzZoM0xVanRwN0ZFdkk?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Seagate Technology Holdings (STX) Launches FireCuda Forge As Undervalued Narrative Faces A Fresh Test",
+              "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNbFE0MGNvNlRidkkwUy1aYzVMbVpUYWVZSWNyXzNKTGVOckxaVDBtbGtzVGZTdW43WlJpM2JNbElYRHdHSi12S2Y0dkRxSDlNVkRmR3pMYVY1amV4QnI2R0dtRXRPcnVWTTRiMzNSeGc1aUZ6UEg4LXNjZldaRHoyV1BYWEdWOHNLaXRBUTFfY19oS01FVkR4ZThnZ2FZTXpIamlSVHAzbnhXbldJRG1nQm11XzJzOG5zeDhfMVhjN0ZnTEc5YmMzeE1YZUJfM3Y2SmZwRGRzTjPSAd4BQVVfeXFMTVpHWUUzWmNBMlFYOUVDd1ppWU1lVnNqTTFhUkJWcGRjVXJmaFVoOXY1Sm1HbXBhWE1HdDlDTzFJVXlGWnJJNjhrM0Zod2hic2l5VWdVU19VS3RXdlVrcmU2YXdDTTctNHhXZ1NqempaMF9RckRtelo4dzBhZThfYnVmVzlONThMMDFFZUFUdDB4eFpMUHczcjh5T0dFbHowdnFmdmoxUGRXTkNEMkhVcGl2UGR2d2JJckdUNkZUdnhZUDkxUjdCZmVmZXZsUmRUcW9YTFVjZFliUzZNbkF3?oc=5",
+              "source": "Simply Wall St",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Seagate stock gets new FireCuda Forge hybrid storage launch",
+              "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOaUlFTFVucVJMWDFtSjNxaTUzT2RkSEVCT0hSMWwyR2l1a3FWTXphemJXeFpJWXFsUjZ0YzhmNTFaRFdxLWMwemNwSkt3a3hVMGRQcG80NGRuU2dyYVhWQ253WEplSzZjZWVPWjBEclF4X2kyTWRjX09fZDA4YUFUR1hwUWxZcGNwclAzRlpPcVVPZmpfYll1a05zSWgyUGZpSEdVLWl3UkVINExCYW9mMURuU1VnODFUWXIwd0NzWQ?oc=5",
+              "source": "ad-hoc-news.de",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 2.89,
+            "n": 9,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "SMCI",
+          "company": "Supermicro",
+          "sector": "TECHNOLOGY",
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 9.5,
+          "close": 30.43000030517578,
+          "tradingValue": 1213951245,
+          "priceSource": "yahoo",
+          "marketCapB": 20.06,
+          "reason": "신규 AI 서버 라인업 출시 및 실적 개선 기대",
+          "reasonStatus": "ok",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(시총가중 평균 +3.0%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Supermicro (SMCI) Stock May Be Undervalued Following Fresh AI Server Launches",
+              "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNLWJ1QjZ1eFk5THlRb1BxZVNQRFF0TURNZmhyWVpZblp4UU00OW83VU9EM2dwcHNfc2IyeHZSa0VpakFVSEk3QkNwbmFVNVBrT3d2eTdoYUlTZzJjNG9jdjQ2R3RWUFRpR25uWmlIcklzQlZqRDFKX0hJbXgxbEZlR1hZUmlqWjNvYTNLVW1zZw?oc=5",
+              "source": "Yahoo! Finance Canada",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Will SMCI break higher amid optimism for the new H15 server line?",
+              "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPZXhtYkZ5M0x2WmptbU9RUEdLTlE1bU5LbDJyYU83Z21aS2MxV0xvaUM3Y2h6ck1Bc2hvbU1ZcnFDNi0zSlVBWFJkSkhsclNyTWdCN0h0c0l0aHJDWmEyYWJnQVMzM3p5UVd3ZjJsTUVRRVJqZTlERU05U0gwTi1oeVdrRVlkMWVpb3BpMmc4M09vbEZhdDNN?oc=5",
+              "source": "Traders Union",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "New servers generate AI text 1.8× faster than prior AMD CPUs, Supermicro says",
+              "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQd2traEowR1NqMXM4bld2bTRHUXpQcEc4UkNfTG8zUmI2S242MnFTOGF2dzZtalhpU3RJLXY3b0xVR3dIZEtudjEzVXZnS2tLWGNTYVNMTnJaQnNyd1ppVGZidDRXczB0VTc0RHhzNndQZldINVVEdzZqbzI5UzdlZVRJcWlyazZaaEhrd3YxWXF5SVJxUllzY1B4Q0NqQlVoLWt2XzdZbXF5YldZRkpHSWIzOER6aWViU2xkNElB?oc=5",
+              "source": "Stock Titan",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 3.02,
+            "n": 9,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "MRVL",
+          "company": "Marvell Technology",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 9.33,
+          "close": 168.8000030517578,
+          "tradingValue": 5561626889,
+          "priceSource": "yahoo",
+          "marketCapB": 151.88,
+          "reason": "AI 광학 부문 회복 및 Lumentum 인수 관련 불확실성 해소",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.7%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Marvell Technology Stocks Surge 12.22% as AI Optics Rally Eases Lumentum Deal Doubts",
+              "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQMXNad0xQYzlFT25tRG81UDB3bU0yT1VTSUZSeWpfU0dJd0xtczdKMHhGX0xJbWY4enhibV9EN0RmcC10MV9wLW95UmVjRER4SDZKaGhkckl6dHJrajB3TlhkTjI3STBiYkItWnJPNjRRY1BLdmJhcTNEYXpLN1pNcEh5MkdlblZjdllUNHNKZ1BSWTdZRkxVR3B3YlVCbU5V?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Marvell Technology stock rises nearly 10% as $115 billion Lumentum deal targets AI connectivity",
+              "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNb1k4ZkYwRGE4bWNNQkRNMm9CM1BVeGplT1ladTQ2blJNZ09mUnctbEhITUZJemNwOXNZWllYb0x6NlZSYkpWdUotX2xXSzRKTUxsQWNJbTdVMGFEZE92dld5Q3dRcHJVQkJyNGdXWnNfMVctbmcwcU1ucExjZHNQSFZjWmtUNW15Z1BuT2lFRzRMVE1OOVZZTzRB?oc=5",
+              "source": "Traders Union",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.71,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "COHR",
+          "company": "Coherent Corp.",
+          "sector": "TECHNOLOGY",
+          "industry": "Electronic Components",
+          "changePct": 9.25,
+          "close": 234.50999450683594,
+          "tradingValue": 2614939574,
+          "priceSource": "yahoo",
+          "marketCapB": 46.189,
+          "reason": "AI 인프라 수요 증가 및 호실적 발표",
+          "reasonStatus": "ok",
+          "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "COHR Stock Gains 10% After Strong Q1 Earnings: Is it Still a Buy?",
+              "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOYXl5ckRiazJlbVZhYjdfS05zemlucWowUWpvSFR5eHhFdmRTQXpSeWk3My1GT0VOcVNHamZRRGpKek1iR08xYVJTOVdCUnhPOUlJTm5Yc0FTU0V0Y2I4UjZ5SFlkb2pGUk1ERTFXbm5KNkhTbW9FMUkySVVUS0czODVLYmsxZTUxelg3WERScGxaOEFJSmc?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Coherent shares jump on AI infrastructure demand",
+              "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxORHhmSjladGZIeXI0Z2hsWm9fcjVmWGpUU181OXNqMFd4NklEYkh1bmgzVnRxajAyUF80c1hOX1pJR1hWdXlVZ180TkQ2Umljbm03Z2VlNFBVVHZuZXFKOG11dlFvdklXYlFIaTUyMjlmRFdCbnloZ0hLQkl5MHBCM2kzQmRsbm5WY1B4MnVPYzQ2azExUGdsR1BkRGdKNzBFT2s1Mg?oc=5",
+              "source": "StreetInsider",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Why Are Coherent (COHR) Shares Jumping On Renewed AI Infrastructure Optimism?",
+              "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPNThHWk9DT2lwT2ZQTzg0ZFd2MlV0N0pxeGg2clJyQm04cUlKR0M2WUpqd2Q1T3duVGoyQTA3eHpuczBvNmZFRnBydS12Rm55M0EyREtndExOUjF5MTM3MWM4V3NEMFZ3ZFNVSUppdmR3dzRka1IxMlJuMFJaakhnRmd2RzV6SURsYkF3U0FpWFR6ZXAyb2dBcGd5M3QwR3pCNV9iSTc2bEcyY2xEV0hQeWVZVUc1Rm5JNzd6TG1R0gHDAUFVX3lxTE9naTRqY2RLTDFRQ09DMkFOQ0ZJRGRFWFBTOENESUFsZkIxdlVPbXZuZldTQ2kxellSemJGdW1WVmpMRTd0VzlsWkhKV3NxNk1DNDVJdU5jekhCQlQ3T1ZpdjliZFRsSk5mWXFLWHNpMERvSWZnYjhVbWRLdldpTU5PR2tpVHQ1Y3Q0MTZidG43MjdlYXRrb0daVGlnOVQ0ZnNJMU1aNmtxcVZrd193M1dnWHJmVTVVYXNrTDhfM0xRcnFTYw?oc=5",
+              "source": "Simply Wall St",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "섹터",
+            "name": "TECHNOLOGY",
+            "avgPct": 2.91,
+            "n": 76,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "MPWR",
+          "company": "Monolithic Power Systems",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 8.92,
+          "close": 1478.68994140625,
+          "tradingValue": 1575078345,
+          "priceSource": "yahoo",
+          "marketCapB": 72.113,
+          "reason": "호실적 발표 및 기술적 모멘텀",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.8%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Monolithic Power Systems shares gain almost 8% after bullish earnings and strong technical momentum",
+              "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPWHZPdnRoT3VLRVhzTVFVUDEyOUR3WWw4WTltLV84c2F6OW9CcG9odzZ2RmJ5THFHNmJkUDdzWkdud19WQ0J0LVd4V3hWcDVZSHJIaXpFRlpOeFY0OGsxRXI2a1h3TG54T0tSdDhVT0ZXa2dja05lOUU3SWRORGRnTE1xV3ZKYWZGM2hZRTdGd3k1UXlIVWhJ?oc=5",
+              "source": "Traders Union",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.76,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "ORCL",
+          "company": "Oracle Corporation",
+          "sector": "TECHNOLOGY",
+          "industry": "Application Software",
+          "changePct": 8.82,
+          "close": 128.3800048828125,
+          "tradingValue": 4870867563,
+          "priceSource": "yahoo",
+          "marketCapB": 400.251,
+          "reason": "클라우드 수요 강세 및 성장 목표 제시",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -2759,17 +1696,181 @@
           "evidence": [
             {
               "type": "news",
-              "title": "DaVita Falls as Post-Earnings Cost Pressure and Kidney-Care Policy Overhang Weigh on Shares",
-              "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPTTZyTG9QNW9RWHJxenRsYU9CcXAwLWQ3cjhlNXg5ZEVwN3UyT0VrenhILXhxQ08yUGU3bndjSHdUdmlQYTM3aVo3QzRsSzEydGZhRVpqV1B2c05PN1hrS1h0dUxseUxUZ1hkOFg4NFVlUDBqYkpPamFJS25MSnRuMVpnNDRRR01UdjNKV05wZVNtSnhiT2lJMzF5dDIyRTVDcTRrOHgyamlwYXlNcko2dkFvRkUzTC1ma2p3c005RDdoZw?oc=5",
+              "title": "Oracle CFO: Cloud Demand Strong As Company Touts Growth Targets",
+              "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOZFhjQkpYMzE3MlJGUWZiU1MyZTJKLW9GU2R5aHg5U01RXzlMdGlSV1FPcFNPQ2Q0UUh1dlREejlUNlhIc1h4MGdTMktSVnp4eVdQa1RWeHFnUHE5am5oSTBUQ0M0b2FXWWJmdDFsZV9fUTZwSHZmQm9QZ1NoZy1OVjV0MElGVGJ0THNN?oc=5",
+              "source": "Investor's Business Daily",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Application Software",
+            "avgPct": 1.41,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "CIEN",
+          "company": "Ciena",
+          "sector": "TECHNOLOGY",
+          "industry": "Communications Equipment",
+          "changePct": 8.8,
+          "close": 296.0400085449219,
+          "tradingValue": 1094961403,
+          "priceSource": "yahoo",
+          "marketCapB": 41.981,
+          "reason": "AI 네트워킹 부문 회복 및 견조한 현금 흐름",
+          "reasonStatus": "ok",
+          "sectorNote": "Communications Equipment 업종 동반 상승(시총가중 평균 +4.2%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Ciena's $116M Free Cash Flow: Can Cash Generation Improve in FY27?",
+              "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQakxTeHB5Mk9GZExHXzhiVWtoemJ1OHpqVFNkUk1YVkwtV2hfOVJjVngxMGdiRzQ5Y1hrMWtBU1NNRnNxaS1aUm9LM3dvRGZNZjhHVjJ1aFhEcnRldUxoeGRhUnF5ZGIzcEVTWk0tS0tRU3R4aWNTQnpwLTlXd1pFSDRQMWR2Y1BPS1B0dXNVV2o0VENiUklZTHo2YVc1b3NMRG9aRDRBN2JydkVVekVwM1pkb0pPcGoxVng4?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Ciena jumps as AI-networking rebound lifts shares",
+              "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxNMzdGSFQ4elVxaXlfbWlyNzQ3Ny10U0JqbnFzY19nWDdaUzlqVk5EZDN2LUlSZlI3Z0cweFY2TVEyQWU4b3lPT2FMaTlsYldENkUxY3dTRHVtaU5waUZaRHp3Q3R1UVlwRnYyZXdwdTh3R25YYmNtWVpRcHNURk9TMXViNHRJck1NQmc?oc=5",
               "source": "Quiver Quantitative",
-              "date": "2026-11-09"
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Communications Equipment",
+            "avgPct": 4.21,
+            "n": 5,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "WDC",
+          "company": "Western Digital",
+          "sector": "TECHNOLOGY",
+          "industry": "Technology Hardware, Storage & Peripherals",
+          "changePct": 8.34,
+          "close": 313.30999755859375,
+          "tradingValue": 2498044422,
+          "priceSource": "yahoo",
+          "marketCapB": 117.279,
+          "reason": "AI 데이터센터 관련주 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "Technology Hardware, Storage & Peripherals 업종 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Western Digital: A Pile Of Spinning Disks Is The AI Trade I Want To Be In - Strong Buy",
+              "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPWkV0RkEtOUs3TUVnSkgzOHl1eE9oRUwyOEt6X1h1dTFDd3dZWmZXY0x2eGtveW1HMzJiN2pISHhBV0c0T1FsUFJRZmp1RUVNT2JMdnhRdVhYMGZiajhkTVMxRUJlVHNzOW1LSmtEZ0RleU5kQWxWcFlOdGw2VWI3SC00WjhoVXFVNHZXUWNYNC1wVk5VakhWSzhXVUcxRlZjWTk1VEZNZ0pEN2ltQmdsa19oSjdpR3A5UFZNS1ZrQThKQQ?oc=5",
+              "source": "Seeking Alpha",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Seagate, Western Digital, Vishay Intertechnology, Semtech, and FormFactor stocks trade up, what you need to know",
+              "link": "https://news.google.com/rss/articles/CBMi_AFBVV95cUxOeWw2NXlad2tqSjlpZ0VDczdTUlpyQ05OY1ZYdFpvcW1oenZVUlBIRlhvNEZMN001V2hPVmczN0pjcGZadGFOaVZCRjhaVzFqZ1QxZEJLbnFwZUtuWDRoM0cyQ2RCNHlKd0NZOHB2Yk5SOTY2dl9zNFM2bEswclBXLTVlMVdUVnRXWTFzaEl1TXFIbS11SzQ3ZnVKUE4yMmF3Mm8yTXpXQmgwS1FLU3RVMmozcmUzN09wQUdxQndtUF9VS3U1TUthN1kwZExkZ0dMVVdnRFFISVZXYW5XNUx2azRHaUVDM1NYOGVnU3poRzlfemRIcmUzM0VJVFg?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Technology Hardware, Storage & Peripherals",
+            "avgPct": 2.93,
+            "n": 9,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "TER",
+          "company": "Teradyne",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductor Materials & Equipment",
+          "changePct": 8.3,
+          "close": 265.7799987792969,
+          "tradingValue": 972958117,
+          "priceSource": "yahoo",
+          "marketCapB": 41.495,
+          "reason": "Nvidia 관련 AI 테스트 기회 및 신규 매수 등급 부여",
+          "reasonStatus": "ok",
+          "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Teradyne Stock Jumps. Jefferies Sees a $2 Billion Nvidia Opportunity.",
+              "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNXzgtMGRIazV0X0Vlb2NTRmZCUHZNb2tEU2s5c0tINVJHcEZET2JXXzBiVVdRNDRGdjZNUVNTaG9jYUJxVmhVSlNVSENjRldsMWN5VnQ5THhlR1Jnd3N6MmJJZ1Uyc1RBSDBlaXVGQS0zNEJob2pLcUdfbU1nU0liZjN3?oc=5",
+              "source": "Barron's",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Teradyne Stock Surges On Fresh Buy Rating, Called AI Play",
+              "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOZzVGS09oSDZ3SEU3d3RPYmhrWGg3NDAybmR4UGpOVEJ6bThOMFB2TG5RRHFGVHZsZ2ZfYlAtZWlCT1I0UXhmbVd1MmE4bHdxUExGa0hoM3NoOUg3SEIyLTNHMjZoUGNwNHhvMTNtUGRQdlUwcVVWeWNTb05Fb2QzcE1ZNHlSbnRSbjUzRmJBeXAwdGszZlhRZm1Wd0Y?oc=5",
+              "source": "Investor's Business Daily",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Jefferies initiates Teradyne stock with buy rating on AI growth",
+              "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNNTU4SHk0VE9oRW9TeExSdXZFSTVLNmJvWTh3aURFeGJNT1BoSEFNdHRwb1FMdWVDX0tGcW05Q1I3Qm1IX0Y2N0F5dldPZGdsOHJxM2RLT1EtaEJ6Q1k5ZklXaFl3UXEwcjY4a09ST1RtaTEyZEtReHhsWXNuc25OUXJGZnlaXzNETzdrRzAyc1RTTGs4Qm5jX1FfVXVBeEFmMnhqSWdlMEJVN0RsSGNNQXphcjI0bTBvSDYtbHlRYTQ?oc=5",
+              "source": "Investing.com",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
             "level": "섹터",
-            "name": "HEALTHCARE",
-            "avgPct": 0.29,
-            "n": 59,
+            "name": "TECHNOLOGY",
+            "avgPct": 2.91,
+            "n": 76,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "INTC",
+          "company": "Intel",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 7.52,
+          "close": 62.5,
+          "tradingValue": 8013959875,
+          "priceSource": "yahoo",
+          "marketCapB": 332.188,
+          "reason": "CoreWeave 실적 발표에 따른 반도체 주가 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.7%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Intel INTC Stock Recovers 25% as CoreWeave Earnings Boost Chip Shares",
+              "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOTXpSdWVYaGJoc3o4YlR1bVFuZ29GemZJSG82ZlFoY21DM3hPdzNlN1NWTjczLVhrZnh6dFRraFY4NW1mZHRGWXplN2VBaTVRWVFZVkRVZ2JUUXNHemppOFppMHdqVzNDTUx3UTE4UXRiSFdYVG1fYmdLSDlTYXJJVzc1cDFTeVhlNXhla19qWmRiXzB2eUp2RDRTVDVzZHNVSXlOZWdSVy1paThHeGdVQw?oc=5",
+              "source": "FXLeaders",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.69,
+            "n": 14,
             "weighting": "시총가중"
           }
         },
@@ -2778,11 +1879,86 @@
           "company": "Corning Inc.",
           "sector": "TECHNOLOGY",
           "industry": "Electronic Components",
-          "changePct": -3.29,
-          "close": 112.12999725341797,
-          "tradingValue": 811807500,
+          "changePct": 7.43,
+          "close": 120.45999908447266,
+          "tradingValue": 1227386204,
           "priceSource": "yahoo",
-          "marketCapB": 96.589,
+          "marketCapB": 103.764,
+          "reason": "AI 광섬유 수요 증가 및 신규 매수 등급 부여",
+          "reasonStatus": "ok",
+          "sectorNote": "TECHNOLOGY 섹터 동반 상승(시총가중 평균 +2.9%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Corning stock jumps as Jefferies sees AI fiber demand driving growth",
+              "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNQ0V1WlNDNnhQQk5vME15cUZ4QWhxTE5TTDRRVy0xYkw3Uk1TZU56Vjg5a2swTmZxUmczWHNNWjZUaXhVU2F6TTdNbF8wbEpMSzdCZ1ZCa29fZzNlUGkxdWpoLVNWOUdQZ1luSXFiaGJ1MzlFR05LOUlQaEJ4QVFJM01pd3plSUx3ejMwQjVJa0hmUk1NSWJJbEFtRE41bGFjS25yTXJQR1dtaHRqcGpiNllNV2V1eEE4SlBBZjNMRUJudms?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-11"
+            },
+            {
+              "type": "news",
+              "title": "Jefferies initiates Corning stock coverage with buy rating on fiber demand",
+              "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxOdlYwc2hVRFpUaDQ0WFNPUzNJZlJFdXgwRURXVEF6ZmZncnpYTUIyYXpyZmpQdjdSWV9kV2JYS1JpTGwxajNleFc4eUl6WEhYcGVOU0VOTGtWUHhtb2RnaEU2VFZIR00wQjFGQXBUQk5OclVZMGxlaFl4S3hhaVMtWHQ1c1l1SWh3ekc4bEVrQ0h3UkZGNTQtRjk2d3ctT0pqdkJ4OFpUNjYtaFBPSksyWDBreDdFYXc5T2s2NmxyWk5qMXE3NmFZYkNiQjZveHM?oc=5",
+              "source": "Investing.com",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "섹터",
+            "name": "TECHNOLOGY",
+            "avgPct": 2.9,
+            "n": 76,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "AMD",
+          "company": "Advanced Micro Devices",
+          "sector": "TECHNOLOGY",
+          "industry": "Semiconductors",
+          "changePct": 7.32,
+          "close": 552.9000244140625,
+          "tradingValue": 23517753480,
+          "priceSource": "yahoo",
+          "marketCapB": 906.804,
+          "reason": "AI 관련주 동반 강세",
+          "reasonStatus": "ok",
+          "sectorNote": "Semiconductors 업종 동반 상승(시총가중 평균 +4.5%)",
+          "tags": [
+            "섹터동조",
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "BofA Raised Its Earnings Estimates but Cut Its Target on AMD (AMD), Here’s Why",
+              "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNSXJleUlRZEFkakZDN3phZjBfVTRMNWRrZ2JnQWduQXh1aVdFbm5vVzNRblN2dlQ4VkxvdVlSQ1VNRFZpcXlOd0RCYWxfSnZDa3BLNE5kZHBCYUdUbHEzcEdPVTdvandlX3VmeWdWSmgzYkVWWEo4SlRMbC1LaGRFSDJ4ZnBnZHZoREZVTkhxeXVJMTFRZDN5RnI0b0pvSjVi?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-11"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Semiconductors",
+            "avgPct": 4.51,
+            "n": 14,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "RDDT",
+          "company": "Reddit",
+          "sector": "COMMUNICATION SERVICES",
+          "industry": "Interactive Media & Services",
+          "changePct": 7.08,
+          "close": 105.66000366210938,
+          "tradingValue": 498211008,
+          "priceSource": "yahoo",
+          "marketCapB": 20.402,
           "reason": "뚜렷한 재료 확인 안 됨",
           "reasonStatus": "none",
           "sectorNote": "",
@@ -2792,23 +1968,48 @@
           "evidence": [],
           "sectorMove": {
             "level": "섹터",
-            "name": "TECHNOLOGY",
-            "avgPct": -1.33,
-            "n": 76,
+            "name": "COMMUNICATION SERVICES",
+            "avgPct": 0.92,
+            "n": 20,
             "weighting": "시총가중"
           }
         },
         {
-          "ticker": "NOW",
-          "company": "ServiceNow",
-          "sector": "TECHNOLOGY",
-          "industry": "Systems Software",
-          "changePct": -3.07,
-          "close": 99.61000061035156,
-          "tradingValue": 1857743943,
+          "ticker": "FIS",
+          "company": "Fidelity National Information Services",
+          "sector": "FINANCIAL",
+          "industry": "Transaction & Payment Processing Services",
+          "changePct": 6.71,
+          "close": 30.209999084472656,
+          "tradingValue": 435143921,
           "priceSource": "yahoo",
-          "marketCapB": 103.387,
-          "reason": "앤트로픽의 새로운 AI 도구 출시",
+          "marketCapB": 15.572,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Transaction & Payment Processing Services",
+            "avgPct": 0.47,
+            "n": 8,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "GNRC",
+          "company": "Generac",
+          "sector": "INDUSTRIALS",
+          "industry": "Heavy Electrical Equipment",
+          "changePct": 6.72,
+          "close": 194.0,
+          "tradingValue": 165446304,
+          "priceSource": "yahoo",
+          "marketCapB": 11.444,
+          "reason": "호실적 가이던스 발표",
           "reasonStatus": "ok",
           "sectorNote": "",
           "tags": [
@@ -2817,17 +2018,44 @@
           "evidence": [
             {
               "type": "news",
-              "title": "ServiceNow Stock Drops Amid Anthropic's New AI Tools",
-              "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOd0h5YzRUWW53aUF6OThhOWI4RS1YelpENnZqRXlLWXBVX1E5VFZReTNPM1BNNUwxRHlhX01qblZqcFV0Smc5YnE3a1pZYXpycDk4ZmpDTGdvRm9iRDd6VTZtZHJ4V05ObWNsb0czOTBHTXZSVEEyQkxjTjk4ZkUySU1kU2QwYlhOUUp1dG1NX1NWV3FjVXltUzhNOE9EaVdWd0dnOGlKdFctdkdQNDhaUTB3?oc=5",
-              "source": "Benzinga",
-              "date": "2026-11-10"
+              "title": "How Strong Earnings Guidance Will Impact Generac Stock Investors",
+              "link": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxPNTRsRFBaMEROWkU5Y1Z3M3NacFRfcXRiRG0tVlpocER5U0dGTnFvYjRNM29BdGJDV3ZiTzRldW9qVVcyVlpld2hXU2pmU2l3eGxkTEJyNlB0aVRCOFRjS0tiNzNpQklVTHFDd1JTNHAzSkVwbTdmTEoxMlBJYVBOSVZsdk5YOEk4Z3lsQlBMVnlsSkQxTVhrUUpNYUY1d1BNTWxNdFpMR2R6OElqNFRUZGFOanJLemxRUzhSZWhENTVrY1Z4d1l4cWtBS09fOS1ueEx3edIB2gFBVV95cUxPMFFPT1VjdW9IZU5sZEw4U1FFNkRUZ2lHLV91Z0pDNVJHdG1lcjR1RlBWczBqRDJZZm5ORV9UUWdKcm9zOHFNNV9ZbVlyQ2ZWTDEydEZNZDNyQnVBVXcwR3VRRDljRnlXZFQwcVRrQ05Qc1FtbU96cEVUblBCMk1heUUtTll3YVlTaEtWWm53eVZZNk9VUTBDZlA5UlVpQXl6TEh3XzRwRHQzSlB4d2FobVpyZ0pXUWU0czdwQnZrcHFsQWdOTGZoeV96WnBSdlBkLXpTaElGNEJBQQ?oc=5",
+              "source": "Simply Wall St",
+              "date": "2026-11-11"
             }
           ],
           "sectorMove": {
+            "level": "섹터",
+            "name": "INDUSTRIALS",
+            "avgPct": 1.35,
+            "n": 83,
+            "weighting": "시총가중"
+          }
+        }
+      ],
+      "down": [
+        {
+          "ticker": "ABNB",
+          "company": "Airbnb",
+          "sector": "CONSUMER CYCLICAL",
+          "industry": "Hotels, Resorts & Cruise Lines",
+          "changePct": -3.09,
+          "close": 181.1300048828125,
+          "tradingValue": 1163400557,
+          "priceSource": "yahoo",
+          "marketCapB": 108.088,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
             "level": "업종",
-            "name": "Systems Software",
-            "avgPct": -1.99,
-            "n": 6,
+            "name": "Hotels, Resorts & Cruise Lines",
+            "avgPct": -0.04,
+            "n": 7,
             "weighting": "시총가중"
           }
         }

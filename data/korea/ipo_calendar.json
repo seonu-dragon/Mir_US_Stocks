@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-11-11 16:17 KST",
+  "updatedAtKst": "2026-11-12 16:16 KST",
   "lastFileDate": "2026.12.14",
-  "count": 38,
+  "count": 33,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -66,6 +66,21 @@
       ]
     },
     {
+      "company": "다비오",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "대신증권",
+      "fileDate": "2026.12.09",
+      "accession": "kr-ipo-bidding-다비오",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        12300,
+        16600
+      ]
+    },
+    {
       "company": "마더스제약",
       "ticker": null,
       "stage": "filed",
@@ -111,6 +126,21 @@
       ]
     },
     {
+      "company": "아델",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "삼성증권,미래에셋증권",
+      "fileDate": "2026.12.02",
+      "accession": "kr-ipo-listed-아델",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        18000,
+        25000
+      ]
+    },
+    {
       "company": "엔키화이트햇",
       "ticker": null,
       "stage": "filed",
@@ -126,18 +156,18 @@
       ]
     },
     {
-      "company": "다비오",
+      "company": "유캐스트",
       "ticker": null,
       "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "대신증권",
-      "fileDate": "2026.12.01",
-      "accession": "kr-ipo-bidding-다비오",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "stageLabel": "신규 상장 예정",
+      "form": "유진투자증권,신영증권",
+      "fileDate": "2026.11.30",
+      "accession": "kr-ipo-listed-유캐스트",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPricePending": true,
       "offerPriceBand": [
-        12300,
-        16600
+        19000,
+        23000
       ]
     },
     {
@@ -153,6 +183,21 @@
       "offerPriceBand": [
         11200,
         13600
+      ]
+    },
+    {
+      "company": "에스에프씨(유가)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "미래에셋증권,한국투자증권,삼성증권",
+      "fileDate": "2026.11.27",
+      "accession": "kr-ipo-listed-에스에프씨(유가)",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        31600,
+        36100
       ]
     },
     {
@@ -212,21 +257,6 @@
       "offerPrice": 7000
     },
     {
-      "company": "아델",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "삼성증권,미래에셋증권",
-      "fileDate": "2026.11.23",
-      "accession": "kr-ipo-bidding-아델",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        18000,
-        25000
-      ]
-    },
-    {
       "company": "하나에어로다이내믹스",
       "ticker": null,
       "stage": "filed",
@@ -237,37 +267,8 @@
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 5700,
       "instCompetition": 1051.38,
-      "commitPct": 4.16
-    },
-    {
-      "company": "에스에프씨(유가)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "미래에셋증권,한국투자증권,삼성증권",
-      "fileDate": "2026.11.18",
-      "accession": "kr-ipo-bidding-에스에프씨(유가)",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        31600,
-        36100
-      ]
-    },
-    {
-      "company": "유캐스트",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "유진투자증권,신영증권",
-      "fileDate": "2026.11.18",
-      "accession": "kr-ipo-bidding-유캐스트",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        19000,
-        23000
-      ]
+      "commitPct": 4.16,
+      "subscriptionCompetition": 1851.14
     },
     {
       "company": "에이엘로봇",
@@ -312,40 +313,10 @@
       "subscriptionCompetition": 1342.66
     },
     {
-      "company": "씨앤엠",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "한국투자증권",
-      "fileDate": "2026.11.12",
-      "accession": "kr-ipo-bidding-씨앤엠",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        10000,
-        13000
-      ]
-    },
-    {
-      "company": "제이앤티지",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "대신증권,NH투자증권",
-      "fileDate": "2026.11.12",
-      "accession": "kr-ipo-bidding-제이앤티지",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        26400,
-        31900
-      ]
-    },
-    {
       "company": "넥스아이",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "ticker": "493410",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "한국투자증권",
       "fileDate": "2026.11.12",
       "accession": "kr-ipo-listed-넥스아이",
@@ -455,7 +426,7 @@
       "ticker": "420610",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "",
+      "form": "미래에셋증권",
       "fileDate": "2026.10.30",
       "accession": "kr-ipo-listed-인텔리빅스",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -481,7 +452,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "",
+      "form": "신한투자증권",
       "fileDate": "2026.10.29",
       "accession": "kr-ipo-listed-티앤이코리아",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -501,48 +472,6 @@
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 2000,
       "instCompetition": 1228.38
-    },
-    {
-      "company": "디티에스(구.동양티에스)",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.10.23",
-      "accession": "kr-ipo-listed-디티에스(구.동양티에스)",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 18500,
-      "instCompetition": 983.98,
-      "commitPct": 13.31,
-      "subscriptionCompetition": 986.99
-    },
-    {
-      "company": "엠에스바이오",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.10.22",
-      "accession": "kr-ipo-listed-엠에스바이오",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 7800,
-      "instCompetition": 1096.56,
-      "commitPct": 30.62,
-      "subscriptionCompetition": 1538.51
-    },
-    {
-      "company": "엘리스그룹",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.10.20",
-      "accession": "kr-ipo-listed-엘리스그룹",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 90500,
-      "instCompetition": 388.84,
-      "commitPct": 13.7,
-      "subscriptionCompetition": 408.0
     }
   ]
 }

@@ -1,8 +1,8 @@
 {
-  "updatedAtKst": "2026-11-11 13:27 KST",
+  "updatedAtKst": "2026-11-12 13:24 KST",
   "lastFileDate": "2026-11-10",
   "partialFetch": false,
-  "count": 1685,
+  "count": 1686,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만. summary 는 8-K 본문에서 규칙(템플릿+정규식)으로 뽑은 3줄 요약(숫자·이름은 원문 표기 그대로), aiSummary 는 시총 상위 일부만 Gemini 요약 후 원문에 없는 숫자가 든 줄을 버린 것.",
   "summaryCount": 685,
@@ -3250,6 +3250,25 @@
         "date": "2026-11-09",
         "src": "rule"
       },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "JSPR",
+      "company": "Jasper Therapeutics, Inc.  (JSPR)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-09",
+      "accession": "0001213900-26-117230",
+      "link": "https://www.sec.gov/Archives/edgar/data/1788028/000121390026117230/ea0311433-8k_jasper.htm",
       "summaryChecked": true
     },
     {

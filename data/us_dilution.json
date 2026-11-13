@@ -1,11 +1,380 @@
 {
-  "updatedAtKst": "2026-11-12 13:34 KST",
-  "lastFileDate": "2026-11-10",
+  "updatedAtKst": "2026-11-13 13:34 KST",
+  "lastFileDate": "2026-11-12",
   "partialFetch": false,
-  "count": 673,
+  "count": 714,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
+    {
+      "ticker": "KLXE",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-11-12",
+      "title": "KLX Energy Services Holdings, Inc.  (KLXE)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1738827/000173882726000086/klx-formsx3backstopexchang.htm",
+      "accession": "0001738827-26-000086"
+    },
+    {
+      "ticker": "HST",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "HOST HOTELS & RESORTS, INC.  (HST)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1070750/000162828026073507/hosthotels-424b5.htm",
+      "accession": "0001628280-26-073507"
+    },
+    {
+      "ticker": "PRME",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Prime Medicine, Inc.  (PRME)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1894562/000162828026073125/primemedicinefinal424b5nov.htm",
+      "accession": "0001628280-26-073125"
+    },
+    {
+      "ticker": "NSPR",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "InspireMD, Inc.  (NSPR)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1433607/000149315226051492/form424b5.htm",
+      "accession": "0001493152-26-051492"
+    },
+    {
+      "ticker": "AIRO",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-11-12",
+      "title": "AIRO Group Holdings, Inc.  (AIRO)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1927958/000149315226051460/forms-3.htm",
+      "accession": "0001493152-26-051460"
+    },
+    {
+      "ticker": "GMHS",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Gamehaus Holdings Inc.  (GMHS)",
+      "url": "https://www.sec.gov/Archives/edgar/data/2000530/000149315226051174/form424b5.htm",
+      "accession": "0001493152-26-051174"
+    },
+    {
+      "ticker": "TLPH",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-11-12",
+      "title": "TALPHERA, INC.  (TLPH)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1427925/000143774926036617/acrx20261105_s3.htm",
+      "accession": "0001437749-26-036617"
+    },
+    {
+      "ticker": "PLUR",
+      "formType": "S-3/A",
+      "formLabel": "일괄신고 정정",
+      "fileDate": "2026-11-12",
+      "title": "Pluri Inc.  (PLUR)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1158780/000121390026118935/ea0311168-s3a1_pluri.htm",
+      "accession": "0001213900-26-118935"
+    },
+    {
+      "ticker": "RETO",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "ReTo Eco-Solutions, Inc.  (RETO)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1687277/000121390026118503/ea0311987-424b5_retoeco.htm",
+      "accession": "0001213900-26-118503"
+    },
+    {
+      "ticker": "RUM",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "RUM Group Inc.  (RUM, RUMBW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1830081/000121390026118428/ea0311435-s3asr_rumgroup.htm",
+      "accession": "0001213900-26-118428"
+    },
+    {
+      "ticker": "RUM",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "RUM Group Inc.  (RUM, RUMBW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1830081/000121390026118424/ea0311434-s3asr_rumgroup.htm",
+      "accession": "0001213900-26-118424"
+    },
+    {
+      "ticker": "ABVC",
+      "formType": "S-3/A",
+      "formLabel": "일괄신고 정정",
+      "fileDate": "2026-11-12",
+      "title": "ABVC BIOPHARMA, INC.  (ABVC, ECOC)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1173313/000121390026118178/ea0311197-s3a1_abvcbio.htm",
+      "accession": "0001213900-26-118178"
+    },
+    {
+      "ticker": "FATE",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "FATE THERAPEUTICS INC  (FATE)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1434316/000119312526458736/d150438d424b5.htm",
+      "accession": "0001193125-26-458736"
+    },
+    {
+      "ticker": "EQ",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-11-12",
+      "title": "Equillium, Inc.  (EQ)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1746466/000119312526458652/d934327ds3.htm",
+      "accession": "0001193125-26-458652"
+    },
+    {
+      "ticker": "VYLR",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "Vylor Inc.  (VYLR)",
+      "url": "https://www.sec.gov/Archives/edgar/data/2128626/000119312526458647/d182384ds3asr.htm",
+      "accession": "0001193125-26-458647"
+    },
+    {
+      "ticker": "FOXA",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Fox Corp  (FOX, FOXA)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1754301/000119312526458635/d147100d424b5.htm",
+      "accession": "0001193125-26-458635"
+    },
+    {
+      "ticker": "PEPG",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "PepGen Inc.  (PEPG)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1835597/000119312526458571/d548742d424b5.htm",
+      "accession": "0001193125-26-458571"
+    },
+    {
+      "ticker": "SPCE",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Virgin Galactic Holdings, Inc  (SPCE)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1706946/000119312526458526/d130163d424b5.htm",
+      "accession": "0001193125-26-458526"
+    },
+    {
+      "ticker": "CADL",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Candel Therapeutics, Inc.  (CADL)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1841387/000119312526458505/d195871d424b5.htm",
+      "accession": "0001193125-26-458505"
+    },
+    {
+      "ticker": "VIR",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Vir Biotechnology, Inc.  (VIR)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1706431/000119312526458462/d178815d424b5.htm",
+      "accession": "0001193125-26-458462"
+    },
+    {
+      "ticker": "STE",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "STERIS plc  (STE)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1757898/000119312526458328/d198963d424b5.htm",
+      "accession": "0001193125-26-458328"
+    },
+    {
+      "ticker": "VIR",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "Vir Biotechnology, Inc.  (VIR)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1706431/000119312526458278/d187683ds3asr.htm",
+      "accession": "0001193125-26-458278"
+    },
+    {
+      "ticker": "ABSI",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "Absci Corp  (ABSI)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1672688/000119312526457130/d154240ds3asr.htm",
+      "accession": "0001193125-26-457130"
+    },
+    {
+      "ticker": "PROK",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "PROKIDNEY CORP.  (PROK)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1850270/000119312526457084/d81716d424b5.htm",
+      "accession": "0001193125-26-457084"
+    },
+    {
+      "ticker": "STIM",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Neuronetics, Inc.  (STIM)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1227636/000119312526457031/d97092d424b5.htm",
+      "accession": "0001193125-26-457031"
+    },
+    {
+      "ticker": "KDP",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "Keurig Dr Pepper Inc.  (KDP)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1418135/000119312526457001/d111532d424b5.htm",
+      "accession": "0001193125-26-457001"
+    },
+    {
+      "ticker": "SCHW",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "SCHWAB CHARLES CORP  (SCHW, SCHW-PD, SCHW-PJ)",
+      "url": "https://www.sec.gov/Archives/edgar/data/316709/000119312526456746/d130223d424b5.htm",
+      "accession": "0001193125-26-456746"
+    },
+    {
+      "ticker": "LSTA",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-11-12",
+      "title": "LISATA THERAPEUTICS, INC.  (LSTA)",
+      "url": "https://www.sec.gov/Archives/edgar/data/320017/000114036126043471/ny20085403x1_s3.htm",
+      "accession": "0001140361-26-043471"
+    },
+    {
+      "ticker": "EMR",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "EMERSON ELECTRIC CO  (EMR)",
+      "url": "https://www.sec.gov/Archives/edgar/data/32604/000114036126043426/ny20084788x3_424b5.htm",
+      "accession": "0001140361-26-043426"
+    },
+    {
+      "ticker": "CTRE",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "CareTrust REIT, Inc.  (CTRE)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1590717/000114036126043213/ny20085288x1_424b5.htm",
+      "accession": "0001140361-26-043213"
+    },
+    {
+      "ticker": "HASI",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "HA Sustainable Infrastructure Capital, Inc.  (HASI)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1561894/000110465926126334/tm2629186-2_424b5.htm",
+      "accession": "0001104659-26-126334"
+    },
+    {
+      "ticker": "FORM",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "FORMFACTOR INC  (FORM)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1039399/000110465926126227/tm2629559d2_s3asr.htm",
+      "accession": "0001104659-26-126227"
+    },
+    {
+      "ticker": "ENB",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "ENBRIDGE INC  (ENB, EBBGF, EBBNF, EBGEF, EBRGF, EBRZF, ENBFF, ENBGF, ENBHF, ENBMF, ENBNF, ENBOF, ENBRF, ENBSF)",
+      "url": "https://www.sec.gov/Archives/edgar/data/895728/000110465926126219/tm2626007d10_424b5.htm",
+      "accession": "0001104659-26-126219"
+    },
+    {
+      "ticker": "ENB",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "ENBRIDGE INC  (ENB, EBBGF, EBBNF, EBGEF, EBRGF, EBRZF, ENBFF, ENBGF, ENBHF, ENBMF, ENBNF, ENBOF, ENBRF, ENBSF)",
+      "url": "https://www.sec.gov/Archives/edgar/data/895728/000110465926126215/tm2626007d9_424b5.htm",
+      "accession": "0001104659-26-126215"
+    },
+    {
+      "ticker": "GWW",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "W.W. GRAINGER, INC.  (GWW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/277135/000110465926125977/tm2629256-1_424b5.htm",
+      "accession": "0001104659-26-125977"
+    },
+    {
+      "ticker": "MGTX",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "MeiraGTx Holdings plc  (MGTX)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1735438/000110465926125974/tm2629540-1_s3asr.htm",
+      "accession": "0001104659-26-125974"
+    },
+    {
+      "ticker": "AME",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "AMETEK INC/  (AME)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1037868/000110465926125615/tm2629569-2_424b5.htm",
+      "accession": "0001104659-26-125615"
+    },
+    {
+      "ticker": "AME",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "AMETEK INC/  (AME)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1037868/000110465926125606/tm2629569-3_424b5.htm",
+      "accession": "0001104659-26-125606"
+    },
+    {
+      "ticker": "AME",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "AMETEK INC/  (AME)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1037868/000110465926125543/tm2629569-1_424b5.htm",
+      "accession": "0001104659-26-125543"
+    },
+    {
+      "ticker": "NTRA",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-11-12",
+      "title": "Natera, Inc.  (NTRA)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1604821/000110465926125441/tm2629518-1_s3asr.htm",
+      "accession": "0001104659-26-125441"
+    },
+    {
+      "ticker": "SO",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-11-12",
+      "title": "SOUTHERN CO  (SO, SOJC, SOJD, SOJE, SOJF, SOMN)",
+      "url": "https://www.sec.gov/Archives/edgar/data/92122/000009212226000076/so2026equityunitsprelimpro.htm",
+      "accession": "0000092122-26-000076"
+    },
     {
       "ticker": "PRME",
       "formType": "424B5",

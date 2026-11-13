@@ -1,10 +1,25 @@
 {
-  "updatedAtKst": "2026-11-12 16:16 KST",
+  "updatedAtKst": "2026-11-13 16:14 KST",
   "lastFileDate": "2026.12.14",
-  "count": 33,
+  "count": 34,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
+    {
+      "company": "태석광학",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "신한투자증권,대신증권",
+      "fileDate": "2026.12.14",
+      "accession": "kr-ipo-bidding-태석광학",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        17500,
+        20200
+      ]
+    },
     {
       "company": "KTE",
       "ticker": null,
@@ -452,7 +467,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "신한투자증권",
+      "form": "",
       "fileDate": "2026.10.29",
       "accession": "kr-ipo-listed-티앤이코리아",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",

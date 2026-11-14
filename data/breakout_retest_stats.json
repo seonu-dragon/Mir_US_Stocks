@@ -1,7 +1,7 @@
 {
-  "generated": "2026-11-08 04:21 KST",
+  "generated": "2026-11-15 04:21 KST",
   "market": "us",
-  "tickers_scanned": 4312,
+  "tickers_scanned": 4481,
   "horizons": [
     1,
     3,
@@ -13,203 +13,203 @@
   "retest_win": 15,
   "baseline": {
     "1": {
-      "n": 487939,
-      "up_rate": 48.2,
-      "down_rate": 51.8,
+      "n": 506786,
+      "up_rate": 48.4,
+      "down_rate": 51.6,
       "avg_ret": 0.02
     },
     "3": {
-      "n": 487684,
-      "up_rate": 48.8,
-      "down_rate": 51.2,
-      "avg_ret": 0.06
-    },
-    "5": {
-      "n": 484192,
+      "n": 506560,
       "up_rate": 48.9,
       "down_rate": 51.1,
-      "avg_ret": 0.03
+      "avg_ret": 0.08
+    },
+    "5": {
+      "n": 502968,
+      "up_rate": 49.4,
+      "down_rate": 50.6,
+      "avg_ret": 0.12
     },
     "10": {
-      "n": 483671,
+      "n": 502334,
       "up_rate": 49.3,
       "down_rate": 50.7,
-      "avg_ret": 0.17
+      "avg_ret": 0.16
     },
     "20": {
-      "n": 479270,
-      "up_rate": 49.1,
-      "down_rate": 50.9,
-      "avg_ret": 0.35
+      "n": 497757,
+      "up_rate": 49.2,
+      "down_rate": 50.8,
+      "avg_ret": 0.36
     },
     "60": {
-      "n": 461666,
-      "up_rate": 49.8,
-      "down_rate": 50.2,
-      "avg_ret": 1.52
+      "n": 479449,
+      "up_rate": 49.5,
+      "down_rate": 50.5,
+      "avg_ret": 1.5
     }
   },
   "directions": {
     "up_break": {
-      "breakouts": 46676,
+      "breakouts": 48133,
       "retest_rate": 80.7,
       "entries": {
         "breakout": {
           "1": {
-            "n": 46644,
-            "cont_rate": 47.7,
+            "n": 48106,
+            "cont_rate": 47.6,
             "avg_dir_ret": -0.04,
-            "edge_vs_market": -0.5
+            "edge_vs_market": -0.8
           },
           "3": {
-            "n": 46450,
+            "n": 48049,
             "cont_rate": 48.9,
             "avg_dir_ret": 0.01,
-            "edge_vs_market": 0.1
+            "edge_vs_market": 0.0
           },
           "5": {
-            "n": 46368,
+            "n": 47965,
             "cont_rate": 49.6,
-            "avg_dir_ret": 0.02,
-            "edge_vs_market": 0.7
+            "avg_dir_ret": 0.03,
+            "edge_vs_market": 0.2
           },
           "10": {
-            "n": 46187,
+            "n": 47654,
             "cont_rate": 49.9,
             "avg_dir_ret": 0.17,
             "edge_vs_market": 0.6
           },
           "20": {
-            "n": 45841,
-            "cont_rate": 51.0,
-            "avg_dir_ret": 0.53,
-            "edge_vs_market": 1.9
+            "n": 47286,
+            "cont_rate": 50.9,
+            "avg_dir_ret": 0.52,
+            "edge_vs_market": 1.7
           },
           "60": {
-            "n": 44573,
-            "cont_rate": 52.5,
-            "avg_dir_ret": 2.23,
-            "edge_vs_market": 2.7
+            "n": 46040,
+            "cont_rate": 52.4,
+            "avg_dir_ret": 2.16,
+            "edge_vs_market": 2.9
           }
         },
         "retest": {
           "1": {
-            "n": 37588,
-            "cont_rate": 50.3,
-            "avg_dir_ret": 0.05,
-            "edge_vs_market": 2.1
+            "n": 38825,
+            "cont_rate": 50.2,
+            "avg_dir_ret": 0.07,
+            "edge_vs_market": 1.8
           },
           "3": {
-            "n": 37466,
-            "cont_rate": 51.1,
-            "avg_dir_ret": 0.16,
-            "edge_vs_market": 2.3
+            "n": 38773,
+            "cont_rate": 51.0,
+            "avg_dir_ret": 0.17,
+            "edge_vs_market": 2.1
           },
           "5": {
-            "n": 37390,
+            "n": 38707,
             "cont_rate": 51.2,
-            "avg_dir_ret": 0.25,
-            "edge_vs_market": 2.3
+            "avg_dir_ret": 0.26,
+            "edge_vs_market": 1.8
           },
           "10": {
-            "n": 37255,
+            "n": 38461,
             "cont_rate": 51.0,
-            "avg_dir_ret": 0.34,
+            "avg_dir_ret": 0.36,
             "edge_vs_market": 1.7
           },
           "20": {
-            "n": 36997,
-            "cont_rate": 51.5,
-            "avg_dir_ret": 0.49,
-            "edge_vs_market": 2.4
+            "n": 38204,
+            "cont_rate": 51.4,
+            "avg_dir_ret": 0.48,
+            "edge_vs_market": 2.2
           },
           "60": {
-            "n": 35847,
-            "cont_rate": 52.7,
-            "avg_dir_ret": 2.4,
+            "n": 37069,
+            "cont_rate": 52.4,
+            "avg_dir_ret": 2.32,
             "edge_vs_market": 2.9
           }
         }
       }
     },
     "down_break": {
-      "breakouts": 48777,
-      "retest_rate": 80.5,
+      "breakouts": 50515,
+      "retest_rate": 80.7,
       "entries": {
         "breakout": {
           "1": {
-            "n": 48711,
-            "cont_rate": 52.8,
-            "avg_dir_ret": 0.08,
-            "edge_vs_market": 1.0
+            "n": 50445,
+            "cont_rate": 52.7,
+            "avg_dir_ret": 0.06,
+            "edge_vs_market": 1.1
           },
           "3": {
-            "n": 48306,
-            "cont_rate": 52.4,
-            "avg_dir_ret": 0.2,
-            "edge_vs_market": 1.2
+            "n": 50274,
+            "cont_rate": 52.2,
+            "avg_dir_ret": 0.12,
+            "edge_vs_market": 1.1
           },
           "5": {
-            "n": 48170,
-            "cont_rate": 51.2,
-            "avg_dir_ret": 0.03,
-            "edge_vs_market": 0.1
+            "n": 50124,
+            "cont_rate": 51.1,
+            "avg_dir_ret": -0.05,
+            "edge_vs_market": 0.5
           },
           "10": {
-            "n": 47760,
-            "cont_rate": 49.8,
-            "avg_dir_ret": -0.15,
-            "edge_vs_market": -0.9
+            "n": 49494,
+            "cont_rate": 49.6,
+            "avg_dir_ret": -0.23,
+            "edge_vs_market": -1.1
           },
           "20": {
-            "n": 46926,
+            "n": 48700,
             "cont_rate": 49.0,
-            "avg_dir_ret": -0.88,
-            "edge_vs_market": -1.9
+            "avg_dir_ret": -0.91,
+            "edge_vs_market": -1.8
           },
           "60": {
-            "n": 44699,
-            "cont_rate": 46.2,
+            "n": 46076,
+            "cont_rate": 46.3,
             "avg_dir_ret": -3.33,
-            "edge_vs_market": -4.0
+            "edge_vs_market": -4.2
           }
         },
         "retest": {
           "1": {
-            "n": 39099,
+            "n": 40735,
             "cont_rate": 52.7,
-            "avg_dir_ret": 0.03,
-            "edge_vs_market": 0.9
+            "avg_dir_ret": 0.0,
+            "edge_vs_market": 1.1
           },
           "3": {
-            "n": 38984,
-            "cont_rate": 51.4,
-            "avg_dir_ret": -0.0,
-            "edge_vs_market": 0.2
+            "n": 40601,
+            "cont_rate": 51.5,
+            "avg_dir_ret": -0.04,
+            "edge_vs_market": 0.4
           },
           "5": {
-            "n": 38806,
-            "cont_rate": 50.7,
-            "avg_dir_ret": -0.12,
-            "edge_vs_market": -0.4
+            "n": 40402,
+            "cont_rate": 50.8,
+            "avg_dir_ret": -0.14,
+            "edge_vs_market": 0.2
           },
           "10": {
-            "n": 38508,
-            "cont_rate": 50.1,
-            "avg_dir_ret": -0.27,
-            "edge_vs_market": -0.6
+            "n": 39930,
+            "cont_rate": 50.0,
+            "avg_dir_ret": -0.37,
+            "edge_vs_market": -0.7
           },
           "20": {
-            "n": 37949,
+            "n": 39323,
             "cont_rate": 49.4,
-            "avg_dir_ret": -0.86,
-            "edge_vs_market": -1.5
+            "avg_dir_ret": -0.88,
+            "edge_vs_market": -1.4
           },
           "60": {
-            "n": 36328,
+            "n": 37475,
             "cont_rate": 46.8,
-            "avg_dir_ret": -3.22,
-            "edge_vs_market": -3.4
+            "avg_dir_ret": -3.24,
+            "edge_vs_market": -3.7
           }
         }
       }
@@ -217,6 +217,6 @@
   },
   "discontinuity_cleaning": {
     "max_bar_ratio": 4.0,
-    "breaks": 382
+    "breaks": 395
   }
 }

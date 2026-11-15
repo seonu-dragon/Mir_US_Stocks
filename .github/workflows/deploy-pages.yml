@@ -336,10 +336,13 @@ jobs:
       # 실측이 456MB(data/details 195M + data/korea/details 169M)이고 종목이 늘수록
       # 같이 큰다. 조용히 한도에 닿으면 배포가 통째로 죽으므로, 700MB 를 넘으면 여기서
       # 먼저 실패시킨다(아래 Notify failure 스텝이 텔레그램으로 알린다).
+      # 2026-11-15: 700 → 850. 미국 details 가 7,220개(242MB)로 늘어 아티팩트가 713MB 가 됐고
+      # 11-13 06:39 KST 이후 배포가 전부 이 가드에 막혔다. 증가 속도 ~4MB/일이라 850 이면 약 한 달
+      # 버틴다(1GB 까지 ~170MB 여유 유지). 근본 해결은 R2 플래그(DEPLOY.md 'R2 종목 상세')다.
       - name: Artifact size guard
         if: steps.gate.outputs.deploy != 'false'
         env:
-          MAX_MB: "700"
+          MAX_MB: "850"
         shell: bash
         run: |
           set -euo pipefail

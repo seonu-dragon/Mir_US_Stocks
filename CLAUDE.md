@@ -212,9 +212,11 @@ exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P
   상세 fetch 는 전부 `details-source.js`(`MirDetails.fetch` / `MirMarket.fetchDetail`)를 거치고
   `detailsBase` 가 비면 예전 상대 경로 그대로다. 업로드·스테이징 제외는 `deploy-pages.yml` 의 리포 변수
   `MIR_R2_DETAILS`·`MIR_R2_DETAILS_SKIP_PAGES`, 켜는 순서는 DEPLOY.md 'R2 종목 상세(details)'.
-  상세를 새로 읽는 코드는 `fetch("data/details/…")` 를 직접 쓰지 말 것. 한도까지의 완충을 지키려고 배포에 700MB
+  상세를 새로 읽는 코드는 `fetch("data/details/…")` 를 직접 쓰지 말 것. 한도까지의 완충을 지키려고 배포에 850MB
   사이즈 가드를 뒀다(넘으면 배포 실패 + 텔레그램). GitHub Pages 발행 사이트 권장
-  한도는 1GB.
+  한도는 1GB. 2026-11-15 실측 **713MB**(`data/details` 242MB·7,220개 + `data/korea/details` 212MB)로
+  예전 700MB 가드에 걸려 11-13~15 배포가 전부 막혔고, 가드를 850MB 로 올렸다(~4MB/일 증가 → 약 한 달 여유).
+  다음에 또 걸리면 가드를 더 올리지 말고 R2 플래그를 켤 것.
 - `app.js` 403KB / `styles.css` 373KB / `index.html` 151KB 단일 파일(CRLF 작업트리
   기준. 2026-09-04 분리 작업 전엔 app.js 가 850KB 였다).
   분리 전에 `scripts/smoke_ui.py` 를 안전망으로 쓸 것.

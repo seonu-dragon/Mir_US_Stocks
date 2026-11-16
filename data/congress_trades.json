@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-16 06:38:21 KST",
+  "updatedAtKst": "2026-11-16 13:42:48 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7737,
+  "tradeCount": 7734,
   "politicianCount": 157,
   "rankings": [
     {
@@ -6121,8 +6121,8 @@
       "party": "D",
       "committees": [],
       "district": "FL22",
-      "tradeCount": 123,
-      "buyCount": 61,
+      "tradeCount": 120,
+      "buyCount": 58,
       "sellCount": 62,
       "recentTrades": [
         {
@@ -81078,7 +81078,7 @@
     },
     "DD": {
       "ticker": "DD",
-      "netBuys": 5,
+      "netBuys": 4,
       "netSells": 3,
       "politicianCount": 3,
       "trades": [
@@ -81194,23 +81194,6 @@
           "amount": "$1,001 - $15,000",
           "amountMid": 8000,
           "transactionDate": "2021-11-18",
-          "disclosureDate": "12/29/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020112.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "DD",
-          "asset": "DuPont de Nemours, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-17",
           "disclosureDate": "12/29/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020112.pdf",
@@ -94039,7 +94022,7 @@
     },
     "AXP": {
       "ticker": "AXP",
-      "netBuys": 11,
+      "netBuys": 10,
       "netSells": 9,
       "politicianCount": 15,
       "trades": [
@@ -94362,23 +94345,6 @@
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019930.pdf",
           "district": "VA04",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "AXP",
-          "asset": "American Express Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-17",
-          "disclosureDate": "12/29/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020112.pdf",
-          "district": "FL21",
           "source": "house_ptr",
           "party": "D"
         }
@@ -140123,7 +140089,7 @@
     },
     "MAR": {
       "ticker": "MAR",
-      "netBuys": 4,
+      "netBuys": 3,
       "netSells": 2,
       "politicianCount": 4,
       "trades": [
@@ -140208,23 +140174,6 @@
           "disclosureDate": "04/04/2022",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020648.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "MAR",
-          "asset": "Marriott International - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-17",
-          "disclosureDate": "12/29/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020112.pdf",
           "district": "FL21",
           "source": "house_ptr",
           "party": "D"
@@ -163760,7 +163709,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-11-13",
-    "measuredTrades": 4991,
+    "measuredTrades": 4985,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -163817,6 +163766,26 @@
         "party": "R"
       },
       {
+        "name": "John James",
+        "tx": {
+          "n": 65,
+          "avgExcess": 8.61,
+          "medianExcess": 10.29,
+          "winRate": 67.7
+        },
+        "disc": {
+          "n": 65,
+          "avgExcess": 6.44,
+          "medianExcess": 9.25,
+          "winRate": 61.5
+        },
+        "buyAvgExcess": 14.08,
+        "lagDays": 1,
+        "id": "house-john-james",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Kelly Louise Morrison",
         "tx": {
           "n": 23,
@@ -163829,26 +163798,6 @@
         "id": "house-kelly-louise-morrison",
         "chamber": "House",
         "party": "D"
-      },
-      {
-        "name": "John James",
-        "tx": {
-          "n": 67,
-          "avgExcess": 7.02,
-          "medianExcess": 9.03,
-          "winRate": 65.7
-        },
-        "disc": {
-          "n": 67,
-          "avgExcess": 5.08,
-          "medianExcess": 8.58,
-          "winRate": 59.7
-        },
-        "buyAvgExcess": 3.45,
-        "lagDays": 1,
-        "id": "house-john-james",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "Robert E. Latta",
@@ -164071,20 +164020,40 @@
       {
         "name": "Josh Gottheimer",
         "tx": {
-          "n": 280,
-          "avgExcess": 1.96,
+          "n": 278,
+          "avgExcess": 1.83,
           "medianExcess": 0.25,
           "winRate": 50.7
         },
         "disc": {
-          "n": 279,
-          "avgExcess": 2.46,
-          "medianExcess": -0.79,
-          "winRate": 49.5
+          "n": 277,
+          "avgExcess": 2.27,
+          "medianExcess": -0.85,
+          "winRate": 49.1
         },
-        "buyAvgExcess": -0.63,
+        "buyAvgExcess": -0.86,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Greg Landsman",
+        "tx": {
+          "n": 45,
+          "avgExcess": 1.66,
+          "medianExcess": 1.47,
+          "winRate": 55.6
+        },
+        "disc": {
+          "n": 45,
+          "avgExcess": 2.97,
+          "medianExcess": 7.86,
+          "winRate": 55.6
+        },
+        "buyAvgExcess": 0.39,
+        "lagDays": 10,
+        "id": "house-greg-landsman",
         "chamber": "House",
         "party": "D"
       },
@@ -164125,26 +164094,6 @@
         "buyAvgExcess": -5.01,
         "lagDays": 21,
         "id": "house-kathy-manning",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Greg Landsman",
-        "tx": {
-          "n": 47,
-          "avgExcess": 1.32,
-          "medianExcess": 1.47,
-          "winRate": 55.3
-        },
-        "disc": {
-          "n": 47,
-          "avgExcess": 4.06,
-          "medianExcess": 9.46,
-          "winRate": 57.4
-        },
-        "buyAvgExcess": -2.24,
-        "lagDays": 14,
-        "id": "house-greg-landsman",
         "chamber": "House",
         "party": "D"
       },

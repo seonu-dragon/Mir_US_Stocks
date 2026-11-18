@@ -1,11 +1,111 @@
 {
-  "updatedAtKst": "2026-11-17 13:34 KST",
-  "lastFileDate": "2026-11-16",
+  "updatedAtKst": "2026-11-18 13:33 KST",
+  "lastFileDate": "2026-11-17",
   "partialFetch": false,
-  "count": 542,
+  "count": 543,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Expion Energy, Inc.",
+      "ticker": "XPON",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-17",
+      "accession": "0001903596-26-000437:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1894954/000190359626000437/xpon_s1.htm"
+    },
+    {
+      "company": "Anthropic, PBC",
+      "ticker": "ANT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001628280-26-074338:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026074338/anthropicpbc-sx1ax3.htm"
+    },
+    {
+      "company": "Anthropic, PBC",
+      "ticker": "ANT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001628280-26-074338:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026074338/anthropicpbc-sx1ax3.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": "MXRX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001477932-26-007117:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226007117/medx_s1a.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": "MXRX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001477932-26-007117:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226007117/medx_s1a.htm"
+    },
+    {
+      "company": "UCSB Acquisition Corp.",
+      "ticker": "UCSB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001213900-26-121218:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2147831/000121390026121218/ea0312312-s1a1_ucsbacq.htm"
+    },
+    {
+      "company": "UCSB Acquisition Corp.",
+      "ticker": "UCSB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001213900-26-121218:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2147831/000121390026121218/ea0312312-s1a1_ucsbacq.htm"
+    },
+    {
+      "company": "Boxlight Corp",
+      "ticker": "BOXL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001213900-26-121027:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1624512/000121390026121027/ea0312355-s1a3_boxlight.htm"
+    },
+    {
+      "company": "Boxlight Corp",
+      "ticker": "BOXL",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-17",
+      "accession": "0001213900-26-121027:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1624512/000121390026121027/ea0312355-s1a3_boxlight.htm"
+    },
+    {
+      "company": "Bitwise Zcash ETF",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-17",
+      "accession": "0001193125-26-465692:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152975/000119312526465692/ck0002152975-20261117.htm"
+    },
     {
       "company": "Core Specialty Insurance Holdings, Inc.",
       "ticker": null,
@@ -5457,96 +5557,6 @@
       "fileDate": "2026-09-18",
       "accession": "0001096906-26-001390:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2078149/000109690626001390/vrhi_s1z.htm"
-    },
-    {
-      "company": "Sensei Harbor Corp.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001683168-26-007209:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826007209/sensei_s1a6.htm"
-    },
-    {
-      "company": "Sensei Harbor Corp.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001683168-26-007209:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826007209/sensei_s1a6.htm"
-    },
-    {
-      "company": "NON INVASIVE MONITORING SYSTEMS INC /FL/",
-      "ticker": "NIMU",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001493152-26-043137:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/720762/000149315226043137/forms-1a.htm"
-    },
-    {
-      "company": "NON INVASIVE MONITORING SYSTEMS INC /FL/",
-      "ticker": "NIMU",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001493152-26-043137:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/720762/000149315226043137/forms-1a.htm"
-    },
-    {
-      "company": "GeoVax Labs, Inc.",
-      "ticker": "GOVX",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-17",
-      "accession": "0001437749-26-030676:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/832489/000143774926030676/govx20260911c_s1.htm"
-    },
-    {
-      "company": "Alopexx, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001213900-26-101026:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1880995/000121390026101026/ea0231844-07.htm"
-    },
-    {
-      "company": "Alopexx, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001213900-26-101026:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1880995/000121390026101026/ea0231844-07.htm"
-    },
-    {
-      "company": "Gravity Acquisition Corp.",
-      "ticker": "GVAC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001185185-26-004107:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2123380/000118518526004107/gravityacqs1a2091726.htm"
-    },
-    {
-      "company": "Gravity Acquisition Corp.",
-      "ticker": "GVAC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-17",
-      "accession": "0001185185-26-004107:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2123380/000118518526004107/gravityacqs1a2091726.htm"
     }
   ]
 }

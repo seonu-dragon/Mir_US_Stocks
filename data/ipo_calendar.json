@@ -1,11 +1,157 @@
 {
-  "updatedAtKst": "2026-11-19 13:34 KST",
-  "lastFileDate": "2026-11-18",
+  "updatedAtKst": "2026-11-20 13:34 KST",
+  "lastFileDate": "2026-11-19",
   "partialFetch": false,
-  "count": 521,
+  "count": 535,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": "SBE",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001628280-26-075026:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026075026/sbenergy-sx1a3.htm"
+    },
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": "SBE",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001628280-26-075026:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026075026/sbenergy-sx1a3.htm"
+    },
+    {
+      "company": "Anthropic, PBC",
+      "ticker": "ANT",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-19",
+      "accession": "0001628280-26-074944:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm",
+      "offerPrice": 83.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "BirchBioMed Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001493152-26-053312:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1670747/000149315226053312/forms-1a.htm"
+    },
+    {
+      "company": "BirchBioMed Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001493152-26-053312:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1670747/000149315226053312/forms-1a.htm"
+    },
+    {
+      "company": "Eastern International Ltd.",
+      "ticker": "ELOG",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-19",
+      "accession": "0001493152-26-053278:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2013320/000149315226053278/form424b4.htm",
+      "offerPrice": 0.36,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Crestone Strategic Capital Acquisition Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001493152-26-053189:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2136449/000149315226053189/forms-1a.htm"
+    },
+    {
+      "company": "Crestone Strategic Capital Acquisition Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001493152-26-053189:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2136449/000149315226053189/forms-1a.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": "MXRX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001477932-26-007188:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226007188/medx_s1a.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": "MXRX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-19",
+      "accession": "0001477932-26-007188:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226007188/medx_s1a.htm"
+    },
+    {
+      "company": "DATA I/O CORP",
+      "ticker": "DAIO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-19",
+      "accession": "0001193125-26-468831:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/351998/000119312526468831/d362942ds1.htm"
+    },
+    {
+      "company": "Medline Inc.",
+      "ticker": "MDLN",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-19",
+      "accession": "0001193125-26-468586:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2046386/000119312526468586/trident_iv_424b4.htm",
+      "offerPrice": 35.5,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Zeno42 Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-19",
+      "accession": "0001096906-26-001825:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2136881/000109690626001825/zeno_s1.htm"
+    },
+    {
+      "company": "Conexeu Sciences Inc.",
+      "ticker": "CNXU",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-19",
+      "accession": "0001062993-26-006205:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2066836/000106299326006205/forms1.htm"
+    },
     {
       "company": "Glow Holdings, Inc.",
       "ticker": "GLOH",

@@ -1,11 +1,153 @@
 {
-  "updatedAtKst": "2026-11-20 13:34 KST",
-  "lastFileDate": "2026-11-19",
+  "updatedAtKst": "2026-11-21 13:34 KST",
+  "lastFileDate": "2026-11-20",
   "partialFetch": false,
-  "count": 535,
+  "count": 549,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "ALPHA DIGITAL VOLTZ INC.",
+      "ticker": "ADVI",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001683168-26-008986:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1985554/000168316826008986/alphadig_s1.htm"
+    },
+    {
+      "company": "TruGolf Holdings, Inc.",
+      "ticker": "TRUG",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001493152-26-053580:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1857086/000149315226053580/forms-1.htm"
+    },
+    {
+      "company": "bioAffinity Technologies, Inc.  (BIAF, BIAFW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001493152-26-053519:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1712762/000149315226053519/forms-1.htm"
+    },
+    {
+      "company": "Fitness Champs Holdings Ltd",
+      "ticker": "FCHL",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-11-20",
+      "accession": "0001493152-26-053458:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2023796/000149315226053458/form424b4.htm",
+      "offerPrice": 0.35,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "LIS Technologies Inc",
+      "ticker": "LIS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-20",
+      "accession": "0001493152-26-053406:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1973276/000149315226053406/forms-1a.htm"
+    },
+    {
+      "company": "LIS Technologies Inc",
+      "ticker": "LIS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-20",
+      "accession": "0001493152-26-053406:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1973276/000149315226053406/forms-1a.htm"
+    },
+    {
+      "company": "BIO KEY INTERNATIONAL INC",
+      "ticker": "BKYI",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-20",
+      "accession": "0001437749-26-037921:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1019034/000143774926037921/bkyi20261113_s1a.htm"
+    },
+    {
+      "company": "BIO KEY INTERNATIONAL INC",
+      "ticker": "BKYI",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-20",
+      "accession": "0001437749-26-037921:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1019034/000143774926037921/bkyi20261113_s1a.htm"
+    },
+    {
+      "company": "Inmune Bio Inc.",
+      "ticker": "INMB",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001213900-26-122693:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1711754/000121390026122693/ea0312507-s1_inmune.htm"
+    },
+    {
+      "company": "ContextLogic Holdings Inc.",
+      "ticker": "LOGC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001193125-26-470479:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2064307/000119312526470479/d184620ds1.htm"
+    },
+    {
+      "company": "Aptevo Therapeutics Inc.",
+      "ticker": "APVO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001193125-26-470268:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1671584/000119312526470268/apvo-20261120.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-20",
+      "accession": "0001104659-26-130675:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926130675/cntm-20260930xs1a.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-20",
+      "accession": "0001104659-26-130675:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926130675/cntm-20260930xs1a.htm"
+    },
+    {
+      "company": "Forge Nano Holdings, Inc.  (NANO, NANOW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-20",
+      "accession": "0001104659-26-130613:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2101833/000110465926130613/tmb-20260930xs1.htm"
+    },
     {
       "company": "SB Energy, Inc.",
       "ticker": "SBE",

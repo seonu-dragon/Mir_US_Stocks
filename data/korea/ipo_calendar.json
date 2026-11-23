@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-11-22 16:18 KST",
+  "updatedAtKst": "2026-11-23 16:18 KST",
   "lastFileDate": "2026.12.17",
-  "count": 37,
+  "count": 36,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -244,21 +244,6 @@
       ]
     },
     {
-      "company": "케이엠에프",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "IBK투자증권",
-      "fileDate": "2026.11.24",
-      "accession": "kr-ipo-bidding-케이엠에프",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        15000,
-        17800
-      ]
-    },
-    {
       "company": "신영스팩12호",
       "ticker": null,
       "stage": "filed",
@@ -455,7 +440,7 @@
       "ticker": "420610",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "",
+      "form": "미래에셋증권",
       "fileDate": "2026.10.30",
       "accession": "kr-ipo-listed-인텔리빅스",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",

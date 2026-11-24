@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-24 06:39:14 KST",
+  "updatedAtKst": "2026-11-24 13:42:10 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 10935,
@@ -316,7 +316,7 @@
       "name": "John Boozman",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 0.13,
+      "estReturnPct": 0.12,
       "buyCount": 228,
       "sellCount": 203,
       "tradeCount": 431,
@@ -2726,7 +2726,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 0.13
+      "estReturnPct": 0.12
     },
     {
       "id": "senate-thomas-r-carper",
@@ -212642,7 +212642,7 @@
         "name": "Jared Moskowitz",
         "tx": {
           "n": 156,
-          "avgExcess": 3.07,
+          "avgExcess": 3.06,
           "medianExcess": 1.74,
           "winRate": 52.6
         },
@@ -212722,17 +212722,17 @@
         "name": "Josh Gottheimer",
         "tx": {
           "n": 277,
-          "avgExcess": 1.82,
+          "avgExcess": 1.84,
           "medianExcess": 0.31,
           "winRate": 50.5
         },
         "disc": {
           "n": 275,
-          "avgExcess": 2.23,
+          "avgExcess": 2.24,
           "medianExcess": -0.88,
           "winRate": 48.4
         },
-        "buyAvgExcess": -0.98,
+        "buyAvgExcess": -0.95,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
@@ -212862,17 +212862,17 @@
         "name": "Alan Armstrong",
         "tx": {
           "n": 364,
-          "avgExcess": -0.33,
+          "avgExcess": -0.3,
           "medianExcess": -1.69,
-          "winRate": 45.9
+          "winRate": 46.2
         },
         "disc": {
           "n": 364,
-          "avgExcess": 1.46,
+          "avgExcess": 1.47,
           "medianExcess": 1.78,
           "winRate": 53.8
         },
-        "buyAvgExcess": -1.04,
+        "buyAvgExcess": -1.01,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -212896,15 +212896,15 @@
         "name": "John Boozman",
         "tx": {
           "n": 415,
-          "avgExcess": -0.55,
+          "avgExcess": -0.53,
           "medianExcess": -0.07,
           "winRate": 47.5
         },
         "disc": {
           "n": 411,
-          "avgExcess": -0.31,
-          "medianExcess": -0.07,
-          "winRate": 47.7
+          "avgExcess": -0.3,
+          "medianExcess": -0.05,
+          "winRate": 47.9
         },
         "buyAvgExcess": -1.64,
         "lagDays": 28,
@@ -213096,13 +213096,13 @@
         "name": "Jonathan Jackson",
         "tx": {
           "n": 79,
-          "avgExcess": -3.06,
+          "avgExcess": -3.07,
           "medianExcess": -7.01,
           "winRate": 44.3
         },
         "disc": {
           "n": 76,
-          "avgExcess": -1.31,
+          "avgExcess": -1.32,
           "medianExcess": -2.38,
           "winRate": 44.7
         },
@@ -213136,17 +213136,17 @@
         "name": "Gilbert Cisneros",
         "tx": {
           "n": 688,
-          "avgExcess": -3.37,
+          "avgExcess": -3.33,
           "medianExcess": -3.74,
-          "winRate": 44.6
+          "winRate": 44.8
         },
         "disc": {
           "n": 651,
-          "avgExcess": -3.75,
+          "avgExcess": -3.73,
           "medianExcess": -3.73,
           "winRate": 42.5
         },
-        "buyAvgExcess": -4.51,
+        "buyAvgExcess": -4.48,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
@@ -213347,13 +213347,13 @@
         "name": "Kevin Hern",
         "tx": {
           "n": 111,
-          "avgExcess": -6.61,
+          "avgExcess": -6.62,
           "medianExcess": -8.34,
           "winRate": 31.5
         },
         "disc": {
           "n": 101,
-          "avgExcess": -7.42,
+          "avgExcess": -7.43,
           "medianExcess": -7.65,
           "winRate": 31.7
         },
@@ -213420,9 +213420,9 @@
         "name": "April McClain Delaney",
         "tx": {
           "n": 185,
-          "avgExcess": -8.67,
+          "avgExcess": -8.66,
           "medianExcess": -5.76,
-          "winRate": 31.4
+          "winRate": 30.8
         },
         "disc": {
           "n": 185,
@@ -213430,7 +213430,7 @@
           "medianExcess": -5.32,
           "winRate": 34.6
         },
-        "buyAvgExcess": -9.68,
+        "buyAvgExcess": -9.67,
         "lagDays": 12,
         "id": "house-april-mcclain-delaney",
         "chamber": "House",

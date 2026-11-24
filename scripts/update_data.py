@@ -1271,8 +1271,12 @@ def fetch_nasdaq_etf_screener():
         return []
 
     rows = []
-    data = payload.get("data", {})
-    for item in data.get("rows", []) or data.get("data", {}).get("rows", []):
+    # 나스닥은 장애 때 200 + {"data": {"data": {"rows": null}}} 를 준다(2026-11-23~).
+    # 키는 있는데 값이 null 이라 .get 기본값이 안 먹으므로 `or` 로 막고, 빈 목록이면
+    # build_etf_catalog 가 fallback_etf_rows 로 넘어간다.
+    data = (payload or {}).get("data") or {}
+    items = data.get("rows") or (data.get("data") or {}).get("rows") or []
+    for item in items:
         symbol = clean_symbol(item.get("symbol"))
         name = str(item.get("companyName") or item.get("name") or symbol).strip()
         price = parse_money(item.get("lastSalePrice") or item.get("lastsale"))

@@ -81,7 +81,7 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'cancelled'
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -384,9 +384,23 @@ jobs:
           # 스테이징 사본 = 서빙 내용. 체크아웃 루트가 아니라 _site 만 올린다.
           path: '_site'
 
+      # 2026-11 부터 업로드 직후 deploy-pages 가 "Fetching artifact metadata failed /
+      # No artifacts named github-pages" 로 간헐 실패한다(11-24 23회 중 9회). 업로드는
+      # 성공했고 0.5초 만에 조회해서 GitHub 쪽 반영이 늦는 경우라, 1차 실패는 넘기고
+      # 잠깐 기다렸다 한 번 더 배포한다. 재시도까지 실패해야 job 실패(텔레그램 알림).
       - name: Deploy to GitHub Pages
         if: steps.gate.outputs.deploy != 'false'
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Wait before deploy retry
+        if: steps.gate.outputs.deploy != 'false' && steps.deployment.outcome == 'failure'
+        run: sleep 30
+
+      - name: Deploy to GitHub Pages (retry)
+        if: steps.gate.outputs.deploy != 'false' && steps.deployment.outcome == 'failure'
+        id: deployment_retry
         uses: actions/deploy-pages@v5
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.

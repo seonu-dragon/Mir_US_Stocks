@@ -177,6 +177,27 @@ def test_kr_quarterly_parallel_matches_serial(monkeypatch):
     assert serial == parallel and len(serial[0]) == 250
 
 
+
+def test_kr_fetch_batch_bisects_around_bad_corp(monkeypatch):
+    calls = []
+
+    def fake_get(path, params, key):
+        corps = params["corp_code"].split(",")
+        calls.append(len(corps))
+        if "cBAD" in corps:
+            raise ValueError("Expecting value: line 1 column 1 (char 0)")   # DART 가 JSON 아닌 응답
+        return {"status": "000", "list": [{"corp_code": c} for c in corps]}
+
+    monkeypatch.setattr(kre, "dart_get", fake_get)
+    corps = [f"c{i}" for i in range(100)]
+    corps[37] = "cBAD"
+    errors: dict = {}
+    rows = kre.fetch_batch(corps, "2026", "11014", "k", errors, sb.StepBudget(0))
+    assert sorted(r["corp_code"] for r in rows) == sorted(c for c in corps if c != "cBAD")   # 99개 살림
+    assert errors == {"request:ValueError": 1}            # 오류는 문제 회사 하나로만 센다
+    assert len(calls) <= 16                               # 반씩 나누기라 호출이 몇 번만 는다
+
+
 # ─────────────────────────── 소유구조 · 감사의견 ───────────────────────────
 def test_ownership_missing_first_and_budget(monkeypatch):
     monkeypatch.setattr(own, "load_json", lambda p, d: {"stocks": [

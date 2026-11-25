@@ -162,6 +162,13 @@ def fetch_batch(corp_codes: list[str], year: str, reprt: str, api_key: str, erro
             api_key,
         )
     except Exception as exc:
+        if len(corp_codes) > 1 and not (budget and budget.over()):
+            # 묶음 안의 특정 회사 하나 때문에 DART 가 JSON 이 아닌 응답을 줄 때가 있다(11-25 실측:
+            # 같은 100개 묶음이 8개 보고서 모두 JSONDecodeError → 그 묶음 ~90종목이 통째로 빠짐).
+            # 반씩 나눠 다시 받아 문제 회사만 빼고 나머지는 살린다(회사 하나면 ~14회 더 든다).
+            mid = len(corp_codes) // 2
+            return (fetch_batch(corp_codes[:mid], year, reprt, api_key, errors, budget)
+                    + fetch_batch(corp_codes[mid:], year, reprt, api_key, errors, budget))
         key = f"request:{type(exc).__name__}"
         with _lock:
             errors[key] = errors.get(key, 0) + 1

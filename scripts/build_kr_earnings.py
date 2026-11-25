@@ -9,6 +9,11 @@ earningsReactionRows 가 실적 전후 주가 반응을 계산한다.
 효율: fnlttMultiAcnt 는 corp_code 를 콤마로 최대 100개까지 받는다(200개면 status 021).
 2,600종목 × 8분기를 종목별로 돌면 20,800회지만, 100개씩 묶으면 26 × 8 = 208회로 끝난다.
 
+동시 요청: 2026-11-14 무렵부터 DART 가 연결 하나당 초당 ~15KB 로만 보낸다(Actions 실측 —
+100개 묶음 1.4MB 가 3초 → 95초). 208회를 순서대로 받으면 5시간이라 90분 예산에 매주 걸렸다.
+연결별 제한이라 동시에 받으면 그대로 빨라진다(25개 묶음 1개 24초 · 8개 동시 26초). 그래서
+분기 실적·현금흐름 둘 다 DART_WORKERS(기본 8)개를 동시에 돌린다. 호출 횟수는 같다(일일 한도 무관).
+
 검증해서 알아낸 함정 두 가지:
   1) fs_div 를 지정하지 않으면 연결(CFS)과 별도(OFS) 가 같이 와서 '매출액' 이 두 번
      나온다(삼성전자 133.9조 vs 109.3조). 반드시 갈라서 CFS 우선으로 골라야 한다.
@@ -26,6 +31,8 @@ import argparse
 import json
 import os
 import sys
+import threading
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -51,6 +58,9 @@ OUT_JS = ROOT / "data" / "korea" / "earnings.js"
 KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 
 BATCH = 100                      # fnlttMultiAcnt 상한(200 이면 status 021)
+# 동시 요청 수. 1 이면 예전처럼 하나씩(테스트·장애 때 되돌리기용).
+WORKERS = max(1, int(os.environ.get("DART_WORKERS") or 8))
+_lock = threading.Lock()         # 워커 스레드가 같이 쓰는 errors·budget 보호
 REPORTS = {                      # reprt_code → (분기라벨, 분기번호)
     "11013": ("1분기", 1),
     "11012": ("2분기", 2),        # '반기보고서' 지만 값은 2분기치
@@ -152,21 +162,54 @@ def fetch_batch(corp_codes: list[str], year: str, reprt: str, api_key: str, erro
             api_key,
         )
     except Exception as exc:
+        if len(corp_codes) > 1 and not (budget and budget.over()):
+            # 묶음 안의 특정 회사 하나 때문에 DART 가 JSON 이 아닌 응답을 줄 때가 있다(11-25 실측:
+            # 같은 100개 묶음이 8개 보고서 모두 JSONDecodeError → 그 묶음 ~90종목이 통째로 빠짐).
+            # 반씩 나눠 다시 받아 문제 회사만 빼고 나머지는 살린다(회사 하나면 ~14회 더 든다).
+            mid = len(corp_codes) // 2
+            return (fetch_batch(corp_codes[:mid], year, reprt, api_key, errors, budget)
+                    + fetch_batch(corp_codes[mid:], year, reprt, api_key, errors, budget))
         key = f"request:{type(exc).__name__}"
-        errors[key] = errors.get(key, 0) + 1
-        if budget:
-            budget.record(False)
+        with _lock:
+            errors[key] = errors.get(key, 0) + 1
+            if budget:
+                budget.record(False)
         return []
-    if budget:
-        budget.record(True)
     status = str(data.get("status") or "")
-    if status == "013":
-        return []                       # 해당 분기 데이터 없음
+    with _lock:
+        if budget:
+            budget.record(True)
+        if status not in ("000", "013"):
+            key = f'{status}:{data.get("message") or ""}'.strip(":")
+            errors[key] = errors.get(key, 0) + 1
     if status != "000":
-        key = f'{status}:{data.get("message") or ""}'.strip(":")
-        errors[key] = errors.get(key, 0) + 1
-        return []
+        return []                       # 013 = 해당 분기 데이터 없음
     return data.get("list") or []
+
+
+def run_parallel(n: int, fn, on_done, budget: StepBudget | None = None,
+                 workers: int | None = None) -> int:
+    """fn(i) (i = 0..n-1) 를 최대 workers 개 동시에 돌리고, 끝나는 대로 메인 스레드에서
+    on_done(i, 결과) 를 부른다. 예산이 넘으면 새 작업을 더 넣지 않고(돌던 것만 마저 받는다)
+    끝낸다. 끝낸 작업 수를 돌려준다. workers=1 이면 예전 순차 루프와 똑같이 동작한다.
+    fn 안의 BaseException(DART 020 → SystemExit)은 그대로 올라온다."""
+    workers = max(1, workers or WORKERS)
+    done_count = 0
+    nxt = 0
+    pending: dict = {}
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        while True:
+            while nxt < n and len(pending) < workers and not (budget and budget.over()):
+                pending[ex.submit(fn, nxt)] = nxt
+                nxt += 1
+            if not pending:
+                break
+            finished, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for fut in finished:
+                i = pending.pop(fut)
+                on_done(i, fut.result())
+                done_count += 1
+    return done_count
 
 
 class PhaseStopped(Exception):
@@ -205,70 +248,83 @@ def build(api_key: str, years: list[str], limit: int | None, budget: StepBudget 
     # ticker -> {(year, reprt): row}
     acc: dict[str, dict] = {}
 
-    for year in years:
-        for reprt, (qlabel, qnum) in REPORTS.items():
-            for i in range(0, len(pairs), BATCH):
-                if budget and budget.over():
-                    # 분기 실적은 208회짜리라 평소엔 몇 분이면 끝난다. 여기서 멈췄다면 DART 가
-                    # 비정상이다 — 일부 분기만 빈 채로 발행하지 않고 기존 파일을 유지한다.
-                    raise PhaseStopped(budget.reason)
-                chunk = [c for _, c in pairs[i:i + BATCH]]
-                rows = fetch_batch(chunk, year, reprt, api_key, errors, budget)
-                # 종목·재무제표구분별로 손익계산서만 모은다.
-                grouped: dict[tuple[str, str], list[dict]] = {}
-                # 손익계산서(IS)와 재무상태표(BS)를 같이 모은다. BS 는 자산총계 하나만
-                # 쓰는데, 그게 있어야 build_map_fundamentals 가 ROA(순이익/총자산)를
-                # 계산할 수 있다 — KR 은 assetsB 가 없어서 히트맵 ROA 가 전 종목
-                # '데이터 없음'(중립색)이었다.
-                bs_grouped: dict[tuple[str, str], list[dict]] = {}
-                for r in rows:
-                    key = (r.get("corp_code"), r.get("fs_div") or "")
-                    if r.get("sj_div") == "IS":
-                        grouped.setdefault(key, []).append(r)
-                    elif r.get("sj_div") == "BS":
-                        bs_grouped.setdefault(key, []).append(r)
-                for (corp, fs_div), items in grouped.items():
-                    ticker = by_corp.get(corp)
-                    if not ticker:
-                        continue
-                    revenue = pick(items, REVENUE_NAMES)
-                    operating = pick(items, OPERATING_NAMES)
-                    net = pick(items, NET_NAMES)
-                    # 매출이 없다고 버리면 안 된다. 은행·보험·증권은 '매출액' 계정이
-                    # 없을 뿐 영업이익·순이익은 멀쩡히 낸다 — 예전엔 이 한 줄 때문에
-                    # KB금융(영업이익 8.5조)·삼성생명·삼성화재 같은 금융 대형주가
-                    # 통째로 빠졌다(시총 상위 25개 중 5개).
-                    if revenue is None and operating is None and net is None:
-                        continue
-                    entry = {
-                        "quarter": f"{year}Q{qnum}" if qnum != 4 else f"{year}FY",
-                        "label": f"{year} {qlabel}",
-                        "date": announce_date(items[0].get("rcept_no")),
-                        "period": str(items[0].get("thstrm_dt") or "").strip(),
-                        "revenue": revenue,
-                        "operatingProfit": operating,
-                        "netIncome": net,
-                        "fsDiv": fs_div,
-                        "annual": qnum == 4,
-                    }
-                    # 금융업은 매출 대신 이 지표들이 실질 톱라인이다. 있을 때만 싣는다.
-                    for key_name, names in (
-                        ("netInterestIncome", INTEREST_NET_NAMES),
-                        ("interestIncome", INTEREST_INCOME_NAMES),
-                        ("netFeeIncome", FEE_NET_NAMES),
-                    ):
-                        v = pick(items, names)
-                        if v is not None:
-                            entry[key_name] = v
-                    # 같은 (회사, 연결구분) 의 재무상태표에서 총자산.
-                    assets = pick(bs_grouped.get((corp, fs_div)) or [], ASSET_NAMES)
-                    if assets is not None:
-                        entry["totalAssets"] = assets
-                    slot = acc.setdefault(ticker, {})
-                    prev = slot.get((year, reprt))
-                    # 연결(CFS) 우선. 별도(OFS)는 연결이 없는 회사만.
-                    if prev is None or (prev.get("fsDiv") != "CFS" and fs_div == "CFS"):
-                        slot[(year, reprt)] = entry
+    jobs = [
+        (year, reprt, qlabel, qnum, [c for _, c in pairs[i:i + BATCH]])
+        for year in years
+        for reprt, (qlabel, qnum) in REPORTS.items()
+        for i in range(0, len(pairs), BATCH)
+    ]
+    fetched: dict[int, list[dict]] = {}
+
+    def _done(i, rows):
+        fetched[i] = rows
+        if len(fetched) % 25 == 0:
+            el = f" · {budget.elapsed_min():.0f}분" if budget else ""
+            print(f"[실적] {len(fetched)}/{len(jobs)} …{el}", flush=True)
+
+    run_parallel(len(jobs), lambda i: fetch_batch(jobs[i][4], jobs[i][0], jobs[i][1], api_key, errors, budget),
+                 _done, budget)
+    if len(fetched) < len(jobs):
+        # 일부 분기만 빈 채로 발행하지 않고 기존 파일을 유지한다.
+        raise PhaseStopped(budget.reason if budget and budget.reason else "분기 실적 수집 미완료")
+
+    for idx, (year, reprt, qlabel, qnum, _chunk) in enumerate(jobs):
+        rows = fetched[idx]
+        # 종목·재무제표구분별로 손익계산서만 모은다.
+        grouped: dict[tuple[str, str], list[dict]] = {}
+        # 손익계산서(IS)와 재무상태표(BS)를 같이 모은다. BS 는 자산총계 하나만
+        # 쓰는데, 그게 있어야 build_map_fundamentals 가 ROA(순이익/총자산)를
+        # 계산할 수 있다 — KR 은 assetsB 가 없어서 히트맵 ROA 가 전 종목
+        # '데이터 없음'(중립색)이었다.
+        bs_grouped: dict[tuple[str, str], list[dict]] = {}
+        for r in rows:
+            key = (r.get("corp_code"), r.get("fs_div") or "")
+            if r.get("sj_div") == "IS":
+                grouped.setdefault(key, []).append(r)
+            elif r.get("sj_div") == "BS":
+                bs_grouped.setdefault(key, []).append(r)
+        for (corp, fs_div), items in grouped.items():
+            ticker = by_corp.get(corp)
+            if not ticker:
+                continue
+            revenue = pick(items, REVENUE_NAMES)
+            operating = pick(items, OPERATING_NAMES)
+            net = pick(items, NET_NAMES)
+            # 매출이 없다고 버리면 안 된다. 은행·보험·증권은 '매출액' 계정이
+            # 없을 뿐 영업이익·순이익은 멀쩡히 낸다 — 예전엔 이 한 줄 때문에
+            # KB금융(영업이익 8.5조)·삼성생명·삼성화재 같은 금융 대형주가
+            # 통째로 빠졌다(시총 상위 25개 중 5개).
+            if revenue is None and operating is None and net is None:
+                continue
+            entry = {
+                "quarter": f"{year}Q{qnum}" if qnum != 4 else f"{year}FY",
+                "label": f"{year} {qlabel}",
+                "date": announce_date(items[0].get("rcept_no")),
+                "period": str(items[0].get("thstrm_dt") or "").strip(),
+                "revenue": revenue,
+                "operatingProfit": operating,
+                "netIncome": net,
+                "fsDiv": fs_div,
+                "annual": qnum == 4,
+            }
+            # 금융업은 매출 대신 이 지표들이 실질 톱라인이다. 있을 때만 싣는다.
+            for key_name, names in (
+                ("netInterestIncome", INTEREST_NET_NAMES),
+                ("interestIncome", INTEREST_INCOME_NAMES),
+                ("netFeeIncome", FEE_NET_NAMES),
+            ):
+                v = pick(items, names)
+                if v is not None:
+                    entry[key_name] = v
+            # 같은 (회사, 연결구분) 의 재무상태표에서 총자산.
+            assets = pick(bs_grouped.get((corp, fs_div)) or [], ASSET_NAMES)
+            if assets is not None:
+                entry["totalAssets"] = assets
+            slot = acc.setdefault(ticker, {})
+            prev = slot.get((year, reprt))
+            # 연결(CFS) 우선. 별도(OFS)는 연결이 없는 회사만.
+            if prev is None or (prev.get("fsDiv") != "CFS" and fs_div == "CFS"):
+                slot[(year, reprt)] = entry
 
     out: dict[str, list[dict]] = {}
     cumulative_suspect = 0
@@ -310,71 +366,86 @@ def fetch_cash_flow_and_ev(api_key: str, pairs: list[tuple[str, str]], year: str
     out: dict[str, dict] = {}
     errors: dict[str, int] = {}
     attempted = attempted if attempted is not None else set()
-    for i, (ticker, corp) in enumerate(pairs, 1):
-        if budget and budget.over():
-            print(f"[현금흐름] {budget.reason} — {i - 1}/{len(pairs)}종목에서 멈춘다(나머지는 직전 값 이월)",
-                  flush=True)
-            break
-        if i % 250 == 0:
-            el = f" · {budget.elapsed_min():.0f}분" if budget else ""
-            print(f"[현금흐름] {i}/{len(pairs)} …{el}", flush=True)
+
+    def _fetch(i):                      # 워커 스레드 — 요청만 하고 처리는 메인 스레드(_done)
         try:
-            data = dart_get(
+            return dart_get(
                 "fnlttSinglAcntAll.json",
-                {"corp_code": corp, "bsns_year": year, "reprt_code": "11011", "fs_div": "CFS"},
+                {"corp_code": pairs[i][1], "bsns_year": year, "reprt_code": "11011", "fs_div": "CFS"},
                 api_key,
             )
         except Exception as exc:
-            errors[f"request:{type(exc).__name__}"] = errors.get(f"request:{type(exc).__name__}", 0) + 1
+            return exc
+
+    progress = [0]
+
+    def _done(i, data):
+        progress[0] += 1
+        if progress[0] % 250 == 0:
+            el = f" · {budget.elapsed_min():.0f}분" if budget else ""
+            print(f"[현금흐름] {progress[0]}/{len(pairs)} …{el}", flush=True)
+        ticker = pairs[i][0]
+        if isinstance(data, Exception):
+            errors[f"request:{type(data).__name__}"] = errors.get(f"request:{type(data).__name__}", 0) + 1
             if budget:
                 budget.record(False)
-            continue
+            return
         if budget:
             budget.record(True)
-        status = str(data.get("status") or "")
-        if status in ("000", "013"):
-            attempted.add(ticker)          # 응답을 받아 '확인한' 종목 — 이월 대상이 아니다
-        if status == "013":
-            continue
-        if status != "000":
-            key = f'{status}:{data.get("message") or ""}'.strip(":")
-            errors[key] = errors.get(key, 0) + 1
-            continue
-        ocf = capex = cash = None
-        debt_parts = []
-        for row in data.get("list") or []:
-            sj = row.get("sj_div")
-            aid = row.get("account_id")
-            if sj == "CF":
-                if aid == CF_OPERATING_ID and ocf is None:
-                    ocf = to_num(row.get("thstrm_amount"))
-                elif aid == CF_CAPEX_ID and capex is None:
-                    capex = to_num(row.get("thstrm_amount"))
-            elif sj == "BS":
-                if aid == BS_CASH_ID and cash is None:
-                    cash = to_num(row.get("thstrm_amount"))
-                elif (row.get("account_nm") or "").strip() in DEBT_NAMES:
-                    v = to_num(row.get("thstrm_amount"))
-                    if v is not None:
-                        debt_parts.append(abs(v))
+        _ingest_cash_flow(ticker, data, out, errors, attempted)
 
-        entry = {}
-        if ocf is not None:
-            entry["operatingCashFlow"] = ocf
-            if capex is not None:
-                # CAPEX 는 유출인데 양수로 오는 회사와 음수로 오는 회사가 섞여 있다.
-                # 절대값으로 통일해서 뺀다.
-                entry["capex"] = abs(capex)
-                entry["freeCashFlow"] = ocf - abs(capex)
-        if cash is not None:
-            entry["cash"] = cash
-        if debt_parts:                      # 못 찾았으면 0 이 아니라 '없음' 으로 남긴다
-            entry["totalDebt"] = sum(debt_parts)
-        if entry:
-            out[ticker] = entry
+    done = run_parallel(len(pairs), _fetch, _done, budget)
+    if done < len(pairs):
+        reason = budget.reason if budget else "중단"
+        print(f"[현금흐름] {reason} — {done}/{len(pairs)}종목에서 멈춘다(나머지는 직전 값 이월)", flush=True)
     if errors:
         print(f"[현금흐름] 오류 {sum(errors.values())}건: {dict(list(errors.items())[:4])}")
     return out
+
+
+def _ingest_cash_flow(ticker: str, data: dict, out: dict, errors: dict, attempted: set) -> None:
+    """전체재무제표 응답 하나에서 현금흐름(P/FCF)·재무상태(EV) 값을 out[ticker] 에 담는다."""
+    status = str(data.get("status") or "")
+    if status in ("000", "013"):
+        attempted.add(ticker)          # 응답을 받아 '확인한' 종목 — 이월 대상이 아니다
+    if status == "013":
+        return
+    if status != "000":
+        key = f'{status}:{data.get("message") or ""}'.strip(":")
+        errors[key] = errors.get(key, 0) + 1
+        return
+    ocf = capex = cash = None
+    debt_parts = []
+    for row in data.get("list") or []:
+        sj = row.get("sj_div")
+        aid = row.get("account_id")
+        if sj == "CF":
+            if aid == CF_OPERATING_ID and ocf is None:
+                ocf = to_num(row.get("thstrm_amount"))
+            elif aid == CF_CAPEX_ID and capex is None:
+                capex = to_num(row.get("thstrm_amount"))
+        elif sj == "BS":
+            if aid == BS_CASH_ID and cash is None:
+                cash = to_num(row.get("thstrm_amount"))
+            elif (row.get("account_nm") or "").strip() in DEBT_NAMES:
+                v = to_num(row.get("thstrm_amount"))
+                if v is not None:
+                    debt_parts.append(abs(v))
+
+    entry = {}
+    if ocf is not None:
+        entry["operatingCashFlow"] = ocf
+        if capex is not None:
+            # CAPEX 는 유출인데 양수로 오는 회사와 음수로 오는 회사가 섞여 있다.
+            # 절대값으로 통일해서 뺀다.
+            entry["capex"] = abs(capex)
+            entry["freeCashFlow"] = ocf - abs(capex)
+    if cash is not None:
+        entry["cash"] = cash
+    if debt_parts:                      # 못 찾았으면 0 이 아니라 '없음' 으로 남긴다
+        entry["totalDebt"] = sum(debt_parts)
+    if entry:
+        out[ticker] = entry
 
 
 def main() -> int:

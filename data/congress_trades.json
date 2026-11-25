@@ -1,10 +1,10 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-25 06:40:09 KST",
+  "updatedAtKst": "2026-11-25 13:42:33 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10937,
-  "politicianCount": 198,
+  "tradeCount": 10904,
+  "politicianCount": 196,
   "rankings": [
     {
       "rank": 1,
@@ -96,7 +96,7 @@
       "name": "Richard Dean McCormick",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 18.25,
+      "estReturnPct": 18.58,
       "buyCount": 30,
       "sellCount": 25,
       "tradeCount": 55,
@@ -132,7 +132,7 @@
       "name": "Lloyd Doggett",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 12.95,
+      "estReturnPct": 13.05,
       "buyCount": 70,
       "sellCount": 0,
       "tradeCount": 70,
@@ -169,9 +169,9 @@
       "chamber": "House",
       "party": "R",
       "estReturnPct": 10.97,
-      "buyCount": 130,
-      "sellCount": 118,
-      "tradeCount": 257,
+      "buyCount": 116,
+      "sellCount": 117,
+      "tradeCount": 242,
       "committees": []
     },
     {
@@ -180,7 +180,7 @@
       "name": "Alan Armstrong",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 9.73,
+      "estReturnPct": 9.78,
       "buyCount": 322,
       "sellCount": 48,
       "tradeCount": 370,
@@ -288,6 +288,18 @@
     },
     {
       "rank": 24,
+      "id": "house-dan-newhouse",
+      "name": "Dan Newhouse",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 1.25,
+      "buyCount": 52,
+      "sellCount": 15,
+      "tradeCount": 67,
+      "committees": []
+    },
+    {
+      "rank": 25,
       "id": "senate-john-w-hickenlooper",
       "name": "John W Hickenlooper",
       "chamber": "Senate",
@@ -296,18 +308,6 @@
       "buyCount": 26,
       "sellCount": 64,
       "tradeCount": 90,
-      "committees": []
-    },
-    {
-      "rank": 25,
-      "id": "house-dan-newhouse",
-      "name": "Dan Newhouse",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 0.97,
-      "buyCount": 52,
-      "sellCount": 15,
-      "tradeCount": 67,
       "committees": []
     },
     {
@@ -519,7 +519,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -14.1,
+      "estReturnPct": -14.85,
       "buyCount": 56,
       "sellCount": 40,
       "tradeCount": 96,
@@ -2735,9 +2735,9 @@
       "party": "D",
       "committees": [],
       "district": "",
-      "tradeCount": 379,
-      "buyCount": 164,
-      "sellCount": 215,
+      "tradeCount": 374,
+      "buyCount": 162,
+      "sellCount": 212,
       "recentTrades": [
         {
           "politician": "Thomas R Carper",
@@ -3434,7 +3434,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 9.73
+      "estReturnPct": 9.78
     },
     {
       "id": "senate-markwayne-mullin",
@@ -4148,360 +4148,6 @@
       "estReturnPct": -8.8
     },
     {
-      "id": "house-kevin-hern",
-      "name": "Kevin Hern",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "OK01",
-      "tradeCount": 257,
-      "buyCount": 130,
-      "sellCount": 118,
-      "recentTrades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "NEE",
-          "asset": "NextEra Energy, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-10-02",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "CB",
-          "asset": "Chubb Limited Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "DVN",
-          "asset": "Devon Energy Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Foundation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "HD",
-          "asset": "Home Depot, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "LMT",
-          "asset": "Lockheed Martin Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "MRSH",
-          "asset": "Marsh Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "SBUX",
-          "asset": "Starbucks Corporation - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Revocable Trust",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "UNH",
-          "asset": "UnitedHealth Group Incorporated Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Foundation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-23",
-          "disclosureDate": "10/02/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "CNP",
-          "asset": "CenterPoint Energy, Inc",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-15",
-          "disclosureDate": "09/15/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "STE",
-          "asset": "STERIS plc",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-15",
-          "disclosureDate": "09/15/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "TJX",
-          "asset": "TJX Companies, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-09-15",
-          "disclosureDate": "09/15/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "HD",
-          "asset": "Home Depot, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-14",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "IQV",
-          "asset": "IQVIA Holdings, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-09-14",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "OKE",
-          "asset": "ONEOK, Inc. Common Stock",
-          "side": "exchange",
-          "type": "Exchange",
-          "amount": "$500,001",
-          "amountMid": 500001,
-          "transactionDate": "2026-09-11",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "OKE",
-          "asset": "ONEOK, Inc. Common Stock",
-          "side": "exchange",
-          "type": "Exchange",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2026-09-11",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "NVO",
-          "asset": "Novo Nordisk A/S Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-09-10",
-          "disclosureDate": "09/15/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "UNH",
-          "asset": "UnitedHealth Group Incorporated Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Foundation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-10",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "BSX",
-          "asset": "Boston Scientific Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2026-09-09",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "ITW",
-          "asset": "Illinois Tool Works Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Revocable Trust",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-09-09",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "PTC",
-          "asset": "PTC Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2026-09-09",
-          "disclosureDate": "09/15/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": 10.97
-    },
-    {
       "id": "house-jefferson-shreve",
       "name": "Jefferson Shreve",
       "chamber": "House",
@@ -5208,6 +4854,360 @@
         }
       ],
       "estReturnPct": -4.8
+    },
+    {
+      "id": "house-kevin-hern",
+      "name": "Kevin Hern",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "OK01",
+      "tradeCount": 242,
+      "buyCount": 116,
+      "sellCount": 117,
+      "recentTrades": [
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "NEE",
+          "asset": "NextEra Energy, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-10-02",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "CB",
+          "asset": "Chubb Limited Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "DVN",
+          "asset": "Devon Energy Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Foundation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "HD",
+          "asset": "Home Depot, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "LMT",
+          "asset": "Lockheed Martin Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "MRSH",
+          "asset": "Marsh Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "SBUX",
+          "asset": "Starbucks Corporation - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Revocable Trust",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "UNH",
+          "asset": "UnitedHealth Group Incorporated Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Foundation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-23",
+          "disclosureDate": "10/02/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035588.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "CNP",
+          "asset": "CenterPoint Energy, Inc",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-15",
+          "disclosureDate": "09/15/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "STE",
+          "asset": "STERIS plc",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-15",
+          "disclosureDate": "09/15/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "TJX",
+          "asset": "TJX Companies, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-09-15",
+          "disclosureDate": "09/15/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "HD",
+          "asset": "Home Depot, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-14",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "IQV",
+          "asset": "IQVIA Holdings, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-09-14",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "OKE",
+          "asset": "ONEOK, Inc. Common Stock",
+          "side": "exchange",
+          "type": "Exchange",
+          "amount": "$500,001",
+          "amountMid": 500001,
+          "transactionDate": "2026-09-11",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "OKE",
+          "asset": "ONEOK, Inc. Common Stock",
+          "side": "exchange",
+          "type": "Exchange",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2026-09-11",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "NVO",
+          "asset": "Novo Nordisk A/S Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-09-10",
+          "disclosureDate": "09/15/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "UNH",
+          "asset": "UnitedHealth Group Incorporated Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Foundation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-10",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "BSX",
+          "asset": "Boston Scientific Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-09-09",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "ITW",
+          "asset": "Illinois Tool Works Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Hern Family Revocable Trust",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-09",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kevin Hern",
+          "chamber": "House",
+          "ticker": "PTC",
+          "asset": "PTC Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-09-09",
+          "disclosureDate": "09/15/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
+          "district": "OK01",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": 10.97
     },
     {
       "id": "house-kathy-manning",
@@ -7342,8 +7342,8 @@
       "party": "R",
       "committees": [],
       "district": "NC05",
-      "tradeCount": 183,
-      "buyCount": 145,
+      "tradeCount": 181,
+      "buyCount": 143,
       "sellCount": 38,
       "recentTrades": [
         {
@@ -10522,7 +10522,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -14.1
+      "estReturnPct": -14.85
     },
     {
       "id": "house-greg-stanton",
@@ -14416,7 +14416,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 12.95
+      "estReturnPct": 13.05
     },
     {
       "id": "house-dan-newhouse",
@@ -14770,7 +14770,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 0.97
+      "estReturnPct": 1.25
     },
     {
       "id": "house-ritchie-john-torres",
@@ -15832,7 +15832,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 18.25
+      "estReturnPct": 18.58
     },
     {
       "id": "senate-jerry-moran",
@@ -31637,241 +31637,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-bob-gibbs",
-      "name": "Bob Gibbs",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "OH07",
-      "tradeCount": 13,
-      "buyCount": 10,
-      "sellCount": 3,
-      "recentTrades": [
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "INTC",
-          "asset": "Intel Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-12-21",
-          "disclosureDate": "12/21/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022166.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "F",
-          "asset": "Ford Motor Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-10-27",
-          "disclosureDate": "10/27/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021911.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-09-06",
-          "disclosureDate": "09/06/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021661.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "WBD",
-          "asset": "Warner Bros. Discovery, Inc. - Series A F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: MERRILL LYNCH - IRA C\u0000\u0000\u0000\u0000\u0000\u0000\u0000: Required IRS sale/distribution",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-08-04",
-          "disclosureDate": "08/05/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021492.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "F",
-          "asset": "Ford Motor Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-06-23",
-          "disclosureDate": "06/23/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021275.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-05-11",
-          "disclosureDate": "05/11/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021044.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "GOOGL",
-          "asset": "Alphabet Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2022-02-02",
-          "disclosureDate": "02/02/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020386.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "TGT",
-          "asset": "Target Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-01-06",
-          "disclosureDate": "01/06/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020166.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-12-22",
-          "disclosureDate": "12/22/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020090.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-12-22",
-          "disclosureDate": "12/22/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020090.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/26/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019893.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "ABBV",
-          "asset": "AbbVie Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/26/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019893.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Bob Gibbs",
-          "chamber": "House",
-          "ticker": "MRK",
-          "asset": "Merck & Company, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/26/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019893.pdf",
-          "district": "OH07",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-august-lee-pfluger",
       "name": "August Lee Pfluger",
       "chamber": "House",
@@ -33093,6 +32858,190 @@
         }
       ],
       "estReturnPct": 40.33
+    },
+    {
+      "id": "house-bob-gibbs",
+      "name": "Bob Gibbs",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "OH07",
+      "tradeCount": 10,
+      "buyCount": 7,
+      "sellCount": 3,
+      "recentTrades": [
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "INTC",
+          "asset": "Intel Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-12-21",
+          "disclosureDate": "12/21/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022166.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "F",
+          "asset": "Ford Motor Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-10-27",
+          "disclosureDate": "10/27/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021911.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-09-06",
+          "disclosureDate": "09/06/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021661.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "WBD",
+          "asset": "Warner Bros. Discovery, Inc. - Series A F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: MERRILL LYNCH - IRA C\u0000\u0000\u0000\u0000\u0000\u0000\u0000: Required IRS sale/distribution",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-08-04",
+          "disclosureDate": "08/05/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021492.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "F",
+          "asset": "Ford Motor Company",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-06-23",
+          "disclosureDate": "06/23/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021275.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-05-11",
+          "disclosureDate": "05/11/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021044.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "GOOGL",
+          "asset": "Alphabet Inc. - Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2022-02-02",
+          "disclosureDate": "02/02/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020386.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "TGT",
+          "asset": "Target Corporation",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-01-06",
+          "disclosureDate": "01/06/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020166.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "T",
+          "asset": "AT&T Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-12-22",
+          "disclosureDate": "12/22/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020090.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Bob Gibbs",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-12-22",
+          "disclosureDate": "12/22/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020090.pdf",
+          "district": "OH07",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": null
     },
     {
       "id": "house-laurel-lee",
@@ -35079,238 +35028,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-marie-newman",
-      "name": "Marie Newman",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "IL03",
-      "tradeCount": 6,
-      "buyCount": 2,
-      "sellCount": 4,
-      "recentTrades": [
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "COIN",
-          "asset": "Coinbase Global, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-11-21",
-          "disclosureDate": "11/24/2022",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022173.pdf",
-          "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "ATVI",
-          "asset": "Activision blizzard, Inc",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-02-08",
-          "disclosureDate": "03/03/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020560.pdf",
-          "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "ZM",
-          "asset": "Zoom Video Communications, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-01-11",
-          "disclosureDate": "02/03/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020370.pdf",
-          "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "COIN",
-          "asset": "Coinbase global, Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-01-04",
-          "disclosureDate": "02/03/2022",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020370.pdf",
-          "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "BBY",
-          "asset": "best buy Co., Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-12-29",
-          "disclosureDate": "01/04/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020145.pdf",
-          "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "12/04/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019971.pdf",
-          "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
-      "id": "house-ed-perlmutter",
-      "name": "Ed Perlmutter",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "CO07",
-      "tradeCount": 6,
-      "buyCount": 3,
-      "sellCount": 3,
-      "recentTrades": [
-        {
-          "politician": "Ed Perlmutter",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-11-10",
-          "disclosureDate": "12/16/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022158.pdf",
-          "district": "CO07",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Ed Perlmutter",
-          "chamber": "House",
-          "ticker": "CHPT",
-          "asset": "ChargePoint Holdings, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-11-01",
-          "disclosureDate": "12/16/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022158.pdf",
-          "district": "CO07",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Ed Perlmutter",
-          "chamber": "House",
-          "ticker": "KR",
-          "asset": "Kroger Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-07-19",
-          "disclosureDate": "09/26/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021752.pdf",
-          "district": "CO07",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Ed Perlmutter",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-05-20",
-          "disclosureDate": "06/08/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021232.pdf",
-          "district": "CO07",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Ed Perlmutter",
-          "chamber": "House",
-          "ticker": "COIN",
-          "asset": "Coinbase global, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-12-21",
-          "disclosureDate": "01/12/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020300.pdf",
-          "district": "CO07",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Ed Perlmutter",
-          "chamber": "House",
-          "ticker": "F",
-          "asset": "Ford Motor Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "12/20/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020086.pdf",
-          "district": "CO07",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-roger-williams",
       "name": "Roger Williams",
       "chamber": "House",
@@ -35405,6 +35122,204 @@
           "district": "TX25",
           "source": "house_ptr",
           "party": "R"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-marie-newman",
+      "name": "Marie Newman",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "IL03",
+      "tradeCount": 5,
+      "buyCount": 2,
+      "sellCount": 3,
+      "recentTrades": [
+        {
+          "politician": "Marie Newman",
+          "chamber": "House",
+          "ticker": "COIN",
+          "asset": "Coinbase Global, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-11-21",
+          "disclosureDate": "11/24/2022",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022173.pdf",
+          "district": "IL03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Marie Newman",
+          "chamber": "House",
+          "ticker": "ATVI",
+          "asset": "Activision blizzard, Inc",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-02-08",
+          "disclosureDate": "03/03/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020560.pdf",
+          "district": "IL03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Marie Newman",
+          "chamber": "House",
+          "ticker": "ZM",
+          "asset": "Zoom Video Communications, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-01-11",
+          "disclosureDate": "02/03/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020370.pdf",
+          "district": "IL03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Marie Newman",
+          "chamber": "House",
+          "ticker": "COIN",
+          "asset": "Coinbase global, Inc. - Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-01-04",
+          "disclosureDate": "02/03/2022",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020370.pdf",
+          "district": "IL03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Marie Newman",
+          "chamber": "House",
+          "ticker": "BBY",
+          "asset": "best buy Co., Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2021-12-29",
+          "disclosureDate": "01/04/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020145.pdf",
+          "district": "IL03",
+          "source": "house_ptr",
+          "party": "D"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-ed-perlmutter",
+      "name": "Ed Perlmutter",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "CO07",
+      "tradeCount": 5,
+      "buyCount": 2,
+      "sellCount": 3,
+      "recentTrades": [
+        {
+          "politician": "Ed Perlmutter",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-11-10",
+          "disclosureDate": "12/16/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022158.pdf",
+          "district": "CO07",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Ed Perlmutter",
+          "chamber": "House",
+          "ticker": "CHPT",
+          "asset": "ChargePoint Holdings, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-11-01",
+          "disclosureDate": "12/16/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20022158.pdf",
+          "district": "CO07",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Ed Perlmutter",
+          "chamber": "House",
+          "ticker": "KR",
+          "asset": "Kroger Company",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-07-19",
+          "disclosureDate": "09/26/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021752.pdf",
+          "district": "CO07",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Ed Perlmutter",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-05-20",
+          "disclosureDate": "06/08/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021232.pdf",
+          "district": "CO07",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Ed Perlmutter",
+          "chamber": "House",
+          "ticker": "COIN",
+          "asset": "Coinbase global, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-12-21",
+          "disclosureDate": "01/12/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020300.pdf",
+          "district": "CO07",
+          "source": "house_ptr",
+          "party": "D"
         }
       ],
       "estReturnPct": null
@@ -36143,88 +36058,6 @@
           "district": "",
           "source": "senate_efd",
           "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
-      "id": "house-donald-sternoff-honorable-beyer",
-      "name": "Donald Sternoff Honorable Beyer",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "VA08",
-      "tradeCount": 4,
-      "buyCount": 1,
-      "sellCount": 3,
-      "recentTrades": [
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "NVDA",
-          "asset": "NVIDIA Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "TJX",
-          "asset": "TJX Companies, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "TDOC",
-          "asset": "Teladoc Health, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ],
       "estReturnPct": null
@@ -38061,54 +37894,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-peter-welch",
-      "name": "Peter Welch",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "VT00",
-      "tradeCount": 2,
-      "buyCount": 0,
-      "sellCount": 2,
-      "recentTrades": [
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "IBM",
-          "asset": "International business Machines Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "UNP",
-          "asset": "Union Pacific Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-warren-davidson",
       "name": "Warren Davidson",
       "chamber": "House",
@@ -39486,8 +39271,8 @@
     "AAPL": {
       "ticker": "AAPL",
       "netBuys": 80,
-      "netSells": 72,
-      "politicianCount": 55,
+      "netSells": 71,
+      "politicianCount": 54,
       "trades": [
         {
           "politician": "Ed Case",
@@ -43846,7 +43631,7 @@
     },
     "T": {
       "ticker": "T",
-      "netBuys": 22,
+      "netBuys": 21,
       "netSells": 16,
       "politicianCount": 21,
       "trades": [
@@ -48623,8 +48408,8 @@
     "NVDA": {
       "ticker": "NVDA",
       "netBuys": 99,
-      "netSells": 37,
-      "politicianCount": 45,
+      "netSells": 36,
+      "politicianCount": 44,
       "trades": [
         {
           "politician": "Maria Elvira Salazar",
@@ -55713,8 +55498,8 @@
     "IBM": {
       "ticker": "IBM",
       "netBuys": 30,
-      "netSells": 15,
-      "politicianCount": 19,
+      "netSells": 14,
+      "politicianCount": 18,
       "trades": [
         {
           "politician": "Pete Sessions",
@@ -64318,9 +64103,9 @@
     },
     "TJX": {
       "ticker": "TJX",
-      "netBuys": 13,
+      "netBuys": 11,
       "netSells": 12,
-      "politicianCount": 17,
+      "politicianCount": 16,
       "trades": [
         {
           "politician": "Pete Sessions",
@@ -64712,40 +64497,6 @@
           "district": "NY03",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "TJX",
-          "asset": "TJX Companies, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "TJX",
-          "asset": "TJX Companies, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -73076,9 +72827,9 @@
     },
     "ABBV": {
       "ticker": "ABBV",
-      "netBuys": 15,
+      "netBuys": 14,
       "netSells": 18,
-      "politicianCount": 19,
+      "politicianCount": 18,
       "trades": [
         {
           "politician": "Pete Sessions",
@@ -78952,7 +78703,7 @@
     },
     "CR": {
       "ticker": "CR",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 1,
       "politicianCount": 1,
       "trades": [
@@ -78969,23 +78720,6 @@
           "disclosureDate": "09/15/2026",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035491.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "CR",
-          "asset": "Crane Co.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
           "district": "OK01",
           "source": "house_ptr",
           "party": "R"
@@ -79333,9 +79067,9 @@
     },
     "F": {
       "ticker": "F",
-      "netBuys": 18,
+      "netBuys": 17,
       "netSells": 16,
-      "politicianCount": 13,
+      "politicianCount": 12,
       "trades": [
         {
           "politician": "Kevin Hern",
@@ -80529,9 +80263,9 @@
     },
     "PWR": {
       "ticker": "PWR",
-      "netBuys": 9,
+      "netBuys": 8,
       "netSells": 3,
-      "politicianCount": 9,
+      "politicianCount": 8,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -80719,23 +80453,6 @@
           "district": "CA19",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "PWR",
-          "asset": "Quanta Services, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -81554,7 +81271,7 @@
     },
     "ACN": {
       "ticker": "ACN",
-      "netBuys": 20,
+      "netBuys": 19,
       "netSells": 21,
       "politicianCount": 21,
       "trades": [
@@ -89574,9 +89291,9 @@
     },
     "MRK": {
       "ticker": "MRK",
-      "netBuys": 20,
+      "netBuys": 19,
       "netSells": 18,
-      "politicianCount": 25,
+      "politicianCount": 24,
       "trades": [
         {
           "politician": "Maria Elvira Salazar",
@@ -99897,7 +99614,7 @@
     },
     "INTC": {
       "ticker": "INTC",
-      "netBuys": 33,
+      "netBuys": 32,
       "netSells": 29,
       "politicianCount": 28,
       "trades": [
@@ -101369,9 +101086,9 @@
     },
     "LITE": {
       "ticker": "LITE",
-      "netBuys": 3,
+      "netBuys": 2,
       "netSells": 1,
-      "politicianCount": 4,
+      "politicianCount": 3,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -101423,23 +101140,6 @@
           "district": "",
           "source": "senate_efd",
           "party": "R"
-        },
-        {
-          "politician": "Thomas R Carper",
-          "chamber": "Senate",
-          "ticker": "LITE",
-          "asset": "Lumentum Holdings Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "2021-12-04",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a89172dd-f90e-4a61-9da4-24fa2544ddf5/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
         }
       ]
     },
@@ -111555,9 +111255,9 @@
     },
     "HLT": {
       "ticker": "HLT",
-      "netBuys": 7,
+      "netBuys": 6,
       "netSells": 2,
-      "politicianCount": 6,
+      "politicianCount": 5,
       "trades": [
         {
           "politician": "Jonathan Jackson",
@@ -111693,23 +111393,6 @@
           "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/7810aff4-67d6-44e9-8464-9267478cbe5f/",
           "district": "",
           "source": "senate_efd",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "HLT",
-          "asset": "Hilton Worldwide Holdings Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
           "party": "R"
         }
       ]
@@ -117903,9 +117586,9 @@
     },
     "PH": {
       "ticker": "PH",
-      "netBuys": 13,
+      "netBuys": 12,
       "netSells": 5,
-      "politicianCount": 12,
+      "politicianCount": 11,
       "trades": [
         {
           "politician": "David J. Taylor",
@@ -118195,23 +117878,6 @@
           "district": "IL01",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "PH",
-          "asset": "Parker-Hannifin Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -130312,8 +129978,8 @@
     "UNP": {
       "ticker": "UNP",
       "netBuys": 10,
-      "netSells": 11,
-      "politicianCount": 15,
+      "netSells": 10,
+      "politicianCount": 14,
       "trades": [
         {
           "politician": "Alan Armstrong",
@@ -130652,23 +130318,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023816.pdf",
           "district": "FL22",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Peter Welch",
-          "chamber": "House",
-          "ticker": "UNP",
-          "asset": "Union Pacific Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019973.pdf",
-          "district": "VT00",
           "source": "house_ptr",
           "party": "D"
         }
@@ -146352,8 +146001,8 @@
     "SQ": {
       "ticker": "SQ",
       "netBuys": 8,
-      "netSells": 12,
-      "politicianCount": 9,
+      "netSells": 11,
+      "politicianCount": 8,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -146677,23 +146326,6 @@
           "district": "GA14",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -170470,9 +170102,9 @@
     },
     "AGCO": {
       "ticker": "AGCO",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 1,
-      "politicianCount": 2,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Lisa McClain",
@@ -170488,23 +170120,6 @@
           "owner": "Spouse",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030891.pdf",
           "district": "MI09",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "AGCO",
-          "asset": "AgCO Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
           "source": "house_ptr",
           "party": "R"
         }
@@ -185151,7 +184766,7 @@
     },
     "GLPI": {
       "ticker": "GLPI",
-      "netBuys": 4,
+      "netBuys": 3,
       "netSells": 1,
       "politicianCount": 3,
       "trades": [
@@ -185222,23 +184837,6 @@
           "district": "",
           "source": "senate_efd",
           "party": "R"
-        },
-        {
-          "politician": "Thomas R Carper",
-          "chamber": "Senate",
-          "ticker": "GLPI",
-          "asset": "Gaming and Leisure Properties, Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "2021-12-04",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a89172dd-f90e-4a61-9da4-24fa2544ddf5/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
         }
       ]
     },
@@ -188449,8 +188047,8 @@
     "GOLD": {
       "ticker": "GOLD",
       "netBuys": 11,
-      "netSells": 7,
-      "politicianCount": 2,
+      "netSells": 6,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Thomas H Tuberville",
@@ -188740,23 +188338,6 @@
           "district": "",
           "source": "senate_efd",
           "party": "R"
-        },
-        {
-          "politician": "Thomas R Carper",
-          "chamber": "Senate",
-          "ticker": "GOLD",
-          "asset": "Barrick Gold Corporation Common Stock (BC)",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "2022-05-04",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/568b2751-dc6b-4143-9c83-b5a067d9770b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
         }
       ]
     },
@@ -193543,7 +193124,7 @@
     },
     "PAA": {
       "ticker": "PAA",
-      "netBuys": 5,
+      "netBuys": 4,
       "netSells": 1,
       "politicianCount": 2,
       "trades": [
@@ -193629,23 +193210,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20019881.pdf",
           "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "PAA",
-          "asset": "Plains All American Pipeline, l.P. - Common units representing limited Partner Interests",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/26/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019946.pdf",
-          "district": "NC05",
           "source": "house_ptr",
           "party": "R"
         }
@@ -198831,8 +198395,8 @@
     "QS": {
       "ticker": "QS",
       "netBuys": 1,
-      "netSells": 2,
-      "politicianCount": 2,
+      "netSells": 1,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Daniel Goldman",
@@ -198866,23 +198430,6 @@
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022948.pdf",
           "district": "NY10",
           "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas R Carper",
-          "chamber": "Senate",
-          "ticker": "QS",
-          "asset": "QuantumScape Corporation Class A Common Stock",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "2021-12-04",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a89172dd-f90e-4a61-9da4-24fa2544ddf5/",
-          "district": "",
-          "source": "senate_efd",
           "party": "D"
         }
       ]
@@ -204212,7 +203759,7 @@
     },
     "ARCB": {
       "ticker": "ARCB",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 1,
       "politicianCount": 1,
       "trades": [
@@ -204229,23 +203776,6 @@
           "disclosureDate": "12/20/2022",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022285.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "ARCB",
-          "asset": "ArcBest Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
           "district": "OK01",
           "source": "house_ptr",
           "party": "R"
@@ -211038,7 +210568,7 @@
     },
     "BXMT": {
       "ticker": "BXMT",
-      "netBuys": 2,
+      "netBuys": 1,
       "netSells": 0,
       "politicianCount": 1,
       "trades": [
@@ -211055,23 +210585,6 @@
           "disclosureDate": "01/18/2022",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020355.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "BXMT",
-          "asset": "Blackstone Mortgage Trust, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/26/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019946.pdf",
           "district": "NC05",
           "source": "house_ptr",
           "party": "R"
@@ -212094,206 +211607,6 @@
           "party": "D"
         }
       ]
-    },
-    "TDOC": {
-      "ticker": "TDOC",
-      "netBuys": 0,
-      "netSells": 1,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "TDOC",
-          "asset": "Teladoc Health, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ]
-    },
-    "FDIS": {
-      "ticker": "FDIS",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "FDIS",
-          "asset": "Fidelity MSCI Consumer Discretionary Index ETF",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "ABB": {
-      "ticker": "ABB",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "ABB",
-          "asset": "ABB Ltd",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "BLL": {
-      "ticker": "BLL",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "BLL",
-          "asset": "Ball Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "DRE": {
-      "ticker": "DRE",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "DRE",
-          "asset": "Duke Realty Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001",
-          "amountMid": 50001,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "FTEC": {
-      "ticker": "FTEC",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "FTEC",
-          "asset": "Fidelity MSCI Information Technology Index ETF",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "FSK": {
-      "ticker": "FSK",
-      "netBuys": 0,
-      "netSells": 1,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "FSK",
-          "asset": "FS KKR Capital Corp.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/27/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019983.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "CONE": {
-      "ticker": "CONE",
-      "netBuys": 0,
-      "netSells": 1,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Thomas R Carper",
-          "chamber": "Senate",
-          "ticker": "CONE",
-          "asset": "CyrusOne Inc - Common Stock",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "2021-12-04",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a89172dd-f90e-4a61-9da4-24fa2544ddf5/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        }
-      ]
     }
   },
   "performance": {
@@ -212535,7 +211848,7 @@
         },
         "disc": {
           "n": 270,
-          "avgExcess": -0.85,
+          "avgExcess": -0.86,
           "medianExcess": -4.14,
           "winRate": 44.1
         },
@@ -212793,17 +212106,17 @@
         "name": "Josh Gottheimer",
         "tx": {
           "n": 277,
-          "avgExcess": 1.45,
+          "avgExcess": 1.49,
           "medianExcess": 0.31,
           "winRate": 50.5
         },
         "disc": {
           "n": 275,
-          "avgExcess": 1.87,
+          "avgExcess": 1.9,
           "medianExcess": -0.85,
           "winRate": 49.5
         },
-        "buyAvgExcess": -1.34,
+        "buyAvgExcess": -1.29,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
@@ -212833,17 +212146,17 @@
         "name": "Markwayne Mullin",
         "tx": {
           "n": 226,
-          "avgExcess": 0.88,
+          "avgExcess": 0.89,
           "medianExcess": 0.06,
           "winRate": 50.0
         },
         "disc": {
           "n": 226,
-          "avgExcess": 2.29,
+          "avgExcess": 2.3,
           "medianExcess": 1.06,
           "winRate": 50.9
         },
-        "buyAvgExcess": 1.06,
+        "buyAvgExcess": 1.09,
         "lagDays": 26,
         "id": "senate-markwayne-mullin",
         "chamber": "Senate",
@@ -212873,13 +212186,13 @@
         "name": "Richard Dean McCormick",
         "tx": {
           "n": 43,
-          "avgExcess": 0.35,
+          "avgExcess": 0.26,
           "medianExcess": -0.58,
           "winRate": 46.5
         },
         "disc": {
           "n": 43,
-          "avgExcess": -1.13,
+          "avgExcess": -1.14,
           "medianExcess": -3.23,
           "winRate": 41.9
         },
@@ -212913,17 +212226,17 @@
         "name": "Alan Armstrong",
         "tx": {
           "n": 364,
-          "avgExcess": -0.01,
-          "medianExcess": -1.14,
-          "winRate": 47.8
+          "avgExcess": 0.06,
+          "medianExcess": -1.05,
+          "winRate": 48.4
         },
         "disc": {
           "n": 364,
-          "avgExcess": 2.04,
+          "avgExcess": 2.07,
           "medianExcess": 2.4,
           "winRate": 54.1
         },
-        "buyAvgExcess": -0.46,
+        "buyAvgExcess": -0.37,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -212953,17 +212266,17 @@
         "name": "John Boozman",
         "tx": {
           "n": 415,
-          "avgExcess": -0.41,
+          "avgExcess": -0.42,
           "medianExcess": -0.03,
           "winRate": 47.7
         },
         "disc": {
           "n": 411,
-          "avgExcess": -0.19,
+          "avgExcess": -0.2,
           "medianExcess": -0.07,
           "winRate": 47.2
         },
-        "buyAvgExcess": -1.47,
+        "buyAvgExcess": -1.46,
         "lagDays": 28,
         "id": "senate-john-boozman",
         "chamber": "Senate",
@@ -213027,17 +212340,17 @@
         "name": "Lloyd Doggett",
         "tx": {
           "n": 43,
-          "avgExcess": -1.09,
+          "avgExcess": -1.04,
           "medianExcess": -5.44,
           "winRate": 48.8
         },
         "disc": {
           "n": 42,
-          "avgExcess": -1.5,
+          "avgExcess": -1.46,
           "medianExcess": -2.19,
           "winRate": 47.6
         },
-        "buyAvgExcess": -1.09,
+        "buyAvgExcess": -1.04,
         "lagDays": 25,
         "id": "house-lloyd-doggett",
         "chamber": "House",
@@ -213067,7 +212380,7 @@
         "name": "Dan Newhouse",
         "tx": {
           "n": 52,
-          "avgExcess": -1.99,
+          "avgExcess": -1.93,
           "medianExcess": -5.72,
           "winRate": 44.2
         },
@@ -213077,7 +212390,7 @@
           "medianExcess": 3.58,
           "winRate": 52.6
         },
-        "buyAvgExcess": -5.03,
+        "buyAvgExcess": -4.94,
         "lagDays": 15,
         "id": "house-dan-newhouse",
         "chamber": "House",
@@ -213124,6 +212437,26 @@
         "party": "D"
       },
       {
+        "name": "Gilbert Cisneros",
+        "tx": {
+          "n": 688,
+          "avgExcess": -3.01,
+          "medianExcess": -3.03,
+          "winRate": 45.3
+        },
+        "disc": {
+          "n": 651,
+          "avgExcess": -3.39,
+          "medianExcess": -3.88,
+          "winRate": 43.9
+        },
+        "buyAvgExcess": -3.94,
+        "lagDays": 23,
+        "id": "house-gilbert-cisneros",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
         "name": "Jonathan Jackson",
         "tx": {
           "n": 79,
@@ -213140,26 +212473,6 @@
         "buyAvgExcess": -8.89,
         "lagDays": 21,
         "id": "house-jonathan-jackson",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Gilbert Cisneros",
-        "tx": {
-          "n": 688,
-          "avgExcess": -3.11,
-          "medianExcess": -3.23,
-          "winRate": 45.1
-        },
-        "disc": {
-          "n": 651,
-          "avgExcess": -3.47,
-          "medianExcess": -3.89,
-          "winRate": 43.8
-        },
-        "buyAvgExcess": -4.06,
-        "lagDays": 23,
-        "id": "house-gilbert-cisneros",
         "chamber": "House",
         "party": "D"
       },
@@ -213227,13 +212540,13 @@
         "name": "Richard W. Allen",
         "tx": {
           "n": 39,
-          "avgExcess": -4.28,
+          "avgExcess": -4.37,
           "medianExcess": -7.69,
           "winRate": 35.9
         },
         "disc": {
           "n": 39,
-          "avgExcess": -3.72,
+          "avgExcess": -3.8,
           "medianExcess": -6.86,
           "winRate": 35.9
         },
@@ -213242,26 +212555,6 @@
         "id": "house-richard-w-allen",
         "chamber": "House",
         "party": ""
-      },
-      {
-        "name": "Pete Sessions",
-        "tx": {
-          "n": 42,
-          "avgExcess": -4.32,
-          "medianExcess": -8.66,
-          "winRate": 33.3
-        },
-        "disc": {
-          "n": 27,
-          "avgExcess": -9.14,
-          "medianExcess": -12.0,
-          "winRate": 25.9
-        },
-        "buyAvgExcess": 13.89,
-        "lagDays": 3,
-        "id": "house-pete-sessions",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "Dwight Evans",
@@ -213282,6 +212575,26 @@
         "id": "house-dwight-evans",
         "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "Pete Sessions",
+        "tx": {
+          "n": 42,
+          "avgExcess": -4.47,
+          "medianExcess": -8.66,
+          "winRate": 33.3
+        },
+        "disc": {
+          "n": 27,
+          "avgExcess": -9.26,
+          "medianExcess": -12.0,
+          "winRate": 25.9
+        },
+        "buyAvgExcess": 13.89,
+        "lagDays": 3,
+        "id": "house-pete-sessions",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Rick Larsen",

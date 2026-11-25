@@ -167,6 +167,49 @@ def test_nps_http_get_does_not_retry_4xx(monkeypatch):
         NPS.http_get("https://x", waits=(1,), sleep=lambda s: None)
 
 
+
+# 2026-10 말 포털 개편: 페이지에 atchFileId 가 없고 다운로드 버튼의 공개 식별자만 남았다.
+_NPS_NEW_PAGE = (
+    "<title>국민연금공단_국내주식 투자정보_20251231 | 공공데이터포털</title>"
+    "<a onclick=\"fileDetailObj.fn_fileDataDown('3070507', 'uddi:b32185ed-8e1a', '','1', '1')\">다운로드</a>"
+)
+
+
+def test_nps_discover_new_page_resolves_via_button():
+    asked = []
+
+    def resolve(pk, detail_pk, sn):
+        asked.append((pk, detail_pk, sn))
+        return {"status": True, "atchFileId": "FILE_000000007701374", "fileDetailSn": "1",
+                "dataSetFileDetailInfo": {"dataNm": "국민연금공단_국내주식 투자정보_20251231"}}
+
+    assert NPS.discover_file(_NPS_NEW_PAGE, resolve) == ("FILE_000000007701374", "1", "2025-12-31")
+    assert asked == [("3070507", "uddi:b32185ed-8e1a", "1")]
+
+
+def test_nps_discover_old_page_still_works_without_resolve():
+    html = "국내주식 투자정보_20241231 <a href='x?atchFileId=FILE_0001&fileDetailSn=2'>"
+    assert NPS.discover_file(html, lambda *a: pytest.fail("옛 페이지는 조회 불필요")) == ("FILE_0001", "2", "2024-12-31")
+
+
+def test_nps_discover_fails_loudly_when_resolve_refuses():
+    with pytest.raises(RuntimeError, match="다운로드 식별자 조회 실패"):
+        NPS.discover_file(_NPS_NEW_PAGE, lambda *a: {"status": False, "error": "인증 필요"})
+    with pytest.raises(RuntimeError, match="둘 다 찾지 못함"):
+        NPS.discover_file("<html>바뀐 페이지</html>", lambda *a: {})
+
+
+def test_nps_http_get_posts_form_when_data_given(monkeypatch):
+    seen = {}
+
+    def fake(req, timeout=None):
+        seen["method"], seen["body"] = req.get_method(), req.data
+        return _Resp(b"{}")
+
+    monkeypatch.setattr(NPS.urllib.request, "urlopen", fake)
+    NPS.http_get("https://x", data={"publicDataPk": "3070507", "atchFileId": ""})
+    assert seen == {"method": "POST", "body": b"publicDataPk=3070507&atchFileId="}
+
 # ---- 5. KSD 쿼터 ----
 
 @pytest.fixture

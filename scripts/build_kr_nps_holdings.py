@@ -11,8 +11,11 @@
   - **연 1회 갱신**(연말 기준, 이듬해 하반기 공개 — 현재분 기준일 2024-12-31,
     다음 갱신 예정 2026-09-30). asOf 로 기준일을 명시한다. 값이 1년 내내 같은 게 정상이라
     check_data_freshness.py 는 '빌더가 주간으로 돌고 있나'(updatedAtKst 나이 15일 = 주간 2회 연속 실패)만 본다.
-  - 다운로드 식별자(atchFileId)는 연차 갱신 때 바뀌므로 매 실행 시 데이터셋
-    페이지에서 다시 긁는다. 실행이 저비용이라 주간 워크플로우에 실어도 무해하다.
+  - 다운로드 식별자(atchFileId)는 연차 갱신 때 바뀌므로 매 실행 시 다시 찾는다.
+    2026-10 말 포털 개편으로 페이지 HTML 에서 atchFileId 가 빠졌다(그 뒤 10-25 에서 멈춤).
+    이제 페이지의 다운로드 버튼 fn_fileDataDown('3070507', 'uddi:…', …) 에서 공개 식별자를
+    읽어 /tcs/dss/selectFileDataDownload.do 에 POST 하면 atchFileId 를 돌려준다(로그인·쿠키
+    불필요, 브라우저 다운로드 버튼과 같은 경로). 실행이 저비용이라 주간 워크플로우에 실어도 무해하다.
 
 종목명을 KR 스냅샷 상장사명과 매칭한다. 정규화((주)·주식회사·㈜·공백·괄호 제거) 후
 **완전 일치만** 인정 — 부분 일치로 엉뚱한 종목에 붙이지 않는다(데이터 정직성).
@@ -31,6 +34,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -44,6 +48,8 @@ OUT_JS = ROOT / "data" / "korea" / "nps_holdings.js"
 
 PAGE_URL = "https://www.data.go.kr/data/3070507/fileData.do"
 DOWNLOAD_URL = "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId={atch}&fileDetailSn={sn}"
+RESOLVE_URL = "https://www.data.go.kr/tcs/dss/selectFileDataDownload.do"
+_DOWN_BTN = re.compile(r"fn_fileDataDown\(\s*'(\d+)'\s*,\s*'([^']+)'\s*,\s*'([^']*)'\s*,\s*'(\d*)'")
 UA = {"User-Agent": "Mozilla/5.0 (Mir US Stocks research; dydtjsdn@gmail.com)"}
 MIN_MATCHED = 100   # 국민연금은 국내 1,000+ 종목 보유 — 이 밑이면 소스/매칭 이상
 
@@ -76,13 +82,16 @@ def fnum(v) -> float | None:
 RETRY_WAITS = (5, 15, 30)
 
 
-def http_get(url: str, referer: str | None = None, *, waits=RETRY_WAITS, sleep=time.sleep) -> bytes:
+def http_get(url: str, referer: str | None = None, *, waits=RETRY_WAITS, sleep=time.sleep,
+             data: dict | None = None) -> bytes:
+    """GET(또는 data 가 있으면 form POST). 일시 오류만 간격을 늘려 다시 받는다."""
     headers = dict(UA)
     if referer:
         headers["Referer"] = referer
+    body = urllib.parse.urlencode(data).encode() if data is not None else None
     last: Exception | None = None
     for attempt in range(len(waits) + 1):
-        req = urllib.request.Request(url, headers=headers)
+        req = urllib.request.Request(url, data=body, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read()
@@ -99,21 +108,46 @@ def http_get(url: str, referer: str | None = None, *, waits=RETRY_WAITS, sleep=t
     raise last
 
 
-def discover_file(page_html: str) -> tuple[str, str, str | None]:
-    """데이터셋 페이지에서 (atchFileId, fileDetailSn, 기준일 YYYY-MM-DD)를 찾는다."""
+def _as_of_from(text: str) -> str | None:
+    """제목 "국민연금공단_국내주식 투자정보_20251231" 에서 기준일 YYYY-MM-DD."""
+    d_m = re.search(r"국내주식[^<\"]*?_(\d{8})", text or "")
+    if not d_m:
+        return None
+    raw = d_m.group(1)
+    return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
+
+
+def discover_file(page_html: str, resolve=None) -> tuple[str, str, str | None]:
+    """데이터셋 페이지에서 (atchFileId, fileDetailSn, 기준일 YYYY-MM-DD)를 찾는다.
+
+    옛 페이지는 atchFileId 를 HTML 에 그대로 실었다. 지금 페이지는 다운로드 버튼의 공개 식별자만
+    있어서 resolve(publicDataPk, publicDataDetailPk, fileDetailSn) 로 서버에 물어본다."""
+    as_of = _as_of_from(page_html)
     m = re.search(r"atchFileId=(FILE_\d+)", page_html)
-    if not m:
-        raise RuntimeError("데이터셋 페이지에서 atchFileId 를 찾지 못함 — 페이지 구조 변경?")
-    atch = m.group(1)
-    sn_m = re.search(r"fileDetailSn=(\d+)", page_html)
-    sn = sn_m.group(1) if sn_m else "1"
-    # 제목 "국민연금공단_국내주식 투자정보_20241231" 에서 기준일 추출
-    as_of = None
-    d_m = re.search(r"국내주식[^<\"]*?_(\d{8})", page_html)
-    if d_m:
-        raw = d_m.group(1)
-        as_of = f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
-    return atch, sn, as_of
+    if m:
+        sn_m = re.search(r"fileDetailSn=(\d+)", page_html)
+        return m.group(1), (sn_m.group(1) if sn_m else "1"), as_of
+    btn = _DOWN_BTN.search(page_html)
+    if not btn:
+        raise RuntimeError("데이터셋 페이지에서 atchFileId·다운로드 버튼을 둘 다 찾지 못함 — 페이지 구조 변경?")
+    pk, detail_pk, atch_hint, sn_hint = btn.groups()
+    if atch_hint.startswith("FILE_"):
+        return atch_hint, sn_hint or "1", as_of
+    info = (resolve or resolve_file)(pk, detail_pk, sn_hint or "1")
+    atch = str(info.get("atchFileId") or "")
+    if not info.get("status") or not atch.startswith("FILE_"):
+        raise RuntimeError(f"다운로드 식별자 조회 실패: {str(info.get('error') or info)[:200]}")
+    detail = info.get("dataSetFileDetailInfo") or {}
+    return atch, str(info.get("fileDetailSn") or sn_hint or "1"), as_of or _as_of_from(detail.get("dataNm") or "")
+
+
+def resolve_file(public_data_pk: str, detail_pk: str, sn: str) -> dict:
+    """브라우저 다운로드 버튼과 같은 요청 — atchFileId 를 돌려받는다."""
+    raw = http_get(RESOLVE_URL, referer=PAGE_URL, data={
+        "publicDataDetailPk": detail_pk, "publicDataPk": public_data_pk,
+        "atchFileId": "", "fileDetailSn": sn, "publicDataTyCode": "PR0051",
+    })
+    return json.loads(raw.decode("utf-8", errors="replace"))
 
 
 def decode_csv(raw: bytes) -> str:

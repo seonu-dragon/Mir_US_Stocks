@@ -9,7 +9,9 @@ DART 공급계약 공시가 '기업이 알린' 수주라면, 나라장터 낙찰
   - 2024~2025 조달청 API 개편으로 구 경로(/1230000/ScsbidInfoService{,05,06})는
     전부 폐기됐다(NO_OPENAPI_SERVICE_ERROR). 현재 살아있는 경로는 /as/ 다.
   - 업무별 오퍼레이션: getScsbidListSttusThng(물품)·Servc(용역)·Cnstwk(공사).
-  - 조회기간(inqryDiv=1, 등록일시 기준)은 1개월 제한 — 90일을 30일 단위로 쪼갠다.
+  - 조회기간(inqryDiv=1, 등록일시 기준)은 7일 제한 — 90일을 7일 단위로 쪼갠다.
+    (2026-11-10 무렵 1개월 → 7일로 줄었다. 8일 이상은 resultCode 07 "입력범위값 초과".
+    11-25 실측: 7일 이하 OK, numOfRows 999·120일 전 시작일은 문제없음.)
   - 에러는 {"nkoneps.com.response.ResponseError": ...} 별도 봉투로 온다.
   - 인증키는 환경변수 DATA_GO_KR_KEY(디코딩형) — 파일에 넣지 않는다.
 
@@ -47,7 +49,7 @@ OPS = [  # (오퍼레이션, 업무 구분)
     ("getScsbidListSttusCnstwk", "공사"),
 ]
 LOOKBACK_DAYS = 90
-CHUNK_DAYS = 30  # API 조회기간 제한(1개월) 준수
+CHUNK_DAYS = 7  # API 조회기간 제한(7일, 2026-11 축소) 준수
 PAGE_SIZE = 999
 UA = {"User-Agent": "Mir US Stocks research (dydtjsdn@gmail.com)"}
 

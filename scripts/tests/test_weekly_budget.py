@@ -82,6 +82,7 @@ def test_kr_cashflow_stops_on_budget_and_marks_attempted(monkeypatch):
         ]}
 
     monkeypatch.setattr(kre, "dart_get", fake_get)
+    monkeypatch.setattr(kre, "WORKERS", 1)                 # 순차 모드 — 호출 순서·멈춤 지점을 고정해 본다
     budget = sb.StepBudget(2.5, now=c)
     attempted: set[str] = set()
     out = kre.fetch_cash_flow_and_ev("k", [("A", "c1"), ("B", "c2"), ("C", "c3"), ("D", "c4")], "2025",
@@ -115,6 +116,65 @@ def test_kr_quarterly_phase_stop_keeps_file(monkeypatch, tmp_path):
     with pytest.raises(kre.PhaseStopped):
         kre.build("k", ["2025"], None, b)
     assert json.loads(out_json.read_text(encoding="utf-8")) == {"keep": True}
+
+
+# ─────────────── KR 실적 동시 요청 (2026-11 DART 연결당 ~15KB/s 대응) ───────────────
+def test_run_parallel_overlaps_requests():
+    import threading
+    import time as _t
+    live, peak = [0], [0]
+    lock = threading.Lock()
+
+    def fn(i):
+        with lock:
+            live[0] += 1
+            peak[0] = max(peak[0], live[0])
+        _t.sleep(0.05)
+        with lock:
+            live[0] -= 1
+        return i * 10
+
+    got = {}
+    done = kre.run_parallel(16, fn, lambda i, v: got.__setitem__(i, v), workers=8)
+    assert done == 16 and got == {i: i * 10 for i in range(16)}
+    assert 2 <= peak[0] <= 8                               # 동시에 돌되 workers 를 넘지 않는다
+
+
+def test_run_parallel_stops_submitting_when_budget_over():
+    budget = sb.StepBudget(0, now=FakeClock())
+    seen = []
+
+    def on_done(i, v):
+        seen.append(i)
+        if len(seen) == 3:
+            budget.reason = "시간 예산 0분 소진"            # 3개째 끝났을 때 예산 초과
+
+    done = kre.run_parallel(100, lambda i: i, on_done, budget, workers=2)
+    assert 3 <= done <= 4 and done == len(seen)            # 돌던 것만 마저 받고 새로 안 넣는다
+
+
+def test_kr_quarterly_parallel_matches_serial(monkeypatch):
+    stocks = [{"ticker": f"{n:06d}", "marketCapB": 1000 - n} for n in range(1, 251)]   # 3묶음
+    corp_map = {s["ticker"]: f"c{s['ticker']}" for s in stocks}
+    monkeypatch.setattr(kre, "load_json", lambda p, d: {"stocks": stocks} if p == kre.KR_SNAPSHOT else d)
+    monkeypatch.setattr(kre, "load_corp_map", lambda key: corp_map)
+
+    def fake_get(path, params, key):
+        rows = []
+        for corp in params["corp_code"].split(","):
+            n = int(corp[1:])
+            for fs, mult in (("OFS", 1), ("CFS", 2)):       # 연결 우선 규칙까지 같이 본다
+                rows.append({"corp_code": corp, "fs_div": fs, "sj_div": "IS", "account_nm": "매출액",
+                             "thstrm_amount": str(n * mult * int(params["reprt_code"][-1])),
+                             "rcept_no": "20261114000001", "thstrm_dt": "x"})
+        return {"status": "000", "list": rows}
+
+    monkeypatch.setattr(kre, "dart_get", fake_get)
+    monkeypatch.setattr(kre, "WORKERS", 1)
+    serial = kre.build("k", ["2026"], None, sb.StepBudget(0))
+    monkeypatch.setattr(kre, "WORKERS", 8)
+    parallel = kre.build("k", ["2026"], None, sb.StepBudget(0))
+    assert serial == parallel and len(serial[0]) == 250
 
 
 # ─────────────────────────── 소유구조 · 감사의견 ───────────────────────────

@@ -1,13 +1,18 @@
+import http.client
 import json
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 AUTOMATION_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AUTOMATION_DIR))
 
+import news_collector  # noqa: E402
 from news_collector import (  # noqa: E402
+    CollectorConfig,
+    NewsCollector,
     _NaverSectionParser,
     clean_text,
     extract_article_text,
@@ -68,6 +73,24 @@ class NewsCollectorHelpersTest(unittest.TestCase):
         parser.close()
         self.assertEqual(len(parser.items), 1)
         self.assertEqual(parser.items[0]["publisher"], "테스트경제")
+
+
+class FetchBodyResilienceTest(unittest.TestCase):
+    """언론사 한 곳의 연결 끊김이 수집 전체를 죽이지 않아야 한다(11-16·11-23 실패)."""
+
+    def _collector(self):
+        return NewsCollector("id", "secret", CollectorConfig(request_delay=0))
+
+    def test_connection_errors_fall_back_to_empty_body(self):
+        errors = [
+            http.client.RemoteDisconnected("Remote end closed connection without response"),
+            http.client.IncompleteRead(b"partial"),
+            ConnectionResetError("reset by peer"),
+        ]
+        for exc in errors:
+            with self.subTest(exc=type(exc).__name__):
+                with mock.patch.object(news_collector, "urlopen", side_effect=exc):
+                    self.assertEqual(self._collector()._fetch_body("https://example.com/a"), ("", ""))
 
 
 if __name__ == "__main__":

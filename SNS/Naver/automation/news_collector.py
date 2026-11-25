@@ -7,6 +7,7 @@ to enrich the API title/description with article text when it is accessible.
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import re
@@ -450,7 +451,10 @@ class NewsCollector:
                 raw = response.read(2_000_000)
                 charset = response.headers.get_content_charset() or "utf-8"
             return extract_article_text(raw.decode(charset, errors="replace"))
-        except (HTTPError, URLError, TimeoutError, ValueError):
+        # 언론사 한 곳이 응답 없이 끊거나(RemoteDisconnected, 11-16·11-23 실패) 본문이
+        # 잘려 와도(IncompleteRead) 그 기사만 요약으로 넘기고 수집 전체는 계속한다.
+        # OSError 는 ConnectionResetError·SSL 오류를, HTTPException 은 IncompleteRead 등을 덮는다.
+        except (HTTPError, URLError, TimeoutError, ValueError, OSError, http.client.HTTPException):
             return "", ""
 
     def collect(self, queries: Iterable[str], as_of: datetime | None = None) -> dict:

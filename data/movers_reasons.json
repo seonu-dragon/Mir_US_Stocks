@@ -1,24 +1,24 @@
 {
   "market": "us",
   "tradeDate": "2026-11-25",
-  "updatedAtKst": "2026-11-26 07:07 KST",
+  "updatedAtKst": "2026-11-27 07:07 KST",
   "status": "partial",
-  "attempt": 1,
+  "attempt": 2,
   "count": 79,
   "criteria": "시총 20억 달러 이상 · 거래대금 2,500만 달러 이상 · ETF 제외 · 등락률 ±3% 이상 · 방향별 최대 10종목",
   "source": "SEC 8-K · Google News · Yahoo · 시장 스냅샷",
   "note": "공시·뉴스 헤드라인·업종 평균만을 근거로 한 자동 요약이라 틀릴 수 있다. 근거가 없으면 '뚜렷한 재료 확인 안 됨', 요약이 검증을 통과하지 못하면 '요약 실패'. 매매 신호가 아니다.",
   "llm": {
-    "llmCalls": 2,
-    "llmStocks": 64,
-    "reused": 0,
-    "asked": 64,
+    "llmCalls": 1,
+    "llmStocks": 67,
+    "reused": 58,
+    "asked": 9,
     "models": [
       "gemini-2.5-flash-lite"
     ],
     "errors": [],
-    "callDate": "2026-11-26",
-    "callsToday": 2
+    "callDate": "2026-11-27",
+    "callsToday": 1
   },
   "indexMoves": [
     {
@@ -38,7 +38,7 @@
       "industry": "Computer Software: Programming Data Processing",
       "changePct": 12.56,
       "close": 14.34000015258789,
-      "tradingValue": 119609267,
+      "tradingValue": 121816867,
       "priceSource": "yahoo",
       "marketCapB": 6.766,
       "reason": "3분기 실적 예상치 상회 및 자사주 매입 프로그램 발표",
@@ -73,8 +73,8 @@
       "sectorMove": {
         "level": "업종",
         "name": "Computer Software: Programming Data Processing",
-        "avgPct": 1.8,
-        "n": 37,
+        "avgPct": 0.99,
+        "n": 38,
         "weighting": "시총가중"
       }
     },
@@ -85,7 +85,7 @@
       "industry": "Computer Manufacturing",
       "changePct": 11.49,
       "close": 31.149999618530273,
-      "tradingValue": 1216740292,
+      "tradingValue": 1218130080,
       "priceSource": "yahoo",
       "marketCapB": 28.064,
       "reason": "견조한 실적 및 가이던스 발표로 주가 상승",
@@ -125,7 +125,7 @@
       "industry": "Aerospace",
       "changePct": 11.11,
       "close": 3.9000000953674316,
-      "tradingValue": 132090106,
+      "tradingValue": 133075803,
       "priceSource": "yahoo",
       "marketCapB": 3.97,
       "reason": "주요 임원의 주식 매도에도 불구하고 주가 상승",
@@ -165,7 +165,7 @@
       "industry": "Auto Manufacturing",
       "changePct": 11.03,
       "close": 11.880000114440918,
-      "tradingValue": 124475636,
+      "tradingValue": 124892065,
       "priceSource": "yahoo",
       "marketCapB": 11.61,
       "reason": "3분기 손실 축소 및 차량 마진 회복, 애널리스트 목표가 상향",
@@ -212,7 +212,7 @@
       "industry": "Telecommunications Equipment",
       "changePct": 10.25,
       "close": 26.020000457763672,
-      "tradingValue": 684919268,
+      "tradingValue": 693667192,
       "priceSource": "yahoo",
       "marketCapB": 10.409,
       "reason": "초기 손실 만회하며 주가 상승, 스페이스X와 차별화",
@@ -252,12 +252,12 @@
       "industry": "Services-Misc. Amusement & Recreation",
       "changePct": 9.56,
       "close": 17.649999618530273,
-      "tradingValue": 304712629,
+      "tradingValue": 307369448,
       "priceSource": "yahoo",
       "marketCapB": 8.795,
       "reason": "공매도 세력의 관심에도 불구하고 주가 상승",
       "reasonStatus": "ok",
-      "sectorNote": "Services-Misc. Amusement & Recreation 업종 동반 상승(시총가중 평균 +3.9%)",
+      "sectorNote": "Services-Misc. Amusement & Recreation 업종 동반 상승(시총가중 평균 +5.4%)",
       "tags": [
         "섹터동조",
         "뉴스"
@@ -281,7 +281,7 @@
       "sectorMove": {
         "level": "업종",
         "name": "Services-Misc. Amusement & Recreation",
-        "avgPct": 3.85,
+        "avgPct": 5.44,
         "n": 24,
         "weighting": "시총가중"
       }
@@ -293,7 +293,7 @@
       "industry": "Rental/Leasing Companies",
       "changePct": 9.62,
       "close": 141.82000732421875,
-      "tradingValue": 86408236,
+      "tradingValue": 86680388,
       "priceSource": "yahoo",
       "marketCapB": 5.012,
       "reason": "뚜렷한 재료 확인 안 됨",
@@ -306,7 +306,7 @@
       "sectorMove": {
         "level": "섹터",
         "name": "CONSUMER CYCLICAL",
-        "avgPct": -0.04,
+        "avgPct": -0.01,
         "n": 521,
         "weighting": "시총가중"
       }
@@ -318,7 +318,7 @@
       "industry": "Biotechnology: Pharmaceutical Preparations",
       "changePct": 9.3,
       "close": 36.08000183105469,
-      "tradingValue": 221071696,
+      "tradingValue": 221141547,
       "priceSource": "yahoo",
       "marketCapB": 6.278,
       "reason": "",
@@ -343,7 +343,7 @@
       "industry": "Movies/Entertainment",
       "changePct": 8.81,
       "close": 3.2100000381469727,
-      "tradingValue": 66861338,
+      "tradingValue": 67262662,
       "priceSource": "yahoo",
       "marketCapB": 2.861,
       "reason": "초기 잉여 현금 흐름으로 주가 상승",
@@ -376,7 +376,7 @@
       "industry": "Other Specialty Stores",
       "changePct": 8.67,
       "close": 112.41999816894531,
-      "tradingValue": 116890267,
+      "tradingValue": 116916798,
       "priceSource": "yahoo",
       "marketCapB": 2.13,
       "reason": "뚜렷한 재료 확인 안 됨",
@@ -401,10 +401,10 @@
       "company": "Sandisk Corporation",
       "sector": "TECHNOLOGY",
       "industry": "Electronic Components",
-      "changePct": -22.02,
-      "close": 73.61000061035156,
-      "tradingValue": 8967826508,
-      "priceSource": "yahoo",
+      "changePct": -22.0,
+      "close": 73.61,
+      "tradingValue": null,
+      "priceSource": "snapshot",
       "marketCapB": 94.265,
       "reason": "메모리 반도체 업황 부진 및 관세 영향",
       "reasonStatus": "ok",
@@ -443,7 +443,7 @@
       "industry": "Computer Software: Prepackaged Software",
       "changePct": -15.19,
       "close": 46.29999923706055,
-      "tradingValue": 629708649,
+      "tradingValue": 629869820,
       "priceSource": "yahoo",
       "marketCapB": 12.628,
       "reason": "CEO 사임 발표로 인한 불확실성",
@@ -479,7 +479,7 @@
       "sectorMove": {
         "level": "업종",
         "name": "Computer Software: Prepackaged Software",
-        "avgPct": -2.53,
+        "avgPct": -1.27,
         "n": 133,
         "weighting": "시총가중"
       }
@@ -491,7 +491,7 @@
       "industry": "Clothing/Shoe/Accessory Stores",
       "changePct": -10.33,
       "close": 76.73999786376953,
-      "tradingValue": 496624277,
+      "tradingValue": 496645918,
       "priceSource": "yahoo",
       "marketCapB": 6.574,
       "reason": "3분기 동일 매장 매출 성장 둔화",
@@ -531,7 +531,7 @@
       "industry": "Consumer Specialties",
       "changePct": -8.16,
       "close": 32.52000045776367,
-      "tradingValue": 25519973,
+      "tradingValue": 25518444,
       "priceSource": "yahoo",
       "marketCapB": 2.036,
       "reason": "4분기 매출 예상치 하회",
@@ -552,7 +552,7 @@
       "sectorMove": {
         "level": "섹터",
         "name": "CONSUMER CYCLICAL",
-        "avgPct": -0.04,
+        "avgPct": -0.0,
         "n": 521,
         "weighting": "시총가중"
       }
@@ -564,14 +564,31 @@
       "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
       "changePct": -5.92,
       "close": 5.644999980926514,
-      "tradingValue": 71307600,
+      "tradingValue": 71779562,
       "priceSource": "yahoo",
       "marketCapB": 6.005,
-      "reason": "",
-      "reasonStatus": "failed",
+      "reason": "주가 급락 원인 분석 및 지분 변동",
+      "reasonStatus": "ok",
       "sectorNote": "",
-      "tags": [],
-      "evidence": [],
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Nelson Peltz-Backed Janus Henderson Loads Up On ImmunityBio: IBRX Stake Worth More Than SLS, CAPR And IOVA Combined",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQeFd2aUt2eU44WWVIMENEVTFJS1Qta2szb010dlFlOGx2NjFOeThSb1FlZm1vMVA3YzV1STRtbGd5NlNYYjlaZmRaUllzR2Eyenh3YndIOWlXZGdOZXcweTNWempNSUx1RTg5UHFaOV9IY1lqaWtlbnB3RlBJWlZDUExISFkzejhUaWE4eS1IRVV3MHdncDNWTUFtTEhWM3h0NEE?oc=5",
+          "source": "Yahoo Finance",
+          "date": "2026-11-25"
+        },
+        {
+          "type": "news",
+          "title": "Why ImmunityBio shares are getting obliterated today",
+          "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNYUZIWVpSeXJHSzUzblBFZ1Q5QTNlWlM4THBYdWR0cWMyVHNTM1VtX0Zzcmp6a1dhcG1hNHVlOWtzSVk4OHRFQUFGQzE3dV93b3A5dDV2a25mRnJHcEdXaXplbWtCWF9BY1JEQlBRempZVXlsOFJEbERBWlFoVW11bDZJSkRYMGwwbDZmcWNoSnRfN0xYNUF3d1hRZkhOelZPWFFjSVpxaDByeFJ2WWVvcThqZw?oc=5",
+          "source": "TradingView",
+          "date": "2026-11-25"
+        }
+      ],
       "sectorMove": {
         "level": "업종",
         "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
@@ -587,7 +604,7 @@
       "industry": "Industrial Machinery/Components",
       "changePct": -5.68,
       "close": 185.00999450683594,
-      "tradingValue": 3876208408,
+      "tradingValue": 3978732437,
       "priceSource": "yahoo",
       "marketCapB": 231.109,
       "reason": "경쟁사 대비 부진한 주가 흐름",
@@ -620,7 +637,7 @@
       "industry": "Biotechnology: Pharmaceutical Preparations",
       "changePct": -5.47,
       "close": 126.04000091552734,
-      "tradingValue": 52730725,
+      "tradingValue": 52735136,
       "priceSource": "yahoo",
       "marketCapB": 5.321,
       "reason": "뚜렷한 재료 확인 안 됨",
@@ -633,7 +650,7 @@
       "sectorMove": {
         "level": "업종",
         "name": "Biotechnology: Pharmaceutical Preparations",
-        "avgPct": -0.49,
+        "avgPct": -0.5,
         "n": 190,
         "weighting": "시총가중"
       }
@@ -645,7 +662,7 @@
       "industry": "Oil & Gas Production",
       "changePct": -5.3,
       "close": 59.619998931884766,
-      "tradingValue": 37954986,
+      "tradingValue": 38019673,
       "priceSource": "yahoo",
       "marketCapB": 2.984,
       "reason": "뚜렷한 재료 확인 안 됨",
@@ -670,12 +687,12 @@
       "industry": "Computer Software: Prepackaged Software",
       "changePct": -5.13,
       "close": 103.87999725341797,
-      "tradingValue": 3974209771,
+      "tradingValue": 3998496914,
       "priceSource": "yahoo",
       "marketCapB": 314.075,
       "reason": "AI 관련주 약세 및 신용부도스왑 스프레드 확대",
       "reasonStatus": "ok",
-      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(시총가중 평균 -2.4%)",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(Nutanix·Datadog 등)",
       "tags": [
         "섹터동조",
         "뉴스"
@@ -699,7 +716,7 @@
       "sectorMove": {
         "level": "업종",
         "name": "Computer Software: Prepackaged Software",
-        "avgPct": -2.44,
+        "avgPct": -1.14,
         "n": 133,
         "weighting": "시총가중"
       }
@@ -711,7 +728,7 @@
       "industry": "Investment Bankers/Brokers/Service",
       "changePct": -5.03,
       "close": 36.22999954223633,
-      "tradingValue": 79024078,
+      "tradingValue": 79082843,
       "priceSource": "yahoo",
       "marketCapB": 4.37,
       "reason": "애널리스트 투자의견 '강력 매도' 하향 조정",
@@ -749,7 +766,7 @@
           "industry": "Computer Software: Programming Data Processing",
           "changePct": 12.56,
           "close": 14.34000015258789,
-          "tradingValue": 119609267,
+          "tradingValue": 121816867,
           "priceSource": "yahoo",
           "marketCapB": 6.766,
           "reason": "3분기 실적 예상치 상회 및 자사주 매입 프로그램 발표",
@@ -784,8 +801,8 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Programming Data Processing",
-            "avgPct": 1.8,
-            "n": 37,
+            "avgPct": 0.99,
+            "n": 38,
             "weighting": "시총가중"
           }
         },
@@ -796,7 +813,7 @@
           "industry": "Computer Manufacturing",
           "changePct": 11.49,
           "close": 31.149999618530273,
-          "tradingValue": 1216740292,
+          "tradingValue": 1218130080,
           "priceSource": "yahoo",
           "marketCapB": 28.064,
           "reason": "견조한 실적 및 가이던스 발표로 주가 상승",
@@ -836,7 +853,7 @@
           "industry": "Aerospace",
           "changePct": 11.11,
           "close": 3.9000000953674316,
-          "tradingValue": 132090106,
+          "tradingValue": 133075803,
           "priceSource": "yahoo",
           "marketCapB": 3.97,
           "reason": "주요 임원의 주식 매도에도 불구하고 주가 상승",
@@ -876,7 +893,7 @@
           "industry": "Auto Manufacturing",
           "changePct": 11.03,
           "close": 11.880000114440918,
-          "tradingValue": 124475636,
+          "tradingValue": 124892065,
           "priceSource": "yahoo",
           "marketCapB": 11.61,
           "reason": "3분기 손실 축소 및 차량 마진 회복, 애널리스트 목표가 상향",
@@ -923,7 +940,7 @@
           "industry": "Telecommunications Equipment",
           "changePct": 10.25,
           "close": 26.020000457763672,
-          "tradingValue": 684919268,
+          "tradingValue": 693667192,
           "priceSource": "yahoo",
           "marketCapB": 10.409,
           "reason": "초기 손실 만회하며 주가 상승, 스페이스X와 차별화",
@@ -963,12 +980,12 @@
           "industry": "Services-Misc. Amusement & Recreation",
           "changePct": 9.56,
           "close": 17.649999618530273,
-          "tradingValue": 304712629,
+          "tradingValue": 307369448,
           "priceSource": "yahoo",
           "marketCapB": 8.795,
           "reason": "공매도 세력의 관심에도 불구하고 주가 상승",
           "reasonStatus": "ok",
-          "sectorNote": "Services-Misc. Amusement & Recreation 업종 동반 상승(시총가중 평균 +3.9%)",
+          "sectorNote": "Services-Misc. Amusement & Recreation 업종 동반 상승(시총가중 평균 +5.4%)",
           "tags": [
             "섹터동조",
             "뉴스"
@@ -992,7 +1009,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Services-Misc. Amusement & Recreation",
-            "avgPct": 3.85,
+            "avgPct": 5.44,
             "n": 24,
             "weighting": "시총가중"
           }
@@ -1004,7 +1021,7 @@
           "industry": "Rental/Leasing Companies",
           "changePct": 9.62,
           "close": 141.82000732421875,
-          "tradingValue": 86408236,
+          "tradingValue": 86680388,
           "priceSource": "yahoo",
           "marketCapB": 5.012,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -1017,7 +1034,7 @@
           "sectorMove": {
             "level": "섹터",
             "name": "CONSUMER CYCLICAL",
-            "avgPct": -0.04,
+            "avgPct": -0.01,
             "n": 521,
             "weighting": "시총가중"
           }
@@ -1029,7 +1046,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": 9.3,
           "close": 36.08000183105469,
-          "tradingValue": 221071696,
+          "tradingValue": 221141547,
           "priceSource": "yahoo",
           "marketCapB": 6.278,
           "reason": "",
@@ -1054,7 +1071,7 @@
           "industry": "Movies/Entertainment",
           "changePct": 8.81,
           "close": 3.2100000381469727,
-          "tradingValue": 66861338,
+          "tradingValue": 67262662,
           "priceSource": "yahoo",
           "marketCapB": 2.861,
           "reason": "초기 잉여 현금 흐름으로 주가 상승",
@@ -1087,7 +1104,7 @@
           "industry": "Other Specialty Stores",
           "changePct": 8.67,
           "close": 112.41999816894531,
-          "tradingValue": 116890267,
+          "tradingValue": 116916798,
           "priceSource": "yahoo",
           "marketCapB": 2.13,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -1112,7 +1129,7 @@
           "industry": "RETAIL: Building Materials",
           "changePct": 8.62,
           "close": 11.970000267028809,
-          "tradingValue": 340450281,
+          "tradingValue": 340949897,
           "priceSource": "yahoo",
           "marketCapB": 12.438,
           "reason": "견조한 3분기 실적 및 애널리스트 지지",
@@ -1152,7 +1169,7 @@
           "industry": "Cable & Other Pay Television Services",
           "changePct": 8.39,
           "close": 147.27000427246094,
-          "tradingValue": 542798798,
+          "tradingValue": 542896144,
           "priceSource": "yahoo",
           "marketCapB": 16.856,
           "reason": "비용 절감, Cox 통합 및 애널리스트 지지 고려",
@@ -1199,7 +1216,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": 8.3,
           "close": 84.05000305175781,
-          "tradingValue": 163733104,
+          "tradingValue": 163779836,
           "priceSource": "yahoo",
           "marketCapB": 7.334,
           "reason": "미국 판매 허가 신청 관련 투자자 미팅 확대",
@@ -1231,9 +1248,9 @@
           "company": "INNIO N.V. Ordinary Shares",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Metal Fabrications",
-          "changePct": 8.21,
-          "close": 12.984999656677246,
-          "tradingValue": 101632956,
+          "changePct": 8.25,
+          "close": 12.989999771118164,
+          "tradingValue": 101675326,
           "priceSource": "yahoo",
           "marketCapB": 9.739,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -1258,7 +1275,7 @@
           "industry": "Computer Software: Programming Data Processing",
           "changePct": 8.0,
           "close": 46.290000915527344,
-          "tradingValue": 378845144,
+          "tradingValue": 390733898,
           "priceSource": "yahoo",
           "marketCapB": 32.147,
           "reason": "",
@@ -1269,8 +1286,8 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Programming Data Processing",
-            "avgPct": 1.13,
-            "n": 37,
+            "avgPct": 0.31,
+            "n": 38,
             "weighting": "시총가중"
           }
         },
@@ -1281,7 +1298,7 @@
           "industry": "Construction/Ag Equipment/Trucks",
           "changePct": 8.0,
           "close": 11.880000114440918,
-          "tradingValue": 293465608,
+          "tradingValue": 293469267,
           "priceSource": "yahoo",
           "marketCapB": 14.671,
           "reason": "3분기 실적 상회, EPS 전망 상향 및 건설 JV 계약",
@@ -1321,7 +1338,7 @@
           "industry": "Mining & Quarrying of Nonmetallic Minerals (No Fuels)",
           "changePct": 7.77,
           "close": 53.68000030517578,
-          "tradingValue": 26539500,
+          "tradingValue": 26539392,
           "priceSource": "yahoo",
           "marketCapB": 3.045,
           "reason": "자재 관련 동종 업계와 함께 주가 상승",
@@ -1361,7 +1378,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": 7.83,
           "close": 35.40999984741211,
-          "tradingValue": 46982129,
+          "tradingValue": 46981988,
           "priceSource": "yahoo",
           "marketCapB": 2.316,
           "reason": "회사의 뉴스 없이 주가 상승",
@@ -1395,7 +1412,7 @@
           "industry": "Real Estate",
           "changePct": 7.72,
           "close": 10.609999656677246,
-          "tradingValue": 244793753,
+          "tradingValue": 244793912,
           "priceSource": "yahoo",
           "marketCapB": 8.125,
           "reason": "낮은 금리가 주택 관련 주가 상승 견인",
@@ -1428,7 +1445,7 @@
           "industry": "Computer Software: Prepackaged Software",
           "changePct": 7.64,
           "close": 33.529998779296875,
-          "tradingValue": 30146453,
+          "tradingValue": 30146822,
           "priceSource": "yahoo",
           "marketCapB": 2.049,
           "reason": "펀드가 'AI 루저' 내러티브에 반박하며 주가 상승",
@@ -1449,7 +1466,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Prepackaged Software",
-            "avgPct": -2.55,
+            "avgPct": -1.29,
             "n": 133,
             "weighting": "시총가중"
           }
@@ -1461,10 +1478,10 @@
           "company": "Sandisk Corporation",
           "sector": "TECHNOLOGY",
           "industry": "Electronic Components",
-          "changePct": -22.02,
-          "close": 73.61000061035156,
-          "tradingValue": 8967826508,
-          "priceSource": "yahoo",
+          "changePct": -22.0,
+          "close": 73.61,
+          "tradingValue": null,
+          "priceSource": "snapshot",
           "marketCapB": 94.265,
           "reason": "메모리 반도체 업황 부진 및 관세 영향",
           "reasonStatus": "ok",
@@ -1503,7 +1520,7 @@
           "industry": "Computer Software: Prepackaged Software",
           "changePct": -15.19,
           "close": 46.29999923706055,
-          "tradingValue": 629708649,
+          "tradingValue": 629869820,
           "priceSource": "yahoo",
           "marketCapB": 12.628,
           "reason": "CEO 사임 발표로 인한 불확실성",
@@ -1539,7 +1556,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Prepackaged Software",
-            "avgPct": -2.53,
+            "avgPct": -1.27,
             "n": 133,
             "weighting": "시총가중"
           }
@@ -1551,7 +1568,7 @@
           "industry": "Clothing/Shoe/Accessory Stores",
           "changePct": -10.33,
           "close": 76.73999786376953,
-          "tradingValue": 496624277,
+          "tradingValue": 496645918,
           "priceSource": "yahoo",
           "marketCapB": 6.574,
           "reason": "3분기 동일 매장 매출 성장 둔화",
@@ -1591,7 +1608,7 @@
           "industry": "Consumer Specialties",
           "changePct": -8.16,
           "close": 32.52000045776367,
-          "tradingValue": 25519973,
+          "tradingValue": 25518444,
           "priceSource": "yahoo",
           "marketCapB": 2.036,
           "reason": "4분기 매출 예상치 하회",
@@ -1612,7 +1629,7 @@
           "sectorMove": {
             "level": "섹터",
             "name": "CONSUMER CYCLICAL",
-            "avgPct": -0.04,
+            "avgPct": -0.0,
             "n": 521,
             "weighting": "시총가중"
           }
@@ -1624,14 +1641,31 @@
           "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
           "changePct": -5.92,
           "close": 5.644999980926514,
-          "tradingValue": 71307600,
+          "tradingValue": 71779562,
           "priceSource": "yahoo",
           "marketCapB": 6.005,
-          "reason": "",
-          "reasonStatus": "failed",
+          "reason": "주가 급락 원인 분석 및 지분 변동",
+          "reasonStatus": "ok",
           "sectorNote": "",
-          "tags": [],
-          "evidence": [],
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "Nelson Peltz-Backed Janus Henderson Loads Up On ImmunityBio: IBRX Stake Worth More Than SLS, CAPR And IOVA Combined",
+              "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQeFd2aUt2eU44WWVIMENEVTFJS1Qta2szb010dlFlOGx2NjFOeThSb1FlZm1vMVA3YzV1STRtbGd5NlNYYjlaZmRaUllzR2Eyenh3YndIOWlXZGdOZXcweTNWempNSUx1RTg5UHFaOV9IY1lqaWtlbnB3RlBJWlZDUExISFkzejhUaWE4eS1IRVV3MHdncDNWTUFtTEhWM3h0NEE?oc=5",
+              "source": "Yahoo Finance",
+              "date": "2026-11-25"
+            },
+            {
+              "type": "news",
+              "title": "Why ImmunityBio shares are getting obliterated today",
+              "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNYUZIWVpSeXJHSzUzblBFZ1Q5QTNlWlM4THBYdWR0cWMyVHNTM1VtX0Zzcmp6a1dhcG1hNHVlOWtzSVk4OHRFQUFGQzE3dV93b3A5dDV2a25mRnJHcEdXaXplbWtCWF9BY1JEQlBRempZVXlsOFJEbERBWlFoVW11bDZJSkRYMGwwbDZmcWNoSnRfN0xYNUF3d1hRZkhOelZPWFFjSVpxaDByeFJ2WWVvcThqZw?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-25"
+            }
+          ],
           "sectorMove": {
             "level": "업종",
             "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
@@ -1647,7 +1681,7 @@
           "industry": "Industrial Machinery/Components",
           "changePct": -5.68,
           "close": 185.00999450683594,
-          "tradingValue": 3876208408,
+          "tradingValue": 3978732437,
           "priceSource": "yahoo",
           "marketCapB": 231.109,
           "reason": "경쟁사 대비 부진한 주가 흐름",
@@ -1680,7 +1714,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": -5.47,
           "close": 126.04000091552734,
-          "tradingValue": 52730725,
+          "tradingValue": 52735136,
           "priceSource": "yahoo",
           "marketCapB": 5.321,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -1693,7 +1727,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Biotechnology: Pharmaceutical Preparations",
-            "avgPct": -0.49,
+            "avgPct": -0.5,
             "n": 190,
             "weighting": "시총가중"
           }
@@ -1705,7 +1739,7 @@
           "industry": "Oil & Gas Production",
           "changePct": -5.3,
           "close": 59.619998931884766,
-          "tradingValue": 37954986,
+          "tradingValue": 38019673,
           "priceSource": "yahoo",
           "marketCapB": 2.984,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -1730,12 +1764,12 @@
           "industry": "Computer Software: Prepackaged Software",
           "changePct": -5.13,
           "close": 103.87999725341797,
-          "tradingValue": 3974209771,
+          "tradingValue": 3998496914,
           "priceSource": "yahoo",
           "marketCapB": 314.075,
           "reason": "AI 관련주 약세 및 신용부도스왑 스프레드 확대",
           "reasonStatus": "ok",
-          "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(시총가중 평균 -2.4%)",
+          "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(Nutanix·Datadog 등)",
           "tags": [
             "섹터동조",
             "뉴스"
@@ -1759,7 +1793,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Prepackaged Software",
-            "avgPct": -2.44,
+            "avgPct": -1.14,
             "n": 133,
             "weighting": "시총가중"
           }
@@ -1771,7 +1805,7 @@
           "industry": "Investment Bankers/Brokers/Service",
           "changePct": -5.03,
           "close": 36.22999954223633,
-          "tradingValue": 79024078,
+          "tradingValue": 79082843,
           "priceSource": "yahoo",
           "marketCapB": 4.37,
           "reason": "애널리스트 투자의견 '강력 매도' 하향 조정",
@@ -1804,7 +1838,7 @@
           "industry": "Metal Fabrications",
           "changePct": -4.75,
           "close": 8.220000267028809,
-          "tradingValue": 120197184,
+          "tradingValue": 120364642,
           "priceSource": "yahoo",
           "marketCapB": 3.339,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -1829,7 +1863,7 @@
           "industry": "Semiconductors",
           "changePct": -4.53,
           "close": 601.25,
-          "tradingValue": 31451778312,
+          "tradingValue": 31859275500,
           "priceSource": "yahoo",
           "marketCapB": 681.065,
           "reason": "서프라이즈 지출 증가 발표",
@@ -1869,7 +1903,7 @@
           "industry": "Biotechnology: Laboratory Analytical Instruments",
           "changePct": -4.47,
           "close": 56.63999938964844,
-          "tradingValue": 140591976,
+          "tradingValue": 140591806,
           "priceSource": "yahoo",
           "marketCapB": 8.65,
           "reason": "보수적 신규 커버리지 및 거시 경제 위험",
@@ -1902,7 +1936,7 @@
           "industry": "Integrated oil Companies",
           "changePct": -4.38,
           "close": 27.100000381469727,
-          "tradingValue": 39876241,
+          "tradingValue": 39883071,
           "priceSource": "yahoo",
           "marketCapB": 2.387,
           "reason": "이사 10,000주 매도 제안",
@@ -1935,12 +1969,12 @@
           "industry": "Computer Software: Prepackaged Software",
           "changePct": -4.31,
           "close": 158.25,
-          "tradingValue": 909453730,
+          "tradingValue": 915634500,
           "priceSource": "yahoo",
           "marketCapB": 57.135,
           "reason": "고객 사용량 경고 및 AI 매도세",
           "reasonStatus": "ok",
-          "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(시총가중 평균 -2.5%)",
+          "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(Nutanix·Oracle 등)",
           "tags": [
             "섹터동조",
             "뉴스"
@@ -1957,7 +1991,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Prepackaged Software",
-            "avgPct": -2.53,
+            "avgPct": -1.27,
             "n": 133,
             "weighting": "시총가중"
           }
@@ -1969,7 +2003,7 @@
           "industry": "Military/Government/Technical",
           "changePct": -4.27,
           "close": 145.49000549316406,
-          "tradingValue": 284053086,
+          "tradingValue": 284098334,
           "priceSource": "yahoo",
           "marketCapB": 16.9,
           "reason": "실적 부진 및 시장 압력",
@@ -1997,7 +2031,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Military/Government/Technical",
-            "avgPct": 1.75,
+            "avgPct": 1.74,
             "n": 31,
             "weighting": "시총가중"
           }
@@ -2009,12 +2043,12 @@
           "industry": "Computer Software: Prepackaged Software",
           "changePct": -4.26,
           "close": 4.489999771118164,
-          "tradingValue": 66819166,
+          "tradingValue": 67074760,
           "priceSource": "yahoo",
           "marketCapB": 3.817,
           "reason": "새로운 경쟁 직면",
           "reasonStatus": "ok",
-          "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(시총가중 평균 -2.5%)",
+          "sectorNote": "Computer Software: Prepackaged Software 업종 동반 하락(Nutanix·Oracle 등)",
           "tags": [
             "섹터동조",
             "뉴스"
@@ -2031,7 +2065,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Prepackaged Software",
-            "avgPct": -2.54,
+            "avgPct": -1.29,
             "n": 133,
             "weighting": "시총가중"
           }
@@ -2043,7 +2077,7 @@
           "industry": "Finance: Consumer Services",
           "changePct": -4.26,
           "close": 7.409999847412109,
-          "tradingValue": 103923803,
+          "tradingValue": 105368716,
           "priceSource": "yahoo",
           "marketCapB": 2.053,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2056,7 +2090,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Finance: Consumer Services",
-            "avgPct": -0.24,
+            "avgPct": -0.27,
             "n": 73,
             "weighting": "시총가중"
           }
@@ -2068,7 +2102,7 @@
           "industry": "Integrated oil Companies",
           "changePct": -4.22,
           "close": 52.869998931884766,
-          "tradingValue": 80152663,
+          "tradingValue": 80150918,
           "priceSource": "yahoo",
           "marketCapB": 3.204,
           "reason": "내부자 매도 및 200일 이동평균선 하회",
@@ -2115,7 +2149,7 @@
           "industry": "Engineering & Construction",
           "changePct": -4.1,
           "close": 565.469970703125,
-          "tradingValue": 1388731481,
+          "tradingValue": 1388907342,
           "priceSource": "yahoo",
           "marketCapB": 85.22,
           "reason": "주가 5.6% 하락",
@@ -2147,38 +2181,13 @@
       "criteria": "전체 시장(시총·거래대금 하한 없음) · ETF 제외 · 등락률 ±3% 이상 · 방향별 최대 20종목",
       "up": [
         {
-          "ticker": "FNUC",
-          "company": "Frontier Nuclear and Minerals Inc. Common Shares",
-          "sector": "BASIC MATERIALS",
-          "industry": "Other Metals and Minerals",
-          "changePct": 1660.0,
-          "close": 5.28000020980835,
-          "tradingValue": 244179,
-          "priceSource": "yahoo",
-          "marketCapB": 0.191,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Other Metals and Minerals",
-            "avgPct": 2.58,
-            "n": 5,
-            "weighting": "시총가중"
-          }
-        },
-        {
           "ticker": "BGLC",
           "company": "BioNexus Gene Lab Corp Common stock",
           "sector": "HEALTHCARE",
           "industry": "Medical Specialities",
           "changePct": 113.56,
           "close": 1.2599999904632568,
-          "tradingValue": 68643320,
+          "tradingValue": 69727013,
           "priceSource": "yahoo",
           "marketCapB": 0.004,
           "reason": "2백만 달러 규모 자사주 매입 프로그램 승인",
@@ -2225,9 +2234,9 @@
           "industry": "Trucking Freight/Courier Services",
           "changePct": 79.37,
           "close": 0.5649999976158142,
-          "tradingValue": 77787685,
+          "tradingValue": 78908804,
           "priceSource": "yahoo",
-          "marketCapB": 0.002,
+          "marketCapB": 0.003,
           "reason": "뚜렷한 재료 확인 안 됨",
           "reasonStatus": "none",
           "sectorNote": "",
@@ -2250,7 +2259,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": 62.0,
           "close": 0.8100000023841858,
-          "tradingValue": 3651740,
+          "tradingValue": 3710772,
           "priceSource": "yahoo",
           "marketCapB": 0.012,
           "reason": "Biotechnology: Pharmaceutical Preparations 업종 동반 상승(NeuroSense Therapeutics·Traws Pharma 등)",
@@ -2275,7 +2284,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": 60.0,
           "close": 1.7599999904632568,
-          "tradingValue": 144926590,
+          "tradingValue": 145946943,
           "priceSource": "yahoo",
           "marketCapB": 0.003,
           "reason": "2상 ALS 임상 시험 긍정적 결과 발표",
@@ -2323,14 +2332,14 @@
           "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
           "changePct": 58.48,
           "close": 2.7100000381469727,
-          "tradingValue": 3644549,
+          "tradingValue": 3662294,
           "priceSource": "yahoo",
           "marketCapB": 0.035,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
+          "reason": "Biotechnology: Biological Products (No Diagnostic Substances) 업종 동반 상승(Aligos Therapeutics·Cognition Therapeutics 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "Biotechnology: Biological Products (No Diagnostic Substances) 업종 동반 상승(Aligos Therapeutics·Cognition Therapeutics 등)",
           "tags": [
-            "불명"
+            "섹터동조"
           ],
           "evidence": [],
           "sectorMove": {
@@ -2348,7 +2357,7 @@
           "industry": "Metal Fabrications",
           "changePct": 54.12,
           "close": 0.6549999713897705,
-          "tradingValue": 63658976,
+          "tradingValue": 64597735,
           "priceSource": "yahoo",
           "marketCapB": 0.001,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2373,7 +2382,7 @@
           "industry": "Industrial Machinery/Components",
           "changePct": 53.12,
           "close": 5.650000095367432,
-          "tradingValue": 52637079,
+          "tradingValue": 53138251,
           "priceSource": "yahoo",
           "marketCapB": 0.006,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2396,9 +2405,9 @@
           "company": "Nexus Advanced Technologies Inc. Ordinary Shares",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Movies/Entertainment",
-          "changePct": 52.08,
-          "close": 0.6448000073432922,
-          "tradingValue": 77227595,
+          "changePct": 52.12,
+          "close": 0.6449999809265137,
+          "tradingValue": 85818795,
           "priceSource": "yahoo",
           "marketCapB": 0.002,
           "reason": "청신이 공동 최고경영자로 임명",
@@ -2445,14 +2454,14 @@
           "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
           "changePct": 51.68,
           "close": 2.259999990463257,
-          "tradingValue": 73751757,
+          "tradingValue": 74386770,
           "priceSource": "yahoo",
           "marketCapB": 0.014,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
+          "reason": "Biotechnology: Biological Products (No Diagnostic Substances) 업종 동반 상승(LeonaBio·Cognition Therapeutics 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "Biotechnology: Biological Products (No Diagnostic Substances) 업종 동반 상승(LeonaBio·Cognition Therapeutics 등)",
           "tags": [
-            "불명"
+            "섹터동조"
           ],
           "evidence": [],
           "sectorMove": {
@@ -2470,7 +2479,7 @@
           "industry": "Precious Metals",
           "changePct": 45.03,
           "close": 2.190000057220459,
-          "tradingValue": 800392,
+          "tradingValue": 802197,
           "priceSource": "yahoo",
           "marketCapB": 0.148,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2495,7 +2504,7 @@
           "industry": "Package Goods/Cosmetics",
           "changePct": 45.0,
           "close": 1.159999966621399,
-          "tradingValue": 3607609,
+          "tradingValue": 3646576,
           "priceSource": "yahoo",
           "marketCapB": 0.004,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2520,7 +2529,7 @@
           "industry": "Business Services",
           "changePct": 44.44,
           "close": 2.2100000381469727,
-          "tradingValue": 993165,
+          "tradingValue": 998699,
           "priceSource": "yahoo",
           "marketCapB": 0.089,
           "reason": "",
@@ -2537,36 +2546,13 @@
           }
         },
         {
-          "ticker": "DKI",
-          "company": "DarkIris Inc. Class A Ordinary Shares",
-          "sector": "TECHNOLOGY",
-          "industry": "Computer Software: Prepackaged Software",
-          "changePct": 40.81,
-          "close": 1.2799999713897705,
-          "tradingValue": 24327365,
-          "priceSource": "yahoo",
-          "marketCapB": 259.587,
-          "reason": "",
-          "reasonStatus": "failed",
-          "sectorNote": "",
-          "tags": [],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Computer Software: Prepackaged Software",
-            "avgPct": -3.93,
-            "n": 133,
-            "weighting": "시총가중"
-          }
-        },
-        {
           "ticker": "TRAW",
           "company": "Traws Pharma Inc.",
           "sector": "HEALTHCARE",
           "industry": "Biotechnology: Pharmaceutical Preparations",
-          "changePct": 40.53,
-          "close": 0.2669999897480011,
-          "tradingValue": 773334,
+          "changePct": 42.11,
+          "close": 0.27000001072883606,
+          "tradingValue": 791937,
           "priceSource": "yahoo",
           "marketCapB": 0.004,
           "reason": "Biotechnology: Pharmaceutical Preparations 업종 동반 상승(Radiopharm Theranostics·NeuroSense Therapeutics 등)",
@@ -2585,13 +2571,53 @@
           }
         },
         {
+          "ticker": "DKI",
+          "company": "DarkIris Inc. Class A Ordinary Shares",
+          "sector": "TECHNOLOGY",
+          "industry": "Computer Software: Prepackaged Software",
+          "changePct": 40.81,
+          "close": 1.2799999713897705,
+          "tradingValue": 24664063,
+          "priceSource": "yahoo",
+          "marketCapB": 259.587,
+          "reason": "모바일 게임 3천만 달러 인수 및 CEO 주식 매수",
+          "reasonStatus": "ok",
+          "sectorNote": "",
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "DarkIris (DKI) Stock Jumps Over 35% After Hours on $30 Million Mobile Games Deal, CEO Share Purchase",
+              "link": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxQcy1VdXNQQmpYRUozVmxNRmY1enBoSDVqbXJFNTJiR01lY0xIanpOenkyZWRPU3l2cjA4VUNwVDFxYjBOcTV2Mnk2dldHVm5OenZrQXNJdC1WbXVrQTFIUFptd0sxTkM0RVp5WFlQYlVGUVBVbUYteGJWYk1zdDRLQXBCX0Y4YUJCTUQzRzhzMGtlYW1BYXRSYmxRN3BvOU5kb01nVzJEdmxpVTdIYXE4d0VmN01memhBWDNhVXkwVTluc1VBOTd2UGh5anBHdnllWFFOejBlOURhaDk2VExyYzVPY3ZnOVRWelE?oc=5",
+              "source": "TradingView",
+              "date": "2026-11-25"
+            },
+            {
+              "type": "news",
+              "title": "DarkIris Buys Mobile Games for $30 Million",
+              "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQZ004S1ZGZkRuNm41U1ZsRDNDUnRmNU5GWnVfSkMzaDhCRzFpbVRPOU1fMnhJSW42ZlZfQ0p5R2lJOVlIU1oxRVZ1RGFUMzVaSEg3Vl9QQjUwQXphcVpTV19UYUNReWRGRnI2WkJuOTliNFhaWXphMkVGcmZDbVg2TUUybEpPUGMyU0hB?oc=5",
+              "source": "Wisevoter",
+              "date": "2026-11-25"
+            }
+          ],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Computer Software: Prepackaged Software",
+            "avgPct": -2.64,
+            "n": 133,
+            "weighting": "시총가중"
+          }
+        },
+        {
           "ticker": "MWYN",
           "company": "Marwynn Holdings Inc. Common stock",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Food Distributors",
           "changePct": 37.84,
           "close": 1.5299999713897705,
-          "tradingValue": 299152,
+          "tradingValue": 300186,
           "priceSource": "yahoo",
           "marketCapB": 0.037,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2616,7 +2642,7 @@
           "industry": "Diversified Commercial Services",
           "changePct": 34.62,
           "close": 1.399999976158142,
-          "tradingValue": 5992740,
+          "tradingValue": 6047300,
           "priceSource": "yahoo",
           "marketCapB": 0.008,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2641,7 +2667,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": 33.81,
           "close": 1.8600000143051147,
-          "tradingValue": 2344013,
+          "tradingValue": 2349738,
           "priceSource": "yahoo",
           "marketCapB": 0.008,
           "reason": "Biotechnology: Pharmaceutical Preparations 업종 동반 상승(Radiopharm Theranostics·NeuroSense Therapeutics 등)",
@@ -2666,7 +2692,7 @@
           "industry": "Package Goods/Cosmetics",
           "changePct": 32.94,
           "close": 2.259999990463257,
-          "tradingValue": 3096955,
+          "tradingValue": 3704140,
           "priceSource": "yahoo",
           "marketCapB": 0.16,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2691,7 +2717,7 @@
           "industry": "Other Consumer Services",
           "changePct": 32.93,
           "close": 0.10899999737739563,
-          "tradingValue": 887864,
+          "tradingValue": 960410,
           "priceSource": "yahoo",
           "marketCapB": 0.001,
           "reason": "주주총회에서 20대 1 역분할 및 자본금 증액 승인",
@@ -2723,6 +2749,31 @@
             "n": 24,
             "weighting": "시총가중"
           }
+        },
+        {
+          "ticker": "CGTX",
+          "company": "Cognition Therapeutics Inc.",
+          "sector": "HEALTHCARE",
+          "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
+          "changePct": 30.96,
+          "close": 0.9010000228881836,
+          "tradingValue": 2099330,
+          "priceSource": "yahoo",
+          "marketCapB": 0.086,
+          "reason": "Biotechnology: Biological Products (No Diagnostic Substances) 업종 동반 상승(LeonaBio·Aligos Therapeutics 등)",
+          "reasonStatus": "sector",
+          "sectorNote": "Biotechnology: Biological Products (No Diagnostic Substances) 업종 동반 상승(LeonaBio·Aligos Therapeutics 등)",
+          "tags": [
+            "섹터동조"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
+            "avgPct": -1.13,
+            "n": 64,
+            "weighting": "시총가중"
+          }
         }
       ],
       "down": [
@@ -2731,11 +2782,11 @@
           "company": "Healthcare Triangle Inc.",
           "sector": "TECHNOLOGY",
           "industry": "EDP Services",
-          "changePct": -83.78,
-          "close": 0.46239998936653137,
-          "tradingValue": 1204932,
+          "changePct": -83.8,
+          "close": 0.4620000123977661,
+          "tradingValue": 1296649,
           "priceSource": "yahoo",
-          "marketCapB": 0.002,
+          "marketCapB": 12.954,
           "reason": "상장폐지 통보 및 규정 미준수",
           "reasonStatus": "ok",
           "sectorNote": "",
@@ -2779,20 +2830,44 @@
           "company": "VisionWave Holdings Inc.",
           "sector": "TECHNOLOGY",
           "industry": "Computer Software: Prepackaged Software",
-          "changePct": -65.31,
-          "close": 0.045099999755620956,
-          "tradingValue": 3132682,
+          "changePct": -65.38,
+          "close": 0.04500000178813934,
+          "tradingValue": 3276581,
           "priceSource": "yahoo",
           "marketCapB": 270.498,
-          "reason": "",
-          "reasonStatus": "failed",
+          "reason": "2백만 달러 규모 주식 공모 진행",
+          "reasonStatus": "ok",
           "sectorNote": "",
-          "tags": [],
-          "evidence": [],
+          "tags": [
+            "뉴스"
+          ],
+          "evidence": [
+            {
+              "type": "news",
+              "title": "VisionWave Holdings, Inc. Announces $2.0 Million Registered Direct Offering",
+              "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNajFvR01fYnBPcmFwZVpCUkNMNWhfdE9aMGtmejFld29EdGxaazZIS1lYQXNFdC1teUp6TXotZjBQX0FwdEdSTW92aGNYWXBhMTlDRE12a1BpUzU1QUNjdnQ4QmpCbzZENjRyUUFZYVZwWDUzSE92M2NMQjN5a25tNzY2czJhaUlYcmNCMFp0MzhWM1JHVnhDRXhPQUhzaU5pNFEzRjJBMUI1ZktqMXNUREUzZGo?oc=5",
+              "source": "Quantisnow",
+              "date": "2026-11-25"
+            },
+            {
+              "type": "news",
+              "title": "VisionWave Prices $2 Million Stock Offering",
+              "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQbHNHc0twRURoQktpX1BFQnBtS3VGcWNwRFFzMVN6QUxDMmEwdFJSTDNPaWVoc3hQMFdoWTNSVmFTaDA0ZWppMFRIc2NTOVYxT2FGYjRpZVNVdk5lMW1RUEROaGh6OE4zYW5DUGd4WHM5UEZrSWoweFp4Z2VwOVlwWnR1V2dkSE1hd3J4YmFoNjNzTVVtT2RtZ09NMA?oc=5",
+              "source": "marketscreener.com",
+              "date": "2026-11-25"
+            },
+            {
+              "type": "news",
+              "title": "VisionWave Holdings raises $2M in registered direct offering",
+              "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPc1ZLaGtuTG5DaUVubGdSX3NIN0FNWGhkWW12Z0xiOThtd0M3TVBDQTc5T2xldEZ0eWFYajhVR3EteGN1c3dTN2JnVmlFMk1oMWI2N2ljLWYwcGJ0QmhwNk9mN3hxVDZkaHV0NTA2c01uUmFXb0VXRGtxMUw4c3RYRWRCSG9WY2R0MjRBc0pVNEktZnVoek9JeFMyckVNQjQ2RndCVFZSUm5Db29YUWF5OWE5a256SzUzRXpQZDNkMFM?oc=5",
+              "source": "StreetInsider",
+              "date": "2026-11-25"
+            }
+          ],
           "sectorMove": {
             "level": "업종",
             "name": "Computer Software: Prepackaged Software",
-            "avgPct": -0.45,
+            "avgPct": 0.85,
             "n": 133,
             "weighting": "시총가중"
           }
@@ -2804,7 +2879,7 @@
           "industry": "Medical/Nursing Services",
           "changePct": -53.67,
           "close": 4.170000076293945,
-          "tradingValue": 1290732,
+          "tradingValue": 1295619,
           "priceSource": "yahoo",
           "marketCapB": 0.012,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2829,7 +2904,7 @@
           "industry": "Services-Misc. Amusement & Recreation",
           "changePct": -46.49,
           "close": 0.061000000685453415,
-          "tradingValue": 2764465,
+          "tradingValue": 2968230,
           "priceSource": "yahoo",
           "marketCapB": 0.004,
           "reason": "80대1 역주식병합 실행",
@@ -2857,7 +2932,7 @@
           "sectorMove": {
             "level": "업종",
             "name": "Services-Misc. Amusement & Recreation",
-            "avgPct": 4.09,
+            "avgPct": 5.61,
             "n": 25,
             "weighting": "시총가중"
           }
@@ -2867,9 +2942,9 @@
           "company": "Perpetuals.com Ltd American Depositary Shares",
           "sector": "TECHNOLOGY",
           "industry": "EDP Services",
-          "changePct": -33.18,
-          "close": 0.5184999704360962,
-          "tradingValue": 162108,
+          "changePct": -33.12,
+          "close": 0.5189999938011169,
+          "tradingValue": 165301,
           "priceSource": "yahoo",
           "marketCapB": 0.004,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2882,33 +2957,8 @@
           "sectorMove": {
             "level": "업종",
             "name": "EDP Services",
-            "avgPct": 1.84,
-            "n": 66,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "PW",
-          "company": "Power REIT (MD)",
-          "sector": "REAL ESTATE",
-          "industry": "Real Estate Investment Trusts",
-          "changePct": -32.97,
-          "close": 3.640000104904175,
-          "tradingValue": 207819,
-          "priceSource": "yahoo",
-          "marketCapB": 0.002,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Real Estate Investment Trusts",
-            "avgPct": 0.78,
-            "n": 115,
+            "avgPct": -0.56,
+            "n": 67,
             "weighting": "시총가중"
           }
         },
@@ -2919,7 +2969,7 @@
           "industry": "Medical/Dental Instruments",
           "changePct": -32.99,
           "close": 2.640000104904175,
-          "tradingValue": 1320362,
+          "tradingValue": 1323696,
           "priceSource": "yahoo",
           "marketCapB": 0.001,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2938,13 +2988,38 @@
           }
         },
         {
+          "ticker": "PW",
+          "company": "Power REIT (MD)",
+          "sector": "REAL ESTATE",
+          "industry": "Real Estate Investment Trusts",
+          "changePct": -32.97,
+          "close": 3.640000104904175,
+          "tradingValue": 207844,
+          "priceSource": "yahoo",
+          "marketCapB": 0.001,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Real Estate Investment Trusts",
+            "avgPct": 0.78,
+            "n": 115,
+            "weighting": "시총가중"
+          }
+        },
+        {
           "ticker": "WXM",
           "company": "WF International Limited Ordinary Shares",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Engineering & Construction",
           "changePct": -32.92,
           "close": 1.0800000429153442,
-          "tradingValue": 101385,
+          "tradingValue": 102384,
           "priceSource": "yahoo",
           "marketCapB": 0.003,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -2967,15 +3042,17 @@
           "company": "SU Group Holdings Limited Class A Ordinary Shares",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Diversified Commercial Services",
-          "changePct": -31.21,
-          "close": 0.8255000114440918,
-          "tradingValue": 60663,
+          "changePct": -31.17,
+          "close": 0.8259999752044678,
+          "tradingValue": 100689,
           "priceSource": "yahoo",
           "marketCapB": 0.001,
-          "reason": "",
-          "reasonStatus": "failed",
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
           "sectorNote": "",
-          "tags": [],
+          "tags": [
+            "불명"
+          ],
           "evidence": [],
           "sectorMove": {
             "level": "업종",
@@ -2990,9 +3067,9 @@
           "company": "American Resources Corporation Class A",
           "sector": "ENERGY",
           "industry": "Coal Mining",
-          "changePct": -30.61,
-          "close": 0.7425000071525574,
-          "tradingValue": 9002767,
+          "changePct": -30.56,
+          "close": 0.7429999709129333,
+          "tradingValue": 9080648,
           "priceSource": "yahoo",
           "marketCapB": 0.079,
           "reason": "상장폐지 통보 및 재무제표 신뢰 불가",
@@ -3040,7 +3117,7 @@
           "industry": "Telecommunications Equipment",
           "changePct": -29.5,
           "close": 0.09799999743700027,
-          "tradingValue": 180008,
+          "tradingValue": 186935,
           "priceSource": "yahoo",
           "marketCapB": 0.003,
           "reason": "1대20 역주식병합 실시",
@@ -3080,7 +3157,7 @@
           "industry": "Marine Transportation",
           "changePct": -28.62,
           "close": 2.2699999809265137,
-          "tradingValue": 1244630,
+          "tradingValue": 1318643,
           "priceSource": "yahoo",
           "marketCapB": 0.002,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -3103,9 +3180,9 @@
           "company": "Ryde Group Ltd. Class A Ordinary Shares",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Business Services",
-          "changePct": -24.15,
-          "close": 0.6901999711990356,
-          "tradingValue": 477850,
+          "changePct": -24.18,
+          "close": 0.6899999976158142,
+          "tradingValue": 477687,
           "priceSource": "yahoo",
           "marketCapB": 0.123,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -3130,7 +3207,7 @@
           "industry": "Semiconductors",
           "changePct": -24.12,
           "close": 1.9500000476837158,
-          "tradingValue": 809213,
+          "tradingValue": 813930,
           "priceSource": "yahoo",
           "marketCapB": 0.018,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -3155,7 +3232,7 @@
           "industry": "Biotechnology: Pharmaceutical Preparations",
           "changePct": -23.98,
           "close": 10.050000190734863,
-          "tradingValue": 1507440,
+          "tradingValue": 1507500,
           "priceSource": "yahoo",
           "marketCapB": 0.71,
           "reason": "RUCONEST 제조 중단 및 공급 부족 경고",
@@ -3190,33 +3267,8 @@
           "sectorMove": {
             "level": "업종",
             "name": "Biotechnology: Pharmaceutical Preparations",
-            "avgPct": -0.49,
+            "avgPct": -0.5,
             "n": 190,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "SRTM",
-          "company": "Stratum Holdings Corp.",
-          "sector": "FINANCIAL",
-          "industry": "Real Estate",
-          "changePct": -22.6,
-          "close": 0.3630000054836273,
-          "tradingValue": 983032,
-          "priceSource": "yahoo",
-          "marketCapB": 145.674,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Real Estate",
-            "avgPct": 1.9,
-            "n": 23,
             "weighting": "시총가중"
           }
         },
@@ -3225,9 +3277,9 @@
           "company": "Viomi Technology Co. Ltd American Depositary Shares",
           "sector": "CONSUMER CYCLICAL",
           "industry": "Consumer Electronics/Appliances",
-          "changePct": -22.4,
-          "close": 0.8845999836921692,
-          "tradingValue": 60433,
+          "changePct": -22.81,
+          "close": 0.8799999952316284,
+          "tradingValue": 60104,
           "priceSource": "yahoo",
           "marketCapB": 0.059,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -3246,14 +3298,64 @@
           }
         },
         {
+          "ticker": "BFLR",
+          "company": "BlueFlare Inc.",
+          "sector": "TECHNOLOGY",
+          "industry": "Computer Software: Prepackaged Software",
+          "changePct": -22.73,
+          "close": 0.017000000923871994,
+          "tradingValue": 6341437,
+          "priceSource": "yahoo",
+          "marketCapB": 0.002,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Computer Software: Prepackaged Software",
+            "avgPct": -1.29,
+            "n": 134,
+            "weighting": "시총가중"
+          }
+        },
+        {
+          "ticker": "SRTM",
+          "company": "Stratum Holdings Corp.",
+          "sector": "FINANCIAL",
+          "industry": "Real Estate",
+          "changePct": -22.6,
+          "close": 0.3630000054836273,
+          "tradingValue": 1066676,
+          "priceSource": "yahoo",
+          "marketCapB": 145.674,
+          "reason": "뚜렷한 재료 확인 안 됨",
+          "reasonStatus": "none",
+          "sectorNote": "",
+          "tags": [
+            "불명"
+          ],
+          "evidence": [],
+          "sectorMove": {
+            "level": "업종",
+            "name": "Real Estate",
+            "avgPct": 1.9,
+            "n": 23,
+            "weighting": "시총가중"
+          }
+        },
+        {
           "ticker": "SNDK",
           "company": "Sandisk Corporation",
           "sector": "TECHNOLOGY",
           "industry": "Electronic Components",
-          "changePct": -22.02,
-          "close": 73.61000061035156,
-          "tradingValue": 8967826508,
-          "priceSource": "yahoo",
+          "changePct": -22.0,
+          "close": 73.61,
+          "tradingValue": null,
+          "priceSource": "snapshot",
           "marketCapB": 94.265,
           "reason": "메모리 반도체 업황 부진 및 관세 영향",
           "reasonStatus": "ok",
@@ -3292,7 +3394,7 @@
           "industry": "Medical/Dental Instruments",
           "changePct": -22.03,
           "close": 0.04600000008940697,
-          "tradingValue": 150469,
+          "tradingValue": 248648,
           "priceSource": "yahoo",
           "marketCapB": 0.002,
           "reason": "뚜렷한 재료 확인 안 됨",
@@ -3307,31 +3409,6 @@
             "name": "Medical/Dental Instruments",
             "avgPct": 1.1,
             "n": 48,
-            "weighting": "시총가중"
-          }
-        },
-        {
-          "ticker": "PRPL",
-          "company": "Purple Innovation Inc.",
-          "sector": "CONSUMER CYCLICAL",
-          "industry": "Home Furnishings",
-          "changePct": -20.95,
-          "close": 0.7944999933242798,
-          "tradingValue": 47003,
-          "priceSource": "yahoo",
-          "marketCapB": 0.003,
-          "reason": "뚜렷한 재료 확인 안 됨",
-          "reasonStatus": "none",
-          "sectorNote": "",
-          "tags": [
-            "불명"
-          ],
-          "evidence": [],
-          "sectorMove": {
-            "level": "업종",
-            "name": "Home Furnishings",
-            "avgPct": 1.69,
-            "n": 10,
             "weighting": "시총가중"
           }
         }

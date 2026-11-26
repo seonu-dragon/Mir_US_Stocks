@@ -1,12 +1,669 @@
 {
-  "updatedAtKst": "2026-11-25 13:25 KST",
-  "lastFileDate": "2026-11-24",
+  "updatedAtKst": "2026-11-26 13:25 KST",
+  "lastFileDate": "2026-11-25",
   "partialFetch": false,
-  "count": 1746,
+  "count": 1773,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만. summary 는 8-K 본문에서 규칙(템플릿+정규식)으로 뽑은 3줄 요약(숫자·이름은 원문 표기 그대로), aiSummary 는 시총 상위 일부만 Gemini 요약 후 원문에 없는 숫자가 든 줄을 버린 것.",
-  "summaryCount": 765,
+  "summaryCount": 778,
   "events": [
+    {
+      "ticker": "AXON",
+      "company": "AXON ENTERPRISE, INC.  (AXON)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001628280-26-075976",
+      "link": "https://www.sec.gov/Archives/edgar/data/1069183/000162828026075976/axon-20261119.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Caitlin E. Kalinowski(이사) 사임",
+        "amount": "",
+        "date": "2026-11-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "ANT",
+      "company": "Anthropic, PBC  (ANT)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "3.03",
+          "label": "주주 권리 변경"
+        },
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001628280-26-075973",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130357/000162828026075973/ant-20261119.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Stockholders’ Agreement",
+        "who": "",
+        "amount": "",
+        "date": "2026-11-18",
+        "src": "rule"
+      },
+      "summaryChecked": true,
+      "aiChecked": true,
+      "aiSummary": {
+        "lines": [
+          "주요 계약 체결",
+          "Anthropic, PBC, Founder LLC, Trust",
+          ""
+        ],
+        "model": "gemini-2.5-flash-lite",
+        "droppedLines": 1,
+        "src": "ai"
+      }
+    },
+    {
+      "ticker": "IP",
+      "company": "INTERNATIONAL PAPER CO /NEW/  (IP, INPAP)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001628280-26-075971",
+      "link": "https://www.sec.gov/Archives/edgar/data/51434/000162828026075971/ip-20261122.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 보수·계약 변경 1명",
+        "who": "Timothy S. Nicholls(EVP·사장) 보수·계약 변경",
+        "amount": "",
+        "date": "2026-11-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "MDLZ",
+      "company": "Mondelez International, Inc.  (MDLZ)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001628280-26-075952",
+      "link": "https://www.sec.gov/Archives/edgar/data/1103982/000162828026075952/mdlz-20261120.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Amit Banati(EVP·CFO) 선임",
+        "amount": "",
+        "date": "2026-11-20",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001564708-26-000269",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000269/nws-20261124.htm",
+      "buybackMention": true,
+      "amountUsd": 1000000000.0,
+      "kind": "buyback",
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "DTSQ",
+      "company": "DT Cloud Star Acquisition Corp  (DTSQ, DTSQR, DTSQU)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054279",
+      "link": "https://www.sec.gov/Archives/edgar/data/2017950/000149315226054279/form8-k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "CAPN",
+      "company": "Cayson Acquisition Corp  (CAPN, CAPNR, CAPNU)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054255",
+      "link": "https://www.sec.gov/Archives/edgar/data/2024203/000149315226054255/form8-k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "BMNR",
+      "company": "BITMINE IMMERSION TECHNOLOGIES, INC.  (BMNP, BMNR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054131",
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226054131/form8-k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "NXPI",
+      "company": "NXP Semiconductors N.V.  (NXPI)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001413447-26-000064",
+      "link": "https://www.sec.gov/Archives/edgar/data/1413447/000141344726000064/nxpi-20261118.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "GME",
+      "company": "GameStop Corp.  (GME)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001326380-26-000071",
+      "link": "https://www.sec.gov/Archives/edgar/data/1326380/000132638026000071/gme-20261124.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "MORN",
+      "company": "Morningstar, Inc.  (MORN)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001289419-26-000058",
+      "link": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000058/morn-20261125.htm",
+      "buybackMention": true,
+      "buybackChecked": true,
+      "summaryChecked": true
+    },
+    {
+      "ticker": "CEPO",
+      "company": "Cantor Equity Partners I, Inc.  (CEPO)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001213900-26-124223",
+      "link": "https://www.sec.gov/Archives/edgar/data/2027708/000121390026124223/ea0313223-8k_cantor1.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "IPXG",
+      "company": "Inflection Point Acquisition Corp. VII  (IPXG, IPXGU, IPXGW)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001213900-26-124196",
+      "link": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026124196/ea0313601-8k425_inflection7.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "JACS",
+      "company": "Jackson Acquisition Co II  (JACS, JACS-RI, JACS-UN)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        },
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001213900-26-124167",
+      "link": "https://www.sec.gov/Archives/edgar/data/2039058/000121390026124167/ea0313435-8k_jackson2.htm",
+      "buybackMention": true,
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Amended and Restated Investment Management Trust Agreement",
+        "who": "",
+        "amount": "$250,000",
+        "date": "2026-11-20",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "OBA",
+      "company": "Oxley Bridge Acquisition Ltd  (OBA, OBAWU, OBAWW)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001213900-26-124147",
+      "link": "https://www.sec.gov/Archives/edgar/data/2034313/000121390026124147/ea0313598-8k_oxley.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "NXPI",
+      "company": "NXP Semiconductors N.V.  (NXPI)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-478623",
+      "link": "https://www.sec.gov/Archives/edgar/data/1413447/000119312526478623/d188453d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — 2034 Notes",
+        "who": "",
+        "amount": "€500,000,000",
+        "date": "2026-11-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "TEM",
+      "company": "Tempus AI, Inc.  (TEM)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-478564",
+      "link": "https://www.sec.gov/Archives/edgar/data/1717115/000119312526478564/d51820d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Credit Agreement",
+        "who": "",
+        "amount": "$57.5 million",
+        "date": "2026-11-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "FE",
+      "company": "FIRSTENERGY CORP  (FE)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-478506",
+      "link": "https://www.sec.gov/Archives/edgar/data/1031296/000119312526478506/d195970d8k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "AMT",
+      "company": "AMERICAN TOWER CORP /MA/  (AMT)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-478472",
+      "link": "https://www.sec.gov/Archives/edgar/data/1053507/000119312526478472/d114688d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Base Indenture",
+        "who": "",
+        "amount": "€600.0 million",
+        "date": "2026-11-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "URBN",
+      "company": "URBAN OUTFITTERS INC  (URBN)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-477264",
+      "link": "https://www.sec.gov/Archives/edgar/data/912615/000119312526477264/urbn-20261124.htm",
+      "buybackMention": true,
+      "buybackChecked": true,
+      "summaryChecked": true
+    },
+    {
+      "ticker": "FE",
+      "company": "FIRSTENERGY CORP  (FE)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-476850",
+      "link": "https://www.sec.gov/Archives/edgar/data/1031296/000119312526476850/d185350d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Contribution Agreement",
+        "who": "상대방 State Street",
+        "amount": "$299,999,978.24",
+        "date": "2026-11-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "SW",
+      "company": "Smurfit Westrock plc  (SW)",
+      "items": [
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0001104659-26-131797",
+      "link": "https://www.sec.gov/Archives/edgar/data/2005951/000110465926131797/tm2629851d16_8k.htm",
+      "summary": {
+        "item": "2.03",
+        "what": "채무 발생 — 20 37 Notes",
+        "who": "",
+        "amount": "$ 900.0 million",
+        "date": "2026-11-20",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "DE",
+      "company": "DEERE & CO  (DE)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0001104659-26-131741",
+      "link": "https://www.sec.gov/Archives/edgar/data/315189/000110465926131741/de-20261125x8k.htm",
+      "buybackMention": true,
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-11-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "RJF",
+      "company": "RAYMOND JAMES FINANCIAL INC  (RJF)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-25",
+      "accession": "0000720005-26-000088",
+      "link": "https://www.sec.gov/Archives/edgar/data/720005/000072000526000088/rjf-20261125.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-11-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "IMO",
+      "company": "IMPERIAL OIL LTD  (IMO)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0000049938-26-000054",
+      "link": "https://www.sec.gov/Archives/edgar/data/49938/000004993826000054/imo-20261125.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "AXP",
+      "company": "AMERICAN EXPRESS CO  (AXP)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-11-25",
+      "accession": "0000004962-26-000440",
+      "link": "https://www.sec.gov/Archives/edgar/data/4962/000000496226000440/axp-20261125.htm",
+      "summaryChecked": true
+    },
     {
       "ticker": "GJP",
       "company": "STRATS(SM) TRUST FOR DOMINION RESOURCES, INC. SECURITIES, SERIES 2005-6  (GJP)",
@@ -442,6 +1099,25 @@
       "link": "https://www.sec.gov/Archives/edgar/data/1791942/000121390026123726/ea0313447-8k_jbsnv.htm",
       "buybackMention": true,
       "buybackChecked": true,
+      "summaryChecked": true
+    },
+    {
+      "ticker": "SRTM",
+      "company": "Stratum Holdings Corp.  (SRTM)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-11-24",
+      "accession": "0001213900-26-123414",
+      "link": "https://www.sec.gov/Archives/edgar/data/1879403/000121390026123414/ea0313344-8k_stratum.htm",
       "summaryChecked": true
     },
     {
@@ -2285,7 +2961,18 @@
         "date": "2026-11-22",
         "src": "rule"
       },
-      "summaryChecked": true
+      "summaryChecked": true,
+      "aiChecked": true,
+      "aiSummary": {
+        "lines": [
+          "CrowdStrike Holdings, Inc.가 Zscaler, Inc. 인수 계약 체결",
+          "CrowdStrike Holdings, Inc. (Parent), Neon Speedway, Inc. (Merger Sub), Zscaler, Inc. (Company)",
+          ""
+        ],
+        "model": "gemini-2.5-flash-lite",
+        "droppedLines": 1,
+        "src": "ai"
+      }
     },
     {
       "ticker": "A",

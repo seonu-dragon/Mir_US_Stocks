@@ -1,5 +1,5 @@
 {
- "updatedAtKst": "2026-11-26 17:37 KST",
+ "updatedAtKst": "2026-11-27 07:07 KST",
  "count": 112,
  "curatedCount": 72,
  "autoCount": 40,
@@ -313,14 +313,14 @@
     "chg": 0.6,
     "date": "2026-11-25"
    },
-   "MFG": {
-    "name": "Mizuho Financial Group Inc. Sponosred ADR (Japan)",
-    "chg": -1.1,
-    "date": "2026-11-25"
-   },
    "SNDK": {
     "name": "Sandisk Corporation",
     "chg": -22.0,
+    "date": "2026-11-25"
+   },
+   "MFG": {
+    "name": "Mizuho Financial Group Inc. Sponosred ADR (Japan)",
+    "chg": -1.1,
     "date": "2026-11-25"
    }
   },
@@ -4067,6 +4067,40 @@
    }
   },
   {
+   "kr": "005930",
+   "us": "SNDK",
+   "type": "auto",
+   "why": "반도체 ↔ Electronic Components",
+   "source": "auto",
+   "n": 235,
+   "lagCorr": 0.41,
+   "lagCorrEx": 0.319,
+   "sameCorr": 0.287,
+   "sameCorrEx": 0.232,
+   "strength": "strong",
+   "sameStrength": "moderate",
+   "nextDay": {
+    "base": {
+     "n": 1222,
+     "gap": 0.16,
+     "bull": 44.1,
+     "ret": 0.11
+    },
+    "up": {
+     "n": 168,
+     "gap": 1.72,
+     "bull": 47.0,
+     "ret": 1.69
+    },
+    "down": {
+     "n": 125,
+     "gap": -1.43,
+     "bull": 44.8,
+     "ret": -1.55
+    }
+   }
+  },
+  {
    "kr": "086790",
    "us": "MFG",
    "type": "auto",
@@ -4335,40 +4369,6 @@
      "gap": -1.53,
      "bull": 41.3,
      "ret": -2.06
-    }
-   }
-  },
-  {
-   "kr": "005930",
-   "us": "SNDK",
-   "type": "auto",
-   "why": "반도체 ↔ Electronic Components",
-   "source": "auto",
-   "n": 236,
-   "lagCorr": 0.4,
-   "lagCorrEx": 0.308,
-   "sameCorr": 0.309,
-   "sameCorrEx": 0.257,
-   "strength": "strong",
-   "sameStrength": "strong",
-   "nextDay": {
-    "base": {
-     "n": 1222,
-     "gap": 0.16,
-     "bull": 44.1,
-     "ret": 0.11
-    },
-    "up": {
-     "n": 168,
-     "gap": 1.72,
-     "bull": 47.0,
-     "ret": 1.69
-    },
-    "down": {
-     "n": 126,
-     "gap": -1.41,
-     "bull": 44.4,
-     "ret": -1.53
     }
    }
   },

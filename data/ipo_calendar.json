@@ -1,11 +1,171 @@
 {
-  "updatedAtKst": "2026-11-25 13:34 KST",
-  "lastFileDate": "2026-11-24",
+  "updatedAtKst": "2026-11-26 13:34 KST",
+  "lastFileDate": "2026-11-25",
   "partialFetch": false,
-  "count": 514,
+  "count": 520,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "DarkPulse, Inc.",
+      "ticker": "DPLS",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-25",
+      "accession": "0001683168-26-009139:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/866439/000168316826009139/darkpulse_s1.htm"
+    },
+    {
+      "company": "BIOTRICITY INC.",
+      "ticker": "BTCY",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054303:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1630113/000149315226054303/forms-1.htm"
+    },
+    {
+      "company": "Compute AI Acquisition Corp.",
+      "ticker": "AICP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054294:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2158099/000149315226054294/forms-1a.htm"
+    },
+    {
+      "company": "Compute AI Acquisition Corp.",
+      "ticker": "AICP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054294:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2158099/000149315226054294/forms-1a.htm"
+    },
+    {
+      "company": "CSTS Enterprises Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054262:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2101280/000149315226054262/forms-1.htm"
+    },
+    {
+      "company": "bioAffinity Technologies, Inc.  (BIAF, BIAFW)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054208:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1712762/000149315226054208/forms-1a.htm"
+    },
+    {
+      "company": "bioAffinity Technologies, Inc.  (BIAF, BIAFW)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054208:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1712762/000149315226054208/forms-1a.htm"
+    },
+    {
+      "company": "Kalohexis, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054198:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2135148/000149315226054198/forms-1.htm"
+    },
+    {
+      "company": "Crestone Strategic Capital Acquisition Corp",
+      "ticker": "CSCM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054154:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2136449/000149315226054154/forms-1a.htm"
+    },
+    {
+      "company": "Crestone Strategic Capital Acquisition Corp",
+      "ticker": "CSCM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001493152-26-054154:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2136449/000149315226054154/forms-1a.htm"
+    },
+    {
+      "company": "EON Resources Inc.  (EONR, EONR-WT)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001213900-26-124137:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026124137/ea0313532-s1a2_eonres.htm"
+    },
+    {
+      "company": "EON Resources Inc.  (EONR, EONR-WT)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001213900-26-124137:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026124137/ea0313532-s1a2_eonres.htm"
+    },
+    {
+      "company": "DATA I/O CORP",
+      "ticker": "DAIO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-478540:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/351998/000119312526478540/d142737ds1.htm"
+    },
+    {
+      "company": "Fidelity Chainlink Fund",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-25",
+      "accession": "0001193125-26-477751:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2166611/000119312526477751/d85304ds1.htm"
+    },
+    {
+      "company": "Kartoon Studios Acquisition Corp",
+      "ticker": "KACQ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001104659-26-132022:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2160422/000110465926132022/tm2627415-8_s1a.htm"
+    },
+    {
+      "company": "Kartoon Studios Acquisition Corp",
+      "ticker": "KACQ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-25",
+      "accession": "0001104659-26-132022:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2160422/000110465926132022/tm2627415-8_s1a.htm"
+    },
     {
       "company": "Expion Energy, Inc.",
       "ticker": "XPON",
@@ -5152,111 +5312,6 @@
       "fileDate": "2026-09-28",
       "accession": "0000950103-26-014555:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1468327/000095010326014555/dp253712_s1a-1.htm"
-    },
-    {
-      "company": "Regenlab USA Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-25",
-      "accession": "0001829126-26-010431:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2084031/000182912626010431/regenlabusa_s1.htm"
-    },
-    {
-      "company": "Elevation Acquisition Group Inc.",
-      "ticker": "ELEV",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-25",
-      "accession": "0001493152-26-044388:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2131124/000149315226044388/forms-1a.htm"
-    },
-    {
-      "company": "Elevation Acquisition Group Inc.",
-      "ticker": "ELEV",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-25",
-      "accession": "0001493152-26-044388:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2131124/000149315226044388/forms-1a.htm"
-    },
-    {
-      "company": "Ocean Power Technologies, Inc.",
-      "ticker": "OPTT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-25",
-      "accession": "0001493152-26-044343:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1378140/000149315226044343/forms-1a.htm"
-    },
-    {
-      "company": "Ocean Power Technologies, Inc.",
-      "ticker": "OPTT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-09-25",
-      "accession": "0001493152-26-044343:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1378140/000149315226044343/forms-1a.htm"
-    },
-    {
-      "company": "INTERPACE BIOSCIENCES, INC.  (IDXG, IDXGD)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-25",
-      "accession": "0001493152-26-044208:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1054102/000149315226044208/forms-1.htm"
-    },
-    {
-      "company": "MED-X, INC.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-25",
-      "accession": "0001477932-26-005809:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226005809/medx_s1.htm"
-    },
-    {
-      "company": "Star Fashion Culture Holdings Ltd",
-      "ticker": "STFS",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-09-25",
-      "accession": "0001213900-26-103256:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2003061/000121390026103256/ea0306527-424b4_starfashion.htm",
-      "offerPrice": 0.8,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "TCGX Acquisition Corp. II",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-09-25",
-      "accession": "0001193125-26-402977:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2149916/000119312526402977/ck0002149916-20260925.htm"
-    },
-    {
-      "company": "Bluerock Acquisition Corp. II",
-      "ticker": "BRRK",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-09-25",
-      "accession": "0001104659-26-111049:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2098410/000110465926111049/tm2532616-11_424b4.htm",
-      "offerPrice": 10.0,
-      "offerPriceKind": "unit",
-      "offerPriceChecked": 2
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-27 06:40:03 KST",
+  "updatedAtKst": "2026-11-27 13:42:02 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 10996,
@@ -32,18 +32,6 @@
     },
     {
       "rank": 3,
-      "id": "house-robert-e-latta",
-      "name": "Robert E. Latta",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 35.32,
-      "buyCount": 22,
-      "sellCount": 0,
-      "tradeCount": 22,
-      "committees": []
-    },
-    {
-      "rank": 4,
       "id": "house-julia-letlow",
       "name": "Julia Letlow",
       "chamber": "House",
@@ -55,7 +43,7 @@
       "committees": []
     },
     {
-      "rank": 5,
+      "rank": 4,
       "id": "house-rick-larsen",
       "name": "Rick Larsen",
       "chamber": "House",
@@ -64,6 +52,18 @@
       "buyCount": 21,
       "sellCount": 19,
       "tradeCount": 41,
+      "committees": []
+    },
+    {
+      "rank": 5,
+      "id": "house-robert-e-latta",
+      "name": "Robert E. Latta",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 28.87,
+      "buyCount": 22,
+      "sellCount": 0,
+      "tradeCount": 22,
       "committees": []
     },
     {
@@ -26038,7 +26038,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 35.32
+      "estReturnPct": 28.87
     },
     {
       "id": "house-dwight-evans",
@@ -213117,7 +213117,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-11-25",
-    "measuredTrades": 6902,
+    "measuredTrades": 6900,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -213324,19 +213324,19 @@
       {
         "name": "Shelley M Capito",
         "tx": {
-          "n": 138,
-          "avgExcess": 5.73,
+          "n": 136,
+          "avgExcess": 5.96,
           "medianExcess": 5.43,
-          "winRate": 59.4
+          "winRate": 59.6
         },
         "disc": {
-          "n": 134,
-          "avgExcess": 5.9,
+          "n": 132,
+          "avgExcess": 5.89,
           "medianExcess": 2.97,
-          "winRate": 56.7
+          "winRate": 56.8
         },
         "buyAvgExcess": 11.26,
-        "lagDays": 20,
+        "lagDays": 19,
         "id": "senate-shelley-m-capito",
         "chamber": "Senate",
         "party": "R"

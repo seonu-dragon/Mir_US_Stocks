@@ -1,12 +1,12 @@
 {
-  "updatedAtKst": "2026-11-26 13:19 KST",
+  "updatedAtKst": "2026-11-27 13:18 KST",
   "lastFileDate": "2026-11-25",
   "partialFetch": false,
-  "count": 9899,
-  "newCount": 310,
+  "count": 9900,
+  "newCount": 1,
   "source": "SEC EDGAR Form 4",
   "note": "비파생(직접 보유) 거래만 집계. P=매수, S=매도. 추적 universe 종목 한정.",
-  "planFlagged": 9899,
+  "planFlagged": 9900,
   "trades": [
     {
       "ticker": "AU",
@@ -28068,6 +28068,27 @@
       "txIndex": 1,
       "link": "https://www.sec.gov/Archives/edgar/data/1688179/000168817926000001/form4-11212026_121146.xml",
       "plan10b51": false
+    },
+    {
+      "ticker": "CSAI",
+      "issuer": "CLOUDASTRUCTURE, INC.",
+      "owner": "Bentley Sheldon Richard",
+      "relation": "기타",
+      "code": "S",
+      "codeLabel": "매도",
+      "kind": "sell",
+      "ad": "D",
+      "shares": 1500.0,
+      "price": 0.72,
+      "value": 1080.0,
+      "ownedAfter": 6001.0,
+      "txDate": "2026-11-18",
+      "fileDate": "2026-11-20",
+      "accession": "0001683168-26-008989",
+      "txIndex": 0,
+      "link": "https://www.sec.gov/Archives/edgar/data/2044249/000168316826008989/ownership.xml",
+      "plan10b51": true,
+      "planAdoptedDate": "2026-09-01"
     },
     {
       "ticker": "CINF",

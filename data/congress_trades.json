@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-11-28 06:38:02 KST",
+  "updatedAtKst": "2026-11-28 13:42:03 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10996,
+  "tradeCount": 10992,
   "politicianCount": 199,
   "rankings": [
     {
@@ -116,6 +116,18 @@
     },
     {
       "rank": 10,
+      "id": "house-valerie-hoyle",
+      "name": "Valerie Hoyle",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 20.18,
+      "buyCount": 97,
+      "sellCount": 89,
+      "tradeCount": 186,
+      "committees": []
+    },
+    {
+      "rank": 11,
       "id": "house-thomas-h-kean",
       "name": "Thomas H. Kean",
       "chamber": "House",
@@ -127,7 +139,7 @@
       "committees": []
     },
     {
-      "rank": 11,
+      "rank": 12,
       "id": "house-jared-moskowitz",
       "name": "Jared Moskowitz",
       "chamber": "House",
@@ -136,18 +148,6 @@
       "buyCount": 129,
       "sellCount": 58,
       "tradeCount": 187,
-      "committees": []
-    },
-    {
-      "rank": 12,
-      "id": "house-valerie-hoyle",
-      "name": "Valerie Hoyle",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 14.82,
-      "buyCount": 97,
-      "sellCount": 89,
-      "tradeCount": 186,
       "committees": []
     },
     {
@@ -176,6 +176,20 @@
     },
     {
       "rank": 15,
+      "id": "house-marjorie-taylor-greene",
+      "name": "Marjorie Taylor Greene",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 12.35,
+      "buyCount": 199,
+      "sellCount": 5,
+      "tradeCount": 204,
+      "committees": [
+        "Homeland Security"
+      ]
+    },
+    {
+      "rank": 16,
       "id": "house-kevin-hern",
       "name": "Kevin Hern",
       "chamber": "House",
@@ -187,7 +201,7 @@
       "committees": []
     },
     {
-      "rank": 16,
+      "rank": 17,
       "id": "senate-shelley-m-capito",
       "name": "Shelley M Capito",
       "chamber": "Senate",
@@ -199,7 +213,7 @@
       "committees": []
     },
     {
-      "rank": 17,
+      "rank": 18,
       "id": "senate-alan-armstrong",
       "name": "Alan Armstrong",
       "chamber": "Senate",
@@ -211,7 +225,7 @@
       "committees": []
     },
     {
-      "rank": 18,
+      "rank": 19,
       "id": "house-lisa-mcclain",
       "name": "Lisa McClain",
       "chamber": "House",
@@ -223,45 +237,19 @@
       "committees": []
     },
     {
-      "rank": 19,
-      "id": "house-marjorie-taylor-greene",
-      "name": "Marjorie Taylor Greene",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 10.75,
-      "buyCount": 199,
-      "sellCount": 5,
-      "tradeCount": 204,
-      "committees": [
-        "Homeland Security"
-      ]
-    },
-    {
       "rank": 20,
-      "id": "house-cliff-bentz",
-      "name": "Cliff Bentz",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 9.95,
-      "buyCount": 1,
-      "sellCount": 1,
-      "tradeCount": 2,
-      "committees": []
-    },
-    {
-      "rank": 21,
       "id": "senate-gary-c-peters",
       "name": "Gary C Peters",
       "chamber": "Senate",
       "party": "D",
       "estReturnPct": 9.38,
-      "buyCount": 14,
+      "buyCount": 12,
       "sellCount": 14,
-      "tradeCount": 28,
+      "tradeCount": 26,
       "committees": []
     },
     {
-      "rank": 22,
+      "rank": 21,
       "id": "house-josh-gottheimer",
       "name": "Josh Gottheimer",
       "chamber": "House",
@@ -275,7 +263,7 @@
       ]
     },
     {
-      "rank": 23,
+      "rank": 22,
       "id": "house-dan-newhouse",
       "name": "Dan Newhouse",
       "chamber": "House",
@@ -287,7 +275,7 @@
       "committees": []
     },
     {
-      "rank": 24,
+      "rank": 23,
       "id": "house-david-j-taylor",
       "name": "David J. Taylor",
       "chamber": "House",
@@ -299,7 +287,7 @@
       "committees": []
     },
     {
-      "rank": 25,
+      "rank": 24,
       "id": "senate-john-w-hickenlooper",
       "name": "John W Hickenlooper",
       "chamber": "Senate",
@@ -311,7 +299,7 @@
       "committees": []
     },
     {
-      "rank": 26,
+      "rank": 25,
       "id": "house-gilbert-cisneros",
       "name": "Gilbert Cisneros",
       "chamber": "House",
@@ -323,7 +311,7 @@
       "committees": []
     },
     {
-      "rank": 27,
+      "rank": 26,
       "id": "house-maria-elvira-salazar",
       "name": "Maria Elvira Salazar",
       "chamber": "House",
@@ -335,7 +323,7 @@
       "committees": []
     },
     {
-      "rank": 28,
+      "rank": 27,
       "id": "senate-john-boozman",
       "name": "John Boozman",
       "chamber": "Senate",
@@ -350,7 +338,7 @@
       ]
     },
     {
-      "rank": 29,
+      "rank": 28,
       "id": "senate-markwayne-mullin",
       "name": "Markwayne Mullin",
       "chamber": "Senate",
@@ -365,7 +353,7 @@
       ]
     },
     {
-      "rank": 30,
+      "rank": 29,
       "id": "house-james-french-hill",
       "name": "James French Hill",
       "chamber": "House",
@@ -377,7 +365,7 @@
       "committees": []
     },
     {
-      "rank": 31,
+      "rank": 30,
       "id": "house-april-mcclain-delaney",
       "name": "April McClain Delaney",
       "chamber": "House",
@@ -389,7 +377,7 @@
       "committees": []
     },
     {
-      "rank": 32,
+      "rank": 31,
       "id": "house-michael-rulli",
       "name": "Michael Rulli",
       "chamber": "House",
@@ -401,7 +389,7 @@
       "committees": []
     },
     {
-      "rank": 33,
+      "rank": 32,
       "id": "senate-a-mitchell-mcconnell-jr",
       "name": "A. Mitchell McConnell, Jr.",
       "chamber": "Senate",
@@ -413,7 +401,7 @@
       "committees": []
     },
     {
-      "rank": 34,
+      "rank": 33,
       "id": "house-scott-franklin",
       "name": "Scott Franklin",
       "chamber": "House",
@@ -425,7 +413,7 @@
       "committees": []
     },
     {
-      "rank": 35,
+      "rank": 34,
       "id": "house-julie-johnson",
       "name": "Julie Johnson",
       "chamber": "House",
@@ -437,19 +425,7 @@
       "committees": []
     },
     {
-      "rank": 36,
-      "id": "house-rob-bresnahan",
-      "name": "Rob Bresnahan",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": -4.47,
-      "buyCount": 111,
-      "sellCount": 165,
-      "tradeCount": 276,
-      "committees": []
-    },
-    {
-      "rank": 37,
+      "rank": 35,
       "id": "senate-sheldon-whitehouse",
       "name": "Sheldon Whitehouse",
       "chamber": "Senate",
@@ -464,7 +440,7 @@
       ]
     },
     {
-      "rank": 38,
+      "rank": 36,
       "id": "house-cleo-fields",
       "name": "Cleo Fields",
       "chamber": "House",
@@ -476,7 +452,7 @@
       "committees": []
     },
     {
-      "rank": 39,
+      "rank": 37,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -490,7 +466,7 @@
       ]
     },
     {
-      "rank": 40,
+      "rank": 38,
       "id": "house-harriet-hageman",
       "name": "Harriet Hageman",
       "chamber": "House",
@@ -502,7 +478,7 @@
       "committees": []
     },
     {
-      "rank": 41,
+      "rank": 39,
       "id": "house-jonathan-jackson",
       "name": "Jonathan Jackson",
       "chamber": "House",
@@ -514,7 +490,7 @@
       "committees": []
     },
     {
-      "rank": 42,
+      "rank": 40,
       "id": "house-john-mcguire",
       "name": "John McGuire",
       "chamber": "House",
@@ -526,7 +502,7 @@
       "committees": []
     },
     {
-      "rank": 43,
+      "rank": 41,
       "id": "house-dwight-evans",
       "name": "Dwight Evans",
       "chamber": "House",
@@ -538,7 +514,7 @@
       "committees": []
     },
     {
-      "rank": 44,
+      "rank": 42,
       "id": "senate-rand-paul",
       "name": "Rand Paul",
       "chamber": "Senate",
@@ -550,7 +526,7 @@
       "committees": []
     },
     {
-      "rank": 45,
+      "rank": 43,
       "id": "house-richard-w-allen",
       "name": "Richard W. Allen",
       "chamber": "House",
@@ -562,7 +538,7 @@
       "committees": []
     },
     {
-      "rank": 46,
+      "rank": 44,
       "id": "senate-jerry-moran",
       "name": "Jerry Moran,",
       "chamber": "Senate",
@@ -574,7 +550,7 @@
       "committees": []
     },
     {
-      "rank": 47,
+      "rank": 45,
       "id": "house-daniel-meuser",
       "name": "Daniel Meuser",
       "chamber": "House",
@@ -586,7 +562,7 @@
       "committees": []
     },
     {
-      "rank": 48,
+      "rank": 46,
       "id": "house-john-j-mcguire",
       "name": "John J McGuire",
       "chamber": "House",
@@ -2735,8 +2711,8 @@
       "party": "D",
       "committees": [],
       "district": "",
-      "tradeCount": 374,
-      "buyCount": 162,
+      "tradeCount": 372,
+      "buyCount": 160,
       "sellCount": 212,
       "recentTrades": [
         {
@@ -4145,7 +4121,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -4.47
+      "estReturnPct": null
     },
     {
       "id": "house-jefferson-shreve",
@@ -5917,7 +5893,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 10.75
+      "estReturnPct": 12.35
     },
     {
       "id": "senate-shelley-m-capito",
@@ -7333,7 +7309,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 14.82
+      "estReturnPct": 20.18
     },
     {
       "id": "house-virginia-foxx",
@@ -22895,360 +22871,6 @@
       "estReturnPct": null
     },
     {
-      "id": "senate-gary-c-peters",
-      "name": "Gary C Peters",
-      "chamber": "Senate",
-      "party": "D",
-      "committees": [],
-      "district": "",
-      "tradeCount": 28,
-      "buyCount": 14,
-      "sellCount": 14,
-      "recentTrades": [
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "O",
-          "asset": "Realty Income Corporation Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-07-23",
-          "disclosureDate": "2026-08-07",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/328a9b36-1205-4117-bdc4-cd7c3ccbcbbc/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-06-29",
-          "disclosureDate": "2026-07-02",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/40fbe259-f282-4982-a53f-1c7278d041cd/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "KHC",
-          "asset": "The Kraft Heinz Company - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-05-21",
-          "disclosureDate": "2026-06-11",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/be9bb561-8290-4364-85b4-06a59ef0ec01/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "CTVA",
-          "asset": "Corteva, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-04-23",
-          "disclosureDate": "2026-05-11",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/969f5bc0-89d8-4c76-a55e-944fb03aff0d/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "WPC",
-          "asset": "W. P. Carey Inc. REIT",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-01-12",
-          "disclosureDate": "2026-01-20",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/5dfd6dd1-5c2f-4398-984b-79c88380fc84/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "SWK",
-          "asset": "Stanley Black & Decker Inc",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-01-12",
-          "disclosureDate": "2026-01-20",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/5dfd6dd1-5c2f-4398-984b-79c88380fc84/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "INTC",
-          "asset": "Intel Corp",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-12-12",
-          "disclosureDate": "2026-01-07",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/0dbb004e-a36f-4554-986d-d8b1a9a4769a/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "VZ",
-          "asset": "Verizon Communications Inc",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-12-12",
-          "disclosureDate": "2026-01-07",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/0dbb004e-a36f-4554-986d-d8b1a9a4769a/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "CAG",
-          "asset": "Conagra Brands Inc",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-11-14",
-          "disclosureDate": "2025-12-04",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b9164fd3-7f99-4060-8e86-7ad89350cd03/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "OGN",
-          "asset": "Organon & Co.",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-07-10",
-          "disclosureDate": "2025-11-24",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/18a1aea6-282e-4152-b3dd-d773e0302c7e/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "LEG",
-          "asset": "Leggett & Platt Inc",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-10-31",
-          "disclosureDate": "2024-11-14",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f107eca1-7edb-4f5a-b81e-f4134df3b21b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "LW",
-          "asset": "Lamb Weston Holdings Inc",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-10-31",
-          "disclosureDate": "2024-11-14",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f107eca1-7edb-4f5a-b81e-f4134df3b21b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "IVZ",
-          "asset": "Invesco Ltd Common Stock",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-10-17",
-          "disclosureDate": "2024-11-14",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f107eca1-7edb-4f5a-b81e-f4134df3b21b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "OTIS",
-          "asset": "Otis Worldwide Corp",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-07-17",
-          "disclosureDate": "2024-08-05",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/af3e4dec-0e1e-4833-9620-4f6c61523cfc/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "SOLV",
-          "asset": "Solventum Corporation",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-05-14",
-          "disclosureDate": "2024-05-23",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "CCL",
-          "asset": "Carnival Corp",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-05-14",
-          "disclosureDate": "2024-05-23",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "SLB",
-          "asset": "Schlumberger N.V.",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-05-14",
-          "disclosureDate": "2024-05-23",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "IFF",
-          "asset": "International Flavors & Fragrances",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2024-05-14",
-          "disclosureDate": "2024-05-23",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "D",
-          "asset": "Dominion Energy Inc",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-28",
-          "disclosureDate": "2024-01-25",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a801ab6e-6491-4775-8318-3ead166fd778/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "IFF",
-          "asset": "Internationa Flavors & Fragrances, Inc. Common Sto",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-06-06",
-          "disclosureDate": "2023-06-30",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f1af8e74-b65e-4886-9361-bc13bd413bc8/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": 9.38
-    },
-    {
       "id": "house-kelly-louise-morrison",
       "name": "Kelly Louise Morrison",
       "chamber": "House",
@@ -23601,6 +23223,360 @@
         }
       ],
       "estReturnPct": null
+    },
+    {
+      "id": "senate-gary-c-peters",
+      "name": "Gary C Peters",
+      "chamber": "Senate",
+      "party": "D",
+      "committees": [],
+      "district": "",
+      "tradeCount": 26,
+      "buyCount": 12,
+      "sellCount": 14,
+      "recentTrades": [
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "O",
+          "asset": "Realty Income Corporation Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-07-23",
+          "disclosureDate": "2026-08-07",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/328a9b36-1205-4117-bdc4-cd7c3ccbcbbc/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "T",
+          "asset": "AT&T Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-06-29",
+          "disclosureDate": "2026-07-02",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/40fbe259-f282-4982-a53f-1c7278d041cd/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "KHC",
+          "asset": "The Kraft Heinz Company - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-05-21",
+          "disclosureDate": "2026-06-11",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/be9bb561-8290-4364-85b4-06a59ef0ec01/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "CTVA",
+          "asset": "Corteva, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-04-23",
+          "disclosureDate": "2026-05-11",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/969f5bc0-89d8-4c76-a55e-944fb03aff0d/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "WPC",
+          "asset": "W. P. Carey Inc. REIT",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-01-12",
+          "disclosureDate": "2026-01-20",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/5dfd6dd1-5c2f-4398-984b-79c88380fc84/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "SWK",
+          "asset": "Stanley Black & Decker Inc",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-01-12",
+          "disclosureDate": "2026-01-20",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/5dfd6dd1-5c2f-4398-984b-79c88380fc84/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "INTC",
+          "asset": "Intel Corp",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-12-12",
+          "disclosureDate": "2026-01-07",
+          "owner": "Spouse",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/0dbb004e-a36f-4554-986d-d8b1a9a4769a/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "VZ",
+          "asset": "Verizon Communications Inc",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-12-12",
+          "disclosureDate": "2026-01-07",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/0dbb004e-a36f-4554-986d-d8b1a9a4769a/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "CAG",
+          "asset": "Conagra Brands Inc",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-11-14",
+          "disclosureDate": "2025-12-04",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b9164fd3-7f99-4060-8e86-7ad89350cd03/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "OGN",
+          "asset": "Organon & Co.",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-07-10",
+          "disclosureDate": "2025-11-24",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/18a1aea6-282e-4152-b3dd-d773e0302c7e/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "LEG",
+          "asset": "Leggett & Platt Inc",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-10-31",
+          "disclosureDate": "2024-11-14",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f107eca1-7edb-4f5a-b81e-f4134df3b21b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "LW",
+          "asset": "Lamb Weston Holdings Inc",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-10-31",
+          "disclosureDate": "2024-11-14",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f107eca1-7edb-4f5a-b81e-f4134df3b21b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "IVZ",
+          "asset": "Invesco Ltd Common Stock",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-10-17",
+          "disclosureDate": "2024-11-14",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f107eca1-7edb-4f5a-b81e-f4134df3b21b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "OTIS",
+          "asset": "Otis Worldwide Corp",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-07-17",
+          "disclosureDate": "2024-08-05",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/af3e4dec-0e1e-4833-9620-4f6c61523cfc/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "SOLV",
+          "asset": "Solventum Corporation",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-05-14",
+          "disclosureDate": "2024-05-23",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "CCL",
+          "asset": "Carnival Corp",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-05-14",
+          "disclosureDate": "2024-05-23",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "SLB",
+          "asset": "Schlumberger N.V.",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-05-14",
+          "disclosureDate": "2024-05-23",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "IFF",
+          "asset": "International Flavors & Fragrances",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2024-05-14",
+          "disclosureDate": "2024-05-23",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/1f48b3e2-dafe-4f0a-ab51-32cb30c9337b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "D",
+          "asset": "Dominion Energy Inc",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-28",
+          "disclosureDate": "2024-01-25",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a801ab6e-6491-4775-8318-3ead166fd778/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        },
+        {
+          "politician": "Gary C Peters",
+          "chamber": "Senate",
+          "ticker": "IFF",
+          "asset": "Internationa Flavors & Fragrances, Inc. Common Sto",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-06-06",
+          "disclosureDate": "2023-06-30",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/f1af8e74-b65e-4886-9361-bc13bd413bc8/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "D"
+        }
+      ],
+      "estReturnPct": 9.38
     },
     {
       "id": "senate-david-h-mccormick",
@@ -37601,7 +37577,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 9.95
+      "estReturnPct": null
     },
     {
       "id": "house-andrew-garbarino",
@@ -112122,7 +112098,7 @@
     },
     "CAG": {
       "ticker": "CAG",
-      "netBuys": 8,
+      "netBuys": 7,
       "netSells": 9,
       "politicianCount": 9,
       "trades": [
@@ -112397,23 +112373,6 @@
           "district": "NC05",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "CAG",
-          "asset": "ConAgra Brands, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-29",
-          "disclosureDate": "2021-12-07",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/6799f5d8-9bc8-427f-a33b-24a59bffe182/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
         }
       ]
     },
@@ -122685,7 +122644,7 @@
     },
     "BMY": {
       "ticker": "BMY",
-      "netBuys": 11,
+      "netBuys": 10,
       "netSells": 17,
       "politicianCount": 17,
       "trades": [
@@ -200934,7 +200893,7 @@
     },
     "SBIO": {
       "ticker": "SBIO",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 5,
       "politicianCount": 1,
       "trades": [
@@ -201019,23 +200978,6 @@
           "disclosureDate": "2022-01-04",
           "owner": "Spouse",
           "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/41868f55-ad42-4855-9aca-1764a05fb956/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas R Carper",
-          "chamber": "Senate",
-          "ticker": "SBIO",
-          "asset": "Alps Medical Breakthroughs ETF",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-29",
-          "disclosureDate": "2021-12-04",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a89172dd-f90e-4a61-9da4-24fa2544ddf5/",
           "district": "",
           "source": "senate_efd",
           "party": "D"
@@ -213085,31 +213027,6 @@
           "party": "R"
         }
       ]
-    },
-    "OFC": {
-      "ticker": "OFC",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Gary C Peters",
-          "chamber": "Senate",
-          "ticker": "OFC",
-          "asset": "Corporate Office Properties Trust Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-29",
-          "disclosureDate": "2021-12-07",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/6799f5d8-9bc8-427f-a33b-24a59bffe182/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "D"
-        }
-      ]
     }
   },
   "performance": {
@@ -213117,7 +213034,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-11-27",
-    "measuredTrades": 6906,
+    "measuredTrades": 6904,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -213595,16 +213512,16 @@
       {
         "name": "Josh Gottheimer",
         "tx": {
-          "n": 278,
+          "n": 277,
           "avgExcess": 1.47,
-          "medianExcess": 0.53,
-          "winRate": 50.7
+          "medianExcess": 0.2,
+          "winRate": 50.2
         },
         "disc": {
-          "n": 275,
-          "avgExcess": 1.92,
-          "medianExcess": -0.85,
-          "winRate": 49.5
+          "n": 274,
+          "avgExcess": 1.93,
+          "medianExcess": -1.04,
+          "winRate": 49.3
         },
         "buyAvgExcess": -1.26,
         "lagDays": 21,
@@ -213689,17 +213606,17 @@
         "name": "Alan Armstrong",
         "tx": {
           "n": 364,
-          "avgExcess": 0.63,
-          "medianExcess": 0.53,
-          "winRate": 50.3
+          "avgExcess": 0.66,
+          "medianExcess": 0.77,
+          "winRate": 50.5
         },
         "disc": {
           "n": 364,
-          "avgExcess": 2.58,
+          "avgExcess": 2.59,
           "medianExcess": 2.59,
-          "winRate": 55.5
+          "winRate": 55.2
         },
-        "buyAvgExcess": 0.37,
+        "buyAvgExcess": 0.42,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -213743,7 +213660,7 @@
         "name": "Richard Dean McCormick",
         "tx": {
           "n": 43,
-          "avgExcess": 0.04,
+          "avgExcess": 0.03,
           "medianExcess": -0.4,
           "winRate": 48.8
         },
@@ -213823,7 +213740,7 @@
         },
         "disc": {
           "n": 643,
-          "avgExcess": -0.2,
+          "avgExcess": -0.19,
           "medianExcess": -0.22,
           "winRate": 49.9
         },
@@ -213937,17 +213854,17 @@
         "name": "Gilbert Cisneros",
         "tx": {
           "n": 691,
-          "avgExcess": -2.64,
-          "medianExcess": -2.82,
+          "avgExcess": -2.58,
+          "medianExcess": -2.48,
           "winRate": 45.4
         },
         "disc": {
           "n": 651,
-          "avgExcess": -2.99,
+          "avgExcess": -2.94,
           "medianExcess": -3.42,
-          "winRate": 43.9
+          "winRate": 44.1
         },
-        "buyAvgExcess": -3.23,
+        "buyAvgExcess": -3.15,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
@@ -214358,6 +214275,26 @@
         "party": "R"
       },
       {
+        "name": "Virginia Foxx",
+        "tx": {
+          "n": 39,
+          "avgExcess": -10.16,
+          "medianExcess": -10.89,
+          "winRate": 28.2
+        },
+        "disc": {
+          "n": 37,
+          "avgExcess": -8.86,
+          "medianExcess": -10.92,
+          "winRate": 32.4
+        },
+        "buyAvgExcess": -11.29,
+        "lagDays": 16,
+        "id": "house-virginia-foxx",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "James French Hill",
         "tx": {
           "n": 11,
@@ -214370,26 +214307,6 @@
         "id": "house-james-french-hill",
         "chamber": "House",
         "party": ""
-      },
-      {
-        "name": "Virginia Foxx",
-        "tx": {
-          "n": 40,
-          "avgExcess": -10.95,
-          "medianExcess": -11.08,
-          "winRate": 27.5
-        },
-        "disc": {
-          "n": 38,
-          "avgExcess": -9.7,
-          "medianExcess": -11.13,
-          "winRate": 31.6
-        },
-        "buyAvgExcess": -12.15,
-        "lagDays": 15,
-        "id": "house-virginia-foxx",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "C. Scott Franklin",

@@ -1,11 +1,91 @@
 {
-  "updatedAtKst": "2026-11-27 13:34 KST",
-  "lastFileDate": "2026-11-25",
+  "updatedAtKst": "2026-11-28 13:34 KST",
+  "lastFileDate": "2026-11-27",
   "partialFetch": false,
-  "count": 520,
+  "count": 528,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "AUDDIA INC.",
+      "ticker": "AUUD",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-27",
+      "accession": "0001683168-26-009163:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1554818/000168316826009163/auddia_s1.htm"
+    },
+    {
+      "company": "Stewards, Inc.",
+      "ticker": "SWRD",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-27",
+      "accession": "0001663577-26-000370:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1795851/000166357726000370/swrd_s1.htm"
+    },
+    {
+      "company": "Our Bond, Inc.",
+      "ticker": "OBAI",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-27",
+      "accession": "0001493152-26-054474:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1756064/000149315226054474/forms-1.htm"
+    },
+    {
+      "company": "DataMeds AI, Inc.",
+      "ticker": "MEDS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-27",
+      "accession": "0001493152-26-054462:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2030763/000149315226054462/forms-1a.htm"
+    },
+    {
+      "company": "DataMeds AI, Inc.",
+      "ticker": "MEDS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-11-27",
+      "accession": "0001493152-26-054462:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2030763/000149315226054462/forms-1a.htm"
+    },
+    {
+      "company": "Elvictor Group, Inc.",
+      "ticker": "ELVG",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-27",
+      "accession": "0001213900-26-124391:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1741489/000121390026124391/ea0311704-s1_elvictor.htm"
+    },
+    {
+      "company": "Atrium Therapeutics, Inc.",
+      "ticker": "RNA",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-27",
+      "accession": "0001193125-26-480175:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2093101/000119312526480175/d163655ds1.htm"
+    },
+    {
+      "company": "Spirit SPAC Europa Acquisition Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-11-27",
+      "accession": "0001185185-26-005651:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2152050/000118518526005651/sseacs1111026.htm"
+    },
     {
       "company": "DarkPulse, Inc.",
       "ticker": "DPLS",
